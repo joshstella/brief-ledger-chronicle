@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# brief-ledger installer
+# brief-ledger-chronicle installer
 # Bootstraps the brief/ledger/review workflow into a target project (Cursor-native).
 # Usage: bash install.sh [--target <path>] [--yes]
 
@@ -26,7 +26,7 @@ done
 [[ -z "$TARGET_DIR" ]] && TARGET_DIR="$(pwd)"
 
 if [[ "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
-  echo "error: cannot install into brief-ledger itself." >&2
+  echo "error: cannot install into brief-ledger-chronicle itself." >&2
   echo "  This repo is the source of the process, not a target for it." >&2
   echo "  Use --target <path> to install into another project." >&2
   exit 1
@@ -46,7 +46,7 @@ install_hint() {
 }
 
 echo ""
-echo "brief-ledger installer"
+echo "brief-ledger-chronicle installer"
 echo "======================"
 echo ""
 echo "Checking dependencies..."
@@ -147,14 +147,14 @@ if [[ ! -d "$BRIEF_DIR" ]]; then
   done
 
   cat > "$BRIEF_DIR/brief.md" <<BRIEF_EOF
-# Bootstrap: brief-ledger install
+# Bootstrap: brief-ledger-chronicle install
 
 **Serial:** #0001 · **Created:** $TIMESTAMP · **Author:** $AUTHOR · **Depends on:** —
 
 ## Overview
 
 This brief records the actions taken by \`install.sh\` to bring this repository into
-conformance with the brief-ledger workflow.
+conformance with the brief-ledger-chronicle workflow.
 
 ## Settled decisions
 
@@ -222,6 +222,6 @@ fi
 echo ""
 echo "Next steps:"
 echo "  1. Review and edit AGENTS.md — fill in the project-specific section."
-echo "  2. git add -A && git commit -m 'Bootstrap: brief-ledger install'"
+echo "  2. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
 echo "  3. Open docs/briefs/0001-bootstrap/brief.md to see the install record."
 echo ""

@@ -1,4 +1,4 @@
-# brief-ledger
+# brief-ledger-chronicle
 
 **Install it into your project and be creative — the tools will document what happened.**
 
@@ -44,7 +44,7 @@ The installer checks for these and tells you what to install if anything is miss
 
 ```bash
 # In the repo you want to onboard:
-bash /path/to/brief-ledger/install.sh
+bash /path/to/brief-ledger-chronicle/install.sh
 
 # Or with --target if you're running from elsewhere:
 bash install.sh --target /path/to/my-project

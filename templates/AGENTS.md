@@ -5,7 +5,7 @@ process rules in the first section apply unchanged.
 
 ## Process — use the skills, don't go around them
 
-This repo uses the brief-ledger workflow. Installed skills under `.cursor/skills/` are the
+This repo uses the brief-ledger-chronicle workflow. Installed skills under `.cursor/skills/` are the
 gates; bypassing them is the defect.
 
 - **`commit-push-pr`** — the only path to `main`. Runs the review gate before committing.
