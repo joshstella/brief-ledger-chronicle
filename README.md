@@ -81,3 +81,7 @@ This repo is the Cursor-native successor to
 [claude-process-automation](https://github.com/joshstella/claude-process-automation). The
 brief/ledger/chronicle convention is unchanged; only the install target and agent wiring
 differ (`.cursor/skills/` + `AGENTS.md` instead of `.claude/` + `CLAUDE.md`).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
