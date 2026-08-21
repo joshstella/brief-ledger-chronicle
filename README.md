@@ -6,6 +6,9 @@ Brief, ledger, and chronicle keep your reasoning legible without ceremony. Nothi
 mandatory scaffolding: write what's worth writing, skip what isn't, and the record
 accumulates as a side effect of doing the work.
 
+[**Manifesto**](Manifesto.md) — why this exists, if you want the argument. You don't need
+it to start.
+
 Works with **Claude Code** and **Cursor**. One set of source files serves both — only where
 they land differs, so a wording fix lands once rather than twice.
 
