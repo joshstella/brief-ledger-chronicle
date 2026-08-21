@@ -12,8 +12,10 @@ bypassing them is the defect.
   committing. Never use raw `git commit && git push` for work headed to `main`.
 - **`/review-pr`** — called automatically by `/commit-push-pr`. Can also be run manually
   on a PR number or the staged diff.
-- **`/create-brief`** — file a draft into `docs/briefs/`. Non-trivial work gets a brief
-  before it starts, not after.
+- **`/create-brief`** — file a draft into `docs/briefs/`. A brief is the hypothesis you
+  start with, not a spec you have agreed to deliver against: file it before non-trivial
+  work begins, expect the ledger to correct it, and never retrofit one after the work
+  shipped.
 - **`/start-brief` / `/next-brief-phase`** — initiate and continue phased work.
 - **`/chronicle`** — generate a narrative history from briefs, ledgers, and git. Run when
   you want the story of how the codebase got here.

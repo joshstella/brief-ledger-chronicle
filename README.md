@@ -6,6 +6,9 @@ Brief, ledger, and chronicle keep your reasoning legible without ceremony. Nothi
 mandatory scaffolding: write what's worth writing, skip what isn't, and the record
 accumulates as a side effect of doing the work.
 
+[**Manifesto**](Manifesto.md) — why this exists, if you want the argument. You don't need
+it to start.
+
 Works with **Claude Code** and **Cursor**. One set of source files serves both — only where
 they land differs, so a wording fix lands once rather than twice.
 
@@ -75,12 +78,19 @@ starter permission allowlist.
 
 ## How the process works
 
-1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered, and free to sit indefinitely.
+1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered, and free to sit indefinitely,
+   which is what makes it a safe place to be wrong.
 2. **File it** with `create-brief`, which assigns the serial. This is the one-way door.
-3. **Execute** with `start-brief`; continue with `next-brief-phase`.
+3. **Execute** with `start-brief`; continue with `next-brief-phase`, which re-plans the
+   remaining sequence from what the finished phases actually taught.
 4. **Every commit to `main`** goes through `commit-push-pr`, which runs `review-pr` as a
    gate *before* anything is committed.
 5. **`chronicle`** renders the record into prose whenever you want the story.
+
+This is not a spec-then-build pipeline. **The brief is the hypothesis you start with and
+the ledger is what the playing taught** — including where the brief was wrong, which is
+usually the most valuable thing in it. A specification, if the work needs one at all, gets
+written from that record afterwards. See the [Manifesto](Manifesto.md).
 
 The installer never files a brief. `create-brief` is the single point of serial assignment,
 so anything else writing a `NNNN-slug/` folder would bypass both its allocation and its
