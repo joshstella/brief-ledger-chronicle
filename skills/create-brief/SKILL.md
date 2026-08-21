@@ -12,7 +12,7 @@ and get their identity here, at filing time, not while being written.
 
 ## Input
 
-`/create-brief <path-to-draft.md> [slug]`
+`create-brief <path-to-draft.md> [slug]`
 
 - `<path-to-draft.md>` — an unnumbered draft brief (usually from `docs/briefs/_drafts/`,
   or any path). It contains a `# H1` title and a provenance line stamped at draft-write
@@ -26,8 +26,8 @@ and get their identity here, at filing time, not while being written.
 ## Steps
 
 0. **Preflight.** If `docs/briefs/` or `docs/briefs/_drafts/` is missing, **stop** and
-   tell the user to run the `init-briefs` skill first. Do not scaffold the structure here — setup
-   is the `init-briefs` skill's job; this command assumes it exists.
+   tell the user to run `init-briefs` first. Do not scaffold the structure here — setup
+   is `init-briefs`'s job; this command assumes it exists.
 1. **Compute the next serial.** List `docs/briefs/`; from each entry **whose name begins
    with four digits**, parse `NNNN`; take the max and add 1; zero-pad to four. Entries
    without a leading four-digit prefix (`_drafts/`, `README`, etc.) are ignored. If there
@@ -46,13 +46,14 @@ and get their identity here, at filing time, not while being written.
    (append `· **Jira:** …` if the draft carried it.) `<deps>` comes from the draft's
    `**Depends on:**` line — **which, along with the draft's separate `Created`/`Author`
    line, is consumed into this single line so no duplicate remains** — or `—` if absent.
-   If the draft is missing `Created`/`Author`, resolve `Author` from the per-user identity
-   source (`git config user.email` → else `git config user.email`/`user.name`) and stamp
-   `Created` = now, warning that the draft should have carried them from write time, then
-   proceed.
+   If the draft is missing `Created`/`Author`, resolve `Author` from `git config
+   user.email` (falling back to `user.name`) and stamp `Created` = now, warning that the
+   draft should have carried them from write time, then proceed. Git config is the only
+   identity source — every repo already has one, so there is nothing extra to install or
+   keep in sync.
 5. **Clean up.** Remove the draft file if it was a staging file.
 6. **Report** the created path, serial, and depends-on. Do **not** auto-commit — leave
-   that to the `commit-push-pr` skill (which carries `#NNNN` into the PR title).
+   that to `commit-push-pr` (which carries `#NNNN` into the PR title).
 
 ## Rules
 

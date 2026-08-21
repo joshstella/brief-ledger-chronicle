@@ -4,11 +4,13 @@ description: >-
   Review a staged diff or PR against the governing brief and project rules. Use when the user asks for review-pr or a pre-merge review.
 ---
 
+# review-pr
+
 Review a change for correctness, intent, and fitness against my cross-project preferences **before it merges**. This review can BLOCK: a `Request changes` verdict means do not commit / do not push / do not merge.
 
-Usage: /review-pr [PR number | --staged]
+Usage: review-pr [PR number | --staged]
 - **PR number** → review that PR's diff.
-- **--staged** (or no argument when staged changes exist) → review the staged, not-yet-committed diff. This is the mid-chain mode called by the `commit-push-pr` skill.
+- **--staged** (or no argument when staged changes exist) → review the staged, not-yet-committed diff. This is the mid-chain mode called by `commit-push-pr`.
 - **no argument, nothing staged** → review the current branch's open PR; if there is none, review the current branch against the default branch.
 
 ---
@@ -27,7 +29,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 
 ## My preferences (cross-project)
 <!-- Add, remove, or edit entries here at any time. These apply to EVERY project. -->
-<!-- Project-specific architecture rules do NOT go here — they live in each repo's AGENTS.md (read in step 3), so this command stays reusable across projects. -->
+<!-- Project-specific architecture rules do NOT go here — they live in each repo's CLAUDE.md (read in step 3), so this command stays reusable across projects. -->
 
 **Types**
 - Strongly typed at every boundary. No `any`. Explicit named exported interfaces — never inferred or implicit return types on public functions.
@@ -68,16 +70,16 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 2. **Read the governing brief — this is what gives the review teeth on judgment, not just defects.**
    - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the feature/branch name against `docs/briefs/`, `briefs/`, `docs/`.
    - If found, read its **settled** decisions, its **open** decisions, and which phase this change belongs to.
-   - If none is found, note "no governing brief" and review on preferences + AGENTS.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
+   - If none is found, note "no governing brief" and review on preferences + CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
 
-3. **Read the repo `AGENTS.md`** (root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
+3. **Read the repo `CLAUDE.md`** (root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
 
 4. **If the diff touches visual surfaces, read the design doc.**
    Visual surfaces: any `.css` file, `src/theme/`, files with inline `style=` strings, `src/ui/` components, or any HTML shell.
    - Read `docs/design/visual-language.md` — focus on **§9 (the Invariant Index)**, which is the complete machine-checkable ruleset.
    - `[defect]` rules are a **hard gate**: a violation blocks the same as a type error or missing test.
    - `[judgment]` rules surface as **Your call** items — never block on their own, always named.
-   - If the diff edits `docs/design/visual-language.md` itself, flag it explicitly as a **policy-class change** (per AGENTS.md: every theme and future surface inherits from it) — this requires explicit human acknowledgment in the review, not just an Approve.
+   - If the diff edits `docs/design/visual-language.md` itself, flag it explicitly as a **policy-class change** (per CLAUDE.md: every theme and future surface inherits from it) — this requires explicit human acknowledgment in the review, not just an Approve.
    - If no visual surface is touched, skip this step entirely.
 
 5. **Review the diff against these axes, in order — and tag each finding with its epistemic state (verified / couldn't-verify / your-call):**
@@ -86,7 +88,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - **Intent (from the brief)** — did it honor the **settled** decisions rather than re-litigating them? Did it resolve the **open** decisions it claimed to, or leave them properly open? Did it stay inside this phase's scope, or bleed into a later phase's work? Anything that turns on what the ticket/brief *meant* and can't be settled from the diff is a **Your call** item.
    - **Design invariants (if step 4 ran)** — check each `[defect]` rule in §9 against the diff. A `[defect]` violation is a blocking finding; a `[judgment]` item goes in Your call. If no design doc was found, note it and skip this axis.
    - **Cross-project preferences** — types, modules, comments, scope, tests, security.
-   - **Project architecture** — the rules from `AGENTS.md`.
+   - **Project architecture** — the rules from `CLAUDE.md`.
 
 6. **Report in three separate buckets, in this order — do not merge them.** Run each bucket's prose through the `ste-writing` skill (STE-flavored mode) before presenting it — file/line locators and code excerpts stay as-is, only the surrounding sentences get the pass.
    - **Couldn't verify — look here:** located blind spots, each naming what wasn't confirmable and why. Often the most valuable section — it directs the human's interrogation to where automation can't vouch for itself.
@@ -97,6 +99,8 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 7. **Verdict** (one line), scoped explicitly to the mechanical floor: **Approve**, **Approve with suggestions**, or **Request changes** — and why. State plainly that the verdict covers what was *verified*, and that any **Your call** and **Couldn't verify** items remain open regardless of it — a human must close them. "Mechanically clean" is not "this is the right change."
    - **Missing tests on merge-bound code → Request changes**, unless an explicit "test-exempt because…" is declared (in the PR's `## Test plan`, or stated when the gate runs mid-chain). A hard gate, not a suggestion: untested code does not reach `main`.
    - **`[defect]` design invariant violation → Request changes**, same force as a type error.
-   - When called mid-chain by the `commit-push-pr` skill: **Request changes** halts the chain before the commit; **Approve with suggestions** passes, and its suggestions plus any open **Your call** / **Couldn't verify** items are carried forward into the PR handoff so the downstream human reviewer inherits them.
+   - When called mid-chain by `commit-push-pr`: **Request changes** halts the chain before the commit; **Approve with suggestions** passes, and its suggestions plus any open **Your call** / **Couldn't verify** items are carried forward into the PR handoff so the downstream human reviewer inherits them.
 
-8. **Big decisions → the brief's ledger.** Distinct from the bug ledger above and routed elsewhere on purpose: when a **Your call** item (or any ambiguity surfaced in this review) is resolved through the interaction with reasoning **not already in the brief**, append a **Big decisions** entry to the governing brief's `ledger.md` (format and rules in `docs/briefs/README.md`). This is the durable, narrative record; the bug ledger is transient branch tracking. Record **only information-bearing resolutions** — never a clean approval, never a bug fix. If nothing was genuinely decided, write nothing; the section is sparse by design, and that sparseness is the whole point.
+8. **Bug ledger.** Save confirmed **correctness** bugs (not preference/convention findings) to a `project` memory file keyed by branch: `review-<branch>.md`. Each entry: file, line, summary, status (`open`/`fixed`). On re-review of the same branch, flip previously-open bugs to `fixed` if the new diff resolves them — update in place, don't duplicate. Record the PR number in the file once it exists. Add/update the entry in MEMORY.md.
+
+9. **Big decisions → the brief's ledger.** Distinct from the bug ledger above and routed elsewhere on purpose: when a **Your call** item (or any ambiguity surfaced in this review) is resolved through the interaction with reasoning **not already in the brief**, append a **Big decisions** entry to the governing brief's `ledger.md` (format and rules in `docs/briefs/README.md`). This is the durable, narrative record; the bug ledger is transient branch tracking. Record **only information-bearing resolutions** — never a clean approval, never a bug fix. If nothing was genuinely decided, write nothing; the section is sparse by design, and that sparseness is the whole point.

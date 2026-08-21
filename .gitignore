@@ -1,1 +1,8 @@
 .DS_Store
+
+# Your global ignore (~/.config/git/ignore) carries `**/.claude/settings.local.json`.
+# That is right for a project — a local permission allowlist is not shared state — but
+# wrong here: this repo *ships* that file as the template install.sh copies out. A repo
+# .gitignore outranks core.excludesFile, so this negation is what keeps the template
+# tracked. Without it git drops the file silently and install.sh dies at step 8.
+!templates/.claude/settings.local.json
