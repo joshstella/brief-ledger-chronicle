@@ -16,28 +16,28 @@ project, a consulting engagement) to the convention.
 - `docs/briefs/` — the briefs root, if absent.
 - `docs/briefs/_drafts/` — the **committed** holding area for unnumbered drafts, with a
   short `README.md` stating its semantics: drafts are unnumbered and unordered, committed
-  so they're available from any workstation, and filing via the `create-brief` skill is the
+  so they're available from any workstation, and filing via `create-brief` is the
   one-way door that assigns a serial and moves a draft into a numbered folder.
 - `docs/briefs/README.md` — the convention reference. Copy it from
-  `templates/docs/briefs/README.md` (installed with this workflow) so there's a single
+  `~/.claude/briefs/README.template.md` (installed with this workflow) so there's a single
   source of truth; if that template isn't present, write an equivalent from the conventions
   described here: serial-numbered `NNNN-slug/` folders each holding `brief.md` (and
   `ledger.md` on execution, whose final **Big decisions** section logs review-time judgment
   calls); the `_drafts/` holding area; the identity line
   (`**Serial:** · **Created:** · **Author:** · **Depends on:**`); serials assigned at
-  filing by the `create-brief` skill, next = max + 1.
+  filing by `create-brief`, next = max + 1.
 
 ## Rules
 
 - **Idempotent.** Create only what's missing; never overwrite an existing file. If
   everything already exists, report "already initialized" and exit cleanly.
-- **Structure only.** Does not touch `AGENTS.md` or other tooling — wiring the convention
-  pointer into a project's `AGENTS.md` is a separate, project-specific step.
-- **Commits nothing.** Leave staging and commit to the user / the `commit-push-pr` skill.
+- **Structure only.** Does not touch `CLAUDE.md` or other tooling — wiring the convention
+  pointer into a project's `CLAUDE.md` is a separate, project-specific step.
+- **Commits nothing.** Leave staging and commit to the user / `commit-push-pr`.
 
-## Relationship to /create-brief
+## Relationship to create-brief
 
-the `create-brief` skill assumes this structure exists. If `docs/briefs/` or `docs/briefs/_drafts/`
-is missing, the `create-brief` skill stops and points here — it does **not** silently scaffold the
+`create-brief` assumes this structure exists. If `docs/briefs/` or `docs/briefs/_drafts/`
+is missing, `create-brief` stops and points here — it does **not** silently scaffold the
 structure itself. Setup is deliberate and lives here; filing is the hot path and stays
 single-purpose.

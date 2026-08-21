@@ -1,0 +1,24 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  install-sh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # install.sh reports its own version via `git describe --tags --always`, which
+      # needs tags to resolve to anything but a short SHA. Cheap, and it keeps the
+      # log entries CI produces the same shape as a developer's.
+      - name: Fetch tags
+        run: git fetch --tags --force || true
+
+      - name: Syntax check
+        run: bash -n install.sh
+
+      - name: Run tests
+        run: bash tests/run.sh

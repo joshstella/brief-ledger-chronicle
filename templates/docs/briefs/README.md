@@ -84,10 +84,29 @@ Tagged `[defect]` (hard violation) or `[advisory]` (flag for human review).
 8. `[advisory]` Serials are contiguous from `0001` — a gap is flagged, not blocked (a
    removed brief legitimately retires its number).
 
-## Known limitation — concurrent filing
+## Known limitations
 
-`/create-brief` reads max and then writes the folder; the gap between is a race where two
-concurrent filings could claim the same serial. Solo, this never fires. At multi-author
-scale it will, and the fix is remote-aware allocation (the serial allocated against the
-pushed remote, not the local checkout) — not addressed here, recorded so it's a known
-boundary rather than a surprise.
+### Writers outside the pipeline
+
+`/create-brief` is the single point of serial assignment, but nothing *enforces* that it
+is the only writer. Any script, installer, or agent that creates a `NNNN-slug/` folder
+directly bypasses both the max+1 allocation and the collision guard.
+
+Not hypothetical: this toolkit's own installer did exactly this until 2026-08-21. It
+hardcoded `docs/briefs/0001-bootstrap/` and checked whether *that folder* existed
+rather than whether *serial `0001` was free*, so every install into a repo that already
+had briefs wrote a duplicate `#0001` — deterministically, not as a race. One project
+carried the duplicate for six weeks. The fix was to stop writing briefs from the
+installer at all: install records are an append-only log, not a unit of work.
+
+If you automate anything that files briefs, route it through `/create-brief`.
+
+### Concurrent filing
+
+`/create-brief` reads max and then writes the folder; the gap between is a race where
+two concurrent filings could claim the same serial. "Solo" is weaker protection than it
+sounds — it means one filing *at a time*, not one author. Two checkouts of the same repo
+are a realistic trigger: file a brief on the laptop, file one on the desktop, push both.
+At multi-author scale it will fire outright. The fix is remote-aware allocation (the
+serial allocated against the pushed remote, not the local checkout) — not addressed
+here, recorded so it's a known boundary rather than a surprise.
