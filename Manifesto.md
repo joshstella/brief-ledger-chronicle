@@ -61,30 +61,45 @@ agree it, implement against it, then reconcile whatever diverged. The order is t
 it asks you to know the most at the moment you know the least.
 
 **This is not an argument against specs.** Specs are necessary. It is an argument about when
-they earn their authority — *after* iteration and experimentation, not before. You play, you
-probe, you throw things away, and the spec crystallises what the play actually taught, at
-the point where you know enough for writing it down to be worth doing.
+they earn their authority — *after* iteration and experimentation, not before.
 
 The lineage was already doing this. A REPL is play-then-spec. A live Smalltalk image is
 play-then-spec. You jam first; the chart gets written from what worked.
 
-The tools here are shaped for that order:
+**Briefs and Ledgers are not the spec. They are how the play gets recorded.**
 
-- **`_drafts/` is the play space for ideas.** Unnumbered, uncommitted, free to sit
-  indefinitely. Filing a brief is a one-way door, and it comes *after* you know what you
-  are filing.
-- **Branches are the play space for code.** A spike you intend to delete owes nothing to
-  anyone.
-- **A brief is a case, not a blueprint.** It states what you now believe and why — and
-  because it is meant to be checkable, it is meant to be capable of being wrong.
-- **The ledger is where the doing corrects the plan.** Continuing a multi-phase brief
-  deliberately re-plans the remaining sequence from what the finished phases actually
-  taught, rather than barrelling through the original order after a finding should have
-  changed it.
+That distinction is the whole point, and it is easy to miss because both involve writing
+things down before you are finished.
+
+A **Brief** is the hypothesis you enter the play with: what you currently believe, why, and
+what you think is true about the code right now. It is filed before the work because it is
+the opening move — not because it is a contract you have agreed to deliver against. A
+**Ledger** is the lab notebook: what the play actually taught, including, and especially,
+where the brief turned out to be wrong. A brief with no ledger was planned and never
+played. A ledger that merely confirms its brief usually means nothing was risked.
+
+This is why a brief has to be capable of being wrong to be worth filing. It is not a
+promise; it is a claim put where reality can hit it.
+
+The rest of the shape follows from that:
+
+- **`_drafts/` lets an idea sit unnumbered** for as long as it needs to. Being uncommitted
+  is exactly what makes it a safe place to be wrong.
+- **Branches are free.** A spike you intend to delete owes nothing to anyone.
+- **Continuing a multi-phase brief re-plans the remaining sequence** from what the finished
+  phases actually taught, rather than barrelling through the original order after a finding
+  should have changed it.
+- **A Chronicle is written from the record afterwards**, which is only possible because the
+  record was kept while the playing happened rather than reconstructed later.
+
+Then, if the work genuinely needs a specification, it gets written from all of that — by
+which point it is describing something that exists and has been understood, rather than
+predicting something nobody has touched yet.
 
 Waterfall's failure was never that it wrote things down. It was that it wrote them down
-first, and then treated reality's disagreement as an error to be corrected. Play-then-spec
-inverts that: reality goes first, and the writing records what it said.
+first, and then treated reality's disagreement as an error to be corrected. Here the
+writing runs *alongside* the playing, and reality's disagreement is the most valuable thing
+in the file.
 
 ## Rules come in two kinds
 
