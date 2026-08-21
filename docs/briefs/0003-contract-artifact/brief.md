@@ -156,6 +156,31 @@ itself.
   produce a diff nobody reads. Hand-stamped human review, plus CI status for the rest.
 - **This repo's first Contract is an extraction, not an invention.** The rules already exist
   and are already relied upon by the skills; the work is consolidation and enforcement.
+- **A Contract is a claim someone stakes, not a stage a system reaches.** Its absence on a
+  surface is play, not debt. Nobody owes a Contract for work they are still imagining. People
+  decide for themselves which surfaces they are playing on and which they are staking a claim
+  to, and when. This kills the "eventually everything gets codified" reading, which is how
+  this artifact would turn into the ceremony it was built to replace.
+- **Overclaiming is the defect class the Contract exists to prevent.** A clause with unstated
+  scope claims more than it means. A validator implying coverage it lacks claims more than it
+  checks. A document written as if complete claims more than it knows. One principle at every
+  scale, including against this brief. It follows that **every clause states its scope** —
+  binds this repo, ships to consumers, or both. Learned the hard way: `templates/process-rules.md`
+  reads as governance, governs nothing here, and was enforced anyway by a careful reader.
+- **Mechanical hygiene only. Never a clause about the quality of thinking.** Slug shapes and
+  unique serials are safe to check precisely because they are trivial — nobody games a slug
+  regex. A clause reading "every brief must make a falsifiable claim" would produce fake
+  falsifiable claims the day it shipped. The measure becomes the target and kills the thing it
+  measured. What the Manifesto actually values — a brief that could be wrong, a ledger that
+  records surprise — is surfaced and counted, never checked.
+- **Free at the moment of action.** A `[defect]` check stays silent while you comply and
+  speaks only when you break it. Nothing in the Contract may demand something *before* you are
+  allowed to proceed. A mechanism that costs something at the moment of action gets routed
+  around by the person it was built for — who is you, at 11pm, on the other machine.
+- **Small bites and frequent commits: at least daily, preferably several times.** Not
+  discipline for its own sake. It is what bounds the cost of moving fast. Commit quickly and,
+  if someone lands first, you rebase — a day of work is a cheap rebase and a fortnight is not.
+  Encouraged and surfaced, never gated: counting commits would only produce empty ones.
 
 ## Open decisions
 
@@ -163,18 +188,19 @@ itself.
    in git, or `docs/contracts/v1.md`, `v2.md` side by side? Side-by-side makes "what could I
    rely on in v1" answerable without archaeology; in-place keeps one obvious current answer.
    Decide against the extraction in hand rather than in the abstract.
-2. **What stops a *future* rule from being published without a check.** Duplication is
-   handled — the `process-rules.md` generation pattern settles it. The eight existing rules
-   are machine-decidable, so the validator itself is tractable. The open part is narrower: a
-   test asserting that every `[defect]` clause has a corresponding check, or something
-   weaker. Without it the drift returns one rule at a time, which is how it arrived.
-3. **Which tag name survives**, `[advisory]` or `[judgment]`. `[judgment]` pairs better with
-   "judgment call" as the Manifesto uses it; `[advisory]` pairs better with `[defect]` as a
-   severity. Low stakes, but it must be decided once and enforced, since having both is the
-   bug.
-4. **Whether it gets a skill.** `chronicle` renders the record on demand; the equivalent here
-   would draft a version from the briefs and ledgers since the last one. Better judged after
-   v1 exists than guessed at now.
+
+## Resolved since filing
+
+Reasoning is in the ledger's Big decisions; recorded here so they are not re-litigated.
+
+- **Which tag name survives** — `[judgment]`. It has the only external consumer, and renaming
+  the other way fails silently in `review-pr`.
+- **What stops a future rule from being published without a check** — nothing does, by design.
+  The Contract *reports* which clauses lack checks; it never requires one. Demanding a test
+  before a rule may be written is a cost at the moment of action, which is the failure mode
+  above. The honest checked-set sentence already carries the information.
+- **Whether it gets a skill** — not until writing one by hand hurts. No generator before the
+  second instance exists.
 
 ## A tension to resolve after implementation
 
@@ -184,9 +210,11 @@ already published in present tense; `README.md` points readers at them as "the c
 and `create-brief` was *built to them*, re-implementing three as its own procedure. A rule
 that a skill has been coded against is a rule something depends on, whoever wrote the skill.
 
-If that reading holds, the Manifesto line is wrong in a specific and fixable way — the
-Contract is *unbuilt*, not *unowed*. Deliberately not resolved here. Implement first, then
-revisit the Manifesto against what the extraction actually taught.
+If that reading holds, the Manifesto line is wrong in a specific way — the Contract is
+*unbuilt*, not *unowed*. The fix is to **soften the claim, not to resolve it precisely.**
+Completeness is an abstraction; a Manifesto written as though it had closed every hole would
+be overclaiming in exactly the way this brief argues against. Deliberately not resolved here.
+Implement first, then revisit.
 
 ## Success criteria
 
@@ -201,7 +229,8 @@ revisit the Manifesto against what the extraction actually taught.
 
 - Not a changelog, a roadmap, or release notes.
 - Not a replacement for briefs or ledgers; it consumes them.
-- Not a gate on exploratory work. Play does not owe a Contract anything until someone is
-  asked to depend on the result.
+- Not a gate — not on exploratory work, and not on anything else. No clause blocks work at
+  the moment of action. Play owes a Contract nothing until someone is asked to depend on the
+  result, and a surface with no Contract is a surface someone is still playing on.
 - Not a general Contract format for all projects using this toolkit. One instance, written
   by hand, before anything is generalized.

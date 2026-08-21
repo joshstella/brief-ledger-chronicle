@@ -16,6 +16,19 @@ PRs and two deleted branches were invisible to a second machine until `git fetch
 That is the benign case: the record existed and simply had not been pulled. The malign case is
 work that is not in any record yet.
 
+## The default is not to poll
+
+Narrowed after a working session on incentives. Optimistic concurrency is the normal path:
+commit in small bites, at least daily, and if someone lands first you rebase. The cost of
+moving fast is a merge you pay yourself, not a gate imposed on you, and frequent commits are
+what keep that cost small. Asking peers before ordinary work inverts that — it pays a
+coordination cost up front to avoid a rebase that was cheap anyway.
+
+So this is not a step in the normal flow. **It fires only when a claim is expensive to
+unwind** — publishing a Contract version that others will build against. A Tuesday afternoon
+refactor does not qualify. If the answer to "what happens if someone moved first" is "I
+rebase," do not send a message to anyone.
+
 ## The problem splits in two
 
 1. **Visible to git.** Unmerged branches, open PRs, stale remote-tracking refs, unpushed
@@ -45,6 +58,8 @@ poll cannot drift from what is being promised.
 - **Slack is a rendering target, not a requirement.** The same body should paste into email, a
   PR comment, or a standup doc.
 - **The git-visible half comes first** and is useful alone. It needs no message to anyone.
+- **Polling is the exception, not a stage.** The trigger is an expensive-to-unwind claim, not
+  the start of work.
 
 ## Open decisions
 
@@ -63,3 +78,5 @@ poll cannot drift from what is being promised.
 - Not a standup replacement, and not recurring. It fires when a Contract version is about to
   be published.
 - Not a gate. An unanswered poll does not block publishing; it informs it.
+- Not a substitute for moving fast. If the work is cheap to redo, skip this entirely and take
+  the rebase.

@@ -10,13 +10,13 @@
 |---|---|---|
 | `phase 1 — extract the contract` | pending | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
 | `phase 2 — validator` | pending | `tests/test_briefs.sh` implementing clauses 1–8, each check citing its clause id. Update the Contract's checked-set sentence to name the path. |
-| `phase 3 — clause/check linkage` | pending | The meta-check, both directions: every `[defect]` clause has ≥1 check citing its id, and every check cites a live clause id. This is what stops rule N+1 from being published unchecked. |
+| `phase 3 — report unchecked clauses` | pending | **Demoted from a gate to a report.** The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
 | `phase 4 — de-duplicate the readmes` | pending | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md` (93 vs 112 lines, already diverged). Must not break `install.sh:391`. |
 | ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
 
-- **Strict chain:** `phase 1 → phase 2 → phase 3`. Phase 2 needs clause ids to cite; phase 3 needs checks to link.
+- **Strict chain:** `phase 1 → phase 2 → phase 3`. Phase 2 needs clause ids to cite; phase 3 reports on what phase 2 built. Phase 3 is small now that it only reports — fold it into phase 2 if it does not earn its own review.
 - **Parallel track after phase 1:** `phase 4` only, independent of the chain. (`phase 5` dropped — see Big decisions.)
 - **Provisional past phase 1.** Phase 1 chooses the Contract's path *and its clause-id scheme*. The id scheme cannot be retrofitted — phase 3's meta-check keys on it — so phase 1 must be designed with phase 3 in mind, or phase 3 forces a rewrite of the Contract. `/next-brief-phase` re-plans from phase 1's actual outcome.
 
@@ -25,9 +25,9 @@
 | # | decision | blocks |
 |---|---|---|
 | 1 | Where the Contract lives; one file superseded in place vs `v1.md`/`v2.md` side by side | `phase 1` — nothing can reference it until the path exists |
-| 2 | What stops a *future* rule from being published without a check | `phase 3` to implement, but constrains `phase 1`'s clause-id design |
+| 2 | ~~What stops a future rule from being published without a check~~ | **resolved** — nothing does, by design. The Contract reports; it never requires. See Big decisions. |
 | 3 | ~~Which tag name survives~~ | **resolved** — `[judgment]`. See Big decisions. |
-| 4 | Whether it gets a skill | nothing — deferred past v1 by the brief |
+| 4 | ~~Whether it gets a skill~~ | **resolved** — not until writing one by hand hurts. |
 
 ## Complications found in the code, not addressed by the brief
 
@@ -127,3 +127,39 @@ squash-merge subject carries `(#N)`. The check is a heuristic — a merge commit
 `(#9)` would defeat it — which makes it a good first test of stating *how well* a clause is
 checked, not just whether. Whether v1 covers any process rule at all, or only the eight briefs
 invariants, is deferred to `phase 1`.
+
+**What the Contract is for, and what it must never do.** 2026-08-21.
+
+A working session on incentives, not mechanism. It changed the shape of the artifact more than
+any technical finding so far, so it is recorded in full rather than summarised.
+
+The brief had been treating a Contract as something a system *should* acquire once its rules
+settle. That reading is wrong and is the one that turns the artifact into ceremony. **A Contract
+is a claim someone stakes, not a stage a system reaches.** Its absence on a surface is play, not
+debt. People decide for themselves where they are still imagining and where they are staking a
+claim, and when.
+
+Three consequences, all subtractive:
+
+1. **Mechanical hygiene only.** The eight invariants measure slugs, serials and identity lines.
+   None of them measures whether the process is working — a repo could pass all eight with a
+   hundred briefs that were never wrong about anything. That is *correct*, and the reason is
+   Goodhart: trivial rules are safe to check because nobody games a slug regex, while a clause
+   reading "every brief must make a falsifiable claim" would produce fake falsifiable claims
+   immediately. What the Manifesto actually values gets surfaced and counted, never checked.
+2. **Free at the moment of action.** `phase 3` was specified as a gate — no clause without a
+   test — and is demoted to a report. Evidence that cost-at-the-moment-of-action loses: three of
+   seven commits on `main` bypassed the ceremony, including a brief-filing commit carrying a
+   LICENSE. Not carelessness. It was the fast path and nothing stopped it.
+3. **Small bites and frequent commits, at least daily.** This is what bounds the cost of moving
+   fast rather than discipline for its own sake. Commit quickly; if someone lands first you
+   rebase, and a day is a cheap rebase where a fortnight is not. Encouraged and surfaced, never
+   gated — counting commits would only produce empty ones.
+
+Underneath all of it, one principle: **overclaiming is the defect class.** A clause with unstated
+scope, a validator implying coverage it lacks, a document written as if complete — the same error
+at three scales. Which also settles how the Manifesto tension gets fixed later: soften the claim,
+do not resolve it precisely. Completeness is an abstraction, and all specs are squishy unless you
+are willing to pay for proofs, which is almost never the right trade.
+
+**Net effect on the plan:** five phases to three, four open decisions to one.
