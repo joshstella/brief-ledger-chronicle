@@ -29,7 +29,7 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 3. **Read the brief in full.** Do not skim. The consumption protocol — settled decisions are fixed, open decisions resolve first, code conventions are binding, the rationale gets preserved as inline comments — is owned by the `feature-brief` skill; apply it rather than restating it here. Note the phase/layer sequence and any PR boundaries the brief defines.
 
 4. **Read codebase context.**
-   - Read the repo `CLAUDE.md` (root, and any subdirectory governing affected files).
+   - Read the repo `AGENTS.md` or `CLAUDE.md` (whichever exists; root, and any subdirectory governing affected files).
    - For each area the brief touches, read the relevant existing files: what's already there, what the brief adds, what it modifies or replaces.
    - Note anything already built for this brief.
 

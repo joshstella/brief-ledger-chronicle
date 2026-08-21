@@ -26,6 +26,15 @@ test_host_cursor_writes_agents_md_not_claude_md() {
   assert_no_file "$TARGET/CLAUDE.md"
 }
 
+test_host_cursor_writes_process_rules_under_cursor_rules() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_contains "alwaysApply: true" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_contains "ste-writing" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_no_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+}
+
 # A Cursor install that quietly scattered .claude/ through the project would be a
 # surprise, and the reverse holds below.
 #
@@ -71,6 +80,15 @@ test_host_claude_creates_no_cursor_directory() {
   assert_status 0
   assert_no_dir  "$TARGET/.cursor"
   assert_no_file "$TARGET/AGENTS.md"
+}
+
+test_host_claude_writes_process_rules_under_claude_rules() {
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_contains "ste-writing" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_not_contains "alwaysApply:" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_no_file "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
 }
 
 test_host_claude_is_the_default() {

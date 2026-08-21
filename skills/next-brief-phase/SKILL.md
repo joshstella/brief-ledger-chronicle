@@ -28,7 +28,7 @@ If no argument is given, use the most recently updated `in-progress` brief ledge
    - Re-read the remaining sequence against what the completed phases *found*, not against the original plan. Did a completed phase resolve an open decision in a way that reorders, splits, merges, or removes a later phase? (The canonical case: a phase that was provisional-pending-a-decision in `start-brief` — its downstream sequence is now either confirmed or rewritten.)
    - If the remaining sequence still holds, say so explicitly. If it changed, present the revised remainder and *why* it changed.
 
-5. **Refresh codebase context.** Re-read the repo `CLAUDE.md` and the files the next phase will touch — the codebase has moved since the brief was initiated.
+5. **Refresh codebase context.** Re-read the repo `AGENTS.md` or `CLAUDE.md` and the files the next phase will touch — the codebase has moved since the brief was initiated.
 
 6. **Present the next phase:** its stable id, the files it creates/modifies, what it accomplishes, and any open decision that must resolve before it can start (block it if unresolved).
 

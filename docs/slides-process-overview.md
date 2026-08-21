@@ -5,7 +5,8 @@
 
 > **A note on the examples.** The deck shows Claude Code throughout — `/create-brief`,
 > `.claude/`, `CLAUDE.md`. On Cursor the same six process files install to
-> `.cursor/skills/` and the project rules file is `AGENTS.md`; invoke them by name rather
+> `.cursor/skills/`; the process contract is `.cursor/rules/brief-ledger-chronicle.mdc`
+> and `AGENTS.md` is a project-owned architecture stub. Invoke skills by name rather
 > than with a leading slash. The workflow, the brief convention, and everything the deck
 > actually argues are identical on both. See the README's "What lands where" table.
 
@@ -231,10 +232,11 @@ bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/
 
 # Project mode (--target) copies into the repo:
 # - checks all dependencies and tells you what's missing
-# - creates docs/briefs/, docs/chronicles/, docs/install-log/, .claude/
-# - copies CLAUDE.md template (skips if one exists)
+# - creates docs/briefs/, docs/chronicles/, docs/install-log/, host skill dirs
+# - writes a process-rules file the installer owns (.claude/rules or .cursor/rules)
+# - writes a CLAUDE.md / AGENTS.md stub only if absent — never overwrites
 # - appends an entry to docs/install-log/install-log.md recording what was installed
-# - is idempotent — safe to re-run, never overwrites existing files
+# - default is idempotent; --force replaces installer-owned copies, not the stub
 ```
 
 **Why step 2 is called out:** the commands degrade gracefully when their user-level paths
@@ -243,19 +245,24 @@ reproduced from clean. This was found by doing a first from-clean install and hi
 
 ---
 
-## Slide 13 — The CLAUDE.md Contract
+## Slide 13 — Process contract vs project architecture
 
-**The installed CLAUDE.md enforces the process in every Claude Code session.**
+**The installer owns the process. The project owns architecture.**
 
-Key rules it establishes:
-- Use the skills — don't bypass them (`/commit-push-pr`, not raw `git push`)
+Process rules land in `.claude/rules/brief-ledger-chronicle.md` (Claude Code) or
+`.cursor/rules/brief-ledger-chronicle.mdc` (Cursor). `--force` replaces that file.
+
+`CLAUDE.md` / `AGENTS.md` are a stub written only if absent: a pointer at the process
+file, plus an empty project-specific section. The installer never overwrites them.
+
+Key process rules:
+- Use the skills — don't bypass them (`commit-push-pr`, not raw `git push`)
 - Tests gate `main` — no silent exemptions
 - Brief required for non-trivial work before the first commit
-- One change at a time
-- Strongly typed at every boundary
-- Comment the *why*, not the *what*
+- Default prose is STE-flavored via `ste-writing`
 
-The project-specific section is a blank you fill in: stack, build commands, architecture notes.
+Working style and code style live in `personal/CLAUDE.md` (Claude Code machine-level)
+and in user-level Cursor rules, not in the project stub.
 
 ---
 
@@ -276,7 +283,7 @@ The project-specific section is a blank you fill in: stack, build commands, arch
 ## Slide 15 — What It's Not
 
 - Not a project management tool. No tickets, no sprints, no burndown charts.
-- Not a documentation system. The briefs are *specs*, not docs. Architecture lives in `CLAUDE.md` and design docs.
+- Not a documentation system. The briefs are *specs*, not docs. Architecture lives in `AGENTS.md` / `CLAUDE.md` and design docs.
 - Not AI-specific. The skills happen to run in Claude Code, but the brief/ledger convention is plain Markdown and works without AI tooling.
 - Not heavyweight. A brief is a short Markdown file. A ledger is another one. The overhead is proportional to the work.
 
@@ -290,7 +297,7 @@ The project-specific section is a blank you fill in: stack, build commands, arch
 
 ```bash
 bash install.sh --target /path/to/your-project
-# → edit CLAUDE.md (fill in the project-specific section)
+# → edit CLAUDE.md / AGENTS.md (fill in the project-specific section)
 # → git add -A && git commit -m "Bootstrap: brief-ledger-chronicle install"
 # → write your first draft in docs/briefs/_drafts/
 # → run /create-brief to file it
