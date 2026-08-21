@@ -113,7 +113,8 @@ The rest of the shape follows from that:
 
 Then, if the work genuinely needs a specification, it gets written from all of that — by
 which point it is describing something that exists and has been understood, rather than
-predicting something nobody has touched yet.
+predicting something nobody has touched yet. That specification is an artifact in its own
+right, and it is the subject of a later section.
 
 Waterfall's failure was never that it wrote things down. It was that it wrote them down
 first, and then treated reality's disagreement as an error to be corrected. Here the
@@ -150,9 +151,61 @@ is no way for *"this situation revealed the plan was wrong, and here is why the 
 should stand"* to become citable material. That is the thing worth building that such
 processes structurally cannot hold.
 
-What deserves constitutional status in a project without an obvious existing example is
-itself a judgment call. Naming it as one is more honest than inventing a mechanical test
-that doesn't exist.
+What deserves constitutional status looked for a long time like a judgment call with no
+mechanical test behind it. There is one, and it is external rather than a matter of taste:
+**a rule is constitutional once someone has been told they can rely on it.** Not once it
+feels settled, or mature, or important — once a promise has been made and somebody is
+building against it.
+
+That is also why breaking one is a crisis rather than a judgment call. Not because the rule
+carries some intrinsic weight, but because somebody downstream is depending on it.
+Constitutional status is a *consequence* of publishing a promise, not a property to be
+assessed before publishing one. Which is what makes it checkable: "is this baked yet?" has
+no answer, but "did we tell anyone they could count on this?" does.
+
+## The present tense is missing
+
+Brief, Ledger, and Chronicle all describe how a system came to be. None of them says what
+it currently **is**.
+
+A Brief is future tense — the hypothesis going in. A Ledger is past tense — what the play
+taught. A Chronicle is past tense and derived — the doctrinal history. To learn what a
+system guarantees *today*, a reader has to reconstruct it from every case ever decided.
+That is a legal system with no statute layer — all holdings, no codification — and it is
+the exact mirror of the process described above that has no case-law layer at all. Neither
+is better than the other.
+
+So there is a fourth artifact, and it is not a record. A **Contract** states, in the present
+tense, what a system's consumers may rely on for a given version. It is written from the
+briefs and ledgers rather than ahead of them — which is precisely what makes it a
+specification that earned its authority instead of one that assumed it. This is where the
+spec from "play, then spec" goes.
+
+The trigger for writing one is deliberately external. Not *does this feel finished* — that
+question has no answer, and inviting it is how projects end up codifying things nobody
+needed codified. The trigger is: **someone has to build against it.** Which is the same
+test that decides constitutional status, arriving from the other direction. A Contract is
+where a rule goes to *become* constitutional; publishing it is the act that makes breaking
+it a crisis.
+
+Versioned, because a promise holds for a time. A later version supersedes an earlier one
+without making it retroactively false — the difference between a Contract and a
+specification that has to be continuously rewritten in order to stay true.
+
+One hazard is worth stating plainly, because it is what makes this harder than the other
+three. A Contract is the only artifact that is both derived from the record *and* has to be
+committed to the repository. A Chronicle escapes the drift problem entirely by never being
+a source of truth: it is generated on demand and read once. A Contract cannot do that,
+because others depend on it. So it can rot. **A contract that has drifted is worse than no
+contract, because it is believed.** Whatever ties it to the code therefore has to be
+structural. Anything resting on discipline will fail the way hand-synced documents have
+always failed.
+
+And this one is not built yet — which is the rule working, not an omission. Nobody depends
+on this repository yet, so no Contract is owed yet. When someone is first told they can
+count on something here, that is when the first version gets written, out of the record
+that will by then exist. Shipping it before that would be the specification-first move this
+whole document argues against.
 
 ## Why codebases are full of surprises
 
