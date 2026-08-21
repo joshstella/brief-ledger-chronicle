@@ -25,9 +25,11 @@ bash /path/to/brief-ledger-chronicle/install.sh --target /path/to/my-project
 bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/my-project
 ```
 
-Add `--yes` to skip the confirmation prompt for scripted installs. Both modes are
-idempotent: re-running skips what already exists and never overwrites anything, so
-re-running to pick up upstream changes is safe.
+Add `--yes` to skip the confirmation prompt for scripted installs. Default is
+idempotent: re-running skips what already exists and never overwrites. Add `--force`
+to replace installer-owned copies (skills, commands, process rules, brief READMEs,
+settings) with this checkout. `AGENTS.md` / `CLAUDE.md`, numbered briefs, ledgers,
+chronicles, and the install log are never replaced. `--force` is project mode only.
 
 **Skipping the machine step is the failure mode this repo learned the hard way.** The
 process files degrade gracefully when their user-level paths are missing — `init-briefs`
@@ -40,7 +42,8 @@ config — so a machine can look configured while being unrunnable from clean.
 |---|---|---|
 | Process files | `.claude/commands/` (as `/slash` commands) | `.cursor/skills/` |
 | Other skills | `.claude/skills/` | `.cursor/skills/` |
-| Project rules | `CLAUDE.md` | `AGENTS.md` |
+| Process contract | `.claude/rules/brief-ledger-chronicle.md` | `.cursor/rules/brief-ledger-chronicle.mdc` |
+| Project architecture | `CLAUDE.md` (stub if absent, never overwritten) | `AGENTS.md` (same) |
 | Permissions | `.claude/settings.local.json` | — |
 | Machine-level | `~/.claude/` symlinks | — |
 
@@ -69,11 +72,12 @@ places, which is what makes a single source possible.
 | | Purpose |
 |---|---|
 | `chronicle` | Narrative history from briefs, ledgers, and git |
-| `ste-writing` | ASD-STE100 prose pass, wired into commit messages and PR bodies |
+| `ste-writing` | ASD-STE100 prose pass; default for process prose |
 | `to-do` | Append timestamped notes to `docs/to-dos/todo.md` |
 | `installer-builder` | Package a file set into a distributable `.tgz` |
 
-**Templates** — `CLAUDE.md` / `AGENTS.md` project rules, the brief-convention README, and a
+**Templates** — the process-rules contract (installed as a host rules file), a stub
+`CLAUDE.md` / `AGENTS.md` written only when absent, the brief-convention README, and a
 starter permission allowlist.
 
 ## How the process works

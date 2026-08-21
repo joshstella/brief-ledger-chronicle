@@ -1,0 +1,30 @@
+---
+description: Forbid CQ product-repo knowledge from entering brief-ledger-chronicle source, docs, or commits
+alwaysApply: true
+---
+
+# No CQ leak into this repo
+
+This checkout may sit on a machine that also holds CQ / cqai product repos. That is
+an accident of tooling, not a coupling. This repo is a generic process toolkit.
+Nothing about those products belongs here.
+
+## Never
+
+- Read, search, or open a CQ / cqai repo to inform work in this repo — not for
+  precedent, naming, layout, copy, or "how they do it."
+- Write CQ product names, paths, internals, architecture, or examples into this
+  repo's files, comments, commits, briefs, or docs.
+- Treat a CQ repo as in-scope for this repo's design, even if the user named it
+  in the same conversation.
+
+## Install targets are not sources
+
+The user may pass a CQ path as `install.sh --target`. Run the installer against
+that path if asked. Do not then copy anything from the target back into this
+repo. The target is a destination, not a reference.
+
+## If something CQ-shaped is about to land here
+
+Stop. Strip it. Ask whether the change can be stated with no product knowledge.
+If it cannot, it does not belong in this repo.

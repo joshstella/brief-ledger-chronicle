@@ -10,7 +10,10 @@ test_project_creates_the_expected_tree() {
   assert_dir  "$TARGET/docs/chronicles"
   assert_dir  "$TARGET/docs/install-log"
   assert_file "$TARGET/CLAUDE.md"
+  assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_file "$TARGET/.claude/settings.local.json"
+  assert_contains "## Project-specific" "$TARGET/CLAUDE.md"
+  assert_not_contains "## Writing" "$TARGET/CLAUDE.md"
   assert_file "$TARGET/docs/briefs/README.md"
   assert_file "$TARGET/docs/briefs/_drafts/README.md"
 }

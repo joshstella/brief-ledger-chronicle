@@ -18,6 +18,7 @@ tests/
   test_args.sh            argument parsing, mode guards, the confirmation prompt
   test_hosts.sh           the two host layouts, --host validation, --yes
   test_project_mode.sh    what --target creates, and what it refuses to touch
+  test_force.sh           --force replaces installer-owned copies, not briefs or the log
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
 ```
@@ -65,6 +66,9 @@ The original suite was validated against eight deliberate mutations of
 | Log truncated on every run | `log_appends_one_entry_per_run` |
 | `Target:` absolute path re-added to entries | `log_leaks_no_absolute_target_path` |
 | `CLAUDE.md` copied unconditionally | `project_never_overwrites_an_existing_claude_md` |
+| `--force` overwrote `CLAUDE.md` | `force_does_not_overwrite_an_existing_claude_md` |
+| `--force` skipped the process rules file | `force_replaces_cursor_process_rules` |
+| `--force` rewrote a numbered brief | `force_leaves_an_existing_brief_untouched` |
 | Hardcoded `0001-bootstrap/` restored | `project_install_over_existing_0001_creates_no_duplicate_serial` |
 | Any numbered brief written by the installer | `project_writes_no_numbered_brief` |
 | Machine mode clobbers a real file | `machine_refuses_to_clobber_a_real_file` |

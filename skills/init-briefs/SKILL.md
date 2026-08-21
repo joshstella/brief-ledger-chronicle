@@ -31,8 +31,8 @@ project, a consulting engagement) to the convention.
 
 - **Idempotent.** Create only what's missing; never overwrite an existing file. If
   everything already exists, report "already initialized" and exit cleanly.
-- **Structure only.** Does not touch `CLAUDE.md` or other tooling — wiring the convention
-  pointer into a project's `CLAUDE.md` is a separate, project-specific step.
+- **Structure only.** Does not touch `AGENTS.md` / `CLAUDE.md` or other tooling — wiring the convention
+  pointer into a project's architecture file is a separate, project-specific step.
 - **Commits nothing.** Leave staging and commit to the user / `commit-push-pr`.
 
 ## Relationship to create-brief

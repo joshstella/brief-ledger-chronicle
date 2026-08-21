@@ -29,7 +29,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 
 ## My preferences (cross-project)
 <!-- Add, remove, or edit entries here at any time. These apply to EVERY project. -->
-<!-- Project-specific architecture rules do NOT go here — they live in each repo's CLAUDE.md (read in step 3), so this command stays reusable across projects. -->
+<!-- Project-specific architecture rules do NOT go here — they live in each repo's AGENTS.md or CLAUDE.md (read in step 3), so this command stays reusable across projects. -->
 
 **Types**
 - Strongly typed at every boundary. No `any`. Explicit named exported interfaces — never inferred or implicit return types on public functions.
@@ -70,9 +70,9 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 2. **Read the governing brief — this is what gives the review teeth on judgment, not just defects.**
    - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the feature/branch name against `docs/briefs/`, `briefs/`, `docs/`.
    - If found, read its **settled** decisions, its **open** decisions, and which phase this change belongs to.
-   - If none is found, note "no governing brief" and review on preferences + CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
+   - If none is found, note "no governing brief" and review on preferences + AGENTS.md/CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
 
-3. **Read the repo `CLAUDE.md`** (root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
+3. **Read the repo `AGENTS.md` or `CLAUDE.md`** (whichever exists; root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
 
 4. **If the diff touches visual surfaces, read the design doc.**
    Visual surfaces: any `.css` file, `src/theme/`, files with inline `style=` strings, `src/ui/` components, or any HTML shell.
@@ -88,7 +88,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - **Intent (from the brief)** — did it honor the **settled** decisions rather than re-litigating them? Did it resolve the **open** decisions it claimed to, or leave them properly open? Did it stay inside this phase's scope, or bleed into a later phase's work? Anything that turns on what the ticket/brief *meant* and can't be settled from the diff is a **Your call** item.
    - **Design invariants (if step 4 ran)** — check each `[defect]` rule in §9 against the diff. A `[defect]` violation is a blocking finding; a `[judgment]` item goes in Your call. If no design doc was found, note it and skip this axis.
    - **Cross-project preferences** — types, modules, comments, scope, tests, security.
-   - **Project architecture** — the rules from `CLAUDE.md`.
+   - **Project architecture** — the rules from `AGENTS.md` or `CLAUDE.md`.
 
 6. **Report in three separate buckets, in this order — do not merge them.** Run each bucket's prose through the `ste-writing` skill (STE-flavored mode) before presenting it — file/line locators and code excerpts stay as-is, only the surrounding sentences get the pass.
    - **Couldn't verify — look here:** located blind spots, each naming what wasn't confirmable and why. Often the most valuable section — it directs the human's interrogation to where automation can't vouch for itself.

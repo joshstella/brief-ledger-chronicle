@@ -3,7 +3,7 @@
 # Two modes:
 #   project (default) — bootstraps the brief/ledger/review workflow into a target project
 #   --machine         — links the once-per-machine user-level config into ~/.claude
-# Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes]
+# Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes] [--force]
 #        bash install.sh --machine
 #
 # One source, two hosts. Every skill under skills/ is host-neutral prose; only where the
@@ -18,6 +18,7 @@ TARGET_DIR=""
 MODE="project"
 HOST="claude"
 ASSUME_YES=false
+FORCE=false
 
 # The six skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
@@ -52,15 +53,23 @@ while [[ $# -gt 0 ]]; do
       ASSUME_YES=true
       shift
       ;;
+    --force|-f)
+      FORCE=true
+      shift
+      ;;
     --help|-h)
-      echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes]"
+      echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes] [--force]"
       echo "       bash install.sh --machine"
       echo ""
       echo "  --host <name>     Agent host to install for: claude (default) or cursor."
-      echo "                    claude → .claude/commands + .claude/skills + CLAUDE.md"
-      echo "                    cursor → .cursor/skills + AGENTS.md"
+      echo "                    claude → .claude/commands + .claude/skills + .claude/rules"
+      echo "                    cursor → .cursor/skills + .cursor/rules"
       echo "  --target <path>   Install the process into <path> instead of current directory"
       echo "  --yes, -y         Skip the confirmation prompt (for scripted installs)"
+      echo "  --force, -f       Replace existing installer-owned files (skills, commands,"
+      echo "                    process rules, brief READMEs, settings). AGENTS.md/CLAUDE.md,"
+      echo "                    numbered briefs, ledgers, chronicles, and the install log"
+      echo "                    are not touched. Project mode only."
       echo "  --machine         Install the once-per-machine user-level config into"
       echo "                    \$CLAUDE_HOME (default ~/.claude). Run once per machine,"
       echo "                    before or after any project install. Claude Code only."
@@ -81,6 +90,14 @@ fi
 if [[ "$MODE" == "machine" && -n "$TARGET_DIR" ]]; then
   echo "error: --machine and --target are mutually exclusive." >&2
   echo "  --machine writes to \$CLAUDE_HOME (default ~/.claude); --target writes to a project." >&2
+  exit 1
+fi
+
+# Machine mode's contract is that a real file in $CLAUDE_HOME is never clobbered.
+# --force is the project-mode escape hatch for pinned copies; it does not apply here.
+if [[ "$MODE" == "machine" && "$FORCE" == true ]]; then
+  echo "error: --force is project mode only; --machine never overwrites real files." >&2
+  echo "  Move or delete the conflicting file, then re-run --machine." >&2
   exit 1
 fi
 
@@ -109,14 +126,101 @@ fi
 
 CREATED=()
 SKIPPED=()
+REPLACED=()
 CONFLICTS=()
 
 log_created() { CREATED+=("$1"); echo "  [+] $1"; }
 log_skipped() { SKIPPED+=("$1"); echo "  [~] $1 (already exists, skipped)"; }
+log_replaced() { REPLACED+=("$1"); echo "  [>] $1 (replaced)"; }
 log_relinked() { CREATED+=("$1 (replaced dangling symlink)"); echo "  [+] $1 (replaced dangling symlink)"; }
 # Skip with an explicit reason, for cases where "already exists" is the wrong wording.
 log_skipped_as() { SKIPPED+=("$1 ($2)"); echo "  [~] $1 ($2)"; }
 log_conflict() { SKIPPED+=("$1"); echo "  [!] $1 ($2 — NOT replaced; see below)"; }
+
+# Copy a file into the target. Default skips an existing dest; --force replaces it.
+place_file() {
+  local src="$1" dst="$2" label="$3"
+  if [[ -f "$dst" ]]; then
+    if [[ "$FORCE" == true ]]; then
+      cp "$src" "$dst"
+      log_replaced "$label"
+    else
+      log_skipped "$label"
+    fi
+  else
+    cp "$src" "$dst"
+    log_created "$label"
+  fi
+}
+
+# Copy a directory into the target. Default skips an existing dest; --force replaces
+# the whole tree. Extra files a project added inside a skill directory are lost on
+# --force — that is the point of the flag.
+place_dir() {
+  local src="$1" dst="$2" label="$3"
+  if [[ -e "$dst" ]]; then
+    if [[ "$FORCE" == true ]]; then
+      rm -rf "$dst"
+      cp -r "$src" "$dst"
+      log_replaced "$label"
+    else
+      log_skipped "$label"
+    fi
+  else
+    cp -r "$src" "$dst"
+    log_created "$label"
+  fi
+}
+
+# AGENTS.md / CLAUDE.md are project-owned. Write a stub only when the file is
+# absent. Never replace — --force does not apply. Process policy lives in the
+# host rules file, not here.
+write_project_stub() {
+  local dst="$TARGET_DIR/$RULES_FILE"
+  if [[ -f "$dst" ]]; then
+    log_skipped "$RULES_FILE"
+    return
+  fi
+  cat > "$dst" <<EOF
+# $RULES_FILE
+
+This repo uses brief-ledger-chronicle. The installed skills are the gates; bypassing
+them is the defect. Process rules live in \`$PROCESS_RULES_REL\` and are updated by
+the installer. Architecture and stack live in the section below.
+
+## Project-specific
+
+<!-- Add stack, build commands, architecture notes, and project-specific rules here. -->
+EOF
+  log_created "$RULES_FILE"
+}
+
+# One process-rules.md body, two destinations. Cursor needs YAML frontmatter so
+# the rule always applies; Claude Code loads .claude/rules/*.md with no paths
+# field the same way.
+place_process_rules() {
+  local dst label tmp
+  mkdir -p "$(dirname "$TARGET_DIR/$PROCESS_RULES_REL")"
+  if [[ "$HOST" == "cursor" ]]; then
+    dst="$TARGET_DIR/$PROCESS_RULES_REL"
+    label="$PROCESS_RULES_REL"
+    tmp="$(mktemp)"
+    {
+      printf '%s\n' '---'
+      printf '%s\n' 'description: brief-ledger-chronicle process — skills are the gates, STE writing, tests gate main'
+      printf '%s\n' 'alwaysApply: true'
+      printf '%s\n' '---'
+      printf '\n'
+      cat "$SCRIPT_DIR/templates/process-rules.md"
+    } > "$tmp"
+    place_file "$tmp" "$dst" "$label"
+    rm -f "$tmp"
+  else
+    place_file "$SCRIPT_DIR/templates/process-rules.md" \
+               "$TARGET_DIR/$PROCESS_RULES_REL" \
+               "$PROCESS_RULES_REL"
+  fi
+}
 
 # Symlink $2 → $1, idempotently, without ever destroying real user content.
 #
@@ -222,7 +326,8 @@ fi
 # Skills are deliberately NOT linked here. They install per-project so a project can
 # tune its own copy; a machine-wide link would silently override every such tune with
 # whatever the repo happens to be at, and the tune would come back the moment someone
-# ran `git pull`.
+# ran `git pull`. Project mode copies for the same reason; `--force` is the explicit
+# opt-in to take this checkout over those copies.
 
 if [[ "$MODE" == "machine" ]]; then
   echo ""
@@ -328,8 +433,7 @@ echo "Checking templates..."
 
 MISSING_TEMPLATES=()
 for tpl in \
-  "templates/CLAUDE.md" \
-  "templates/AGENTS.md" \
+  "templates/process-rules.md" \
   "templates/.claude/settings.local.json" \
   "templates/docs/briefs/README.md" \
   "templates/docs/briefs/_drafts/README.md"; do
@@ -373,10 +477,12 @@ UTILITY_COUNT=$((ALL_SKILL_COUNT - PROCESS_COUNT))
 if [[ "$HOST" == "cursor" ]]; then
   SKILLS_DST_REL=".cursor/skills"
   RULES_FILE="AGENTS.md"
+  PROCESS_RULES_REL=".cursor/rules/brief-ledger-chronicle.mdc"
 else
   SKILLS_DST_REL=".claude/skills"
   COMMANDS_DST_REL=".claude/commands"
   RULES_FILE="CLAUDE.md"
+  PROCESS_RULES_REL=".claude/rules/brief-ledger-chronicle.md"
 fi
 
 echo ""
@@ -389,12 +495,20 @@ echo "  $TARGET_DIR/docs/chronicles/    (generated chronicles)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
+  echo "  $TARGET_DIR/$PROCESS_RULES_REL"
 else
   echo "  $TARGET_DIR/$SKILLS_DST_REL/     ($UTILITY_COUNT skills)"
   echo "  $TARGET_DIR/$COMMANDS_DST_REL/   ($PROCESS_COUNT process commands)"
-  echo "  $TARGET_DIR/.claude/settings.local.json  (permission allowlist — if absent)"
+  echo "  $TARGET_DIR/$PROCESS_RULES_REL"
+  echo "  $TARGET_DIR/.claude/settings.local.json  (permission allowlist)"
 fi
-echo "  $TARGET_DIR/$RULES_FILE           (project process rules — if absent)"
+echo "  $TARGET_DIR/$RULES_FILE           (project architecture stub — if absent, never replaced)"
+if [[ "$FORCE" == true ]]; then
+  echo ""
+  echo "--force is on. Existing skills, process rules, brief READMEs, and settings will be"
+  echo "replaced with this checkout. $RULES_FILE, numbered briefs, ledgers, chronicles, and"
+  echo "the install log are not touched."
+fi
 echo ""
 
 if [[ "$ASSUME_YES" != true ]]; then
@@ -417,7 +531,11 @@ $TARGET_DIR/docs/install-log
 $TARGET_DIR/$SKILLS_DST_REL"
 if [[ "$HOST" == "claude" ]]; then
   SCAFFOLD_DIRS="$SCAFFOLD_DIRS
-$TARGET_DIR/$COMMANDS_DST_REL"
+$TARGET_DIR/$COMMANDS_DST_REL
+$TARGET_DIR/.claude/rules"
+else
+  SCAFFOLD_DIRS="$SCAFFOLD_DIRS
+$TARGET_DIR/.cursor/rules"
 fi
 
 while IFS= read -r dir; do
@@ -428,16 +546,10 @@ while IFS= read -r dir; do
   fi
 done <<< "$SCAFFOLD_DIRS"
 
-# Copy brief READMEs (only if absent)
+# Copy brief READMEs. Default skips if present; --force replaces. Numbered brief
+# folders are never written here, force or not.
 for src_rel in "docs/briefs/README.md" "docs/briefs/_drafts/README.md"; do
-  src="$SCRIPT_DIR/templates/$src_rel"
-  dst="$TARGET_DIR/$src_rel"
-  if [[ ! -f "$dst" ]]; then
-    cp "$src" "$dst"
-    log_created "$src_rel"
-  else
-    log_skipped "$src_rel"
-  fi
+  place_file "$SCRIPT_DIR/templates/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
 done
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
@@ -454,49 +566,34 @@ for skill_dir in "$SCRIPT_DIR/skills"/*/; do
   skill_name="$(basename "$skill_dir")"
 
   if [[ "$HOST" == "claude" ]] && is_process_skill "$skill_name"; then
-    dst="$TARGET_DIR/$COMMANDS_DST_REL/$skill_name.md"
-    if [[ ! -f "$dst" ]]; then
-      cp "$skill_dir/SKILL.md" "$dst"
-      log_created "$COMMANDS_DST_REL/$skill_name.md"
-    else
-      log_skipped "$COMMANDS_DST_REL/$skill_name.md"
-    fi
+    place_file "$skill_dir/SKILL.md" \
+               "$TARGET_DIR/$COMMANDS_DST_REL/$skill_name.md" \
+               "$COMMANDS_DST_REL/$skill_name.md"
     continue
   fi
 
-  dst="$TARGET_DIR/$SKILLS_DST_REL/$skill_name"
-  if [[ ! -d "$dst" ]]; then
-    cp -r "$skill_dir" "$dst"
-    log_created "$SKILLS_DST_REL/$skill_name"
-  else
-    log_skipped "$SKILLS_DST_REL/$skill_name"
-  fi
+  place_dir "$skill_dir" \
+            "$TARGET_DIR/$SKILLS_DST_REL/$skill_name" \
+            "$SKILLS_DST_REL/$skill_name"
 done
 
-# ── Step 6: Project rules file ───────────────────────────────────────────────
+# ── Step 6: Process rules and project stub ───────────────────────────────────
 #
-# CLAUDE.md and AGENTS.md say the same thing to different readers; each host only looks
-# for its own, so only that one is written.
+# Two owners, two files. The process contract is installer-owned and --force
+# replaces it. AGENTS.md / CLAUDE.md are project-owned: a stub is written only
+# if absent, and never replaced, so architecture notes survive an upgrade.
 
 echo ""
 echo "Configuration:"
-if [[ ! -f "$TARGET_DIR/$RULES_FILE" ]]; then
-  cp "$SCRIPT_DIR/templates/$RULES_FILE" "$TARGET_DIR/$RULES_FILE"
-  log_created "$RULES_FILE"
-else
-  log_skipped "$RULES_FILE"
-fi
+place_process_rules
+write_project_stub
 
 # ── Step 7: settings.local.json (Claude Code only) ───────────────────────────
 
 if [[ "$HOST" == "claude" ]]; then
-  SETTINGS_DST="$TARGET_DIR/.claude/settings.local.json"
-  if [[ ! -f "$SETTINGS_DST" ]]; then
-    cp "$SCRIPT_DIR/templates/.claude/settings.local.json" "$SETTINGS_DST"
-    log_created ".claude/settings.local.json"
-  else
-    log_skipped ".claude/settings.local.json"
-  fi
+  place_file "$SCRIPT_DIR/templates/.claude/settings.local.json" \
+             "$TARGET_DIR/.claude/settings.local.json" \
+             ".claude/settings.local.json"
 fi
 
 # ── Step 8: Append to the install log ────────────────────────────────────────
@@ -528,9 +625,9 @@ Every run of `brief-ledger-chronicle`'s `install.sh` against this repository, ol
 first. Appended automatically — add entries by running the installer, not by hand.
 
 This is a record of *what was installed here and when*. The reasoning behind how the
-toolchain is put together (per-project skills, never-overwrite, and so on) lives
-upstream in the brief-ledger-chronicle repository, not duplicated into every project
-it onboards.
+toolchain is put together (per-project skills, default never-overwrite, `--force` to
+take upstream copies, and so on) lives upstream in the brief-ledger-chronicle
+repository, not duplicated into every project it onboards.
 
 LOGHEAD_EOF
   log_created "docs/install-log/install-log.md"
@@ -561,7 +658,7 @@ cat >> "$LOG_FILE" <<ENTRY_EOF
 
 - **Host:** $HOST
 - **Installer version:** $VERSION
-- **Created:** ${#CREATED[@]} · **Skipped:** ${#SKIPPED[@]}
+- **Created:** ${#CREATED[@]} · **Skipped:** ${#SKIPPED[@]} · **Replaced:** ${#REPLACED[@]}
 
 ### Skills installed
 
@@ -573,6 +670,14 @@ $CMD_LIST
 
 $(if [[ ${#CREATED[@]} -gt 0 ]]; then
   for d in ${CREATED[@]+"${CREATED[@]}"}; do echo "  - $d"; done
+else
+  echo "  (none)"
+fi)
+
+### Replaced
+
+$(if [[ ${#REPLACED[@]} -gt 0 ]]; then
+  for r in ${REPLACED[@]+"${REPLACED[@]}"}; do echo "  - $r"; done
 else
   echo "  (none)"
 fi)
@@ -598,6 +703,12 @@ echo "Created (${#CREATED[@]}):"
 # CREATED is empty on any re-run where everything already exists.
 for item in ${CREATED[@]+"${CREATED[@]}"}; do echo "  $item"; done
 
+if [[ ${#REPLACED[@]} -gt 0 ]]; then
+  echo ""
+  echo "Replaced (${#REPLACED[@]}):"
+  for item in ${REPLACED[@]+"${REPLACED[@]}"}; do echo "  $item"; done
+fi
+
 if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   echo ""
   echo "Skipped — already exist (${#SKIPPED[@]}):"
@@ -607,11 +718,14 @@ fi
 echo ""
 echo "Next steps:"
 echo "  1. Review and edit $RULES_FILE — fill in the project-specific section."
+echo "  2. Process rules are in $PROCESS_RULES_REL — the installer owns that file."
 if [[ "$HOST" == "claude" ]]; then
-  echo "  2. Review .claude/settings.local.json — add any project-specific permissions."
+  echo "  3. Review .claude/settings.local.json — add any project-specific permissions."
+  echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
+  echo "  5. Open docs/install-log/install-log.md to see what this run did."
 else
-  echo "  2. Skills are under .cursor/skills/ — tune any of them for this project."
+  echo "  3. Skills are under .cursor/skills/ — tune any of them for this project."
+  echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
+  echo "  5. Open docs/install-log/install-log.md to see what this run did."
 fi
-echo "  3. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
-echo "  4. Open docs/install-log/install-log.md to see what this run did."
 echo ""
