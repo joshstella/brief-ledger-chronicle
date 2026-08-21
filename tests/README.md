@@ -1,6 +1,7 @@
 # Tests
 
-Coverage for `install.sh`. Run them:
+Coverage for `install.sh` and for `tools/validate-briefs.sh`, the Contract validator.
+Run them:
 
 ```bash
 bash tests/run.sh              # everything
@@ -21,6 +22,7 @@ tests/
   test_force.sh           --force replaces installer-owned copies, not briefs or the log
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
+  test_briefs.sh          Contract v1 clauses BRIEFS-1..8, plus this repo's own compliance
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -74,6 +76,12 @@ The original suite was validated against eight deliberate mutations of
 | Machine mode clobbers a real file | `machine_refuses_to_clobber_a_real_file` |
 | Dependency check removed | `project_missing_dependency_aborts_before_writing` |
 | Self-install guard removed | `args_refuses_to_install_into_the_source_repo` |
+
+`tools/validate-briefs.sh` was validated the same way, and it is the case where the
+rule matters most. A validator exercised only against a compliant tree passes
+identically when every check is replaced by `return 0`, so its green run carries no
+information. Each clause therefore has a fixture that violates it. Neutering the
+`defect` reporter fails eleven tests; restoring it returns the suite to green.
 
 One mutation initially read as a miss and was worth chasing: rewriting the log
 header with `>` does not duplicate the header, it truncates the file. The header
