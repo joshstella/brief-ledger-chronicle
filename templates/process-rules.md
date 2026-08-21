@@ -8,8 +8,10 @@ bypassing them is the defect.
 - `commit-push-pr` is the only path to `main`. Do not use raw `git commit && git push`
   for work headed to `main`.
 - `review-pr` is the review gate. A Request changes verdict blocks the commit.
-- Non-trivial work gets a brief before it starts (`create-brief`, then `start-brief` /
-  `next-brief-phase`).
+- A brief is the hypothesis you start with, not a spec you deliver against. File it
+  before non-trivial work begins (`create-brief`, then `start-brief` /
+  `next-brief-phase`). Expect the ledger to correct it. Do not retrofit one after the
+  work shipped.
 - `chronicle` renders the record. `init-briefs` is one-time setup.
 
 ## Writing
