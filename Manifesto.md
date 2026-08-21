@@ -63,6 +63,25 @@ it asks you to know the most at the moment you know the least.
 **This is not an argument against specs.** Specs are necessary. It is an argument about when
 they earn their authority — *after* iteration and experimentation, not before.
 
+This is much older than any current argument about tooling. In 1975 John Gall — a
+paediatrician, not a software person — put it as a law:
+
+> A complex system that works is invariably found to have evolved from a simple system
+> that worked. A complex system designed from scratch never works and cannot be patched up
+> to make it work. You have to start over with a working simple system.
+>
+> — John Gall, *Systemantics*
+
+Gall's Law is the same observation from the architecture side. You cannot specify a complex
+system into existence; it has to grow from something simple that already worked. The
+failure mode is identical to the waterfall one above — both are attempts to know the most
+at the moment you know the least.
+
+It is worth saying what Gall's Law does *not* license, because it gets quoted that way. It
+is not an argument for never planning. A system that grew from a simple working one still
+grew *deliberately*, one understood step at a time. The law says the complex thing cannot
+be specified into being up front; it does not say nobody should think ahead.
+
 The lineage was already doing this. A REPL is play-then-spec. A live Smalltalk image is
 play-then-spec. You jam first; the chart gets written from what worked.
 
@@ -155,6 +174,12 @@ One brief did both at once — a structural change whose call-site count was bad
 underestimated — which is the clearest evidence that these are not two phenomena but one:
 a codebase has more real structure than any single mental model captures, and that shows up
 differently depending on how accurate the starting model happened to be.
+
+This is Gall's Law observed from the inside, after the fact. A working system got that way
+by growing from simpler working ones, and **the surprises are the seams** — the places
+where an earlier system's assumptions are still load-bearing under something built later
+that never knew about them. No amount of care at specification time removes them, because
+they are not planning failures. They are what accumulated structure feels like from within.
 
 **So write briefs that can be wrong.** A brief that commits to a checkable claim about the
 code is how the code gets to correct you.
