@@ -12,12 +12,12 @@
 | `phase 2 — validator` | pending | `tests/test_briefs.sh` implementing clauses 1–8, each check citing its clause id. Update the Contract's checked-set sentence to name the path. |
 | `phase 3 — clause/check linkage` | pending | The meta-check, both directions: every `[defect]` clause has ≥1 check citing its id, and every check cites a live clause id. This is what stops rule N+1 from being published unchecked. |
 | `phase 4 — de-duplicate the readmes` | pending | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md` (93 vs 112 lines, already diverged). Must not break `install.sh:391`. |
-| `phase 5 — reconcile review-pr tags` | pending | Apply phase 1's tag decision to `skills/review-pr/SKILL.md`. Small diff, consumer-facing blast radius — kept separate so it is reviewed on its own merits. |
+| ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
 
 - **Strict chain:** `phase 1 → phase 2 → phase 3`. Phase 2 needs clause ids to cite; phase 3 needs checks to link.
-- **Parallel tracks after phase 1:** `phase 4` and `phase 5` are independent of the chain and of each other.
+- **Parallel track after phase 1:** `phase 4` only, independent of the chain. (`phase 5` dropped — see Big decisions.)
 - **Provisional past phase 1.** Phase 1 chooses the Contract's path *and its clause-id scheme*. The id scheme cannot be retrofitted — phase 3's meta-check keys on it — so phase 1 must be designed with phase 3 in mind, or phase 3 forces a rewrite of the Contract. `/next-brief-phase` re-plans from phase 1's actual outcome.
 
 ## Open decisions
@@ -26,7 +26,7 @@
 |---|---|---|
 | 1 | Where the Contract lives; one file superseded in place vs `v1.md`/`v2.md` side by side | `phase 1` — nothing can reference it until the path exists |
 | 2 | What stops a *future* rule from being published without a check | `phase 3` to implement, but constrains `phase 1`'s clause-id design |
-| 3 | Which tag name survives, `[advisory]` or `[judgment]` | `phase 1` (the Contract carries tags) and `phase 5` |
+| 3 | ~~Which tag name survives~~ | **resolved** — `[judgment]`. See Big decisions. |
 | 4 | Whether it gets a skill | nothing — deferred past v1 by the brief |
 
 ## Complications found in the code, not addressed by the brief
@@ -34,7 +34,22 @@
 1. **The extraction is consumer-facing whether or not we want it to be.** `install.sh:391` symlinks `templates/docs/briefs/README.md` into every target project, and machine mode links it at `:337`/`:361`. Moving the invariants out of that README changes what installed projects receive. The brief's non-goal ("not a general Contract format for all projects") is in tension with the fact that the shipped README is general by construction. Resolve in phase 1 or phase 4 — do not let it be discovered in phase 4.
 2. **`review-pr`'s tags are read from *other* projects' documents.** It gates on `[defect]`/`[judgment]` in a target project's `docs/design/visual-language.md` §9. A hard rename breaks any project whose design doc uses the old tag. Phase 5 likely needs accept-both with a deprecation, not a rename.
 3. **`templates/process-rules.md` stays unchecked.** The brief names it as the fourth location of present-tense rules but the Change section does not cover it. Its clauses are mostly undecidable ("commit-push-pr is the only path to main"), so this may be a deliberate scope choice — but it is currently a silent one.
-4. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
+5. **A dangling citation, found while resolving open decision 3.** `skills/review-pr/SKILL.md:106`
+   says the Big decisions "format and rules" live in `docs/briefs/README.md`. They do not. That
+   README names `ledger.md` only as "execution record (added on execution)" and never defines the
+   section. The definition is instead spread across `skills/init-briefs/SKILL.md:25`,
+   `skills/chronicle/SKILL.md:28,82,117`, and `docs/slides-process-overview.md:112`. This is a
+   fifth instance of the brief's thesis and a new *class* of it: invariant 6 forbids dangling
+   `Depends on:` references between briefs, but nothing forbids a skill citing a document for a
+   format that document does not carry. Candidate clause for the Contract.
+6. **The toolkit's process rules govern every project except this one.** `templates/process-rules.md`
+   is a template, installed elsewhere and never applied here. That scope is stated nowhere: the
+   file reads as governance, sits in a directory that makes it a template, and nothing marks which
+   it is. It was misread as binding during this brief's own execution, by a reader who had already
+   read the file twice. This is the sharpest instance of the thesis found so far, and it points at
+   a Contract clause the brief does not yet have: **the scope of a rule is part of the rule** —
+   every clause must say whether it binds this repo, ships to consumers, or both.
+7. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
 
 ## Branches
 
@@ -42,12 +57,73 @@ None cut yet. Brief, ledger, Manifesto edits and the `wip-visibility` draft land
 PR off `docs/contract-artifact` via `commit-push-pr`; `phase 1` branches from the updated
 `main` as `feature/contract-artifact-extract`.
 
-`start-brief` step 6 says commit the ledger straight to `main`; `templates/process-rules.md`
-says `commit-push-pr` is the only path to `main`. Resolved in favour of `process-rules.md` —
-filing a brief about unenforced rules by bypassing one of them would be the wrong opening
-move. Recorded because the two documents still contradict each other, and that is a real
-finding for this brief rather than a nuisance.
+`start-brief` step 6 says commit the ledger straight to `main`. This was first recorded as a
+conflict with `templates/process-rules.md`, which says `commit-push-pr` is the only path to
+`main`. **That framing was wrong and is corrected here.** `process-rules.md` is a template: it
+ships to other projects via `install.sh` and has never bound this repo. This repo carries no
+root `CLAUDE.md`, no root `AGENTS.md` and no `.claude/rules/`; its only self-applied rule is
+`.cursor/rules/no-cq-leak.mdc`. At the initial commit the same text lived in
+`templates/AGENTS.md` — also a template.
+
+So there was no conflict. Only `start-brief` applied. The work still landed via `commit-push-pr`,
+because the author's machine-level working agreement expects review before `main`, and that
+remains the right call. Only the stated reason changes.
+
+Consequence for the audit: `383ed5b [#0002] File brief and add MIT license.` went direct to
+`main` with real content, not just coordination metadata. Recorded as history, **not** as a
+violation — no rule bound this repo at the time, and none binds it now.
 
 ## Notes
 
 - The brief's own parked tension (Manifesto says the Contract is *unowed*; the evidence suggests *unbuilt*) is deliberately not resolved here. Revisit after phase 3, when we know what the extraction actually taught.
+
+## Big decisions
+
+**Open decision 3 — which tag name survives — resolved in favour of `[judgment]`.** 2026-08-21.
+
+The brief called this "low stakes." It is not; it is **asymmetric**. Nothing reads either tag
+programmatically, so both are consumed by agents and humans. But the consumer counts differ
+sharply. `[judgment]` is read by `review-pr` against *other projects'* `docs/design/visual-language.md`
+§9 — documents outside this repo, written by other people. `[advisory]` is read by nothing at
+all; it appears twice per briefs README, once defining itself and once on invariant 8, and the
+validator that would act on it does not exist.
+
+So the fork was which direction to rename. Renaming `[judgment]` to `[advisory]` would pair more
+tidily with `[defect]` as two severities, but it would **fail silently**: any design doc still
+using `[judgment]` would stop surfacing those rules, and the review would keep printing "Approve"
+with a category quietly missing. Drift inside the tool whose job is catching drift.
+
+We went the other way: rename `[advisory]` to `[judgment]`. Change the name nobody reads, not the
+one something reads — the Contract's own external-dependence trigger applied to a naming choice.
+`[judgment]` also matches the Manifesto's existing vocabulary and names the action required rather
+than a severity tier. The cost accepted is that `[defect]`/`[judgment]` is a less parallel pair.
+
+**Consequence for the plan:** `phase 5` is dropped entirely; `review-pr` needs no change.
+
+**Consequence for `phase 3`, caught here rather than late:** the two tags occupy the same slot by
+definition, but their instances differ. Invariant 8 (contiguity) is machine-decidable and merely
+non-blocking; a design-doc judgment rule may not be checkable at all. So phase 3's meta-check
+— every clause has a check citing its id — **cannot apply uniformly to `[judgment]` clauses**.
+Some warrant a non-blocking check; others warrant none, because none can exist. Phase 1's
+clause-id scheme has to carry that distinction or phase 3 forces a rewrite.
+
+**The path-to-`main` question, resolved differently than first recorded.** 2026-08-21.
+
+First recorded as a precedence decision: two rule documents contradict, `process-rules.md` wins.
+That was an error. `process-rules.md` is a template and does not govern this repo, so the two
+documents never contradicted — only one of them ever applied.
+
+The real finding is the one underneath: a rule's **scope** is unstated everywhere in this repo.
+`templates/process-rules.md` reads as governance and is not; `docs/briefs/README.md` reads as
+this repo's own documentation and is *also* shipped as a template, symlinked into targets by
+`install.sh:391`. Neither says which it is. That ambiguity is what produced the misreading.
+
+Consequence for `phase 1`: every Contract clause carries its scope — binds this repo, ships to
+consumers, or both. This is not an extra field for tidiness. It is the distinction whose absence
+caused a careful reader to enforce a rule that did not exist.
+
+Consequence for scope, still open: the path-to-`main` rule is machine-checkable, since a
+squash-merge subject carries `(#N)`. The check is a heuristic — a merge commit or a hand-typed
+`(#9)` would defeat it — which makes it a good first test of stating *how well* a clause is
+checked, not just whether. Whether v1 covers any process rule at all, or only the eight briefs
+invariants, is deferred to `phase 1`.
