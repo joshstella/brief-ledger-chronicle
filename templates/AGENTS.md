@@ -28,6 +28,14 @@ gates; bypassing them is the defect.
 - **Ask rather than guess** on judgment calls that turn on intent or domain knowledge.
   Mark every assumption inline so it can be corrected.
 
+## Writing
+
+Default prose for this process uses the `ste-writing` skill in STE-flavored mode.
+Apply it to briefs, ledgers, chronicles, commit messages, PR bodies, reviews, comments,
+and docs. Do not apply it to code, identifiers, or command syntax. Do not rewrite the
+user's own words (to-do entries stay verbatim). The skill owns the rules. Do not copy
+them here.
+
 ## Tests
 
 Tests gate `main`. Code merges to `main` only with tests covering it — unit for logic,
