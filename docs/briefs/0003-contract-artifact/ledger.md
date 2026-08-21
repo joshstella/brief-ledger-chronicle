@@ -151,10 +151,13 @@ Three consequences, all subtractive:
    test — and is demoted to a report. Evidence that cost-at-the-moment-of-action loses: three of
    seven commits on `main` bypassed the ceremony, including a brief-filing commit carrying a
    LICENSE. Not carelessness. It was the fast path and nothing stopped it.
-3. **Small bites and frequent commits, at least daily.** This is what bounds the cost of moving
-   fast rather than discipline for its own sake. Commit quickly; if someone lands first you
-   rebase, and a day is a cheap rebase where a fortnight is not. Encouraged and surfaced, never
-   gated — counting commits would only produce empty ones.
+3. **Small bites and frequent commits — a preference, at least daily.** This bounds the cost of
+   moving fast rather than being discipline for its own sake. Commit quickly; if someone lands
+   first you rebase, and a day is a cheap rebase where a fortnight is not. Held as a preference
+   and sometimes broken by the person who holds it, which is why it is not written as a rule —
+   that would be the overclaim above at a smaller scale. Its known exception: coordination cost
+   rises with project size, so a refactor or a release sometimes warrants idling part of the
+   team, and there serialising beats optimistic concurrency.
 
 Underneath all of it, one principle: **overclaiming is the defect class.** A clause with unstated
 scope, a validator implying coverage it lacks, a document written as if complete — the same error

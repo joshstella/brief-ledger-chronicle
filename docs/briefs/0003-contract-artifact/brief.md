@@ -177,10 +177,15 @@ itself.
   speaks only when you break it. Nothing in the Contract may demand something *before* you are
   allowed to proceed. A mechanism that costs something at the moment of action gets routed
   around by the person it was built for — who is you, at 11pm, on the other machine.
-- **Small bites and frequent commits: at least daily, preferably several times.** Not
-  discipline for its own sake. It is what bounds the cost of moving fast. Commit quickly and,
-  if someone lands first, you rebase — a day of work is a cheap rebase and a fortnight is not.
-  Encouraged and surfaced, never gated: counting commits would only produce empty ones.
+- **Small bites and frequent commits — a preference, at least daily, sometimes broken.** Not
+  discipline for its own sake: it bounds the cost of moving fast. Commit quickly and, if someone
+  lands first, you rebase — a day of work is a cheap rebase and a fortnight is not. Recorded as a
+  preference rather than a rule on purpose. The author holds it and sometimes breaks it, and
+  writing a preference down as a rule is the overclaim above, one scale smaller. Encouraged and
+  surfaced, never gated: counting commits would only produce empty ones.
+  **Known exception:** coordination cost rises with project size, and a refactor or a release
+  sometimes warrants idling part of the team. There, serialising is correct and optimistic
+  concurrency is not. The default is speed; the exception is named so it is not rediscovered.
 
 ## Open decisions
 
