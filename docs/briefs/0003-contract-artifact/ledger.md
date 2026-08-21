@@ -31,10 +31,27 @@
 
 ## Complications found in the code, not addressed by the brief
 
-1. **The extraction is consumer-facing whether or not we want it to be.** `install.sh:391` symlinks `templates/docs/briefs/README.md` into every target project, and machine mode links it at `:337`/`:361`. Moving the invariants out of that README changes what installed projects receive. The brief's non-goal ("not a general Contract format for all projects") is in tension with the fact that the shipped README is general by construction. Resolve in phase 1 or phase 4 — do not let it be discovered in phase 4.
+1. **The extraction is consumer-facing whether or not we want it to be.** Project mode
+   *copies* `templates/docs/briefs/README.md` into every target (`install.sh:551`, via
+   `place_file`); machine mode *symlinks* it to `$CLAUDE_HOME/briefs/README.template.md`
+   (`install.sh:391`), which is what `init-briefs` reads. Moving the invariants out of that
+   README changes what installed projects receive. The brief's non-goal ("not a general
+   Contract format for all projects") is in tension with the fact that the shipped README is
+   general by construction. Resolve in phase 1 or phase 4 — do not let it be discovered in
+   phase 4.
+
+   **Corrected 2026-08-21.** First recorded as project mode symlinking the README into every
+   target, with `:337`/`:361` as the machine-mode links. Both halves were wrong: `:391` *is*
+   the machine-mode link, while `:337` is its source preflight and `:361` an `echo`
+   describing it. The correction changes the blast radius, which is why it is worth the
+   space. A symlink would propagate to every installed project on `git pull`; a copy is
+   forward-only, so existing projects keep what they were onboarded with until someone
+   re-runs with `--force`. The copy-not-link pinning rule is intact. The retroactive surface
+   is one symlink per *machine*, not one per project — smaller than recorded, and it lands on
+   `init-briefs` rather than on installed repos.
 2. **`review-pr`'s tags are read from *other* projects' documents.** It gates on `[defect]`/`[judgment]` in a target project's `docs/design/visual-language.md` §9. A hard rename breaks any project whose design doc uses the old tag. Phase 5 likely needs accept-both with a deprecation, not a rename.
 3. **`templates/process-rules.md` stays unchecked.** The brief names it as the fourth location of present-tense rules but the Change section does not cover it. Its clauses are mostly undecidable ("commit-push-pr is the only path to main"), so this may be a deliberate scope choice — but it is currently a silent one.
-5. **A dangling citation, found while resolving open decision 3.** `skills/review-pr/SKILL.md:106`
+4. **A dangling citation, found while resolving open decision 3.** `skills/review-pr/SKILL.md:106`
    says the Big decisions "format and rules" live in `docs/briefs/README.md`. They do not. That
    README names `ledger.md` only as "execution record (added on execution)" and never defines the
    section. The definition is instead spread across `skills/init-briefs/SKILL.md:25`,
@@ -42,14 +59,14 @@
    fifth instance of the brief's thesis and a new *class* of it: invariant 6 forbids dangling
    `Depends on:` references between briefs, but nothing forbids a skill citing a document for a
    format that document does not carry. Candidate clause for the Contract.
-6. **The toolkit's process rules govern every project except this one.** `templates/process-rules.md`
+5. **The toolkit's process rules govern every project except this one.** `templates/process-rules.md`
    is a template, installed elsewhere and never applied here. That scope is stated nowhere: the
    file reads as governance, sits in a directory that makes it a template, and nothing marks which
    it is. It was misread as binding during this brief's own execution, by a reader who had already
    read the file twice. This is the sharpest instance of the thesis found so far, and it points at
    a Contract clause the brief does not yet have: **the scope of a rule is part of the rule** —
    every clause must say whether it binds this repo, ships to consumers, or both.
-7. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
+6. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
 
 ## Branches
 

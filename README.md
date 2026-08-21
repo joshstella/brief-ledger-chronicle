@@ -114,10 +114,13 @@ bash tests/run.sh              # everything
 bash tests/run.sh host_        # just the host-layout tests
 ```
 
-50 tests covering argument handling, both host layouts, project install, the install log,
+Covers argument handling, both host layouts, project install, `--force`, the install log,
 and machine-mode symlinking. Plain bash, no dependencies. CI runs them on every push and
 pull request. See `tests/README.md` — including why the suite is validated by breaking
 `install.sh` on purpose rather than by going green.
+
+The count is deliberately not written here. A hand-synced number is a claim that drifts the
+moment a test is added, and it had already drifted twice. `bash tests/run.sh` prints it.
 
 ## License
 
