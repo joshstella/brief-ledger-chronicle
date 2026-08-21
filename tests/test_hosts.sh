@@ -91,6 +91,21 @@ test_host_shared_frontmatter_survives_into_both_layouts() {
   assert_matches "^name: review-pr" "$TARGET/.cursor/skills/review-pr/SKILL.md"
 }
 
+# On Claude Code a process skill is flattened to a single commands/<name>.md file, so
+# anything else in its directory would be silently dropped. That is fine today because
+# every process skill is SKILL.md and nothing else — but the day one grows a helper
+# script or an asset, the install would quietly lose it. Fail here instead, at the moment
+# the file is added, rather than in whatever breaks downstream.
+test_host_process_skills_carry_no_auxiliary_files() {
+  local s count
+  for s in $PROCESS; do
+    count=$(find "$REPO_ROOT/skills/$s" -type f 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$count" != "1" ]; then
+      fail "skills/$s has $count files; Claude Code installs it flat as commands/$s.md, so only SKILL.md would survive. Either keep it single-file or teach step 5 to place a directory."
+    fi
+  done
+}
+
 # ── Host argument handling ───────────────────────────────────────────────────
 
 test_host_unknown_value_is_rejected() {
