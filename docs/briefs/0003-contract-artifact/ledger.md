@@ -1,14 +1,14 @@
 # Ledger — #0003 A fourth artifact: the Contract
 
 **Brief:** `docs/briefs/0003-contract-artifact/brief.md`
-**Status:** initiated
+**Status:** in-progress
 **Date:** 2026-08-21
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — extract the contract` | pending | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
+| `phase 1 — extract the contract` | in-progress | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
 | `phase 2 — validator` | pending | `tests/test_briefs.sh` implementing clauses 1–8, each check citing its clause id. Update the Contract's checked-set sentence to name the path. |
 | `phase 3 — report unchecked clauses` | pending | **Demoted from a gate to a report.** The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
 | `phase 4 — de-duplicate the readmes` | pending | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md` (93 vs 112 lines, already diverged). Must not break `install.sh:391`. |
@@ -24,7 +24,7 @@
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | Where the Contract lives; one file superseded in place vs `v1.md`/`v2.md` side by side | `phase 1` — nothing can reference it until the path exists |
+| 1 | ~~Where the Contract lives~~ | **resolved** — `docs/contracts/v1.md` beside an unversioned `docs/contracts/README.md`. See Big decisions. |
 | 2 | ~~What stops a future rule from being published without a check~~ | **resolved** — nothing does, by design. The Contract reports; it never requires. See Big decisions. |
 | 3 | ~~Which tag name survives~~ | **resolved** — `[judgment]`. See Big decisions. |
 | 4 | ~~Whether it gets a skill~~ | **resolved** — not until writing one by hand hurts. |
@@ -67,6 +67,16 @@
    a Contract clause the brief does not yet have: **the scope of a rule is part of the rule** —
    every clause must say whether it binds this repo, ships to consumers, or both.
 6. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
+7. **Complication 1 fired during phase 1, and phase 1 made it worse before improving it.**
+   Extracting the invariants out of `docs/briefs/README.md` left
+   `templates/docs/briefs/README.md` — the copy that ships — still restating all eight, and
+   still using `[advisory]`, the tag retired by open decision 3. For a moment this repository
+   read its rules from a Contract while every installed project read a hand-maintained
+   restatement with dead vocabulary. Phase 1 took the minimal fix: retire `[advisory]` in the
+   shipped copy so the vocabulary is single everywhere. **The restatement itself is left
+   standing for phase 4**, which is the phase that ends the hand-sync. Recorded here so
+   phase 4 inherits a known state rather than a discovery: consumers do not receive the
+   Contract, and whether they should is phase 4's decision, not a detail.
 
 ## Branches
 
@@ -95,6 +105,43 @@ violation — no rule bound this repo at the time, and none binds it now.
 - The brief's own parked tension (Manifesto says the Contract is *unowed*; the evidence suggests *unbuilt*) is deliberately not resolved here. Revisit after phase 3, when we know what the extraction actually taught.
 
 ## Big decisions
+
+**Open decision 1 — where the Contract lives — resolved by drafting it first.** 2026-08-21.
+
+`docs/contracts/v1.md` for the clauses, beside an unversioned `docs/contracts/README.md` for
+the legend. Neither of the two options the brief posed survived contact with the artifact.
+
+The brief framed this as side-by-side versions against in-place superseding, and the argument
+looked like a trade between answering "what could I rely on in v1" without archaeology and
+keeping one obvious current answer. Drafting changed the shape of the question. The clauses
+came to roughly 45 lines and the material around them — what a Contract does not do, the tag
+legend, the scope legend, the three checking states, what a Contract never contains — to
+roughly 80. None of that second part changes when a clause changes.
+
+So self-contained versions would have copied 80 lines of version-independent prose into
+`v2.md` and left it hand-synced. That is this brief's own thesis, reproduced by the artifact
+built to end it, at the moment of its second version. In-place superseding avoids the copy
+but gives up the property the brief wanted.
+
+Splitting the legend out gets both. It is a third option, and it was not visible until there
+was a document to measure. Recorded because it is the clearest instance so far of the
+Manifesto's claim that the spec gets written from the record rather than ahead of it — the
+decision the brief deferred was correctly deferred, and deferring it produced a better answer
+than either option on the table.
+
+**Three checking states, not two.** The brief asks the Contract to state which clauses are
+checked and which are not. Two states are not enough. A clause nobody has written a check for
+and a clause no check can decide are different facts, and reporting them as one claims more
+coverage than exists. The document carries `checked: <path>`, `unchecked, reviewed <date>`,
+and `not mechanically decidable`. This is what the ledger anticipated when it said phase 3's
+meta-report cannot apply uniformly to `[judgment]` clauses. It is carried as a field rather
+than in the clause id, because the id must never encode a fact that changes.
+
+**Scope is uniform in v1, and the document says so.** Every clause is `both`. The field
+therefore discriminates nothing in this version. It is stated per clause anyway and the
+uniformity is stated once, because a field introduced in v2 would read as a change in meaning
+rather than a change in coverage — and because leaving a uniform field uncommented invites a
+reader to infer a distinction that is not there. Overclaiming, one scale smaller.
 
 **Open decision 3 — which tag name survives — resolved in favour of `[judgment]`.** 2026-08-21.
 
