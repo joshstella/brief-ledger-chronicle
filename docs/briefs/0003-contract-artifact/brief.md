@@ -161,6 +161,10 @@ itself.
   decide for themselves which surfaces they are playing on and which they are staking a claim
   to, and when. This kills the "eventually everything gets codified" reading, which is how
   this artifact would turn into the ceremony it was built to replace.
+  Before a claim is staked, several designs are genuinely alive at once. That superposition is
+  the *productive* state rather than indecision, and publishing is what collapses it. So the
+  absence of a Contract on a surface is not an unfinished Contract. It is a surface nobody has
+  been asked to depend on, still holding more than one possible future on purpose.
 - **Overclaiming is the defect class the Contract exists to prevent.** A clause with unstated
   scope claims more than it means. A validator implying coverage it lacks claims more than it
   checks. A document written as if complete claims more than it knows. One principle at every

@@ -166,3 +166,35 @@ do not resolve it precisely. Completeness is an abstraction, and all specs are s
 are willing to pay for proofs, which is almost never the right trade.
 
 **Net effect on the plan:** five phases to three, four open decisions to one.
+
+**Why this brief earned depth no other brief has, and what changes now.** 2026-08-21.
+
+Roughly a hundred briefs across many projects preceded this one, and none went this deep. That
+ratio is data, not an apology, and it gets a rule so the next hundred do not inherit this as a
+template.
+
+**The category-boundary rule.** Depth like this belongs at *category* boundaries — introducing a
+new kind of artifact — not at feature boundaries. A brief that adds behaviour to an existing
+category should be short. A brief that adds a category is arguing about what the categories are,
+and that argument is cheap now and expensive to reverse later. Candidate for
+`docs/briefs/README.md`, where a new team member would look for it.
+
+**Why the economics justify it here.** Brooks's essential-versus-accidental split is the reason.
+AI collapses accidental cost — typing, searching, checking citations, auditing history — and
+barely touches essential complexity. Coordination is essential. So as the accidental share falls,
+coordination grows as a *fraction* of the total: Brooks gets more relevant, not less. Brief,
+Ledger and Chronicle serve the author and successors who read the history. The Contract is the
+only one written for people who will not, which makes it the only artifact whose cost scales like
+n(n-1)/2 rather than n. Getting it wrong is paid by every consumer, silently, forever.
+
+**A premise is about to change.** The brief and the Manifesto both rest on "nobody depends on this
+repository yet." A small team is being introduced to the toolkit shortly, and the author is
+deliberately dogfooding the conditions that break it: working across multiple machines and *not*
+committing conveniently, to observe the real failure modes before other people meet them. That is
+a designed experiment, recorded as one.
+
+Two consequences. The Contract's external-dependence trigger is about to fire for real, which
+moves the parked *unowed*-versus-*unbuilt* tension from theoretical to live. And
+`_drafts/wip-visibility.md` gets more relevant than its narrowing implied: multi-machine work with
+deliberately inconvenient commits is precisely the invisible-WIP case. Its narrowed trigger still
+holds — poll only for expensive-to-unwind claims — but the git-visible half is worth having sooner.
