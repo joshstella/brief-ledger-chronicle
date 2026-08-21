@@ -11,8 +11,9 @@ gates; bypassing them is the defect.
 - **`commit-push-pr`** — the only path to `main`. Runs the review gate before committing.
   Never use raw `git commit && git push` for work headed to `main`.
 - **`review-pr`** — called by `commit-push-pr`. Can also run manually on a PR or staged diff.
-- **`create-brief`** — file a draft into `docs/briefs/`. Non-trivial work gets a brief before
-  it starts, not after.
+- **`create-brief`** — file a draft into `docs/briefs/`. Play first: probe, spike, throw
+  things away. File the brief once the experiment has told you what you are actually
+  proposing — before the committed work starts, never retrofitted after it ships.
 - **`start-brief` / `next-brief-phase`** — initiate and continue phased work.
 - **`chronicle`** — narrative history from briefs, ledgers, and git.
 - **`init-briefs`** — one-time setup. Already run if `docs/briefs/` exists.

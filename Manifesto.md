@@ -54,6 +54,38 @@ and not silence either. They are closer to **lead sheets and changes**: enough s
 jam *on*, with a record of the session kept afterward because it was worth remembering —
 not because someone made you file it.
 
+## Play, then spec
+
+Spec-driven development has a waterfall shape hiding inside it. Write the specification,
+agree it, implement against it, then reconcile whatever diverged. The order is the problem:
+it asks you to know the most at the moment you know the least.
+
+**This is not an argument against specs.** Specs are necessary. It is an argument about when
+they earn their authority — *after* iteration and experimentation, not before. You play, you
+probe, you throw things away, and the spec crystallises what the play actually taught, at
+the point where you know enough for writing it down to be worth doing.
+
+The lineage was already doing this. A REPL is play-then-spec. A live Smalltalk image is
+play-then-spec. You jam first; the chart gets written from what worked.
+
+The tools here are shaped for that order:
+
+- **`_drafts/` is the play space for ideas.** Unnumbered, uncommitted, free to sit
+  indefinitely. Filing a brief is a one-way door, and it comes *after* you know what you
+  are filing.
+- **Branches are the play space for code.** A spike you intend to delete owes nothing to
+  anyone.
+- **A brief is a case, not a blueprint.** It states what you now believe and why — and
+  because it is meant to be checkable, it is meant to be capable of being wrong.
+- **The ledger is where the doing corrects the plan.** Continuing a multi-phase brief
+  deliberately re-plans the remaining sequence from what the finished phases actually
+  taught, rather than barrelling through the original order after a finding should have
+  changed it.
+
+Waterfall's failure was never that it wrote things down. It was that it wrote them down
+first, and then treated reality's disagreement as an error to be corrected. Play-then-spec
+inverts that: reality goes first, and the writing records what it said.
+
 ## Rules come in two kinds
 
 Not every rule belongs to the same category, and knowing which kind you are writing is

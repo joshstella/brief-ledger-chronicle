@@ -78,9 +78,14 @@ starter permission allowlist.
 
 ## How the process works
 
-1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered, and free to sit indefinitely.
-2. **File it** with `create-brief`, which assigns the serial. This is the one-way door.
-3. **Execute** with `start-brief`; continue with `next-brief-phase`.
+0. **Play.** Probe the thing, spike it on a branch, throw the spike away. The spec comes
+   after the experiment, not before it — see the [Manifesto](Manifesto.md).
+1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered, and free to sit indefinitely,
+   which is what makes it a safe place to be wrong.
+2. **File it** with `create-brief`, which assigns the serial. This is the one-way door, and
+   it comes once you know what you are proposing.
+3. **Execute** with `start-brief`; continue with `next-brief-phase`, which re-plans the
+   remaining sequence from what the finished phases actually taught.
 4. **Every commit to `main`** goes through `commit-push-pr`, which runs `review-pr` as a
    gate *before* anything is committed.
 5. **`chronicle`** renders the record into prose whenever you want the story.
