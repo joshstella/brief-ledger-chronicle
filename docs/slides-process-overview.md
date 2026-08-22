@@ -232,7 +232,8 @@ bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/
 
 # Project mode (--target) copies into the repo:
 # - checks all dependencies and tells you what's missing
-# - creates docs/briefs/, docs/chronicles/, docs/install-log/, host skill dirs
+# - creates docs/briefs/, docs/contracts/, docs/chronicles/, docs/install-log/, tools/,
+#   and the host skill dirs
 # - writes a process-rules file the installer owns (.claude/rules or .cursor/rules)
 # - writes a CLAUDE.md / AGENTS.md stub only if absent — never overwrites
 # - appends an entry to docs/install-log/install-log.md recording what was installed

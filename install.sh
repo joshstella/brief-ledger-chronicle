@@ -334,7 +334,7 @@ if [[ "$MODE" == "machine" ]]; then
   echo "Checking machine-mode sources..."
 
   MISSING_SOURCES=()
-  for src in "personal/CLAUDE.md" "skills" "templates/docs/briefs/README.md"; do
+  for src in "personal/CLAUDE.md" "skills" "docs/briefs/README.md"; do
     if [[ ! -e "$SCRIPT_DIR/$src" ]]; then
       echo "  [✗] $src — missing"
       MISSING_SOURCES+=("$src")
@@ -358,7 +358,7 @@ if [[ "$MODE" == "machine" ]]; then
   for s in $PROCESS_SKILLS; do
     echo "  $CLAUDE_HOME/commands/$s.md → skills/$s/SKILL.md"
   done
-  echo "  $CLAUDE_HOME/briefs/README.template.md  → templates/docs/briefs/README.md"
+  echo "  $CLAUDE_HOME/briefs/README.template.md  → docs/briefs/README.md"
   echo ""
   echo "Other skills are NOT linked — they install per-project via --target."
   echo ""
@@ -388,7 +388,7 @@ if [[ "$MODE" == "machine" ]]; then
                     "commands/$s.md"
   done
 
-  link_into_place "$SCRIPT_DIR/templates/docs/briefs/README.md" \
+  link_into_place "$SCRIPT_DIR/docs/briefs/README.md" \
                   "$CLAUDE_HOME/briefs/README.template.md" \
                   "briefs/README.template.md"
 
@@ -429,14 +429,17 @@ fi
 # never written, and no summary saying so.
 
 echo ""
-echo "Checking templates..."
+echo "Checking install sources..."
 
 MISSING_TEMPLATES=()
 for tpl in \
   "templates/process-rules.md" \
   "templates/.claude/settings.local.json" \
-  "templates/docs/briefs/README.md" \
-  "templates/docs/briefs/_drafts/README.md"; do
+  "docs/briefs/README.md" \
+  "docs/briefs/_drafts/README.md" \
+  "docs/contracts/README.md" \
+  "docs/contracts/v1.md" \
+  "tools/validate-briefs.sh"; do
   if [[ ! -f "$SCRIPT_DIR/$tpl" ]]; then
     echo "  [✗] $tpl — missing"
     MISSING_TEMPLATES+=("$tpl")
@@ -465,7 +468,7 @@ if [[ ${#MISSING_TEMPLATES[@]} -gt 0 ]]; then
   exit 1
 fi
 
-echo "  [✓] all templates present"
+echo "  [✓] all install sources present"
 
 # ── Step 3: Target confirmation ───────────────────────────────────────────────
 
@@ -491,8 +494,10 @@ echo "Agent host:       $HOST"
 echo ""
 echo "This will create or update:"
 echo "  $TARGET_DIR/docs/briefs/        (brief/ledger structure)"
+echo "  $TARGET_DIR/docs/contracts/     (Contract v1 — the briefs convention)"
 echo "  $TARGET_DIR/docs/chronicles/    (generated chronicles)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
+echo "  $TARGET_DIR/tools/              (validate-briefs.sh — the check v1 names)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
@@ -505,9 +510,9 @@ fi
 echo "  $TARGET_DIR/$RULES_FILE           (project architecture stub — if absent, never replaced)"
 if [[ "$FORCE" == true ]]; then
   echo ""
-  echo "--force is on. Existing skills, process rules, brief READMEs, and settings will be"
-  echo "replaced with this checkout. $RULES_FILE, numbered briefs, ledgers, chronicles, and"
-  echo "the install log are not touched."
+  echo "--force is on. Existing skills, process rules, brief READMEs, the Contract, the"
+  echo "validator, and settings will be replaced with this checkout. $RULES_FILE, numbered"
+  echo "briefs, ledgers, chronicles, and the install log are not touched."
 fi
 echo ""
 
@@ -526,8 +531,10 @@ echo ""
 # ── Step 4: Scaffold docs structure ──────────────────────────────────────────
 
 SCAFFOLD_DIRS="$TARGET_DIR/docs/briefs/_drafts
+$TARGET_DIR/docs/contracts
 $TARGET_DIR/docs/chronicles
 $TARGET_DIR/docs/install-log
+$TARGET_DIR/tools
 $TARGET_DIR/$SKILLS_DST_REL"
 if [[ "$HOST" == "claude" ]]; then
   SCAFFOLD_DIRS="$SCAFFOLD_DIRS
@@ -546,11 +553,35 @@ while IFS= read -r dir; do
   fi
 done <<< "$SCAFFOLD_DIRS"
 
-# Copy brief READMEs. Default skips if present; --force replaces. Numbered brief
-# folders are never written here, force or not.
-for src_rel in "docs/briefs/README.md" "docs/briefs/_drafts/README.md"; do
-  place_file "$SCRIPT_DIR/templates/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
+# Copy the briefs docs and the Contract. Default skips if present; --force replaces.
+# Numbered brief folders are never written here, force or not.
+#
+# These ship from this repository's own docs/ rather than from a template copy. A
+# second copy under templates/ was hand-synced against these files and had already
+# diverged, which is the drift the Contract was extracted to end. The files a target
+# receives are now the files this repository lives by.
+for src_rel in \
+  "docs/briefs/README.md" \
+  "docs/briefs/_drafts/README.md" \
+  "docs/contracts/README.md" \
+  "docs/contracts/v1.md"; do
+  place_file "$SCRIPT_DIR/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
 done
+
+# Every clause in Contract v1 names this script. Shipping the rules without it would
+# leave a `checked:` path resolving to nothing in the target, which claims a check
+# that is not there.
+VALIDATOR_DST="$TARGET_DIR/tools/validate-briefs.sh"
+if [[ -f "$VALIDATOR_DST" ]]; then
+  VALIDATOR_IS_NEW=false
+else
+  VALIDATOR_IS_NEW=true
+fi
+place_file "$SCRIPT_DIR/tools/validate-briefs.sh" "$VALIDATOR_DST" "tools/validate-briefs.sh"
+# cp keeps an existing destination's mode, so set the bit only on a copy this run wrote.
+if [[ "$VALIDATOR_IS_NEW" == true || "$FORCE" == true ]]; then
+  chmod +x "$VALIDATOR_DST"
+fi
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
 #

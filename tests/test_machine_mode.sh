@@ -9,7 +9,7 @@ test_machine_links_the_personal_agreement_and_brief_template() {
   assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" \
                     "$REPO_ROOT/personal/CLAUDE.md"
   assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" \
-                    "$REPO_ROOT/templates/docs/briefs/README.md"
+                    "$REPO_ROOT/docs/briefs/README.md"
 }
 
 # One link per process skill, not one for a whole directory: the single source tree

@@ -73,3 +73,21 @@ The rules this layout must satisfy live in **[Contract v1](../contracts/v1.md)**
 place to read them and one place to change them.
 
 This file explains the convention. The Contract states it.
+
+## Known limitation — writers outside the pipeline
+
+`/create-brief` is the single point of serial assignment, but nothing *enforces* that it
+is the only writer. Any script, installer, or agent that creates a `NNNN-slug/` folder
+directly bypasses both the max+1 allocation and the collision guard.
+
+Not hypothetical: this toolkit's own installer did exactly this until 2026-08-21. It
+hardcoded `docs/briefs/0001-bootstrap/` and checked whether *that folder* existed rather
+than whether *serial `0001` was free*, so every install into a repo that already had
+briefs wrote a duplicate `#0001` — deterministically, not as a race. One project carried
+the duplicate for six weeks. The fix was to stop writing briefs from the installer at
+all: install records are an append-only log, not a unit of work.
+
+If you automate anything that files briefs, route it through `/create-brief`.
+
+The other known boundary, concurrent filing, is recorded in the Contract beside the
+clause it threatens.
