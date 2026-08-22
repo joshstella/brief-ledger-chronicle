@@ -18,6 +18,50 @@ test_project_creates_the_expected_tree() {
   assert_file "$TARGET/docs/briefs/_drafts/README.md"
 }
 
+# The installer scaffolds docs/chronicles/, and the chronicle skill forbids committing what
+# lands there. Scaffolding the directory without the ignore rule hands every project a
+# generated file that git immediately offers to commit — the drift the skill warns about.
+test_project_ignores_the_chronicles_output_dir() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/.gitignore"
+  assert_contains "docs/chronicles/" "$TARGET/.gitignore"
+}
+
+# This is the only file the installer writes that it does not own, so append-never-rewrite
+# is the whole contract. A project's existing rules must survive untouched.
+test_project_appends_to_an_existing_gitignore() {
+  printf 'node_modules/\n*.log\n' > "$TARGET/.gitignore"
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_contains "node_modules/" "$TARGET/.gitignore"
+  assert_contains "*.log" "$TARGET/.gitignore"
+  assert_contains "docs/chronicles/" "$TARGET/.gitignore"
+}
+
+# Appending on every run would grow the file without bound. The guard is a match on the
+# exact rule, so a second install must add nothing.
+test_project_gitignore_rule_is_not_duplicated() {
+  run_install y --target "$TARGET"
+  run_install y --target "$TARGET"
+  assert_status 0
+  local n
+  n=$(grep -cxF 'docs/chronicles/' "$TARGET/.gitignore")
+  assert_count 1 "$n" "docs/chronicles/ rules in .gitignore after two installs"
+  assert_out "docs/chronicles/ already ignored"
+}
+
+# A project that already ignores the directory its own way is left completely alone —
+# no trailing newline, no comment, no reformatting of a file the installer does not own.
+test_project_leaves_a_gitignore_that_already_ignores_chronicles() {
+  printf 'docs/chronicles/\n' > "$TARGET/.gitignore"
+  local before
+  before=$(cat "$TARGET/.gitignore")
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_count "$before" "$(cat "$TARGET/.gitignore")" ".gitignore contents unchanged"
+}
+
 # Every skill in the source must land somewhere. On Claude Code the six process skills
 # become commands and the rest stay skills, so the two destinations together must account
 # for the whole source tree — a skill silently dropped by the host split would otherwise

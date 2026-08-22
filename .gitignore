@@ -1,5 +1,11 @@
 .DS_Store
 
+# A chronicle is a rendering of the briefs, ledgers and git history, not a row in that
+# record. Committing one beside its own sources guarantees it drifts against them, so the
+# output directory is scaffolded but never tracked. install.sh writes this same rule into
+# every target it scaffolds a chronicles directory for.
+docs/chronicles/
+
 # Your global ignore (~/.config/git/ignore) carries `**/.claude/settings.local.json`.
 # That is right for a project — a local permission allowlist is not shared state — but
 # wrong here: this repo *ships* that file as the template install.sh copies out. A repo

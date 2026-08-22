@@ -553,6 +553,31 @@ while IFS= read -r dir; do
   fi
 done <<< "$SCAFFOLD_DIRS"
 
+# A chronicle is a rendering of the briefs, ledgers and git history — not a row in that
+# record. Committed beside its own sources it drifts against them, and the `chronicle`
+# skill says never to commit one. Since this installer scaffolds the output directory, the
+# rule that keeps it untracked has to travel with it; otherwise the first chronicle a
+# project generates turns up in `git status` asking to be committed.
+#
+# This is the one place the installer writes to a file it does not own, so it appends and
+# never rewrites: an existing .gitignore keeps everything it had.
+GITIGNORE_DST="$TARGET_DIR/.gitignore"
+if [[ -f "$GITIGNORE_DST" ]] && grep -qxF 'docs/chronicles/' "$GITIGNORE_DST"; then
+  log_skipped_as ".gitignore" "docs/chronicles/ already ignored"
+else
+  if [[ -f "$GITIGNORE_DST" ]]; then
+    printf '\n' >> "$GITIGNORE_DST"
+    GITIGNORE_LABEL=".gitignore (appended docs/chronicles/)"
+  else
+    GITIGNORE_LABEL=".gitignore"
+  fi
+  cat >> "$GITIGNORE_DST" <<'GITIGNORE_EOF'
+# Chronicles are generated from the brief record on demand, not committed to it.
+docs/chronicles/
+GITIGNORE_EOF
+  log_created "$GITIGNORE_LABEL"
+fi
+
 # Copy the briefs docs and the Contract. Default skips if present; --force replaces.
 # Numbered brief folders are never written here, force or not.
 #
