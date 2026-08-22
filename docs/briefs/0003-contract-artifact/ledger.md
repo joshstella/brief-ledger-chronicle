@@ -8,9 +8,9 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — extract the contract` | in-progress | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
-| `phase 2 — validator` | pending | `tests/test_briefs.sh` implementing clauses 1–8, each check citing its clause id. Update the Contract's checked-set sentence to name the path. |
-| `phase 3 — report unchecked clauses` | pending | **Demoted from a gate to a report.** The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
+| `phase 1 — extract the contract` | complete (PR #9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
+| `phase 2 — validator` | complete | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
+| `phase 3 — report unchecked clauses` | pending, partly done | **Demoted from a gate to a report.** Phase 2 landed the link half: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. What remains is the report over clauses *without* checks, which is currently empty and will stay empty until v1 grows a clause. | The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
 | `phase 4 — de-duplicate the readmes` | pending | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md` (93 vs 112 lines, already diverged). Must not break `install.sh:391`. |
 | ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
@@ -105,6 +105,52 @@ violation — no rule bound this repo at the time, and none binds it now.
 - The brief's own parked tension (Manifesto says the Contract is *unowed*; the evidence suggests *unbuilt*) is deliberately not resolved here. Revisit after phase 3, when we know what the extraction actually taught.
 
 ## Big decisions
+
+**A check may not be a prompt.** 2026-08-21. Asked directly during phase 2 whether the
+validator could be a `validate-contract` skill.
+
+It could be written. It must not be cited. The Contract's `checked: <path>` field means a
+program decides the clause, which is the whole reason the brief asks for the path to be
+named. Point that path at a skill and the strongest claim the document makes reduces to *a
+language model read the briefs and thought they looked fine* — non-deterministic,
+unauditable, and a different answer on a different day. That is overclaiming a validator's
+coverage, which the brief names as the defect class the Contract exists to prevent, committed
+by the artifact built to prevent it.
+
+Open decision 4 already said no skill until writing one by hand hurts. This is the sharper
+form of the same answer and it is not about earliness: **no amount of pain makes a prompt a
+check.** A skill could still be useful for *authoring* a Contract. It can never appear after
+`checked:`.
+
+The question did surface a real generic validator, recorded so it is not lost. Checking a
+Contract's own hygiene — every clause carries an id, a tag, a scope and a checking state; ids
+are unique and never reused; every named check resolves — is fully mechanical and needs no
+model. That is phase 3's territory and the piece that would generalise to a second Contract.
+Phase 2 built the last of those three because phase 2 is what created the first named path.
+
+**A validator run only against a compliant tree proves nothing.** 2026-08-21.
+
+`tools/validate-briefs.sh` goes green against `docs/briefs/` and would go green identically
+with every check replaced by `return 0`. So the self-check is not the test. Each clause has a
+fixture that violates it, and the suite was verified by neutering the `defect` reporter,
+which failed eleven tests. Recorded because this is the failure `review-pr` calls
+passing-but-hollow, and a validator is the one place where shipping it would be worst: the
+document would then name a check that exists and does nothing, which is more misleading than
+naming no check at all.
+
+**The validator is a standalone script, not a test function.** 2026-08-21. The ledger planned
+`tests/test_briefs.sh` alone; the brief separately called for a portable script with CI as a
+thin trigger. The brief won, for a reason the plan could not see: v1 labels every clause scope
+`both`, and a check that cannot leave this repository makes that label harder to defend. As a
+script taking a briefs directory, shipping it in phase 4 is an `install.sh` line rather than a
+rewrite.
+
+**What phase 2 could not honestly claim.** The check does not ship. `install.sh` places no
+validator, so consumers hold the rules and not the enforcement. Rather than leave that
+inferable, `v1.md` states it: the clauses are scope `both`, the enforcement is `repo` only.
+This is the third time this brief has found the same shape — a rule whose reach is wider than
+its mechanism — and the second time the fix was to say so in the document rather than to
+narrow the rule.
 
 **Open decision 1 — where the Contract lives — resolved by drafting it first.** 2026-08-21.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test runner for install.sh.
+# Test runner for install.sh and the Contract validator.
 #
 # Usage: bash tests/run.sh [name-filter]
 #
@@ -35,8 +35,8 @@ SKIP=0
 FAILED_NAMES=""
 
 echo ""
-echo "install.sh test suite"
-echo "====================="
+echo "brief-ledger-chronicle test suite"
+echo "================================="
 echo ""
 
 for t in $(declare -F | awk '{print $3}' | grep '^test_' | sort); do
