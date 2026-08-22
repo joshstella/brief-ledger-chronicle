@@ -1,4 +1,4 @@
-# Keep the Art in Programming
+# Keep the Art and Play in Programming
 
 *Install it into your project and be creative — the tools will document what happened.
 Have fun.*
@@ -121,6 +121,54 @@ first, and then treated reality's disagreement as an error to be corrected. Here
 writing runs *alongside* the playing, and reality's disagreement is the most valuable thing
 in the file.
 
+## Homo Ludens
+
+The argument so far is that the play comes first and the specification is written from what
+the play taught. That invites an obvious objection: if play is the point, what are all these
+rules doing here — the invariants, the Contract, the review gate?
+
+In 1938 the Dutch historian Johan Huizinga published *Homo Ludens*, a study of the
+play-element in culture. His claim was not that people need recreation. It was that play is
+older than culture and that culture grows out of it — law, poetry, war, and philosophy each
+begin in a play-form and keep that shape long afterwards. *Homo Ludens*, man the player,
+set beside *Homo Faber*, man the maker.
+
+What he found at the centre of play was not freedom. It was order:
+
+> Inside the play-ground an absolute and peculiar order reigns. [...] It creates order, is
+> order. Into an imperfect world and into the confusion of life it brings a temporary, a
+> limited perfection.
+>
+> — Johan Huizinga, *Homo Ludens*
+
+Every game is a bounded space with rules that hold inside it. Huizinga's examples run from
+the tennis court to the temple to the court of justice — all of them grounds marked off
+beforehand, where for a while different rules apply. Remove the boundary and the play does
+not get freer. It stops. A game without rules is not an unconstrained game; it is not a
+game.
+
+He drew one further distinction worth keeping. The cheat breaks the rules while still
+pretending they hold, and so leaves the game standing. The spoil-sport denies the rules
+altogether, and in walking off the court destroys the world the other players were in. Of
+the two, the spoil-sport does the greater damage.
+
+**So: play requires rules, and these are the rules.**
+
+A brief that is capable of being wrong. A ledger that records what the play actually taught.
+A serial assigned in exactly one place. A Contract that states what a consumer may rely on,
+versioned, written afterwards. A short list of invariants with a checker standing behind
+them. That is the court, marked off beforehand — and it is why this document can argue
+against ceremony at length and then hand you a validator without contradicting itself.
+Ceremony is rules that do not hold: steps performed for an audience that is not there. Rules
+that hold are what make the playing possible.
+
+The test for any rule here follows from that, and it is the same test the rest of this
+document keeps arriving at from other directions: **a rule earns its place by making the
+game better to play.** One that makes the work less worth doing has failed on its own terms,
+however defensible it looks written down. This is not licence to ignore the rules — inside
+the court they hold absolutely, which is the whole point — but it is the standard by which a
+rule gets adopted, kept, or dropped.
+
 ## Rules come in two kinds
 
 Not every rule belongs to the same category, and knowing which kind you are writing is
@@ -201,11 +249,22 @@ contract, because it is believed.** Whatever ties it to the code therefore has t
 structural. Anything resting on discipline will fail the way hand-synced documents have
 always failed.
 
-And this one is not built yet — which is the rule working, not an omission. Nobody depends
-on this repository yet, so no Contract is owed yet. When someone is first told they can
-count on something here, that is when the first version gets written, out of the record
-that will by then exist. Shipping it before that would be the specification-first move this
-whole document argues against.
+This one was unbuilt for a long time, and that was the rule working rather than an omission:
+nobody depended on the repository, so no Contract was owed. It is built now, and the trigger
+fired exactly where the rule said it would. The installer puts the briefs convention into
+other people's projects — which is the act of telling someone they can count on it. Version 1
+states that convention as eight clauses with stable ids. It was extracted from conventions
+already in force and already recorded, not invented ahead of them.
+
+The structural tie that the paragraph above demands is `tools/validate-briefs.sh`. Every
+clause in version 1 names it. It runs in CI against this repository's own briefs on every
+change, so the Contract cannot drift from the thing it describes without the build going red.
+And it travels with the Contract into the projects the Contract binds, so a consumer can
+check the promise rather than take it on trust.
+
+Everything else here remains uncontracted: the installer's behaviour, the skills, the shape
+of a ledger. No promise has been made about them, so none is owed, and publishing one before
+that would be the specification-first move this whole document argues against.
 
 ## Why codebases are full of surprises
 

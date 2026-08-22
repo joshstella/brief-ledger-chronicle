@@ -22,3 +22,9 @@ jobs:
 
       - name: Run tests
         run: bash tests/run.sh
+
+      # tests/run.sh proves the validator behaves correctly against fixtures. It does not
+      # prove this repository obeys the Contract it publishes — a distinct claim, and the
+      # one a consumer is entitled to assume. Exits 1 on any [defect].
+      - name: Check this repo against Contract v1
+        run: bash tools/validate-briefs.sh docs/briefs
