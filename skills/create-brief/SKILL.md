@@ -31,16 +31,19 @@ and get their identity here, at filing time, not while being written.
 1. **Compute the next serial.** List `docs/briefs/`; from each entry **whose name begins
    with four digits**, parse `NNNN`; take the max and add 1; zero-pad to four. Entries
    without a leading four-digit prefix (`_drafts/`, `README`, etc.) are ignored. If there
-   are none, start at `0001`.
+   are none, start at `0001`. Enacts `BRIEFS-8` (contiguity).
 2. **Collision guard.** If `docs/briefs/NNNN-*` already exists, increment until free —
-   defensive against a stale read. Assignment must reflect the directory *now*.
+   defensive against a stale read. Assignment must reflect the directory *now*. Enacts
+   `BRIEFS-3` (unique serials); its race is the known limitation recorded in the Contract.
 3. **Resolve the slug.** By the precedence above. Strip any leading `NNNN-` from a
-   derived slug (in case the draft filename was pre-numbered). Validate `^[a-z0-9-]+$` —
+   derived slug (in case the draft filename was pre-numbered). Validate `^[a-z0-9-]+$`
+   per `BRIEFS-2` —
    reject otherwise. If the slug came from the H1 and exceeds ~40 chars, stop and ask for
    an explicit slug. If the slug already names an existing brief under a different
    serial, warn and surface it, then proceed.
 4. **Stamp and file.** Create `docs/briefs/NNNN-slug/` and write `brief.md` from the
-   draft. Produce **exactly one** identity line directly under the H1, prepending the
+   draft (`BRIEFS-4`). Produce **exactly one** identity line directly under the H1 in the
+   shape `BRIEFS-5` requires, prepending the
    serial and **carrying the draft's provenance forward unchanged**:
    `**Serial:** #NNNN · **Created:** <from draft> · **Author:** <from draft> · **Depends on:** <deps>`
    (append `· **Jira:** …` if the draft carried it.) `<deps>` comes from the draft's
@@ -56,6 +59,10 @@ and get their identity here, at filing time, not while being written.
    that to `commit-push-pr` (which carries `#NNNN` into the PR title).
 
 ## Rules
+
+The structural rules this command enacts are stated in `docs/contracts/v1.md`, clauses
+`BRIEFS-1` to `BRIEFS-8`. The steps above cite them rather than restate them, so the
+procedure cannot drift from the rule it implements.
 
 - **One brief per invocation.** Serial assignment re-reads `docs/briefs/` each run and
   files one placement; this is what keeps numbering atomic and collision-free.

@@ -70,7 +70,7 @@ external keys stay external; they reference each other, they don't merge.
 
 Machine-decidable rules a validator can enforce (a portable script; CI is a thin trigger
 that runs it — kept platform-independent so it travels to non-GitHub environments).
-Tagged `[defect]` (hard violation) or `[advisory]` (flag for human review).
+Tagged `[defect]` (hard violation) or `[judgment]` (surfaced for a human to decide).
 
 1. `[defect]` Every entry is either a `NNNN-slug/` folder or a known non-numbered entry
    (`_drafts/`, `README.md`).
@@ -81,7 +81,7 @@ Tagged `[defect]` (hard violation) or `[advisory]` (flag for human review).
    folder, with `Created` (ISO-8601 UTC), `Author` (email-shaped), and `Depends on`.
 6. `[defect]` Every `Depends on: #NNNN` references an existing serial — no dangling deps.
 7. `[defect]` Nothing in `_drafts/` has a four-digit-prefixed name.
-8. `[advisory]` Serials are contiguous from `0001` — a gap is flagged, not blocked (a
+8. `[judgment]` Serials are contiguous from `0001` — a gap is surfaced, not blocked (a
    removed brief legitimately retires its number).
 
 ## Known limitations
