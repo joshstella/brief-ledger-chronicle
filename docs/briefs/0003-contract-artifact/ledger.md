@@ -9,9 +9,9 @@
 | id | status | what it does |
 |---|---|---|
 | `phase 1 — extract the contract` | complete (PR #9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
-| `phase 2 — validator` | complete | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
-| `phase 3 — report unchecked clauses` | pending, partly done | **Demoted from a gate to a report.** Phase 2 landed the link half: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. What remains is the report over clauses *without* checks, which is currently empty and will stay empty until v1 grows a clause. | The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
-| `phase 4 — de-duplicate the readmes` | pending | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md` (93 vs 112 lines, already diverged). Must not break `install.sh:391`. |
+| `phase 2 — validator` | complete (PR #10) | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
+| ~~`phase 3 — report unchecked clauses`~~ | **folded into phase 2** — the report has nothing to report. Every v1 clause names a check, and `briefs_every_named_check_path_resolves` already fails on a check that does not exist. A report over the empty set does not earn a review. It returns when v1 grows a clause without one. | **Demoted from a gate to a report.** Phase 2 landed the link half: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. What remains is the report over clauses *without* checks, which is currently empty and will stay empty until v1 grows a clause. | The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
+| `phase 4 — de-duplicate the readmes` | in-progress — `feature/contract-readme-dedupe` | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
 | ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
@@ -78,6 +78,10 @@
    phase 4 inherits a known state rather than a discovery: consumers do not receive the
    Contract, and whether they should is phase 4's decision, not a detail.
 
+   **Resolved in phase 4.** Consumers receive the Contract and the validator. The template
+   copy is deleted, so the restatement that carried the dead tag no longer exists. See Big
+   decisions for why linking alone could not work.
+
 ## Branches
 
 None cut yet. Brief, ledger, Manifesto edits and the `wip-visibility` draft land first as one
@@ -105,6 +109,49 @@ violation — no rule bound this repo at the time, and none binds it now.
 - The brief's own parked tension (Manifesto says the Contract is *unowed*; the evidence suggests *unbuilt*) is deliberately not resolved here. Revisit after phase 3, when we know what the extraction actually taught.
 
 ## Big decisions
+
+**Phase 4 — the copy could not end without shipping the Contract.** 2026-08-21.
+
+The plan was to cut the template README's restatement down to the same Contract link this
+repository uses, which would have made the two files identical and the copy removable. That
+does not work, and finding out why changed the phase.
+
+The link is relative. `install.sh` placed no `docs/contracts/`, so the link resolved here and
+dangled in every target. Worse, `v1.md` carried sentences that are false outside this
+repository: that the rules were extracted from `docs/briefs/README.md`, and that
+`tests/test_briefs.sh` runs them on every push. Shipping that file verbatim would ship a
+document making claims about a tree it is not in. That is the overclaim this brief names as
+the defect class, committed by the artifact built to prevent it.
+
+So the fork was real: ship the Contract properly, or narrow scope from `both` to `repo` and
+tell consumers to write their own. We ship. `install.sh` now places `docs/contracts/` and
+`tools/validate-briefs.sh` in every target, and the template copy is deleted — a target
+receives the files this repository lives by, not copies of them.
+
+**Scope `both` is now true in both halves.** Phase 2 recorded that the rules ship and the
+enforcement does not. That sentence is retired rather than restated: the check ships with the
+rules, so a `checked:` path resolves in the target. `ship_the_installed_contract_names_a_check_that_exists`
+is the consumer-side mirror of the test that guards this repository.
+
+**Making the prose true anywhere cost three sentences.** The extraction-provenance paragraph
+left `v1.md` — it is a fact about this repository's history, and it already lives in this
+ledger and the brief. Two anecdotes in `docs/contracts/README.md` named paths that do not
+exist in a target (`templates/process-rules.md`, `skills/review-pr/SKILL.md`); both now state
+the lesson without the local path. A document that ships has to be readable from where it
+lands, which is a constraint the phase-1 version never had to meet.
+
+**A second instance of the same hand-sync, found while doing this.** The two `_drafts`
+READMEs were byte-identical, and the two briefs READMEs shared 68 byte-identical lines. The
+ledger recorded one copy; there were two. Both are gone by the same mechanism.
+
+**A gap this phase did not close, recorded rather than discovered later.** Machine mode links
+only the briefs README into `$CLAUDE_HOME`, and `init-briefs` copies that file into a repo
+adopting the convention. That README now links the Contract. A repository set up by
+`init-briefs` alone, with no project-mode install, therefore gets a briefs README whose
+Contract link resolves to nothing. Project mode is unaffected. The fix is either to link
+`docs/contracts/` at machine level and teach `init-briefs` to copy it, or to accept that
+`init-briefs` is only ever run inside a project the installer has already touched. Not
+decided here.
 
 **A check may not be a prompt.** 2026-08-21. Asked directly during phase 2 whether the
 validator could be a `validate-contract` skill.

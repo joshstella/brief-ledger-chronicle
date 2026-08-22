@@ -67,8 +67,9 @@ run_install_from() {
 # it at its own checkout. Pointing the real repo at itself would mean that if the
 # self-install guard ever regressed, the test would write into the working tree
 # before failing — the test would report the bug by causing damage. The copy keeps
-# the blast radius inside $TMP. Only what install.sh reads is copied; .git and docs
-# are not needed and would dominate the cost.
+# the blast radius inside $TMP. The self-install guard fires before the source
+# preflight, so the docs/ and tools/ sources a real install reads are never reached
+# and are not copied — .git and docs would dominate the cost.
 clone_installer_to_tmp() {
   local dest="$TMP/src"
   mkdir -p "$dest"

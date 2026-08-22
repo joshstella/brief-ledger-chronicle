@@ -50,9 +50,9 @@ citation.
 | `[defect]` | A hard violation. |
 | `[judgment]` | Surfaced for a human to decide. Never blocks. |
 
-`[judgment]` was called `[advisory]` in earlier prose. One name survives because
-`skills/review-pr/SKILL.md` already reads `[judgment]` from documents in other repositories,
-and renaming the read tag would have failed silently there.
+`[judgment]` was called `[advisory]` in earlier prose. One name survives because the
+`review-pr` skill already reads `[judgment]` out of design documents, and renaming the read
+tag would have failed silently there.
 
 ### Scope — who the clause binds
 
@@ -63,8 +63,8 @@ and renaming the read tag would have failed silently there.
 | `both` | Binds here and ships. |
 
 Scope is part of the clause, not a filing detail. A rule whose scope is unstated claims more
-than it means. This repository learned that from `templates/process-rules.md`, which reads as
-governance, governs nothing here, and was enforced anyway by a reader who had studied it.
+than it means. The lesson came from a process-rules file that read as governance, governed
+nothing where it sat, and was enforced anyway by a reader who had already studied it twice.
 
 ### Checking — three states, kept distinct
 
