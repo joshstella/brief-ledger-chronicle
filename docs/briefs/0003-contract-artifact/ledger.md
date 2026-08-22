@@ -1,7 +1,7 @@
 # Ledger — #0003 A fourth artifact: the Contract
 
 **Brief:** `docs/briefs/0003-contract-artifact/brief.md`
-**Status:** in-progress
+**Status:** complete
 **Date:** 2026-08-21
 
 ## Phase sequence
@@ -11,7 +11,7 @@
 | `phase 1 — extract the contract` | complete (PR #9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
 | `phase 2 — validator` | complete (PR #10) | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
 | ~~`phase 3 — report unchecked clauses`~~ | **folded into phase 2** — the report has nothing to report. Every v1 clause names a check, and `briefs_every_named_check_path_resolves` already fails on a check that does not exist. A report over the empty set does not earn a review. It returns when v1 grows a clause without one. | **Demoted from a gate to a report.** Phase 2 landed the link half: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. What remains is the report over clauses *without* checks, which is currently empty and will stay empty until v1 grows a clause. | The Contract lists which clauses have checks and which do not. It never requires one. Originally specified as a meta-check blocking any clause without a test; that is a cost at the moment of action and would stop you adding a rule until you had written its test. |
-| `phase 4 — de-duplicate the readmes` | in-progress — `feature/contract-readme-dedupe` | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
+| `phase 4 — de-duplicate the readmes` | complete (PR #11) | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
 | ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
@@ -81,12 +81,35 @@
    **Resolved in phase 4.** Consumers receive the Contract and the validator. The template
    copy is deleted, so the restatement that carried the dead tag no longer exists. See Big
    decisions for why linking alone could not work.
+8. **Shipping the validator claims `tools/` in every consumer repository.** Contract v1 states
+   its check as `tools/validate-briefs.sh`, so the file must land at that path in a target for
+   the `checked:` string to resolve. The installer therefore creates a top-level `tools/` in
+   every project it touches. A project that already uses `tools/` for its own purpose gets a
+   process script mixed into it. The alternative is to move the validator beside the Contract
+   it checks, in `docs/contracts/`, and change the `checked:` field to match — which would keep
+   the whole installed footprint under `docs/` apart from the host skill directories. Raised in
+   the phase 4 review and deliberately not decided there, because it changes a published clause
+   and belongs with the version-2 question rather than with a de-duplication phase.
+9. **The Contract's own internal links are unverified.** `tests/test_contract_ship.sh` proves
+   every relative link in the shipped `docs/briefs/README.md` resolves in the target, but its
+   pattern matches only `../` and `./` forms. The links between `docs/contracts/README.md` and
+   `docs/contracts/v1.md` are same-directory, so no test covers them. They resolve today
+   because the installer places both files. The gap is in coverage, not in behaviour, and it
+   will bite when a third file joins that directory.
 
 ## Branches
 
-None cut yet. Brief, ledger, Manifesto edits and the `wip-visibility` draft land first as one
-PR off `docs/contract-artifact` via `commit-push-pr`; `phase 1` branches from the updated
-`main` as `feature/contract-artifact-extract`.
+Brief, ledger, Manifesto edits and the `wip-visibility` draft landed first as one PR off
+`docs/contract-artifact`. Each phase then branched from the updated `main` and merged through
+`commit-push-pr`:
+
+| branch | phase | PR |
+|---|---|---|
+| `feature/contract-artifact-extract` | phase 1 | #9 |
+| `feature/contract-validator` | phase 2 | #10 |
+| `feature/contract-readme-dedupe` | phase 4 | #11 |
+
+All three are merged and deleted.
 
 `start-brief` step 6 says commit the ledger straight to `main`. This was first recorded as a
 conflict with `templates/process-rules.md`, which says `commit-push-pr` is the only path to

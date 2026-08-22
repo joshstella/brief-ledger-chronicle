@@ -510,9 +510,9 @@ fi
 echo "  $TARGET_DIR/$RULES_FILE           (project architecture stub — if absent, never replaced)"
 if [[ "$FORCE" == true ]]; then
   echo ""
-  echo "--force is on. Existing skills, process rules, brief READMEs, and settings will be"
-  echo "replaced with this checkout. $RULES_FILE, numbered briefs, ledgers, chronicles, and"
-  echo "the install log are not touched."
+  echo "--force is on. Existing skills, process rules, brief READMEs, the Contract, the"
+  echo "validator, and settings will be replaced with this checkout. $RULES_FILE, numbered"
+  echo "briefs, ledgers, chronicles, and the install log are not touched."
 fi
 echo ""
 

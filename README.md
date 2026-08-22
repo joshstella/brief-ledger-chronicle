@@ -77,8 +77,12 @@ places, which is what makes a single source possible.
 | `installer-builder` | Package a file set into a distributable `.tgz` |
 
 **Templates** — the process-rules contract (installed as a host rules file), a stub
-`CLAUDE.md` / `AGENTS.md` written only when absent, the brief-convention README, and a
-starter permission allowlist.
+`CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
+
+**Shipped documents** — this repository's own `docs/briefs/README.md`, the briefs Contract
+(`docs/contracts/`), and the validator that Contract names (`tools/validate-briefs.sh`).
+Copied verbatim rather than templated, so a target reads and checks the same convention
+this repository does.
 
 ## How the process works
 
@@ -98,7 +102,8 @@ written from that record afterwards. See the [Manifesto](Manifesto.md).
 
 The installer never files a brief. `create-brief` is the single point of serial assignment,
 so anything else writing a `NNNN-slug/` folder would bypass both its allocation and its
-collision guard — see "Known limitations" in `docs/briefs/README.md`.
+collision guard — see "Known limitation — writers outside the pipeline" in
+`docs/briefs/README.md`.
 
 See `docs/briefs/README.md` for the full convention and its structural invariants.
 
