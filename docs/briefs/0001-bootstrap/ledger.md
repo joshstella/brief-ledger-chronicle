@@ -1,7 +1,11 @@
 # Ledger — #0001 Bootstrap
+`blc/1 #0001 done(commit 92a7168)`
 
-**Status:** completed
+**Status:** done (commit 92a7168)
 **Date:** 2026-08-02
+
+> No phase table. This ledger predates the phase convention and records a single action;
+> the status line carries no phase entries because there are none to carry.
 
 ## Record
 

@@ -1,4 +1,5 @@
 # Ledger — #0004 The ledger is an archive and a bad inbox
+`blc/1 #0004 in-progress 1:in-progress(brief/0004-phase-1-limitation-entry,PR#15) 2:in-progress(brief/0004-phase-2-status-vocabulary) 3:pending`
 
 **Brief:** `docs/briefs/0004-deferral-surfacing/brief.md`
 **Status:** in-progress
@@ -9,7 +10,7 @@
 | id | status | what it does |
 |---|---|---|
 | `phase 1 — the limitation entry` | in-progress (`brief/0004-phase-1-limitation-entry`, PR#15) | Add the third entry to Known limitations in `docs/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
-| `phase 2 — reconcile ledger status` | pending | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
+| `phase 2 — reconcile ledger status` | in-progress (`brief/0004-phase-2-status-vocabulary`) | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
 | `phase 3 — the open-briefs query` | pending | Answer "which briefs are open?". Interrogate each `in-progress` branch — does it exist, is there a PR, how far has `main` moved — and report any ledger whose status line disagrees with its phase table. Reports; gates nothing. Shape depends on phase 2's vocabulary. |
 
 Scope was settled on 2026-08-24 by amending the brief — see Big decisions. Phases 2 and 3
@@ -52,10 +53,14 @@ Carried from the brief, with what each blocks.
    `pending` / `in-progress` / `done` / `skipped`; `skills/next-brief-phase/SKILL.md:38-40`
    moves a phase to `done`, the next to `in-progress`, and the ledger to `completed`.
 
-   So `**Status:** complete` on #0003 is a violation of a rule that exists, not a gap. And of
-   the four declared phase statuses only `pending` appears in any ledger — `done` is never
+   So `**Status:** complete` on #0003 was a violation of a rule that exists, not a gap. And of
+   the four declared phase statuses only `pending` appeared in any ledger — `done` was never
    used once, while practice invented `complete (PR #9)`, `proposed`, `dropped` and `folded
    into phase 2`.
+
+   **Resolved by phase 2 on 2026-08-24.** Every quotation above is now historical: all four
+   ledgers use the one vocabulary, and #0003 reads `done (PR #11)`. Left in the past tense
+   rather than deleted, because the evidence is what justified the change.
 
    The correction matters more than the defect. Four invented values are not sloppiness; they
    are evidence that the declared set was insufficient, and each names something the four
@@ -101,12 +106,27 @@ Carried from the brief, with what each blocks.
    a brief git has never seen; the honest answer is probably that untracked is its own
    finding, not an absence of one.
 
+7. **`start-brief` says to commit the ledger straight to `main`.** Found during phase 2 at
+   `skills/start-brief/SKILL.md:54`: "Commit this file to `main` immediately — before any
+   feature branch is cut". Practice opens a PR instead, including for this very brief twenty
+   minutes before the line was read. A third declared-and-ignored rule, and the same family
+   as the vocabulary and the branch-recording one. **Not fixed here** — it governs commit
+   routing rather than status, and phase 2 has no mandate for it.
+
+8. **Re-running `start-brief` on an existing ledger can clobber it.** `start-brief:26` stops
+   only when it finds status `in-progress`. A ledger sitting at `pending` — written, no phase
+   begun — is unguarded. Pre-existing, not caused by this phase: the old `initiated` had the
+   same hole. Unifying the vocabulary made it visible by putting both words in one state.
+   **Not fixed here.** It is a one-line guard, but it is a behaviour change, and smuggling
+   one into a vocabulary phase is what `review-pr` exists to catch.
+
 ## Branches
 
 | branch | carries | state |
 |---|---|---|
 | `brief/0004-deferral-surfacing` | the brief and this ledger; no phase work | merged, PR #14 |
 | `brief/0004-phase-1-limitation-entry` | phase 1, the Known limitations entry | open, PR #15 |
+| `brief/0004-phase-2-status-vocabulary` | phase 2, the vocabulary and the four ledgers | open; stacked on phase 1, rebase onto `main` when #15 lands |
 
 **This ledger uses the vocabulary the brief settles, ahead of phase 2 landing it elsewhere.**
 Deliberate. The states are decided in `brief.md`, and a ledger that argues for a vocabulary
@@ -119,6 +139,7 @@ This section is two thirds of the ledger, so it opens with its own contents. Ent
 file order, which is not chronological — later decisions were inserted beside the ones they
 revise, so that a superseded position and its correction read together.
 
+0. One vocabulary at both levels, and what phase 2 refused to fix
 1. A compressed status line, and why the redundancy is accepted
 2. The phase vocabulary, and the state that was missing
 3. Corrected within the hour: acknowledgement does not buy silence
@@ -129,6 +150,26 @@ revise, so that a superseded position and its correction read together.
 8. Two open decisions turned out to be one, and listing them apart hid the trade
 9. A 72-hour debounce, which is a different question from staleness
 10. The cadence signal is derived from git, not stored
+
+**One vocabulary at both levels, and what phase 2 refused to fix.** 2026-08-24.
+
+Reading the declaration sites turned up a second vocabulary nobody had mentioned. Brief level
+ran `initiated` → `in-progress` → `completed`, entirely separate from the phase-level set, so
+the terminal state had two spellings depending on which line of the ledger you read. Unified
+on the one set of five. `initiated` means precisely what `pending` means — a ledger exists, no
+phase has begun — so it was a synonym, not a distinction.
+
+**Branch-recording was already declared too.** `next-brief-phase:39` has said "record its
+branch" all along. That makes three declared-and-ignored rules found in one afternoon, and it
+means this brief's branch-naming decision is a re-declaration rather than an invention. Worth
+saying plainly, because the PR for #14 presents it as new.
+
+Two things were found and deliberately left alone, both recorded as complications 7 and 8:
+`start-brief:54` still says commit the ledger straight to `main` while practice opens a PR,
+and `start-brief:26` guards against clobbering only an `in-progress` ledger, not a `pending`
+one. The first is commit routing rather than status. The second is a one-line fix and a
+behaviour change, which is exactly the kind of thing that should not ride along inside a
+vocabulary phase.
 
 **A compressed status line, and why the redundancy is accepted.** 2026-08-24.
 
@@ -287,11 +328,11 @@ reconstruct one, and derivation would have to infer intent — a brief with ever
 might be complete, or might be waiting on something no commit records.
 
 The decision was easy. Acting on it turned up the real finding, recorded as a correction to
-complication 1: the vocabulary is not missing. It is declared across `start-brief` and
-`next-brief-phase`, and practice ignores it. `**Status:** complete` on #0003 breaks a stated
-rule. Only `pending` of the four declared phase statuses is used anywhere, `done` never
-appears, and four values were invented instead — `complete (PR #N)`, `proposed`, `dropped`,
-`folded into phase 2`.
+complication 1: the vocabulary was not missing. It was declared across `start-brief` and
+`next-brief-phase`, and practice ignored it. `**Status:** complete` on #0003 broke a stated
+rule. Only `pending` of the four declared phase statuses appeared anywhere, `done` never
+appeared, and four values were invented instead — `complete (PR #N)`, `proposed`, `dropped`,
+`folded into phase 2`. Phase 2 closed all of it on 2026-08-24; the past tense is deliberate.
 
 That reframes phase 2 from inventing a vocabulary to reconciling one, and shifts the burden:
 the invented values are the evidence, and the declared set is what has to justify itself.
