@@ -16,7 +16,7 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git 
 
 echo "# Chronicle source digest"
 echo
-echo "Repo origin: $(git log --reverse --format='%aI · %h · %s' 2>/dev/null | head -1)"
+echo "Repo origin: $(git log --format='%aI · %h · %s' 2>/dev/null | tail -1)"
 echo "Repo head:   $(git log -1 --format='%aI · %h · %s' 2>/dev/null)"
 echo "Total commits: $(git rev-list --count HEAD 2>/dev/null || echo '?')"
 if [ -n "$SINCE" ]; then
@@ -29,10 +29,13 @@ echo
 tmp=$(mktemp)
 for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
   [ -d "$d" ] || continue
-  fcd=$(git log --reverse --format='%aI' -- "$d" 2>/dev/null | head -1)
+  # `git log | head -1` takes SIGPIPE once git writes past the first line, which
+  # under `set -o pipefail` plus `set -e` kills this script mid-loop. tail consumes
+  # its whole input, so nothing is left writing into a closed pipe.
+  fcd=$(git log --format='%aI' -- "$d" 2>/dev/null | tail -1)
   # In incremental mode, skip briefs with no commits after the cutoff date.
   if [ -n "$SINCE" ]; then
-    recent=$(git log --since="$SINCE" --format='%aI' -- "$d" 2>/dev/null | head -1)
+    recent=$(git log --since="$SINCE" -1 --format='%aI' -- "$d" 2>/dev/null)
     [ -n "$recent" ] || continue
   fi
   printf '%s\t%s\n' "${fcd:-0000-uncommitted}" "$d" >> "$tmp"
@@ -65,7 +68,7 @@ if [ -d "$BRIEFS_DIR/_drafts" ]; then
     base=$(basename "$f"); [ "$base" = "README.md" ] && continue
     # In incremental mode, only surface drafts touched after the cutoff.
     if [ -n "$SINCE" ]; then
-      recent=$(git log --since="$SINCE" --format='%aI' -- "$f" 2>/dev/null | head -1)
+      recent=$(git log --since="$SINCE" -1 --format='%aI' -- "$f" 2>/dev/null)
       [ -n "$recent" ] || continue
     fi
     echo "- ${base}: $(grep -m1 '^# ' "$f" 2>/dev/null | sed 's/^# //')"
