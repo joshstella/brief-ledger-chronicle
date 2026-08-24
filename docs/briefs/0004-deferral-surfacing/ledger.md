@@ -8,7 +8,7 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — the limitation entry` | in-progress (`brief/0004-phase-1-limitation-entry`) | Add the third entry to Known limitations in `docs/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
+| `phase 1 — the limitation entry` | in-progress (`brief/0004-phase-1-limitation-entry`, PR#15) | Add the third entry to Known limitations in `docs/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
 | `phase 2 — reconcile ledger status` | pending | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
 | `phase 3 — the open-briefs query` | pending | Answer "which briefs are open?". Interrogate each `in-progress` branch — does it exist, is there a PR, how far has `main` moved — and report any ledger whose status line disagrees with its phase table. Reports; gates nothing. Shape depends on phase 2's vocabulary. |
 
@@ -106,7 +106,7 @@ Carried from the brief, with what each blocks.
 | branch | carries | state |
 |---|---|---|
 | `brief/0004-deferral-surfacing` | the brief and this ledger; no phase work | merged, PR #14 |
-| `brief/0004-phase-1-limitation-entry` | phase 1, the Known limitations entry | open |
+| `brief/0004-phase-1-limitation-entry` | phase 1, the Known limitations entry | open, PR #15 |
 
 **This ledger uses the vocabulary the brief settles, ahead of phase 2 landing it elsewhere.**
 Deliberate. The states are decided in `brief.md`, and a ledger that argues for a vocabulary
