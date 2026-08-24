@@ -45,8 +45,9 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 6. **Write the ledger entry — two places.**
 
    **Primary: `docs/briefs/<name>/ledger.md` in the repo** (same directory as the brief file). This is the source of truth — it travels with the code across machines and branches.
-   - Brief path and title; status `initiated`; date.
-   - The **full phase list** with stable ids and per-phase status (`pending` / `in-progress` / `done` / `skipped`).
+   - Brief path and title; status `pending`; date.
+   - The **status line** directly under the title — `blc/1 #NNNN <status> 1:<status> 2:<status> …` — per `docs/briefs/README.md`, "Ledger status". Update it in the same edit as any status change, never separately.
+   - The **full phase list** with stable ids and per-phase status. The vocabulary is `pending` / `in-progress` / `deferred` / `done` / `skipped`, defined once in `docs/briefs/README.md` and used at both levels. `in-progress` and `deferred` name their branch, and their PR once one exists.
    - The **dependency structure** (chain vs parallel; which phase is provisional pending which decision).
    - Branch(es) created.
    - Open decisions (with the phase each blocks) and any complications found in step 4.

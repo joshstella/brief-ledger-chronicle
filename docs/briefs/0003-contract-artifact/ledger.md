@@ -1,18 +1,19 @@
 # Ledger — #0003 A fourth artifact: the Contract
+`blc/1 #0003 done(PR#11) 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR#11) 5:skipped`
 
 **Brief:** `docs/briefs/0003-contract-artifact/brief.md`
-**Status:** complete
+**Status:** done (PR #11)
 **Date:** 2026-08-21
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — extract the contract` | complete (PR #9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
-| `phase 2 — validator` | complete (PR #10) | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
-| ~~`phase 3 — report unchecked clauses`~~ | **folded into phase 2** | **Demoted from a gate to a report, then folded in.** The Contract lists which clauses have checks and which do not; it never requires one. Originally specified as a meta-check blocking any clause without a test — a cost at the moment of action that would stop you adding a rule until you had written its test. Phase 2 landed the half with work in it: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. The other half reports over the empty set, because every v1 clause names a check. It returns when v1 grows a clause without one. |
-| `phase 4 — de-duplicate the readmes` | complete (PR #11) | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
-| ~~`phase 5 — reconcile review-pr tags`~~ | **dropped** | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
+| `phase 1 — extract the contract` | done (PR#9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
+| `phase 2 — validator` | done (PR#10) | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
+| ~~`phase 3 — report unchecked clauses`~~ | skipped | **Demoted from a gate to a report, then folded in.** The Contract lists which clauses have checks and which do not; it never requires one. Originally specified as a meta-check blocking any clause without a test — a cost at the moment of action that would stop you adding a rule until you had written its test. Phase 2 landed the half with work in it: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. The other half reports over the empty set, because every v1 clause names a check. It returns when v1 grows a clause without one. |
+| `phase 4 — de-duplicate the readmes` | done (PR#11) | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
+| ~~`phase 5 — reconcile review-pr tags`~~ | skipped | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
 
@@ -132,6 +133,20 @@ violation — no rule bound this repo at the time, and none binds it now.
 - The brief's own parked tension (Manifesto says the Contract is *unowed*; the evidence suggests *unbuilt*) is deliberately not resolved here. Revisit after phase 3, when we know what the extraction actually taught.
 
 ## Big decisions
+
+This section is 246 of this ledger's 380 lines, so it opens with its own contents. Entries
+are in file order, which is not chronological — later decisions sit beside the ones they
+revise, so a superseded position and its correction read together.
+
+1. Phase 4 — the copy could not end without shipping the Contract
+2. A check may not be a prompt
+3. A validator run only against a compliant tree proves nothing
+4. The validator is a standalone script, not a test function
+5. Open decision 1 — where the Contract lives — resolved by drafting it first
+6. Open decision 3 — which tag name survives — resolved in favour of `[judgment]`
+7. The path-to-`main` question, resolved differently than first recorded
+8. What the Contract is for, and what it must never do
+9. Why this brief earned depth no other brief has, and what changes now
 
 **Phase 4 — the copy could not end without shipping the Contract.** 2026-08-21.
 
