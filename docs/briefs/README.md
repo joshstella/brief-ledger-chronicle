@@ -89,5 +89,40 @@ all: install records are an append-only log, not a unit of work.
 
 If you automate anything that files briefs, route it through `/create-brief`.
 
+## Known limitation — the ledger is an archive, and a bad inbox
+
+A ledger records what a brief is doing. Nothing reads it back. Every command here writes
+into `docs/briefs/`; none of them asks what is already sitting there unfinished. So a brief
+that stalls stays stalled silently, and the cost of the stall grows in a place the record
+never looks.
+
+Not hypothetical: a brief in a consuming project was filed on 2026-06-23, shipped four of
+its five phases, and deferred the fifth on 2026-06-25. **The deferral was recorded
+correctly, and that is the point.** The ledger named the branch, said "pushed, no PR", gave
+the rationale, listed three issues blocking a merge, and specified the resume path. No rule
+was broken and no invariant was violated.
+
+Fifty-seven days later it surfaced, because a human happened to ask in an unrelated session
+which briefs were open. By then the branch was 248 commits behind `main`, a dry-run merge
+conflicted in all three code files it touches, and upstream had added roughly 770 lines to
+the two source files the branch also edits. Work that was mergeable on 2026-06-25 needed its
+integration rewritten.
+
+Nothing in this convention can see that. The Contract governs folder shape, serials,
+identity and dependencies — the things a brief *is*, not the things it is *doing*. A brief
+can sit in-progress forever and satisfy every clause. The nearest cue points the wrong way:
+`Created` is documented above as the signal to re-ground a brief *before* executing it, and
+there is no equivalent for one already in flight. `BRIEFS-8` flags a gap in the serial
+sequence; nothing flags a gap in time.
+
+The structural half is sharper than the record-keeping half. A deferred phase parks code on
+a branch, and `docs/briefs/` has no concept of branches. The ledger names one in prose,
+nothing resolves it, nothing notices it decaying, and deleting the branch leaves the ledger
+reading "code on branch" while pointing at nothing.
+
+Until something reads ledgers back, **the check is manual**: ask periodically which briefs
+are open, and treat a long-deferred phase as a branch that is quietly getting more expensive.
+A known boundary is a legitimate resting place; an unwatched one is not.
+
 The other known boundary, concurrent filing, is recorded in the Contract beside the
 clause it threatens.
