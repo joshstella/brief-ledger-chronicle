@@ -66,6 +66,48 @@ external keys stay external; they reference each other, they don't merge.
 - **`/start-brief` / `/next-brief-phase`** — read `NNNN-slug/brief.md`, write the ledger
   to `NNNN-slug/ledger.md`.
 
+## Ledger status
+
+One vocabulary, used at both levels — for the brief as a whole and for each phase in it.
+Five states, and no others:
+
+| state | means | carries |
+|---|---|---|
+| `pending` | it exists and has a place in the sequence; no real progress | — |
+| `in-progress` | a branch exists | the branch, always; the PR once there is one |
+| `deferred` | parked on purpose, and someone said why | branch and PR as above, plus a reason |
+| `done` | done | the PR, or a commit where there is no forge |
+| `skipped` | not being done | a reason |
+
+**`in-progress` names its branch.** That is what makes it the only state anything can
+interrogate: whether the branch still exists, whether a PR was ever opened, how far `main`
+has moved since. A branch named in prose is not resolvable; a branch in the status field is.
+Backfill the PR number when the PR opens — a phase row left reading `PR #TBD` is the
+failure this convention is trying to avoid, in miniature.
+
+**`done` points at a PR or a commit, not a branch,** because the branch is usually deleted by
+then. A commit is allowed so the vocabulary works with no forge at all.
+
+**If a reason was given, it is `deferred`.** Both `in-progress` and `deferred` fit a parked
+branch, so the tie is broken by rule rather than by mood on the day.
+
+**Deferring does not stop the branch rotting.** Saying why you parked something lowers the
+noise it should make; it does not exempt it from going stale. See the known limitation below
+for what that cost looked like when it was measured.
+
+### The status line
+
+Every ledger opens with one line under its title, so a scan costs a line instead of a table:
+
+```
+`blc/1 #0003 done 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR#11)`
+```
+
+`blc/1` is the schema version. The line restates what the phase table says, deliberately: a
+reader or a tool gets the whole state without parsing prose. **Redundancy has a price** — a
+stale line is worse than no line, because a cheap scan trusts it and stops looking. Update it
+in the same edit that changes a status, never separately.
+
 ## Structural invariants
 
 The rules this layout must satisfy live in **[Contract v1](../contracts/v1.md)**, clauses
