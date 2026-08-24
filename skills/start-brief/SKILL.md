@@ -26,7 +26,7 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - If a ledger exists with status `in-progress`: STOP. Report the branch, completed phases, and remaining phases, and tell the user to run `next-brief-phase` to continue — or to confirm a restart, which re-plans from scratch and overwrites the ledger. Do not silently re-initiate.
    - If none, proceed.
 
-3. **Read the brief in full.** Do not skim. The consumption protocol — settled decisions are fixed, open decisions resolve first, code conventions are binding, the rationale gets preserved as inline comments — is owned by the `feature-brief` skill; apply it rather than restating it here. Note the phase/layer sequence and any PR boundaries the brief defines.
+3. **Read the brief in full.** Do not skim. Apply the consumption protocol, which is stated here because this is where it is used: settled decisions are fixed and are not re-litigated; open decisions resolve before the phase each one blocks; the brief's code conventions bind; and the rationale survives as an inline comment at the site that implements it, so the reasoning outlives the brief. Note the phase/layer sequence and any PR boundaries the brief defines.
 
 4. **Read codebase context.**
    - Read the repo `AGENTS.md` or `CLAUDE.md` (whichever exists; root, and any subdirectory governing affected files).
