@@ -162,9 +162,16 @@ a branch, and `docs/briefs/` has no concept of branches. The ledger names one in
 nothing resolves it, nothing notices it decaying, and deleting the branch leaves the ledger
 reading "code on branch" while pointing at nothing.
 
-Until something reads ledgers back, **the check is manual**: ask periodically which briefs
-are open, and treat a long-deferred phase as a branch that is quietly getting more expensive.
-A known boundary is a legitimate resting place; an unwatched one is not.
+`tools/open-briefs.sh` now reads ledgers back. It lists every `in-progress` and `deferred`
+phase, resolves the branch each one names, and reports how far the trunk has moved since —
+plus any ledger whose status line disagrees with its phase table. It reports and never gates,
+because a long deferral is often the right call and the point is to surface it, not forbid it.
+
+**What it does not do is run itself.** The incident above surfaced because a human asked. A
+query nobody invokes buys exactly as much as no query. Until something calls it on a cadence,
+**the check is still manual** — run it periodically, and treat a long-deferred phase as a
+branch that is quietly getting more expensive. A known boundary is a legitimate resting
+place; an unwatched one is not.
 
 The other known boundary, concurrent filing, is recorded in the Contract beside the
 clause it threatens.

@@ -1,6 +1,7 @@
 # Tests
 
-Coverage for `install.sh` and for `tools/validate-briefs.sh`, the Contract validator.
+Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validator), and
+for `tools/open-briefs.sh` (the open-briefs query).
 Run them:
 
 ```bash
@@ -23,6 +24,7 @@ tests/
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
   test_briefs.sh          Contract v1 clauses BRIEFS-1..8, plus this repo's own compliance
+  test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_contract_ship.sh   what a target receives of the Contract and its validator
 ```
 
