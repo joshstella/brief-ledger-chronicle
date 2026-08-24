@@ -1,8 +1,8 @@
 # Ledger — #0004 The ledger is an archive and a bad inbox
-`blc/1 #0004 in-progress 1:done(PR#15) 2:in-progress(brief/0004-phase-2-status-vocabulary,PR#17) 3:in-progress(brief/0004-phase-3-open-briefs-query)`
+`blc/1 #0004 done(PR#18) 1:done(PR#15) 2:done(PR#17) 3:done(PR#18)`
 
 **Brief:** `docs/briefs/0004-deferral-surfacing/brief.md`
-**Status:** in-progress
+**Status:** done (PR #18)
 **Date:** 2026-08-24
 
 ## Phase sequence
@@ -10,8 +10,8 @@
 | id | status | what it does |
 |---|---|---|
 | `phase 1 — the limitation entry` | done (PR#15) | Add the third entry to Known limitations in `docs/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
-| `phase 2 — reconcile ledger status` | in-progress (`brief/0004-phase-2-status-vocabulary`, PR#17) | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
-| `phase 3 — the open-briefs query` | in-progress (`brief/0004-phase-3-open-briefs-query`) | Answer "which briefs are open?". Interrogate each `in-progress` branch — does it exist, is there a PR, how far has `main` moved — and report any ledger whose status line disagrees with its phase table. Reports; gates nothing. Shape depends on phase 2's vocabulary. |
+| `phase 2 — reconcile ledger status` | done (PR#17) | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
+| `phase 3 — the open-briefs query` | done (PR#18) | Answer "which briefs are open?". Interrogate each `in-progress` branch — does it exist, is there a PR, how far has `main` moved — and report any ledger whose status line disagrees with its phase table. Reports; gates nothing. Shape depends on phase 2's vocabulary. |
 
 Scope was settled on 2026-08-24 by amending the brief — see Big decisions. Phases 2 and 3
 were `proposed` until then, which is no longer a state.
@@ -137,8 +137,8 @@ Carried from the brief, with what each blocks.
 |---|---|---|
 | `brief/0004-deferral-surfacing` | the brief and this ledger; no phase work | merged, PR #14 |
 | `brief/0004-phase-1-limitation-entry` | phase 1, the Known limitations entry | merged, PR #15 |
-| `brief/0004-phase-2-status-vocabulary` | phase 2, the vocabulary and the four ledgers | open, PR #17; #16 was stranded — see complication 9 |
-| `brief/0004-phase-3-open-briefs-query` | phase 3, `tools/open-briefs.sh` and its fixtures | open |
+| `brief/0004-phase-2-status-vocabulary` | phase 2, the vocabulary and the four ledgers | merged, PR #17; #16 was stranded — see complication 9 |
+| `brief/0004-phase-3-open-briefs-query` | phase 3, `tools/open-briefs.sh` and its fixtures | merged, PR #18 |
 
 **This ledger uses the vocabulary the brief settles, ahead of phase 2 landing it elsewhere.**
 Deliberate. The states are decided in `brief.md`, and a ledger that argues for a vocabulary
@@ -151,6 +151,7 @@ This section is two thirds of the ledger, so it opens with its own contents. Ent
 file order, which is not chronological — later decisions were inserted beside the ones they
 revise, so that a superseded position and its correction read together.
 
+0. Closing: what shipped, what the query found, and what is still open
 0. One vocabulary at both levels, and what phase 2 refused to fix
 1. A compressed status line, and why the redundancy is accepted
 2. The phase vocabulary, and the state that was missing
@@ -162,6 +163,40 @@ revise, so that a superseded position and its correction read together.
 8. Two open decisions turned out to be one, and listing them apart hid the trade
 9. A 72-hour debounce, which is a different question from staleness
 10. The cadence signal is derived from git, not stored
+
+**Closing: what shipped, what the query found, and what is still open.** 2026-08-24.
+
+All three phases merged: the limitation entry (#15), the vocabulary (#17), the query (#18).
+
+**The query earned its place before it was reviewed.** In the session that built it, it found
+three real defects, all made by the person building it, none of which reading had caught: a
+phase left `in-progress` after its PR merged, a ledger pointing at a superseded PR, and
+complication 9 — a stacked PR that merged into its base instead of `main`, which GitHub
+reported as `MERGED` while `main` never received a line of it. That last one is the incident's
+shape in miniature, produced accidentally by someone who had spent the day studying it. It is
+the strongest evidence in this ledger that the hole was real and not merely embarrassing.
+
+**Still open, and not quietly dropped.** Nothing invokes the query. It surfaced the incident
+in reality because a human asked, and a query nobody runs buys exactly what no query buys.
+This is stated in `docs/briefs/README.md` rather than left as an implication.
+
+**The staleness threshold was not answered. It was dissolved.** The open decision asked how
+many commits make a branch stale. The incident's own numbers say the question is malformed:
+248 commits was the headline, but the cost was that upstream had rewritten the same three
+files the branch touched. Two hundred and forty-eight commits that never touch your files
+cost nothing. One that rewrites your file costs everything. **Contact is what rots a branch,
+not activity** — which sharpens this ledger's earlier finding that activity rots a branch
+rather than the calendar, by one more turn.
+
+Demonstrated rather than asserted: a branch 50 commits behind with no file overlap merges
+clean, and the same branch one commit later, once the trunk edits its file, conflicts. The
+commit count moved by one while the answer inverted. A threshold on that number would be
+noise with a decimal point.
+
+What replaces it is recorded as the next brief's material, not built here: file overlap
+between the branch and the trunk since their merge base, `git merge-tree --write-tree` as a
+conflict probe that needs no threshold at all, and churn in the overlapping files to separate
+a moved line from a rewritten file.
 
 **One vocabulary at both levels, and what phase 2 refused to fix.** 2026-08-24.
 
