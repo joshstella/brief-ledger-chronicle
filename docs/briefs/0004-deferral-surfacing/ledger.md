@@ -103,8 +103,12 @@ Carried from the brief, with what each blocks.
 
 ## Branches
 
-None cut. `start-brief` holds for confirmation before branching. Scope settled on 2026-08-24
-— three phases — so a phase-named branch is now a safe label to live with.
+| branch | carries | state |
+|---|---|---|
+| `brief/0004-deferral-surfacing` | the brief and this ledger; no phase work | open, PR #14 |
+
+No phase branch cut. `start-brief` holds for confirmation before branching. Scope settled on
+2026-08-24 — three phases — so a phase-named branch is now a safe label to live with.
 
 ## Big decisions
 
