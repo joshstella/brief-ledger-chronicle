@@ -66,8 +66,8 @@ procedure cannot drift from the rule it implements.
 
 - **One brief per invocation.** Serial assignment re-reads `docs/briefs/` each run and
   files one placement; this is what keeps numbering atomic and collision-free.
-- The serial is assigned **only** here. Authoring tools (the feature-brief skill) produce
-  unnumbered drafts and never guess a number.
+- The serial is assigned **only** here. Drafts are authored unnumbered, by whatever tool or
+  hand writes them, and never guess a number.
 - The serial encodes identity only — never status or phase.
 - The unit is always a **folder**: `NNNN-slug/brief.md`. The ledger (`ledger.md`) joins
   it on execution; no brief migrates from file to directory.
