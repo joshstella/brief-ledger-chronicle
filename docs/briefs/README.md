@@ -175,3 +175,32 @@ place; an unwatched one is not.
 
 The other known boundary, concurrent filing, is recorded in the Contract beside the
 clause it threatens.
+
+## Known limitation — one ledger, one writer, unstated
+
+A brief's ledger is one file, `NNNN-slug/ledger.md`. Every phase appends to it.
+`start-brief` tells the agent to commit that file to `main` before cutting a feature
+branch, so every machine that pulls can see it. That is one step in one skill. Nothing
+else states it. Nothing checks it.
+
+Two people executing two phases of one brief edit the same file on two branches. Git
+will merge or conflict. This toolkit will not notice until then. Optimistic concurrency
+is the default. This limitation is that the ownership rule is buried, not that concurrent
+edits are forbidden.
+
+The named fix is to state the rule where a reader meets the ledger — one executor per
+phase — and to decide whether that earns a Contract clause. Neither is built.
+
+## Known limitation — start-brief can overwrite a ledger
+
+`start-brief` stops when it finds a ledger with status `in-progress`. It reports the
+branch and remaining phases, and it will not silently re-initiate. A ledger at `pending`
+— written, no phase begun — does not trip that stop. Re-running the command replans from
+scratch and overwrites the file.
+
+Found 2026-08-24 in this toolkit's own `start-brief`. Unifying the status vocabulary put
+`pending` and `in-progress` in one set. Only `in-progress` was guarded. The hole is older
+than that vocabulary. The previous word, `initiated`, had the same gap.
+
+The named fix is to refuse to overwrite any ledger this run did not just create. Not
+built.

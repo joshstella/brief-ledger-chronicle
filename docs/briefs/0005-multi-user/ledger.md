@@ -1,15 +1,15 @@
 # Ledger — #0005 Closing the single-writer holes
-`blc/1 #0005 pending 1:pending 2:pending 3:pending 4:pending`
+`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions) 2:pending 3:pending 4:pending`
 
 **Brief:** `docs/briefs/0005-multi-user/brief.md`
-**Status:** pending
+**Status:** in-progress (`brief/0005-phase-1-state-assumptions`)
 **Date:** 2026-08-25
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — state the assumptions` | pending | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
+| `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
 | `phase 2 — the clobber guard` | pending | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Shape depends on open decision 4 — a markdown prompt may not be able to "close" anything. |
 | `phase 3 — ledger write-ownership` | pending | Promote the commit-before-branch convention from one step in `start-brief` to a stated rule with an owner: one executor per phase. Decide whether it earns a Contract clause. Blocked by open decisions 1 and 2. |
 | `phase 4 — remote-aware allocation` | pending | Allocate the serial against the pushed remote — the fix the Contract has named since v1. Blocked by open decision 3. |
@@ -77,4 +77,6 @@ Carried from the brief, with what each blocks.
 
 ## Branches
 
-None yet. Phase 1 awaits confirmation: `brief/0005-phase-1-state-assumptions`.
+| branch | phase | state |
+|---|---|---|
+| `brief/0005-phase-1-state-assumptions` | phase 1, state the assumptions | open |
