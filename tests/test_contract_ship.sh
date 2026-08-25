@@ -21,6 +21,66 @@ test_ship_places_the_contract_for_cursor_too() {
   assert_file "$TARGET/docs/contracts/README.md"
 }
 
+# Generalised deliberately. A test naming open-briefs.sh would have caught the bug
+# that prompted it and nothing after: the briefs README shipped for a full day
+# telling targets that tools/open-briefs.sh reads their ledgers back, while the
+# installer carried only the validator. The failing property is not "this tool is
+# missing" but "the shipped prose names a tool the target does not have", so that is
+# what is asserted — every tools/ path the installed docs mention has to resolve.
+test_ship_every_tool_the_installed_docs_name_is_present() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  local doc path found=0
+  # All four documents install.sh ships, not the three that happen to name a tool
+  # today. The property is about the shipped set; scanning a subset of it would let
+  # a tool named in the fourth document go unchecked.
+  for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/briefs/_drafts/README.md" \
+             "$TARGET/docs/contracts/README.md" "$TARGET/docs/contracts/v1.md"; do
+    [ -f "$doc" ] || continue
+    # Underscores and digits included so a tool named off the lowercase-hyphen
+    # convention is caught rather than skipped. A pattern that silently ignores the
+    # name it cannot parse would report success for the case it failed to look at.
+    for path in $(grep -oE 'tools/[a-z0-9_-]+\.sh' "$doc" | sort -u); do
+      found=$((found + 1))
+      [ -f "$TARGET/$path" ] \
+        || fail "installed docs name a tool absent from the target: $path (in ${doc##*/})"
+      [ -x "$TARGET/$path" ] \
+        || fail "installed tool is not executable: $path"
+    done
+  done
+  [ "$found" -gt 0 ] || fail "installed docs name no tools at all — the scan found nothing to check"
+}
+
+# Shipping a git-dependent tool into a directory with no git makes the briefs README
+# name something the reader cannot run. The installer cannot fix that, but staying
+# silent about it reproduces the defect this file exists to catch, one step along:
+# present, documented, and unrunnable.
+test_ship_warns_when_the_target_is_not_a_git_repo() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_out "is not a git repository"
+  assert_out "open-briefs.sh does not"
+}
+
+# The warning has to be conditional, or it is noise every real install learns to skip.
+test_ship_is_silent_about_git_when_the_target_is_a_repo() {
+  git -C "$TARGET" init -q
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_not_contains "is not a git repository" "$OUT"
+  assert_file "$TARGET/tools/open-briefs.sh"
+}
+
+# The query ships for the same reason the validator does, and is pinned separately
+# so a regression names itself rather than surfacing as a generic scan failure.
+test_ship_places_the_open_briefs_query() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/tools/open-briefs.sh"
+  [ -x "$TARGET/tools/open-briefs.sh" ] \
+    || fail "installed open-briefs.sh is not executable"
+}
+
 # The rules without the check would be a Contract whose strongest claim is backed
 # by nothing in the tree that holds it.
 test_ship_places_a_validator_that_runs() {

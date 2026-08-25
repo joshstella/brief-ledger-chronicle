@@ -3,9 +3,11 @@
 #
 # Usage: open-briefs.sh [briefs-dir]     (default: docs/briefs)
 #
-# Always exits 0. This reports; it does not gate. A long deferral is often the
-# right call, so failing a build on one would forbid the thing this is meant to
+# No finding exits non-zero. This reports; it does not gate. A long deferral is often
+# the right call, so failing a build on one would forbid the thing this is meant to
 # surface — see docs/briefs/README.md, "the ledger is an archive, and a bad inbox".
+# A broken environment is not a finding: a missing briefs directory or a target outside
+# a repository exits 2, because those mean the question could not be asked at all.
 #
 # The vocabulary it reads is defined once in docs/briefs/README.md, "Ledger status".
 # This script does not restate it.

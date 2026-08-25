@@ -80,7 +80,8 @@ places, which is what makes a single source possible.
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
 
 **Shipped documents** — this repository's own `docs/briefs/README.md`, the briefs Contract
-(`docs/contracts/`), and the validator that Contract names (`tools/validate-briefs.sh`).
+(`docs/contracts/`), and the tools those docs name (`tools/validate-briefs.sh`, the check
+Contract v1 requires, and `tools/open-briefs.sh`, the query that reports which briefs are open).
 Copied verbatim rather than templated, so a target reads and checks the same convention
 this repository does.
 
