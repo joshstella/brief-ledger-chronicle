@@ -31,10 +31,16 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
   run_install y --target "$TARGET"
   assert_status 0
   local doc path found=0
-  for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/contracts/v1.md" \
-             "$TARGET/docs/contracts/README.md"; do
+  # All four documents install.sh ships, not the three that happen to name a tool
+  # today. The property is about the shipped set; scanning a subset of it would let
+  # a tool named in the fourth document go unchecked.
+  for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/briefs/_drafts/README.md" \
+             "$TARGET/docs/contracts/README.md" "$TARGET/docs/contracts/v1.md"; do
     [ -f "$doc" ] || continue
-    for path in $(grep -oE 'tools/[a-z0-9-]+\.sh' "$doc" | sort -u); do
+    # Underscores and digits included so a tool named off the lowercase-hyphen
+    # convention is caught rather than skipped. A pattern that silently ignores the
+    # name it cannot parse would report success for the case it failed to look at.
+    for path in $(grep -oE 'tools/[a-z0-9_-]+\.sh' "$doc" | sort -u); do
       found=$((found + 1))
       [ -f "$TARGET/$path" ] \
         || fail "installed docs name a tool absent from the target: $path (in ${doc##*/})"
