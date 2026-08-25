@@ -21,6 +21,40 @@ test_ship_places_the_contract_for_cursor_too() {
   assert_file "$TARGET/docs/contracts/README.md"
 }
 
+# Generalised deliberately. A test naming open-briefs.sh would have caught the bug
+# that prompted it and nothing after: the briefs README shipped for a full day
+# telling targets that tools/open-briefs.sh reads their ledgers back, while the
+# installer carried only the validator. The failing property is not "this tool is
+# missing" but "the shipped prose names a tool the target does not have", so that is
+# what is asserted — every tools/ path the installed docs mention has to resolve.
+test_ship_every_tool_the_installed_docs_name_is_present() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  local doc path found=0
+  for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/contracts/v1.md" \
+             "$TARGET/docs/contracts/README.md"; do
+    [ -f "$doc" ] || continue
+    for path in $(grep -oE 'tools/[a-z0-9-]+\.sh' "$doc" | sort -u); do
+      found=$((found + 1))
+      [ -f "$TARGET/$path" ] \
+        || fail "installed docs name a tool absent from the target: $path (in ${doc##*/})"
+      [ -x "$TARGET/$path" ] \
+        || fail "installed tool is not executable: $path"
+    done
+  done
+  [ "$found" -gt 0 ] || fail "installed docs name no tools at all — the scan found nothing to check"
+}
+
+# The query ships for the same reason the validator does, and is pinned separately
+# so a regression names itself rather than surfacing as a generic scan failure.
+test_ship_places_the_open_briefs_query() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/tools/open-briefs.sh"
+  [ -x "$TARGET/tools/open-briefs.sh" ] \
+    || fail "installed open-briefs.sh is not executable"
+}
+
 # The rules without the check would be a Contract whose strongest claim is backed
 # by nothing in the tree that holds it.
 test_ship_places_a_validator_that_runs() {

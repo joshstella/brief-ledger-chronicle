@@ -439,7 +439,8 @@ for tpl in \
   "docs/briefs/_drafts/README.md" \
   "docs/contracts/README.md" \
   "docs/contracts/v1.md" \
-  "tools/validate-briefs.sh"; do
+  "tools/validate-briefs.sh" \
+  "tools/open-briefs.sh"; do
   if [[ ! -f "$SCRIPT_DIR/$tpl" ]]; then
     echo "  [✗] $tpl — missing"
     MISSING_TEMPLATES+=("$tpl")
@@ -497,7 +498,7 @@ echo "  $TARGET_DIR/docs/briefs/        (brief/ledger structure)"
 echo "  $TARGET_DIR/docs/contracts/     (Contract v1 — the briefs convention)"
 echo "  $TARGET_DIR/docs/chronicles/    (generated chronicles)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
-echo "  $TARGET_DIR/tools/              (validate-briefs.sh — the check v1 names)"
+echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
@@ -593,20 +594,23 @@ for src_rel in \
   place_file "$SCRIPT_DIR/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
 done
 
-# Every clause in Contract v1 names this script. Shipping the rules without it would
-# leave a `checked:` path resolving to nothing in the target, which claims a check
-# that is not there.
-VALIDATOR_DST="$TARGET_DIR/tools/validate-briefs.sh"
-if [[ -f "$VALIDATOR_DST" ]]; then
-  VALIDATOR_IS_NEW=false
-else
-  VALIDATOR_IS_NEW=true
-fi
-place_file "$SCRIPT_DIR/tools/validate-briefs.sh" "$VALIDATOR_DST" "tools/validate-briefs.sh"
-# cp keeps an existing destination's mode, so set the bit only on a copy this run wrote.
-if [[ "$VALIDATOR_IS_NEW" == true || "$FORCE" == true ]]; then
-  chmod +x "$VALIDATOR_DST"
-fi
+# Every clause in Contract v1 names validate-briefs.sh, and the briefs README that
+# ships beside it names open-briefs.sh. Shipping the prose without the tools would
+# leave both pointing at nothing in the target — claiming a check and a query that
+# are not there. Any tool this repo's own docs name has to travel with them.
+for tool_rel in "tools/validate-briefs.sh" "tools/open-briefs.sh"; do
+  tool_dst="$TARGET_DIR/$tool_rel"
+  if [[ -f "$tool_dst" ]]; then
+    tool_is_new=false
+  else
+    tool_is_new=true
+  fi
+  place_file "$SCRIPT_DIR/$tool_rel" "$tool_dst" "$tool_rel"
+  # cp keeps an existing destination's mode, so set the bit only on a copy this run wrote.
+  if [[ "$tool_is_new" == true || "$FORCE" == true ]]; then
+    chmod +x "$tool_dst"
+  fi
+done
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
 #
