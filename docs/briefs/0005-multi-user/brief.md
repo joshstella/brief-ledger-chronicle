@@ -1,9 +1,6 @@
 # Closing the single-writer holes before the second writer arrives
 
-**Created:** 2026-08-25T12:40:16Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0003, #0004
-
-> Draft note: unnumbered by design. `create-brief` assigns the serial at filing.
+**Serial:** #0005 · **Created:** 2026-08-25T12:40:16Z · **Author:** josh.stella@gmail.com · **Depends on:** #0003, #0004
 
 ## Ground
 
