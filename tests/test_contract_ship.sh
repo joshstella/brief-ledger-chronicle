@@ -51,6 +51,26 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
   [ "$found" -gt 0 ] || fail "installed docs name no tools at all — the scan found nothing to check"
 }
 
+# Shipping a git-dependent tool into a directory with no git makes the briefs README
+# name something the reader cannot run. The installer cannot fix that, but staying
+# silent about it reproduces the defect this file exists to catch, one step along:
+# present, documented, and unrunnable.
+test_ship_warns_when_the_target_is_not_a_git_repo() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_out "is not a git repository"
+  assert_out "open-briefs.sh does not"
+}
+
+# The warning has to be conditional, or it is noise every real install learns to skip.
+test_ship_is_silent_about_git_when_the_target_is_a_repo() {
+  git -C "$TARGET" init -q
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_not_contains "is not a git repository" "$OUT"
+  assert_file "$TARGET/tools/open-briefs.sh"
+}
+
 # The query ships for the same reason the validator does, and is pinned separately
 # so a regression names itself rather than surfacing as a generic scan failure.
 test_ship_places_the_open_briefs_query() {

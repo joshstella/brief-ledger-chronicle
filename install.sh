@@ -515,6 +515,20 @@ if [[ "$FORCE" == true ]]; then
   echo "validator, and settings will be replaced with this checkout. $RULES_FILE, numbered"
   echo "briefs, ledgers, chronicles, and the install log are not touched."
 fi
+
+# open-briefs.sh reads git history, so a target outside a repository receives a
+# documented tool that cannot run there — the briefs README tells the reader it reads
+# their ledgers back, and it exits 2 instead. Said before the prompt rather than after
+# the install, so the person can decide while the choice is still theirs.
+#
+# Warned, not refused. The briefs, the Contract and its validator all work without git,
+# and a directory that is not a repository yet usually becomes one.
+if ! git -C "$TARGET_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  echo ""
+  echo "Note: $TARGET_DIR is not a git repository."
+  echo "  tools/validate-briefs.sh works regardless. tools/open-briefs.sh does not —"
+  echo "  it reads git history, and will report an error until this becomes a repo."
+fi
 echo ""
 
 if [[ "$ASSUME_YES" != true ]]; then
