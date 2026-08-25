@@ -11,7 +11,7 @@
 |---|---|---|
 | `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
 | `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
-| `phase 3 — ledger write-ownership` | pending | Promote the commit-before-branch convention from one step in `start-brief` to a stated rule with an owner: one executor per phase. Decide whether it earns a Contract clause. Blocked by open decisions 1 and 2. |
+| `phase 3 — ledger write-ownership` | pending | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
 | `phase 4 — remote-aware allocation` | pending | Allocate the serial against the pushed remote — the fix the Contract has named since v1. Blocked by open decision 3. |
 
 ## Dependency structure
@@ -23,8 +23,8 @@
 - **Parallel tracks after phase 1: phases 2, 3, and 4.** The brief states they can land in
   any order once phase 1 is in. No strict chain between them.
 - **Provisional past open decisions.** Phase 2 landed as skill prose plus an honest
-  remaining-hole in the README: the stop is an instruction, not a check. Phase 3 may stop
-  at README prose if open decisions 1–2 conclude Contract v2 is too much machinery. Phase 4's
+  remaining-hole in the README: the stop is an instruction, not a check. Phase 3 is README
+  prose: one owner per serial, one file. Not Contract v2. Phase 4's
   shape follows open decision 3's fetch/degrade answer. `/next-brief-phase` re-plans any
   phase whose open decisions resolve differently than assumed here.
 
@@ -37,8 +37,8 @@ Carried from the brief, with what each blocks.
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | Does the ledger stay one file per brief? | phase 3 |
-| 2 | Does write-ownership earn a clause, and in which version? | phase 3 |
+| 1 | ~~Does the ledger stay one file per brief?~~ | **resolved** — one file. See Big decisions |
+| 2 | ~~Does write-ownership earn a clause?~~ | **resolved** — not while it is a team convention. See Big decisions |
 | 3 | What does phase 4 consult, and what does it cost? | phase 4 |
 | 4 | ~~How is a guard inside a skill verified at all?~~ | **resolved** — it is not. See Big decisions |
 | 5 | ~~Does phase 2's guard need an escape hatch (`--force`)?~~ | **resolved** — confirmation, not a flag. See Big decisions |
@@ -71,7 +71,7 @@ Carried from the brief, with what each blocks.
    child. Serials stay flat. File reserves, start claims. `Author` is the filer. The
    executor is whoever runs `start-brief`. Human diligence is accepted. This does not add a
    phase. It constrains phases 2 and 3: the clobber guard is the claim, write-ownership is
-   one executor per phase, and neither becomes a work queue. `open-briefs.sh` still does not
+   one owner per serial, and neither becomes a work queue. `open-briefs.sh` still does not
    walk `Depends on`. That gap is a status problem, not an assignment problem, and it is not
    closed here.
 
@@ -94,3 +94,13 @@ Carried from the brief, with what each blocks.
   `--force` would name a switch nobody can pass, and would hand the clobber back to
   anyone who typed it. Restart still requires the user to confirm, which is the path
   `in-progress` already had.
+
+- **One person owns a serial.** Starting place, 2026-08-25. Humans scope each brief to
+  one team member. That person runs `start-brief` and the later phases. `Author` stays
+  who filed. Those can differ. Two people on two phases of one brief is out of scope
+  until this is relaxed. Open decision 1 follows: the ledger stays one file. Splitting
+  files was a cost paid for concurrent phase writers this team is not using.
+
+- **Ownership is not a Contract clause.** Open decision 2. A clause is a promise to
+  people who were told they can rely on it. A team convention is README prose. Phase 3
+  states the convention where the ledger is documented. It does not open v2.
