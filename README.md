@@ -1,16 +1,14 @@
 # brief-ledger-chronicle
 
-**Install it into your project and be creative — the tools will document what happened.**
+A process toolkit for work that needs a record: a **brief** (the claim going in), a
+**ledger** (what the work taught), and a **chronicle** (the story written from those two
+and from git). A **Contract** states, in the present tense, what a consumer of the briefs
+convention may rely on.
 
-Brief, ledger, and chronicle keep your reasoning legible without ceremony. Nothing here is
-mandatory scaffolding: write what's worth writing, skip what isn't, and the record
-accumulates as a side effect of doing the work.
+[**Manifesto**](Manifesto.md) is the argument for this shape. You do not need it to install.
 
-[**Manifesto**](Manifesto.md) — why this exists, if you want the argument. You don't need
-it to start.
-
-Works with **Claude Code** and **Cursor**. One set of source files serves both — only where
-they land differs, so a wording fix lands once rather than twice.
+Works with **Claude Code** and **Cursor**. One set of source files serves both. Only the
+install path differs, so a wording fix lands once.
 
 ## Install
 
@@ -25,16 +23,19 @@ bash /path/to/brief-ledger-chronicle/install.sh --target /path/to/my-project
 bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/my-project
 ```
 
-Add `--yes` to skip the confirmation prompt for scripted installs. Default is
-idempotent: re-running skips what already exists and never overwrites. Add `--force`
-to replace installer-owned copies (skills, commands, process rules, brief READMEs,
-settings) with this checkout. `AGENTS.md` / `CLAUDE.md`, numbered briefs, ledgers,
-chronicles, and the install log are never replaced. `--force` is project mode only.
+Add `--yes` to skip the confirmation prompt. Default is idempotent: re-running skips what
+already exists. Add `--force` to replace installer-owned copies (skills, commands, process
+rules, brief READMEs, settings) with this checkout. `AGENTS.md` / `CLAUDE.md`, numbered
+briefs, ledgers, chronicles, and the install log are never replaced. `--force` is project
+mode only.
 
-**Skipping the machine step is the failure mode this repo learned the hard way.** The
-process files degrade gracefully when their user-level paths are missing — `init-briefs`
-hand-writes a README instead of copying the template, and `create-brief` falls back to git
-config — so a machine can look configured while being unrunnable from clean.
+The installer warns if the target is not a git repository. `validate-briefs.sh` still
+runs there. `open-briefs.sh` does not: it reads git history.
+
+**Skipping the machine step is the failure mode this repo learned the hard way.** Process
+files degrade when user-level paths are missing — `init-briefs` hand-writes a README,
+`create-brief` falls back to git config — so a machine can look configured and still be
+unrunnable from clean.
 
 ## What lands where
 
@@ -47,11 +48,11 @@ config — so a machine can look configured while being unrunnable from clean.
 | Permissions | `.claude/settings.local.json` | — |
 | Machine-level | `~/.claude/` symlinks | — |
 
-Both hosts also get `docs/briefs/` (with `_drafts/`), `docs/chronicles/`, and
-`docs/install-log/install-log.md`.
+Both hosts also get `docs/briefs/` (with `_drafts/`), `docs/chronicles/`,
+`docs/contracts/`, `docs/install-log/install-log.md`, and `tools/`.
 
-The six process files are the same document either way; Cursor has no slash-command
-concept, so it reads them as ordinary skills. The shared YAML frontmatter is valid in both
+The six process files are the same document either way. Cursor has no slash-command
+concept, so it reads them as ordinary skills. Shared YAML frontmatter is valid in both
 places, which is what makes a single source possible.
 
 ## What it installs
@@ -63,8 +64,8 @@ places, which is what makes a single source possible.
 | `commit-push-pr` | Stage → review gate → commit → push → open PR |
 | `review-pr` | Review a diff or PR against the governing brief and project rules |
 | `create-brief` | File a draft into `docs/briefs/NNNN-slug/` |
-| `start-brief` | Initiate a brief: plan phases, write ledger, branch the first phase |
-| `next-brief-phase` | Continue a multi-phase brief, re-planning from what it taught |
+| `start-brief` | Plan phases, write the ledger, branch the first phase |
+| `next-brief-phase` | Continue a multi-phase brief, re-planning from what finished phases taught |
 | `init-briefs` | One-time idempotent `docs/briefs/` scaffold |
 
 **Skills** — useful alongside it:
@@ -79,34 +80,46 @@ places, which is what makes a single source possible.
 **Templates** — the process-rules contract (installed as a host rules file), a stub
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
 
-**Shipped documents** — this repository's own `docs/briefs/README.md`, the briefs Contract
-(`docs/contracts/`), and the tools those docs name (`tools/validate-briefs.sh`, the check
-Contract v1 requires, and `tools/open-briefs.sh`, the query that reports which briefs are open).
+**Shipped documents** — this repository's own `docs/briefs/README.md`, Contract v1
+(`docs/contracts/`), and the tools those docs name:
+
+| | Purpose |
+|---|---|
+| `tools/validate-briefs.sh` | Checks Contract v1 clauses BRIEFS-1 through BRIEFS-8 |
+| `tools/open-briefs.sh` | Reports which briefs are open, and how far `main` has moved |
+
 Copied verbatim rather than templated, so a target reads and checks the same convention
 this repository does.
 
+Skills are markdown prompts. The two `tools/` scripts are programs. The test suite covers
+the programs and the installer. It does not exercise what a skill instructs an agent to do.
+
 ## How the process works
 
-1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered, and free to sit indefinitely,
-   which is what makes it a safe place to be wrong.
+1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered. Drafts are committed to git.
+   Filing, not committing, is the decision to do the work.
 2. **File it** with `create-brief`, which assigns the serial. This is the one-way door.
-3. **Execute** with `start-brief`; continue with `next-brief-phase`, which re-plans the
-   remaining sequence from what the finished phases actually taught.
+3. **Execute** with `start-brief`. Continue with `next-brief-phase`, which re-plans the
+   remaining sequence from what the finished phases taught.
 4. **Every commit to `main`** goes through `commit-push-pr`, which runs `review-pr` as a
-   gate *before* anything is committed.
-5. **`chronicle`** renders the record into prose whenever you want the story.
+   gate before anything is committed.
+5. **`open-briefs.sh`** lists `in-progress` and `deferred` phases. It reports. It does not
+   gate. Nothing invokes it on a cadence yet — run it when you want to know what is open.
+6. **`chronicle`** renders the record into prose when you want the story.
 
-This is not a spec-then-build pipeline. **The brief is the hypothesis you start with and
-the ledger is what the playing taught** — including where the brief was wrong, which is
-usually the most valuable thing in it. A specification, if the work needs one at all, gets
-written from that record afterwards. See the [Manifesto](Manifesto.md).
+The brief is the claim you start with. The ledger is what the work taught, including where
+the brief was wrong. A specification, if the work needs one, gets written from that record
+afterwards. See the [Manifesto](Manifesto.md).
 
-The installer never files a brief. `create-brief` is the single point of serial assignment,
-so anything else writing a `NNNN-slug/` folder would bypass both its allocation and its
-collision guard — see "Known limitation — writers outside the pipeline" in
-`docs/briefs/README.md`.
+Ledger status uses one vocabulary at both levels: `pending`, `in-progress`, `deferred`,
+`done`, `skipped`. Defined in `docs/briefs/README.md`.
 
-See `docs/briefs/README.md` for the full convention and its structural invariants.
+The installer never files a brief. `create-brief` is the single point of serial assignment.
+Anything else writing a `NNNN-slug/` folder bypasses both its allocation and its collision
+guard — see "Known limitation — writers outside the pipeline" in `docs/briefs/README.md`.
+
+See `docs/briefs/README.md` for the convention. See `docs/contracts/v1.md` for the
+structural invariants.
 
 ## Requirements
 
@@ -120,13 +133,11 @@ bash tests/run.sh              # everything
 bash tests/run.sh host_        # just the host-layout tests
 ```
 
-Covers argument handling, both host layouts, project install, `--force`, the install log,
-and machine-mode symlinking. Plain bash, no dependencies. CI runs them on every push and
-pull request. See `tests/README.md` — including why the suite is validated by breaking
-`install.sh` on purpose rather than by going green.
+Covers the installer (arguments, both hosts, `--force`, install log, machine-mode
+symlinks), Contract v1, the open-briefs query, and `gather.sh`. Plain bash, no
+dependencies. CI runs them on every push and pull request. See `tests/README.md`.
 
-The count is deliberately not written here. A hand-synced number is a claim that drifts the
-moment a test is added, and it had already drifted twice. `bash tests/run.sh` prints it.
+The count is not written here. `bash tests/run.sh` prints it.
 
 ## License
 
