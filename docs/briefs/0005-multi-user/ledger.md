@@ -1,5 +1,5 @@
 # Ledger — #0005 Closing the single-writer holes
-`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:pending 3:pending 4:pending`
+`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 3:pending 4:pending`
 
 **Brief:** `docs/briefs/0005-multi-user/brief.md`
 **Status:** in-progress (`brief/0005-phase-1-state-assumptions`, PR#26)
@@ -10,7 +10,7 @@
 | id | status | what it does |
 |---|---|---|
 | `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
-| `phase 2 — the clobber guard` | pending | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Shape depends on open decision 4 — a markdown prompt may not be able to "close" anything. |
+| `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
 | `phase 3 — ledger write-ownership` | pending | Promote the commit-before-branch convention from one step in `start-brief` to a stated rule with an owner: one executor per phase. Decide whether it earns a Contract clause. Blocked by open decisions 1 and 2. |
 | `phase 4 — remote-aware allocation` | pending | Allocate the serial against the pushed remote — the fix the Contract has named since v1. Blocked by open decision 3. |
 
@@ -22,15 +22,14 @@
   ordering #0003 established and this brief inherits.
 - **Parallel tracks after phase 1: phases 2, 3, and 4.** The brief states they can land in
   any order once phase 1 is in. No strict chain between them.
-- **Provisional past open decisions.** Phase 2's deliverable may be prose-only if open
-  decision 4 concludes a skill guard cannot be verified. Phase 3's deliverable may stop at
-  README prose if open decisions 1–2 conclude Contract v2 is too much machinery. Phase 4's
+- **Provisional past open decisions.** Phase 2 landed as skill prose plus an honest
+  remaining-hole in the README: the stop is an instruction, not a check. Phase 3 may stop
+  at README prose if open decisions 1–2 conclude Contract v2 is too much machinery. Phase 4's
   shape follows open decision 3's fetch/degrade answer. `/next-brief-phase` re-plans any
   phase whose open decisions resolve differently than assumed here.
 
-Suggested default order after phase 1: phase 2 first (cheapest: a guard in one skill), then
-phase 3, then phase 4 — but that is convenience, not a dependency. The supplied near-miss
-does not rank the work.
+Phase 2 is stacked on this branch at the user's request, before phase 1 merged. That
+inverts `next-brief-phase`'s "confirm the previous phase landed" step on purpose.
 
 ## Open decisions
 
@@ -41,18 +40,19 @@ Carried from the brief, with what each blocks.
 | 1 | Does the ledger stay one file per brief? | phase 3 |
 | 2 | Does write-ownership earn a clause, and in which version? | phase 3 |
 | 3 | What does phase 4 consult, and what does it cost? | phase 4 |
-| 4 | How is a guard inside a skill verified at all? | phase 2 — may reshape it entirely |
-| 5 | Does phase 2's guard need an escape hatch (`--force`)? | phase 2 implementation detail |
+| 4 | ~~How is a guard inside a skill verified at all?~~ | **resolved** — it is not. See Big decisions |
+| 5 | ~~Does phase 2's guard need an escape hatch (`--force`)?~~ | **resolved** — confirmation, not a flag. See Big decisions |
 
 ## Complications found in the code, not addressed by the brief
 
-1. **`start-brief:26` guards only `in-progress`.** This is complication 8 from #0004's
-   ledger, now the subject of phase 2. A ledger at `pending` is unguarded today.
+1. **`start-brief` guarded only `in-progress`.** Complication 8 from #0004. **Addressed in
+   phase 2 as an instruction**, not as a check. A `pending` ledger now trips the same stop.
+   The remaining hole is that nothing verifies the agent followed it.
 
 2. **Every check in this repo applies to shell, not skills.** `tests/test_hosts.sh:8` and
    `tests/test_machine_mode.sh:23` assert `start-brief` is installed, not that it behaves.
-   The same gap applies to `create-brief`, which phase 4 would modify. Open decision 4 is
-   therefore load-bearing for phases 2 and 4, not only phase 2.
+   The same gap applies to `create-brief`, which phase 4 would modify. **Not closed.** Open
+   decision 4 named it and refused to pretend a prompt change is a test.
 
 3. **`docs/briefs/README.md` has no Known limitation for single-writer ledger assumptions.**
    It has entries for writers outside the pipeline and for the archive/inbox hole (#0004).
@@ -79,4 +79,18 @@ Carried from the brief, with what each blocks.
 
 | branch | phase | state |
 |---|---|---|
-| `brief/0005-phase-1-state-assumptions` | phase 1, state the assumptions | open, PR #26 |
+| `brief/0005-phase-1-state-assumptions` | phases 1 and 2 | open, PR #26 |
+
+## Big decisions
+
+- **A skill guard is not a check.** Open decision 4. The honest options were: move the
+  stop into a program, declare skills advisory, or land the instruction and label it.
+  Phase 2 takes the third. `start-brief` now stops on any existing ledger. The README
+  Known limitation no longer says the fix is unbuilt. It says the remaining hole is that
+  nothing exercises the stop. Claiming this "closes" the clobber would be the same
+  overclaim this brief just walked back.
+
+- **Confirmation is the hatch, not `--force`.** Open decision 5. A skill has no flags.
+  `--force` would name a switch nobody can pass, and would hand the clobber back to
+  anyone who typed it. Restart still requires the user to confirm, which is the path
+  `in-progress` already had.

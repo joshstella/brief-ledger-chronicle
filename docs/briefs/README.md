@@ -193,14 +193,15 @@ phase — and to decide whether that earns a Contract clause. Neither is built.
 
 ## Known limitation — start-brief can overwrite a ledger
 
-`start-brief` stops when it finds a ledger with status `in-progress`. It reports the
-branch and remaining phases, and it will not silently re-initiate. A ledger at `pending`
-— written, no phase begun — does not trip that stop. Re-running the command replans from
-scratch and overwrites the file.
+`start-brief` is a markdown prompt. It now tells the agent to stop when *any* ledger file
+already exists, not only one with status `in-progress`, and to overwrite only after the
+user confirms a restart. That is the instruction. It is not a check.
 
 Found 2026-08-24 in this toolkit's own `start-brief`. Unifying the status vocabulary put
 `pending` and `in-progress` in one set. Only `in-progress` was guarded. The hole is older
 than that vocabulary. The previous word, `initiated`, had the same gap.
 
-The named fix is to refuse to overwrite any ledger this run did not just create. Not
-built.
+The remaining hole is the same class as every other skill instruction: an agent that skips
+the stop is indistinguishable from one that followed it, except by reading the ledger
+afterwards. The test suite asserts that `start-brief` is installed. It does not assert
+that this stop ran.
