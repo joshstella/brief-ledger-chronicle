@@ -28,8 +28,9 @@
   shape follows open decision 3's fetch/degrade answer. `/next-brief-phase` re-plans any
   phase whose open decisions resolve differently than assumed here.
 
-Suggested default order after phase 1: phase 2 first (already nearly fired), then phase 3,
-then phase 4 — but that is convenience, not a dependency.
+Suggested default order after phase 1: phase 2 first (cheapest: a guard in one skill), then
+phase 3, then phase 4 — but that is convenience, not a dependency. The supplied near-miss
+does not rank the work.
 
 ## Open decisions
 

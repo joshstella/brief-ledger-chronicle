@@ -28,7 +28,7 @@ three, in that order.
 
 ## Evidence
 
-All three are verifiable in this repository. Nothing here is supplied testimony.
+The three holes live in this repository. The near-miss under item 3 does not. It is supplied.
 
 **1. Serial allocation races across machines.** `docs/contracts/v1.md:87` records it as a known
 limitation, names the fix — allocation against the pushed remote rather than the local checkout
@@ -59,14 +59,15 @@ branches.
 was deliberately not taken during a vocabulary phase, because smuggling a behaviour change into
 a naming change is what `review-pr` exists to catch.
 
-This one has already nearly fired with a single author. During #0003's execution a brief was
-found already initiated with an unmerged remote branch that had also modified its ledger, and
-re-running `start-brief` would have overwritten it. A human noticed. No mechanism did.
+Supplied, and not in #0003's ledger: during that brief's execution a ledger was found
+already written, with an unmerged remote branch that had also modified it. Re-running
+`start-brief` would have overwritten it. A human noticed. No mechanism did. The hole does
+not depend on this story. Complication 8 is enough.
 
 ## Change
 
 Four phases. Phase 1 is prose and states all three assumptions where a reader meets them.
-Phases 2 to 4 close them, cheapest and most-nearly-fired first.
+Phases 2 to 4 close them, cheapest first.
 
 | Phase | Work |
 |---|---|
