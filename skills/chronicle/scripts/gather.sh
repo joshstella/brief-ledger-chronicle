@@ -46,8 +46,13 @@ if [ -s "$tmp" ]; then
     lcd=$(git log -1 --format='%aI' -- "$d" 2>/dev/null)
     cnt=$(git log --oneline -- "$d" 2>/dev/null | wc -l | tr -d ' ')
     ledger="planned"; [ -f "${d}ledger.md" ] && ledger="executed"
+    # A brief with no `Depends on:` line is ordinary, not an error — grep returning 1
+    # for it must not end the run. Without the guard, `pipefail` carries that 1 out of
+    # the substitution and `set -e` kills the script mid-loop, with empty stderr and a
+    # digest that stops after the first brief. Same shape as the SIGPIPE case above:
+    # a benign non-zero inside a pipeline, fatal by default.
     dep=$(grep -m1 -oE 'Depends on:[^<]*' "${d}brief.md" 2>/dev/null \
-          | sed 's/Depends on://; s/\*//g; s/^[[:space:]]*//; s/[[:space:]]*$//')
+          | sed 's/Depends on://; s/\*//g; s/^[[:space:]]*//; s/[[:space:]]*$//' || true)
     echo "- ${slug}"
     echo "    first ${fcd}  ·  last ${lcd}  ·  ${cnt} commits  ·  ${ledger}  ·  depends-on: ${dep:-—}"
     if [ -f "${d}ledger.md" ]; then
@@ -84,4 +89,17 @@ echo "## Commits referencing a brief serial"
 SINCE_FLAG=""
 [ -n "$SINCE" ] && SINCE_FLAG="--since=$SINCE"
 # shellcheck disable=SC2086
-git log $SINCE_FLAG --format='%aI · %h · %s' 2>/dev/null | grep -E '#[0-9]{3,4}' | head -60 || echo "(none found)"
+SERIALS=$(git log $SINCE_FLAG --format='%aI · %h · %s' 2>/dev/null | grep -E '#[0-9]{3,4}' || true)
+if [ -z "$SERIALS" ]; then
+  echo "(none found)"
+else
+  SERIAL_COUNT=$(printf '%s\n' "$SERIALS" | wc -l | tr -d ' ')
+  # sed rather than `head -60`: sed reads its whole input, so nothing is left writing
+  # into a closed pipe. See the SIGPIPE note in the briefs loop.
+  printf '%s\n' "$SERIALS" | sed -n '1,60p'
+  # The cap is a ceiling on digest size, but a history written from a silently
+  # truncated source would be wrong without saying so. Name what was dropped.
+  if [ "$SERIAL_COUNT" -gt 60 ]; then
+    echo "(showing the 60 most recent of $SERIAL_COUNT — older commits omitted)"
+  fi
+fi

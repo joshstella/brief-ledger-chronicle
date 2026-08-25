@@ -1,7 +1,8 @@
 # Tests
 
-Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validator), and
-for `tools/open-briefs.sh` (the open-briefs query).
+Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validator), for
+`tools/open-briefs.sh` (the open-briefs query), and for
+`skills/chronicle/scripts/gather.sh` (the chronicle's source digest).
 Run them:
 
 ```bash
@@ -26,6 +27,7 @@ tests/
   test_briefs.sh          Contract v1 clauses BRIEFS-1..8, plus this repo's own compliance
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_contract_ship.sh   what a target receives of the Contract and its validator
+  test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -86,12 +88,42 @@ identically when every check is replaced by `return 0`, so its green run carries
 information. Each clause therefore has a fixture that violates it. Neutering the
 `defect` reporter fails eleven tests; restoring it returns the suite to green.
 
+`gather.sh` was validated against five mutations. Reverting its `Depends on:` guard
+fails seventeen of the twenty-three tests, which measures the bug rather than the
+test: a brief with no dependency line ended the run, and almost every fixture has
+one. Dropping the truncation notice, lowering the commit ceiling, forcing every
+brief to report `executed`, and letting the fork scan run past its section each fail
+exactly one test.
+
 One mutation initially read as a miss and was worth chasing: rewriting the log
 header with `>` does not duplicate the header, it truncates the file. The header
 count stayed at 1 while the install history was destroyed. The suite did catch it,
 through the entry-count tests rather than the header test — but only because those
 existed. The lesson is in the file: **assert on what must survive, not only on
 what must not repeat.**
+
+## Helper names are shared across every test file
+
+The runner sources all `test_*.sh` files into one shell, so helpers are global. Two
+files defining `add_ledger` do not collide loudly — the last one sourced wins, and
+the other file's tests silently run against fixtures they did not write.
+
+This happened while writing `test_gather.sh`: its `make_repo`, `add_brief` and
+`add_ledger` were overridden by the identically named helpers in
+`test_open_briefs.sh`, which sorts later. Three tests failed with assertions about
+missing content, pointing at the script under test rather than at the fixture that
+was never built. The script was fine.
+
+Prefix helpers with the file's subject — `gather_repo`, `gather_brief` — so a
+collision is impossible rather than merely unlikely. Assertions in `lib.sh` are
+shared on purpose and stay unprefixed.
+
+## Fixture commits need a real change
+
+`git commit` on an unchanged tree fails, and under a helper that discards output it
+fails quietly. A loop meant to build 65 commits built one, and the test that needed
+them read as a bug in the ceiling logic. If a fixture wants N commits, it has to
+write something N times.
 
 ## Negative assertions need a success assertion beside them
 
