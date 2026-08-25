@@ -65,6 +65,15 @@ Carried from the brief, with what each blocks.
    commit and this ledger commit are paired deliberately — a ledger for a brief that does not
    exist on the trunk would be invisible to the same machines this brief is about to serve.
 
+6. **Assignment will be specific, not a pile.** Found in use after filing. A consuming
+   project is splitting work with a Child Briefs table on the parent and `Depends on` on the
+   child. Serials stay flat. File reserves, start claims. `Author` is the filer. The
+   executor is whoever runs `start-brief`. Human diligence is accepted. This does not add a
+   phase. It constrains phases 2 and 3: the clobber guard is the claim, write-ownership is
+   one executor per phase, and neither becomes a work queue. `open-briefs.sh` still does not
+   walk `Depends on`. That gap is a status problem, not an assignment problem, and it is not
+   closed here.
+
 ## Branches
 
 None yet. Phase 1 awaits confirmation: `brief/0005-phase-1-state-assumptions`.

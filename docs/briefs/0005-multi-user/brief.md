@@ -91,6 +91,16 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
 - **The prose-then-check ordering binds Contract clauses, not skill behaviour.** Phase 2 is a
   guard in a command, not an invariant, so it does not need a clause first. Phase 3 is where
   the ordering actually bites, because a write-ownership rule is a candidate clause.
+- **Assignment is explicit.** A person is handed a serial. Nobody takes work off a pile of
+  unblocked briefs. Human diligence is accepted. This brief does not build a work queue, an
+  unblocked-pending query as an assignment mechanism, or an assignee field. `Author` is who
+  filed the brief. The executor is who ran `start-brief`. Those are different people in a
+  team, and they must not be collapsed into one identity-line field.
+- **Parentage lives in content, not in the serial.** A parent lists its children in a Child
+  Briefs table. A child names its parents in `Depends on`. The serial stays a flat identity
+  from `create-brief`. Hierarchical numbers cannot express a DAG, fight max+1 allocation, and
+  fight `BRIEFS-8`. This is not a phase here. It is a constraint on anything this brief might
+  be tempted to add around "who owns which work."
 
 ## Open decisions
 
@@ -137,6 +147,12 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
   arrives, and answering it early would be invention.
 - **Not a permissions or ownership model.** Git has one.
 - **Not a coordination gate.** See the settled decision on optimistic concurrency.
+- **Not a Child Briefs convention, and not an unblocked-work query.** A consuming project is
+  trying a parent table plus `Depends on` as the map. Filing reserves the serial. Starting
+  claims it. `tools/open-briefs.sh` does not walk `Depends on`, so it cannot answer "what can
+  start today." That is a status question, and a useful one, but assignment does not wait on
+  it. Specific assignment makes a pile-grab query the wrong fix. Reconciling that map with
+  the README is not this brief. It must not become a fifth phase.
 
 ## Success criteria
 
@@ -160,3 +176,11 @@ brief depends on #0004's complication 8, not on #0004's status vocabulary. Nor c
 unfiled draft, which is why the relation to `wip-visibility.md` is stated in prose above.
 Whether that is an accepted boundary or a gap to close is not this brief's question, but this
 brief is an instance of it.
+
+Found in use, and it settles the boundary: a child that must start before its parent finishes
+means the parent is still too large. Split the parent. Do not add phase-level `Depends on`.
+File and start stay two acts. Filing plus an update to the parent's Child Briefs row is the
+reservation for an idea. `create-brief` only guards serials, so two people can still file two
+briefs for one idea if that row is not updated in the same change. Specific assignment makes
+that rare. It does not make it impossible. Phase 2's clobber guard is what makes the claim at
+`start-brief` real for the executor. It does not reserve the idea at filing time.
