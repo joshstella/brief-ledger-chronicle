@@ -149,7 +149,7 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
 - The three fixes are built, or explicitly deferred with a reason recorded where the assumption
   is stated.
 - Each behaviour change is verifiable by something other than reading it. What that means for
-  a skill is open decision 5, and it may not mean a test.
+  a skill is open decision 4, and it may not mean a test.
 
 ## A note on the dependency line
 
