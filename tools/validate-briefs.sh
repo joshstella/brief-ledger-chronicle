@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check a briefs directory against Contract v1, clauses BRIEFS-1 to BRIEFS-8.
+# Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-8.
 #
 # Usage: validate-briefs.sh [briefs-dir]     (default: docs/briefs)
 #
@@ -8,9 +8,9 @@
 # is surfaced for a human, so making it fail the build would silently promote it
 # to a defect.
 #
-# The clause text lives in docs/contracts/v1.md. This script cites clause ids and
-# does not restate them: a paraphrase here would be a fourth copy of the rules,
-# which is the drift this Contract was extracted to end.
+# The clause text lives in docs/contracts/v1.1.md (unchanged from v1). This script
+# cites clause ids and does not restate them: a paraphrase here would be a fourth
+# copy of the rules, which is the drift this Contract was extracted to end.
 #
 # No dependency beyond a POSIX shell and grep. CI is a thin trigger, so the check
 # travels to environments that are not GitHub.

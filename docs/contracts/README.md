@@ -13,7 +13,8 @@ legend cannot drift against itself.
 
 | version | covers | status |
 |---|---|---|
-| [v1](v1.md) | the structure of `docs/briefs/` | current |
+| [v1](v1.md) | the structure of `docs/briefs/` | superseded by v1.1 |
+| [v1.1](v1.1.md) | the structure of `docs/briefs/` | current |
 
 A version states what holds for that version. A later version supersedes it without making
 it retroactively false.

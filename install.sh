@@ -439,6 +439,7 @@ for tpl in \
   "docs/briefs/_drafts/README.md" \
   "docs/contracts/README.md" \
   "docs/contracts/v1.md" \
+  "docs/contracts/v1.1.md" \
   "tools/validate-briefs.sh" \
   "tools/open-briefs.sh"; do
   if [[ ! -f "$SCRIPT_DIR/$tpl" ]]; then
@@ -495,7 +496,7 @@ echo "Agent host:       $HOST"
 echo ""
 echo "This will create or update:"
 echo "  $TARGET_DIR/docs/briefs/        (brief/ledger structure)"
-echo "  $TARGET_DIR/docs/contracts/     (Contract v1 — the briefs convention)"
+echo "  $TARGET_DIR/docs/contracts/     (Contract v1.1 — the briefs convention)"
 echo "  $TARGET_DIR/docs/chronicles/    (generated chronicles)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh)"
@@ -604,11 +605,12 @@ for src_rel in \
   "docs/briefs/README.md" \
   "docs/briefs/_drafts/README.md" \
   "docs/contracts/README.md" \
-  "docs/contracts/v1.md"; do
+  "docs/contracts/v1.md" \
+  "docs/contracts/v1.1.md"; do
   place_file "$SCRIPT_DIR/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
 done
 
-# Every clause in Contract v1 names validate-briefs.sh, and the briefs README that
+# Every clause in the current Contract names validate-briefs.sh, and the briefs README that
 # ships beside it names open-briefs.sh. Shipping the prose without the tools would
 # leave both pointing at nothing in the target — claiming a check and a query that
 # are not there. Any tool this repo's own docs name has to travel with them.

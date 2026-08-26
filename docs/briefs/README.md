@@ -122,9 +122,10 @@ in the same edit that changes a status, never separately.
 
 ## Structural invariants
 
-The rules this layout must satisfy live in **[Contract v1](../contracts/v1.md)**, clauses
+The rules this layout must satisfy live in **[Contract v1.1](../contracts/v1.1.md)**, clauses
 `BRIEFS-1` through `BRIEFS-8`. They are stated there and not restated here, so there is one
-place to read them and one place to change them.
+place to read them and one place to change them. [v1](../contracts/v1.md) is superseded;
+the clauses are unchanged.
 
 This file explains the convention. The Contract states it.
 
@@ -185,7 +186,7 @@ query nobody invokes buys exactly as much as no query. Until something calls it 
 branch that is quietly getting more expensive. A known boundary is a legitimate resting
 place; an unwatched one is not.
 
-The other known boundary, concurrent filing, is recorded in the Contract beside the
+The other known boundary, concurrent filing, is recorded in Contract v1.1 beside the
 clause it threatens. If two branches claim the same serial, the second to reach `main`
 renumbers. Fetching first does not prevent that.
 
@@ -206,7 +207,7 @@ file-per-phase layout.
 This is not a Contract clause. No consumer has been told they can rely on an ownership
 protocol.
 
-## Known limitation — start-brief can overwrite a ledger
+## Known limitation — start-brief's clobber stop is an instruction, not a check
 
 `start-brief` is a markdown prompt. It now tells the agent to stop when *any* ledger file
 already exists, not only one with status `in-progress`, and to overwrite only after the

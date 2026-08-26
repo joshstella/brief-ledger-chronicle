@@ -24,7 +24,7 @@ tests/
   test_force.sh           --force replaces installer-owned copies, not briefs or the log
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
-  test_briefs.sh          Contract v1 clauses BRIEFS-1..8, plus this repo's own compliance
+  test_briefs.sh          Contract clauses BRIEFS-1..8 (currently v1.1), plus this repo's own compliance
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_contract_ship.sh   what a target receives of the Contract and its validator
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling

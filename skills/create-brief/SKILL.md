@@ -60,7 +60,7 @@ and get their identity here, at filing time, not while being written.
 
 ## Rules
 
-The structural rules this command enacts are stated in `docs/contracts/v1.md`, clauses
+The structural rules this command enacts are stated in `docs/contracts/v1.1.md`, clauses
 `BRIEFS-1` to `BRIEFS-8`. The steps above cite them rather than restate them, so the
 procedure cannot drift from the rule it implements.
 

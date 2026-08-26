@@ -30,11 +30,12 @@ three, in that order.
 
 The three holes live in this repository. The near-miss under item 3 does not. It is supplied.
 
-**1. Serial allocation races across machines.** `docs/contracts/v1.md:87` records it as a known
-limitation, names the fix — allocation against the pushed remote rather than the local checkout
-— and states it is not built.
+**1. Serial allocation races across machines.** `docs/contracts/v1.md` recorded it as a known
+limitation, named the fix — allocation against the pushed remote rather than the local
+checkout — and stated it is not built. That text stays in v1. The restated limitation,
+including recovery, is Contract v1.1.
 
-Worth being precise about what is and is not already handled, because the Contract's summary is
+Worth being precise about what is and is not already handled, because v1's summary is
 shorter than the mechanism. `skills/create-brief/SKILL.md:31` computes the next serial from the
 directory, and step 2 at `:35` is a collision guard that increments until free, "defensive
 against a stale read". That guard closes the single-machine case. It cannot close the
@@ -71,8 +72,8 @@ Phases 2 to 4 close them, cheapest first.
 
 | Phase | Work |
 |---|---|
-| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only. No clause, no check. |
-| 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Whether that guard can be more than advisory is open decision 4, and it may reshape this phase. |
+| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of concurrent filing. That sharpening is Contract v1.1, not an in-place rewrite of v1. Prose only. No clause, no check. |
+| 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: a skill guard is not a check (open decision 4). Restart is explicit confirmation, not `--force` (open decision 5). |
 | 3 — ledger write-ownership | State in `docs/briefs/README.md` that one person owns the serial, the ledger stays one file, and commit-before-branch is how that owner makes it visible on their other machines. Not a Contract clause. |
 | 4 — remote-aware allocation | **Skipped.** Leave the race. The later merge renumbers. Fetch-then-allocate does not close the gap, and a lock at filing is a coordination step this brief rejected. |
 
@@ -123,23 +124,13 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
    does not publish the serial, so two fetches can still agree on the same next number.
    Building a lock at filing time would be a coordination step this brief already rejected.
    See the ledger.
-4. **How is a guard inside a skill verified at all?** This is the sharpest unknown here, and
-   it was found while drafting rather than assumed. Phase 2 is described above as "one guard,
-   with the tests it has never had" — but `start-brief` is a markdown prompt, not a script.
-   The suite names it twice, at `tests/test_hosts.sh:8` and `tests/test_machine_mode.sh:23`,
-   and both check only that the file gets installed. Nothing exercises what it instructs.
-
-   So every check this repo owns applies to shell — `install.sh`, the two `tools/` scripts,
-   `gather.sh`. The skills, which are where nearly all the process actually lives, are
-   unverified by construction. A guard added to a prompt is a sentence an agent may or may not
-   follow, and a phase that claims to "close" the clobber hole with one would be claiming more
-   than it delivers. The honest options are to move the guard into something executable, to
-   state plainly that skill instructions are advisory and unchecked, or to accept that this
-   phase produces prose and label it so. Blocks phase 2, and arguably outgrows this brief.
-5. **Does phase 2's guard need an escape hatch?** A refusal with no override is a wall the
-   first time someone hits it legitimately — resuming their own interrupted work on the same
-   machine. A `--force` mirrors the installer's existing vocabulary, but it also gives the
-   clobber back to anyone who reaches for it reflexively.
+4. ~~**How is a guard inside a skill verified at all?**~~ **Resolved:** it is not. A prompt
+   is not a program. The suite names `start-brief` twice, at `tests/test_hosts.sh:8` and
+   `tests/test_machine_mode.sh:23`, and both check only that the file gets installed. Phase 2
+   is an instruction, labelled in the README. Claiming it "closes" the clobber is the
+   overclaim this brief walked back. See the ledger.
+5. ~~**Does phase 2's guard need an escape hatch?**~~ **Resolved:** explicit restart
+   confirmation, not `--force`. A skill has no flags. See the ledger.
 
 ## Non-goals
 
@@ -167,9 +158,10 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
   history.
 - Each assumption names its failure, its fix, and whether the fix is built.
 - The three fixes are built, or explicitly deferred with a reason recorded where the assumption
-  is stated.
-- Each behaviour change is verifiable by something other than reading it. What that means for
-  a skill is open decision 4, and it may not mean a test.
+  is stated. Phase 4 is skipped. Phase 2 is an instruction, labelled as not a check.
+- **Overclaim, walked back.** "Each behaviour change is verifiable by something other than
+  reading it" does not hold for a skill. Open decision 4 resolved that. Phase 2's success is
+  that a reader can tell the stop is an instruction, not that a test exercises it.
 
 ## A note on the dependency line
 

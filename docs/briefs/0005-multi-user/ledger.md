@@ -9,7 +9,7 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
+| `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
 | `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
 | `phase 3 — ledger write-ownership` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
 | `phase 4 — remote-aware allocation` | skipped | Leave the race. Second merge renumbers. Fetch-then-allocate does not close TOCTOU. A lock at filing is a coordination step this brief rejected. Open decision 3. |
@@ -58,8 +58,9 @@ Carried from the brief, with what each blocks.
    commit-before-branch. Remaining: nothing checks it, and it is not a Contract clause.
 
 4. **The Contract's concurrent-filing paragraph does not mention the local collision guard.**
-   `docs/contracts/v1.md:87-93` describes the cross-machine race only. Phase 1 sharpens it
-   per the brief; the mechanism lives at `skills/create-brief/SKILL.md:35`.
+   `docs/contracts/v1.md` describes the cross-machine race only. Phase 1 publishes v1.1 with
+   the restated limitation rather than rewriting v1. The mechanism lives at
+   `skills/create-brief/SKILL.md:35`.
 
 5. **Brief #0005 was filed but not yet on `main` when this ledger was written.** The filing
    commit and this ledger commit are paired deliberately — a ledger for a brief that does not
@@ -86,8 +87,9 @@ Carried from the brief, with what each blocks.
   stop into a program, declare skills advisory, or land the instruction and label it.
   Phase 2 takes the third. `start-brief` now stops on any existing ledger. The README
   Known limitation no longer says the fix is unbuilt. It says the remaining hole is that
-  nothing exercises the stop. Claiming this "closes" the clobber would be the same
-  overclaim this brief just walked back.
+  nothing exercises the stop. The brief's success criterion "each behaviour change is
+  verifiable by something other than reading it" overclaimed for a skill. The brief now
+  says so. Claiming this "closes" the clobber would be that overclaim again.
 
 - **Confirmation is the hatch, not `--force`.** Open decision 5. A skill has no flags.
   `--force` would name a switch nobody can pass, and would hand the clobber back to
@@ -110,3 +112,4 @@ Carried from the brief, with what each blocks.
   action. Recovery: first onto `main` keeps the number. The other branch renames the
   folder, the identity line, inbound `Depends on`, the ledger status line, and the PR
   title before it merges. Cost is real. Frequency should be low. Phase 4 is skipped.
+  That recovery is stated in Contract v1.1. v1 is not rewritten.

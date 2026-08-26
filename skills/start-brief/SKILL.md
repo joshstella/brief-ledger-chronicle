@@ -24,8 +24,11 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - Primary: look for `ledger.md` in the same directory as the brief file (e.g. `docs/briefs/refactor/ledger.md`). Read it if it exists.
    - Fallback: read MEMORY.md for a `brief-<kebab>` pointer if the repo ledger wasn't found.
    - If a ledger file exists, **STOP**. Report its status, branch, completed phases, and remaining phases. Do not silently re-initiate and do not overwrite it.
-     - Status `in-progress`: tell the user to run `next-brief-phase` to continue.
-     - Any other status (`pending`, `deferred`, `done`, `skipped`): the plan is already in the ledger. Continue from it, or wait.
+     - `in-progress`: tell the user to run `next-brief-phase`.
+     - `pending`: the plan is already in the ledger. Stop. There is no continue command for this status; `next-brief-phase` requires `in-progress`.
+     - `deferred`: wait. Do not re-initiate.
+     - `done`: the brief is finished. Do not continue from it.
+     - `skipped`: this work was not taken. Do not continue from it.
    - Overwrite only if the user **explicitly confirms a restart**. That re-plans from scratch and replaces the file. Confirmation is the escape hatch. There is no `--force` flag: this is a prompt, not a program, and a flag would give the clobber back to anyone who reaches for it.
    - If none, proceed.
    - This stop is an instruction to the agent. Nothing in the test suite exercises it. A run that skips this step is indistinguishable from a run that followed it, except by reading the ledger afterwards.

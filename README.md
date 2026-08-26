@@ -80,12 +80,12 @@ places, which is what makes a single source possible.
 **Templates** — the process-rules contract (installed as a host rules file), a stub
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
 
-**Shipped documents** — this repository's own `docs/briefs/README.md`, Contract v1
-(`docs/contracts/`), and the tools those docs name:
+**Shipped documents** — this repository's own `docs/briefs/README.md`, the briefs Contract
+(`docs/contracts/`, currently v1.1), and the tools those docs name:
 
 | | Purpose |
 |---|---|
-| `tools/validate-briefs.sh` | Checks Contract v1 clauses BRIEFS-1 through BRIEFS-8 |
+| `tools/validate-briefs.sh` | Checks Contract clauses BRIEFS-1 through BRIEFS-8 |
 | `tools/open-briefs.sh` | Reports which briefs are open, and how far `main` has moved |
 
 Copied verbatim rather than templated, so a target reads and checks the same convention
@@ -118,7 +118,7 @@ The installer never files a brief. `create-brief` is the single point of serial 
 Anything else writing a `NNNN-slug/` folder bypasses both its allocation and its collision
 guard — see "Known limitation — writers outside the pipeline" in `docs/briefs/README.md`.
 
-See `docs/briefs/README.md` for the convention. See `docs/contracts/v1.md` for the
+See `docs/briefs/README.md` for the convention. See `docs/contracts/v1.1.md` for the
 structural invariants.
 
 ## Requirements
@@ -134,7 +134,7 @@ bash tests/run.sh host_        # just the host-layout tests
 ```
 
 Covers the installer (arguments, both hosts, `--force`, install log, machine-mode
-symlinks), Contract v1, the open-briefs query, and `gather.sh`. Plain bash, no
+symlinks), the briefs Contract, the open-briefs query, and `gather.sh`. Plain bash, no
 dependencies. CI runs them on every push and pull request. See `tests/README.md`.
 
 The count is not written here. `bash tests/run.sh` prints it.
