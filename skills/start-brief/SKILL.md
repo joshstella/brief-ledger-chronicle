@@ -20,11 +20,18 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - Otherwise match markdown files whose name or path contains `$ARGUMENTS` under `docs/briefs/`, `briefs/`, `docs/`. One match → use it; several → list and ask; none → say so.
    - No argument → list all `.md` files under those directories and ask.
 
-2. **Check the ledger for prior work — redirect if already in progress.**
+2. **Check the ledger for prior work — do not overwrite one this run did not just create.**
    - Primary: look for `ledger.md` in the same directory as the brief file (e.g. `docs/briefs/refactor/ledger.md`). Read it if it exists.
    - Fallback: read MEMORY.md for a `brief-<kebab>` pointer if the repo ledger wasn't found.
-   - If a ledger exists with status `in-progress`: STOP. Report the branch, completed phases, and remaining phases, and tell the user to run `next-brief-phase` to continue — or to confirm a restart, which re-plans from scratch and overwrites the ledger. Do not silently re-initiate.
+   - If a ledger file exists, **STOP**. Report its status, branch, completed phases, and remaining phases. Do not silently re-initiate and do not overwrite it.
+     - `in-progress`: tell the user to run `next-brief-phase`.
+     - `pending`: the plan is already in the ledger. Stop. There is no continue command for this status; `next-brief-phase` requires `in-progress`.
+     - `deferred`: wait. Do not re-initiate.
+     - `done`: the brief is finished. Do not continue from it.
+     - `skipped`: this work was not taken. Do not continue from it.
+   - Overwrite only if the user **explicitly confirms a restart**. That re-plans from scratch and replaces the file. Confirmation is the escape hatch. There is no `--force` flag: this is a prompt, not a program, and a flag would give the clobber back to anyone who reaches for it.
    - If none, proceed.
+   - This stop is an instruction to the agent. Nothing in the test suite exercises it. A run that skips this step is indistinguishable from a run that followed it, except by reading the ledger afterwards.
 
 3. **Read the brief in full.** Do not skim. Apply the consumption protocol, which is stated here because this is where it is used: settled decisions are fixed and are not re-litigated; open decisions resolve before the phase each one blocks; the brief's code conventions bind; and the rationale survives as an inline comment at the site that implements it, so the reasoning outlives the brief. Note the phase/layer sequence and any PR boundaries the brief defines.
 
@@ -51,7 +58,9 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - The **dependency structure** (chain vs parallel; which phase is provisional pending which decision).
    - Branch(es) created.
    - Open decisions (with the phase each blocks) and any complications found in step 4.
-   - Commit this file to `main` immediately — before any feature branch is cut — so it's visible on every machine that pulls.
+   - Commit this file to `main` immediately — before any feature branch is cut — so the
+     owner sees it on every machine that pulls. One person owns the serial. That is a
+     convention in `docs/briefs/README.md`, "Ledger status", not a Contract clause.
 
    **Secondary: `project` memory file `brief-<kebab>.md`** in the memory directory. Same content. Keeps MEMORY.md pointing at it for fast in-session lookup. Add/update the entry in MEMORY.md — update in place if it already existed, don't duplicate.
 

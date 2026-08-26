@@ -79,6 +79,18 @@ Five states, and no others:
 | `done` | done | the PR, or a commit where there is no forge |
 | `skipped` | not being done | a reason |
 
+**One person owns a serial.** A team member is given the brief. That person runs
+`start-brief` and the later phases. Phases are that person's sequence, not a way to split
+the brief across people. `Author` on the identity line is who filed. The owner is who
+executes. Those can be different people. They are not two fields to merge.
+
+This is a team convention, not a Contract clause. Nothing checks it. Relaxing it later is
+allowed. Designing the ledger for two executors on one serial is not the use case.
+
+The ledger stays **one file** per brief, `NNNN-slug/ledger.md`. One owner, one narrative.
+`start-brief` commits that file to `main` before any feature branch is cut so the owner
+sees it on every machine that pulls.
+
 **`in-progress` names its branch.** That is what makes it the only state anything can
 interrogate: whether the branch still exists, whether a PR was ever opened, how far `main`
 has moved since. A branch named in prose is not resolvable; a branch in the status field is.
@@ -110,9 +122,10 @@ in the same edit that changes a status, never separately.
 
 ## Structural invariants
 
-The rules this layout must satisfy live in **[Contract v1](../contracts/v1.md)**, clauses
+The rules this layout must satisfy live in **[Contract v1.1](../contracts/v1.1.md)**, clauses
 `BRIEFS-1` through `BRIEFS-8`. They are stated there and not restated here, so there is one
-place to read them and one place to change them.
+place to read them and one place to change them. [v1](../contracts/v1.md) is superseded;
+the clauses are unchanged.
 
 This file explains the convention. The Contract states it.
 
@@ -173,5 +186,38 @@ query nobody invokes buys exactly as much as no query. Until something calls it 
 branch that is quietly getting more expensive. A known boundary is a legitimate resting
 place; an unwatched one is not.
 
-The other known boundary, concurrent filing, is recorded in the Contract beside the
-clause it threatens.
+The other known boundary, concurrent filing, is recorded in Contract v1.1 beside the
+clause it threatens. If two branches claim the same serial, the second to reach `main`
+renumbers. Fetching first does not prevent that.
+
+## Known limitation — one ledger, one owner, unchecked
+
+The convention is stated above under Ledger status: one person owns the serial, the ledger
+is one file, and that file is committed to `main` before a feature branch so the owner
+sees it on their other machines.
+
+Nothing enforces any of that. An agent that skips the commit, or a second person who runs
+`next-brief-phase` on a serial they were not given, is not caught. Git will merge or
+conflict if two branches edit the same file. This toolkit will not notice until then.
+
+Two executors on one serial is out of scope for now. The remaining cost for the intended
+use is one owner on two machines — the clobber stop and concurrent filing — not a missing
+file-per-phase layout.
+
+This is not a Contract clause. No consumer has been told they can rely on an ownership
+protocol.
+
+## Known limitation — start-brief's clobber stop is an instruction, not a check
+
+`start-brief` is a markdown prompt. It now tells the agent to stop when *any* ledger file
+already exists, not only one with status `in-progress`, and to overwrite only after the
+user confirms a restart. That is the instruction. It is not a check.
+
+Found 2026-08-24 in this toolkit's own `start-brief`. Unifying the status vocabulary put
+`pending` and `in-progress` in one set. Only `in-progress` was guarded. The hole is older
+than that vocabulary. The previous word, `initiated`, had the same gap.
+
+The remaining hole is the same class as every other skill instruction: an agent that skips
+the stop is indistinguishable from one that followed it, except by reading the ledger
+afterwards. The test suite asserts that `start-brief` is installed. It does not assert
+that this stop ran.

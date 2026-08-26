@@ -1,18 +1,18 @@
 # Ledger — #0005 Closing the single-writer holes
-`blc/1 #0005 pending 1:pending 2:pending 3:pending 4:pending`
+`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 3:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 4:skipped`
 
 **Brief:** `docs/briefs/0005-multi-user/brief.md`
-**Status:** pending
+**Status:** in-progress (`brief/0005-phase-1-state-assumptions`, PR#26)
 **Date:** 2026-08-25
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — state the assumptions` | pending | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
-| `phase 2 — the clobber guard` | pending | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Shape depends on open decision 4 — a markdown prompt may not be able to "close" anything. |
-| `phase 3 — ledger write-ownership` | pending | Promote the commit-before-branch convention from one step in `start-brief` to a stated rule with an owner: one executor per phase. Decide whether it earns a Contract clause. Blocked by open decisions 1 and 2. |
-| `phase 4 — remote-aware allocation` | pending | Allocate the serial against the pushed remote — the fix the Contract has named since v1. Blocked by open decision 3. |
+| `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
+| `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
+| `phase 3 — ledger write-ownership` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
+| `phase 4 — remote-aware allocation` | skipped | Leave the race. Second merge renumbers. Fetch-then-allocate does not close TOCTOU. A lock at filing is a coordination step this brief rejected. Open decision 3. |
 
 ## Dependency structure
 
@@ -22,15 +22,13 @@
   ordering #0003 established and this brief inherits.
 - **Parallel tracks after phase 1: phases 2, 3, and 4.** The brief states they can land in
   any order once phase 1 is in. No strict chain between them.
-- **Provisional past open decisions.** Phase 2's deliverable may be prose-only if open
-  decision 4 concludes a skill guard cannot be verified. Phase 3's deliverable may stop at
-  README prose if open decisions 1–2 conclude Contract v2 is too much machinery. Phase 4's
-  shape follows open decision 3's fetch/degrade answer. `/next-brief-phase` re-plans any
-  phase whose open decisions resolve differently than assumed here.
+- **Provisional past open decisions.** Phase 2 landed as skill prose plus an honest
+  remaining-hole in the README: the stop is an instruction, not a check. Phase 3 is README
+  prose: one owner per serial, one file. Not Contract v2. Phase 4 is skipped. See Big
+  decisions.
 
-Suggested default order after phase 1: phase 2 first (cheapest: a guard in one skill), then
-phase 3, then phase 4 — but that is convenience, not a dependency. The supplied near-miss
-does not rank the work.
+Phase 2 is stacked on this branch at the user's request, before phase 1 merged. That
+inverts `next-brief-phase`'s "confirm the previous phase landed" step on purpose.
 
 ## Open decisions
 
@@ -38,29 +36,31 @@ Carried from the brief, with what each blocks.
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | Does the ledger stay one file per brief? | phase 3 |
-| 2 | Does write-ownership earn a clause, and in which version? | phase 3 |
-| 3 | What does phase 4 consult, and what does it cost? | phase 4 |
-| 4 | How is a guard inside a skill verified at all? | phase 2 — may reshape it entirely |
-| 5 | Does phase 2's guard need an escape hatch (`--force`)? | phase 2 implementation detail |
+| 1 | ~~Does the ledger stay one file per brief?~~ | **resolved** — one file. See Big decisions |
+| 2 | ~~Does write-ownership earn a clause?~~ | **resolved** — not while it is a team convention. See Big decisions |
+| 3 | ~~What does phase 4 consult?~~ | **resolved** — nothing extra; renumber on collision. See Big decisions |
+| 4 | ~~How is a guard inside a skill verified at all?~~ | **resolved** — it is not. See Big decisions |
+| 5 | ~~Does phase 2's guard need an escape hatch (`--force`)?~~ | **resolved** — confirmation, not a flag. See Big decisions |
 
 ## Complications found in the code, not addressed by the brief
 
-1. **`start-brief:26` guards only `in-progress`.** This is complication 8 from #0004's
-   ledger, now the subject of phase 2. A ledger at `pending` is unguarded today.
+1. **`start-brief` guarded only `in-progress`.** Complication 8 from #0004. **Addressed in
+   phase 2 as an instruction**, not as a check. A `pending` ledger now trips the same stop.
+   The remaining hole is that nothing verifies the agent followed it.
 
 2. **Every check in this repo applies to shell, not skills.** `tests/test_hosts.sh:8` and
    `tests/test_machine_mode.sh:23` assert `start-brief` is installed, not that it behaves.
-   The same gap applies to `create-brief`, which phase 4 would modify. Open decision 4 is
-   therefore load-bearing for phases 2 and 4, not only phase 2.
+   The same gap applies to `create-brief`. Phase 4 will not add a remote-aware allocator,
+   so that skill stays an instruction too. **Not closed.**
 
-3. **`docs/briefs/README.md` has no Known limitation for single-writer ledger assumptions.**
-   It has entries for writers outside the pipeline and for the archive/inbox hole (#0004).
-   Phase 1 adds a third entry (or extends an existing one — decision at execution time).
+3. **`docs/briefs/README.md` had no stated ownership rule.** Phase 1 named the hole.
+   **Phase 3 states the convention** under Ledger status: one owner per serial, one file,
+   commit-before-branch. Remaining: nothing checks it, and it is not a Contract clause.
 
 4. **The Contract's concurrent-filing paragraph does not mention the local collision guard.**
-   `docs/contracts/v1.md:87-93` describes the cross-machine race only. Phase 1 sharpens it
-   per the brief; the mechanism lives at `skills/create-brief/SKILL.md:35`.
+   `docs/contracts/v1.md` describes the cross-machine race only. Phase 1 publishes v1.1 with
+   the restated limitation rather than rewriting v1. The mechanism lives at
+   `skills/create-brief/SKILL.md:35`.
 
 5. **Brief #0005 was filed but not yet on `main` when this ledger was written.** The filing
    commit and this ledger commit are paired deliberately — a ledger for a brief that does not
@@ -71,10 +71,45 @@ Carried from the brief, with what each blocks.
    child. Serials stay flat. File reserves, start claims. `Author` is the filer. The
    executor is whoever runs `start-brief`. Human diligence is accepted. This does not add a
    phase. It constrains phases 2 and 3: the clobber guard is the claim, write-ownership is
-   one executor per phase, and neither becomes a work queue. `open-briefs.sh` still does not
+   one owner per serial, and neither becomes a work queue. `open-briefs.sh` still does not
    walk `Depends on`. That gap is a status problem, not an assignment problem, and it is not
    closed here.
 
 ## Branches
 
-None yet. Phase 1 awaits confirmation: `brief/0005-phase-1-state-assumptions`.
+| branch | phase | state |
+|---|---|---|
+| `brief/0005-phase-1-state-assumptions` | phases 1, 2, and 3 | open, PR #26 |
+
+## Big decisions
+
+- **A skill guard is not a check.** Open decision 4. The honest options were: move the
+  stop into a program, declare skills advisory, or land the instruction and label it.
+  Phase 2 takes the third. `start-brief` now stops on any existing ledger. The README
+  Known limitation no longer says the fix is unbuilt. It says the remaining hole is that
+  nothing exercises the stop. The brief's success criterion "each behaviour change is
+  verifiable by something other than reading it" overclaimed for a skill. The brief now
+  says so. Claiming this "closes" the clobber would be that overclaim again.
+
+- **Confirmation is the hatch, not `--force`.** Open decision 5. A skill has no flags.
+  `--force` would name a switch nobody can pass, and would hand the clobber back to
+  anyone who typed it. Restart still requires the user to confirm, which is the path
+  `in-progress` already had.
+
+- **One person owns a serial.** Starting place, 2026-08-25. Humans scope each brief to
+  one team member. That person runs `start-brief` and the later phases. `Author` stays
+  who filed. Those can differ. Two people on two phases of one brief is out of scope
+  until this is relaxed. Open decision 1 follows: the ledger stays one file. Splitting
+  files was a cost paid for concurrent phase writers this team is not using.
+
+- **Ownership is not a Contract clause.** Open decision 2. A clause is a promise to
+  people who were told they can rely on it. A team convention is README prose. Phase 3
+  stated the convention under Ledger status. It did not open v2.
+
+- **Leave the serial race. Renumber the loser.** Open decision 3. Fetch-then-allocate
+  reads `origin/main` and still loses if both filers read before either folder is on the
+  remote. A real close is a reservation push at filing, which is a gate at the moment of
+  action. Recovery: first onto `main` keeps the number. The other branch renames the
+  folder, the identity line, inbound `Depends on`, the ledger status line, and the PR
+  title before it merges. Cost is real. Frequency should be low. Phase 4 is skipped.
+  That recovery is stated in Contract v1.1. v1 is not rewritten.

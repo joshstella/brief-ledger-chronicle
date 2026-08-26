@@ -1,4 +1,4 @@
-# Contract v1, clauses BRIEFS-1 to BRIEFS-8 — tools/validate-briefs.sh.
+# Contract clauses BRIEFS-1 to BRIEFS-8 — tools/validate-briefs.sh.
 #
 # Every clause gets a fixture that violates it. A validator exercised only against
 # a compliant tree passes identically when each check is replaced by `return 0`,
@@ -6,7 +6,8 @@
 # negative fixtures are the test; the self-check at the bottom is the claim that
 # this repo complies.
 #
-# Clause text is in docs/contracts/v1.md and is not restated here.
+# Clause text is in docs/contracts/v1.1.md (unchanged from v1) and is not restated
+# here.
 
 VALIDATOR() { printf '%s' "$REPO_ROOT/tools/validate-briefs.sh"; }
 
@@ -288,10 +289,12 @@ test_briefs_this_repo_satisfies_contract_v1() {
 # string, so the naming only means something if something reads it. Phase 3 owns
 # the wider report on which clauses have checks; this is only the link itself.
 test_briefs_every_named_check_path_resolves() {
-  local contract="$REPO_ROOT/docs/contracts/v1.md" path found=0
-  for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
-    found=$((found + 1))
-    [ -f "$REPO_ROOT/$path" ] || fail "Contract names a check that does not exist: $path"
+  local contract path found=0
+  for contract in "$REPO_ROOT/docs/contracts/v1.md" "$REPO_ROOT/docs/contracts/v1.1.md"; do
+    for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
+      found=$((found + 1))
+      [ -f "$REPO_ROOT/$path" ] || fail "${contract##*/} names a check that does not exist: $path"
+    done
   done
   [ "$found" -gt 0 ] || fail "Contract names no checks at all — expected at least one"
 }

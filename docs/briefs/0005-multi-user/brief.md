@@ -30,11 +30,12 @@ three, in that order.
 
 The three holes live in this repository. The near-miss under item 3 does not. It is supplied.
 
-**1. Serial allocation races across machines.** `docs/contracts/v1.md:87` records it as a known
-limitation, names the fix — allocation against the pushed remote rather than the local checkout
-— and states it is not built.
+**1. Serial allocation races across machines.** `docs/contracts/v1.md` recorded it as a known
+limitation, named the fix — allocation against the pushed remote rather than the local
+checkout — and stated it is not built. That text stays in v1. The restated limitation,
+including recovery, is Contract v1.1.
 
-Worth being precise about what is and is not already handled, because the Contract's summary is
+Worth being precise about what is and is not already handled, because v1's summary is
 shorter than the mechanism. `skills/create-brief/SKILL.md:31` computes the next serial from the
 directory, and step 2 at `:35` is a collision guard that increments until free, "defensive
 against a stale read". That guard closes the single-machine case. It cannot close the
@@ -49,8 +50,8 @@ commit the ledger to `main` immediately, before any feature branch is cut, "so i
 every machine that pulls."
 
 That is a convention. Nothing enforces it, nothing checks it, and it appears in exactly one
-step of one skill. Two people executing two phases of one brief edit the same file on two
-branches.
+step of one skill. Two people on two phases of one brief would collide on that file. That is
+not the use case this brief now designs for. See settled decisions.
 
 **3. `start-brief` can overwrite a ledger that someone else is holding.**
 `docs/briefs/0004-deferral-surfacing/ledger.md:116` records this as complication 8:
@@ -71,10 +72,10 @@ Phases 2 to 4 close them, cheapest first.
 
 | Phase | Work |
 |---|---|
-| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only. No clause, no check. |
-| 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Whether that guard can be more than advisory is open decision 4, and it may reshape this phase. |
-| 3 — ledger write-ownership | Promote the commit-before-branch convention from a step in one skill to a stated rule with an owner: one executor per phase. Decide separately whether it earns a Contract clause. |
-| 4 — remote-aware allocation | Allocate the serial against the pushed remote. The fix the Contract has named since v1 and never built. |
+| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of concurrent filing. That sharpening is Contract v1.1, not an in-place rewrite of v1. Prose only. No clause, no check. |
+| 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: a skill guard is not a check (open decision 4). Restart is explicit confirmation, not `--force` (open decision 5). |
+| 3 — ledger write-ownership | State in `docs/briefs/README.md` that one person owns the serial, the ledger stays one file, and commit-before-branch is how that owner makes it visible on their other machines. Not a Contract clause. |
+| 4 — remote-aware allocation | **Skipped.** Leave the race. The later merge renumbers. Fetch-then-allocate does not close the gap, and a lock at filing is a coordination step this brief rejected. |
 
 Phase 1 precedes the rest because that is the ordering this repo enforces on itself. Phases 2
 to 4 are independent of each other and can land in any order once phase 1 is in.
@@ -90,13 +91,19 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
 - **Recording a boundary is a legitimate answer.** Where a fix is not taken, it is named and
   the reason stated. A known boundary is not debt.
 - **The prose-then-check ordering binds Contract clauses, not skill behaviour.** Phase 2 is a
-  guard in a command, not an invariant, so it does not need a clause first. Phase 3 is where
-  the ordering actually bites, because a write-ownership rule is a candidate clause.
+  guard in a command, not an invariant, so it does not need a clause first. A write-ownership
+  *clause* would be Contract v2. This brief does not add one while ownership is a team
+  convention.
+- **One person owns a serial.** Starting place: humans scope each brief to one team member.
+  That person runs `start-brief` and the later phases. Phases are not a way to split a brief
+  across people. Relaxing this later is allowed. Designing the ledger for two executors now
+  is not.
 - **Assignment is explicit.** A person is handed a serial. Nobody takes work off a pile of
   unblocked briefs. Human diligence is accepted. This brief does not build a work queue, an
   unblocked-pending query as an assignment mechanism, or an assignee field. `Author` is who
-  filed the brief. The executor is who ran `start-brief`. Those are different people in a
-  team, and they must not be collapsed into one identity-line field.
+  filed the brief. The owner is who runs `start-brief` for that serial. Those can be
+  different people. They must not be collapsed into one identity-line field. Once started,
+  later phases stay with that owner.
 - **Parentage lives in content, not in the serial.** A parent lists its children in a Child
   Briefs table. A child names its parents in `Depends on`. The serial stays a flat identity
   from `create-brief`. Hierarchical numbers cannot express a DAG, fight max+1 allocation, and
@@ -105,35 +112,25 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
 
 ## Open decisions
 
-1. **Does the ledger stay one file per brief?** A file per phase removes the concurrent edit
-   and scatters the narrative that makes a ledger worth reading. The alternative is one file
-   plus a stated ownership rule. Blocks phase 3.
-2. **Does write-ownership earn a clause, and in which version?** v1's stated scope is the
-   structure of `docs/briefs/` only. A rule about who may write a ledger is a different
-   namespace, which means Contract v2 and the first real exercise of the supersession design.
-   That may be too much machinery for three sentences of prose. Blocks phase 3.
-3. **What does phase 4 consult, and what does it cost?** Allocating against the pushed remote
-   means a fetch at filing time. That is a network round-trip in a command that currently works
-   offline, which cuts against this project's treatment of external services as optional.
-   Whether the answer is "fetch and degrade to local with a warning" or something else is
-   undecided. Blocks phase 4.
-4. **How is a guard inside a skill verified at all?** This is the sharpest unknown here, and
-   it was found while drafting rather than assumed. Phase 2 is described above as "one guard,
-   with the tests it has never had" — but `start-brief` is a markdown prompt, not a script.
-   The suite names it twice, at `tests/test_hosts.sh:8` and `tests/test_machine_mode.sh:23`,
-   and both check only that the file gets installed. Nothing exercises what it instructs.
-
-   So every check this repo owns applies to shell — `install.sh`, the two `tools/` scripts,
-   `gather.sh`. The skills, which are where nearly all the process actually lives, are
-   unverified by construction. A guard added to a prompt is a sentence an agent may or may not
-   follow, and a phase that claims to "close" the clobber hole with one would be claiming more
-   than it delivers. The honest options are to move the guard into something executable, to
-   state plainly that skill instructions are advisory and unchecked, or to accept that this
-   phase produces prose and label it so. Blocks phase 2, and arguably outgrows this brief.
-5. **Does phase 2's guard need an escape hatch?** A refusal with no override is a wall the
-   first time someone hits it legitimately — resuming their own interrupted work on the same
-   machine. A `--force` mirrors the installer's existing vocabulary, but it also gives the
-   clobber back to anyone who reaches for it reflexively.
+1. ~~**Does the ledger stay one file per brief?**~~ **Resolved:** yes. One owner, one
+   narrative. A file per phase spends readability to move the same hotspot into an index.
+   See the ledger.
+2. ~~**Does write-ownership earn a clause, and in which version?**~~ **Resolved:** not
+   while this is a team convention. Humans scope briefs. A clause would tell other
+   programmers they can rely on an ownership protocol. Nobody has been told that.
+3. ~~**What does phase 4 consult, and what does it cost?**~~ **Resolved:** consult nothing
+   extra. Leave the race. If two branches claim the same serial, the one that reaches `main`
+   second renumbers before it merges. Remote-aware read does not close the gap: `create-brief`
+   does not publish the serial, so two fetches can still agree on the same next number.
+   Building a lock at filing time would be a coordination step this brief already rejected.
+   See the ledger.
+4. ~~**How is a guard inside a skill verified at all?**~~ **Resolved:** it is not. A prompt
+   is not a program. The suite names `start-brief` twice, at `tests/test_hosts.sh:8` and
+   `tests/test_machine_mode.sh:23`, and both check only that the file gets installed. Phase 2
+   is an instruction, labelled in the README. Claiming it "closes" the clobber is the
+   overclaim this brief walked back. See the ledger.
+5. ~~**Does phase 2's guard need an escape hatch?**~~ **Resolved:** explicit restart
+   confirmation, not `--force`. A skill has no flags. See the ledger.
 
 ## Non-goals
 
@@ -161,9 +158,10 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
   history.
 - Each assumption names its failure, its fix, and whether the fix is built.
 - The three fixes are built, or explicitly deferred with a reason recorded where the assumption
-  is stated.
-- Each behaviour change is verifiable by something other than reading it. What that means for
-  a skill is open decision 4, and it may not mean a test.
+  is stated. Phase 4 is skipped. Phase 2 is an instruction, labelled as not a check.
+- **Overclaim, walked back.** "Each behaviour change is verifiable by something other than
+  reading it" does not hold for a skill. Open decision 4 resolved that. Phase 2's success is
+  that a reader can tell the stop is an instruction, not that a test exercises it.
 
 ## A note on the dependency line
 
