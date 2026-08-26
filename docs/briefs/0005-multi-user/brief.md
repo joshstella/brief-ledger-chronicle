@@ -74,7 +74,7 @@ Phases 2 to 4 close them, cheapest first.
 | 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only. No clause, no check. |
 | 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Whether that guard can be more than advisory is open decision 4, and it may reshape this phase. |
 | 3 — ledger write-ownership | State in `docs/briefs/README.md` that one person owns the serial, the ledger stays one file, and commit-before-branch is how that owner makes it visible on their other machines. Not a Contract clause. |
-| 4 — remote-aware allocation | Allocate the serial against the pushed remote. The fix the Contract has named since v1 and never built. |
+| 4 — remote-aware allocation | **Skipped.** Leave the race. The later merge renumbers. Fetch-then-allocate does not close the gap, and a lock at filing is a coordination step this brief rejected. |
 
 Phase 1 precedes the rest because that is the ordering this repo enforces on itself. Phases 2
 to 4 are independent of each other and can land in any order once phase 1 is in.
@@ -117,11 +117,12 @@ to 4 are independent of each other and can land in any order once phase 1 is in.
 2. ~~**Does write-ownership earn a clause, and in which version?**~~ **Resolved:** not
    while this is a team convention. Humans scope briefs. A clause would tell other
    programmers they can rely on an ownership protocol. Nobody has been told that.
-3. **What does phase 4 consult, and what does it cost?** Allocating against the pushed remote
-   means a fetch at filing time. That is a network round-trip in a command that currently works
-   offline, which cuts against this project's treatment of external services as optional.
-   Whether the answer is "fetch and degrade to local with a warning" or something else is
-   undecided. Blocks phase 4.
+3. ~~**What does phase 4 consult, and what does it cost?**~~ **Resolved:** consult nothing
+   extra. Leave the race. If two branches claim the same serial, the one that reaches `main`
+   second renumbers before it merges. Remote-aware read does not close the gap: `create-brief`
+   does not publish the serial, so two fetches can still agree on the same next number.
+   Building a lock at filing time would be a coordination step this brief already rejected.
+   See the ledger.
 4. **How is a guard inside a skill verified at all?** This is the sharpest unknown here, and
    it was found while drafting rather than assumed. Phase 2 is described above as "one guard,
    with the tests it has never had" — but `start-brief` is a markdown prompt, not a script.

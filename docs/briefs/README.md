@@ -186,7 +186,8 @@ branch that is quietly getting more expensive. A known boundary is a legitimate 
 place; an unwatched one is not.
 
 The other known boundary, concurrent filing, is recorded in the Contract beside the
-clause it threatens.
+clause it threatens. If two branches claim the same serial, the second to reach `main`
+renumbers. Fetching first does not prevent that.
 
 ## Known limitation — one ledger, one owner, unchecked
 
