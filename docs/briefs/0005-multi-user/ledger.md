@@ -1,17 +1,17 @@
 # Ledger — #0005 Closing the single-writer holes
-`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 3:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 4:skipped`
+`blc/1 #0005 done(PR#26) 1:done(PR#26) 2:done(PR#26) 3:done(PR#26) 4:skipped`
 
 **Brief:** `docs/briefs/0005-multi-user/brief.md`
-**Status:** in-progress (`brief/0005-phase-1-state-assumptions`, PR#26)
+**Status:** done (PR #26)
 **Date:** 2026-08-25
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
-| `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
-| `phase 3 — ledger write-ownership` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
+| `phase 1 — state the assumptions` | done (PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
+| `phase 2 — the clobber guard` | done (PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
+| `phase 3 — ledger write-ownership` | done (PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
 | `phase 4 — remote-aware allocation` | skipped | Leave the race. Second merge renumbers. Fetch-then-allocate does not close TOCTOU. A lock at filing is a coordination step this brief rejected. Open decision 3. |
 
 ## Dependency structure
@@ -27,8 +27,8 @@
   prose: one owner per serial, one file. Not Contract v2. Phase 4 is skipped. See Big
   decisions.
 
-Phase 2 is stacked on this branch at the user's request, before phase 1 merged. That
-inverts `next-brief-phase`'s "confirm the previous phase landed" step on purpose.
+Phases 1–3 stacked on one branch and merged as PR #26. `done` was not written in that
+PR while it was open. This closeout points at #26 after the merge.
 
 ## Open decisions
 
@@ -79,7 +79,7 @@ Carried from the brief, with what each blocks.
 
 | branch | phase | state |
 |---|---|---|
-| `brief/0005-phase-1-state-assumptions` | phases 1, 2, and 3 | open, PR #26 |
+| `brief/0005-phase-1-state-assumptions` | phases 1, 2, and 3 | merged, PR #26; branch deleted |
 
 ## Big decisions
 
