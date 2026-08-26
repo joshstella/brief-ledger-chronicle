@@ -1,5 +1,5 @@
 # Ledger — #0005 Closing the single-writer holes
-`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 3:pending 4:pending`
+`blc/1 #0005 in-progress 1:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 2:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 3:in-progress(brief/0005-phase-1-state-assumptions,PR#26) 4:pending`
 
 **Brief:** `docs/briefs/0005-multi-user/brief.md`
 **Status:** in-progress (`brief/0005-phase-1-state-assumptions`, PR#26)
@@ -11,7 +11,7 @@
 |---|---|---|
 | `phase 1 — state the assumptions` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and a sharpening of the Contract's concurrent-filing entry to say what the local collision guard does and does not cover. Prose only — no clause, no check. |
 | `phase 2 — the clobber guard` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
-| `phase 3 — ledger write-ownership` | pending | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
+| `phase 3 — ledger write-ownership` | in-progress (`brief/0005-phase-1-state-assumptions`, PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
 | `phase 4 — remote-aware allocation` | pending | Allocate the serial against the pushed remote — the fix the Contract has named since v1. Blocked by open decision 3. |
 
 ## Dependency structure
@@ -54,9 +54,9 @@ Carried from the brief, with what each blocks.
    The same gap applies to `create-brief`, which phase 4 would modify. **Not closed.** Open
    decision 4 named it and refused to pretend a prompt change is a test.
 
-3. **`docs/briefs/README.md` has no Known limitation for single-writer ledger assumptions.**
-   It has entries for writers outside the pipeline and for the archive/inbox hole (#0004).
-   Phase 1 adds a third entry (or extends an existing one — decision at execution time).
+3. **`docs/briefs/README.md` had no stated ownership rule.** Phase 1 named the hole.
+   **Phase 3 states the convention** under Ledger status: one owner per serial, one file,
+   commit-before-branch. Remaining: nothing checks it, and it is not a Contract clause.
 
 4. **The Contract's concurrent-filing paragraph does not mention the local collision guard.**
    `docs/contracts/v1.md:87-93` describes the cross-machine race only. Phase 1 sharpens it
@@ -79,7 +79,7 @@ Carried from the brief, with what each blocks.
 
 | branch | phase | state |
 |---|---|---|
-| `brief/0005-phase-1-state-assumptions` | phases 1 and 2 | open, PR #26 |
+| `brief/0005-phase-1-state-assumptions` | phases 1, 2, and 3 | open, PR #26 |
 
 ## Big decisions
 
@@ -103,4 +103,4 @@ Carried from the brief, with what each blocks.
 
 - **Ownership is not a Contract clause.** Open decision 2. A clause is a promise to
   people who were told they can rely on it. A team convention is README prose. Phase 3
-  states the convention where the ledger is documented. It does not open v2.
+  stated the convention under Ledger status. It did not open v2.

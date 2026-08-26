@@ -79,6 +79,18 @@ Five states, and no others:
 | `done` | done | the PR, or a commit where there is no forge |
 | `skipped` | not being done | a reason |
 
+**One person owns a serial.** A team member is given the brief. That person runs
+`start-brief` and the later phases. Phases are that person's sequence, not a way to split
+the brief across people. `Author` on the identity line is who filed. The owner is who
+executes. Those can be different people. They are not two fields to merge.
+
+This is a team convention, not a Contract clause. Nothing checks it. Relaxing it later is
+allowed. Designing the ledger for two executors on one serial is not the use case.
+
+The ledger stays **one file** per brief, `NNNN-slug/ledger.md`. One owner, one narrative.
+`start-brief` commits that file to `main` before any feature branch is cut so the owner
+sees it on every machine that pulls.
+
 **`in-progress` names its branch.** That is what makes it the only state anything can
 interrogate: whether the branch still exists, whether a PR was ever opened, how far `main`
 has moved since. A branch named in prose is not resolvable; a branch in the status field is.
@@ -176,20 +188,22 @@ place; an unwatched one is not.
 The other known boundary, concurrent filing, is recorded in the Contract beside the
 clause it threatens.
 
-## Known limitation — one ledger, one writer, unstated
+## Known limitation — one ledger, one owner, unchecked
 
-A brief's ledger is one file, `NNNN-slug/ledger.md`. Every phase appends to it.
-`start-brief` tells the agent to commit that file to `main` before cutting a feature
-branch, so every machine that pulls can see it. That is one step in one skill. Nothing
-else states it. Nothing checks it.
+The convention is stated above under Ledger status: one person owns the serial, the ledger
+is one file, and that file is committed to `main` before a feature branch so the owner
+sees it on their other machines.
 
-Two people executing two phases of one brief edit the same file on two branches. Git
-will merge or conflict. This toolkit will not notice until then. Optimistic concurrency
-is the default. This limitation is that the ownership rule is buried, not that concurrent
-edits are forbidden.
+Nothing enforces any of that. An agent that skips the commit, or a second person who runs
+`next-brief-phase` on a serial they were not given, is not caught. Git will merge or
+conflict if two branches edit the same file. This toolkit will not notice until then.
 
-The named fix is to state the rule where a reader meets the ledger — one executor per
-phase — and to decide whether that earns a Contract clause. Neither is built.
+Two executors on one serial is out of scope for now. The remaining cost for the intended
+use is one owner on two machines — the clobber stop and concurrent filing — not a missing
+file-per-phase layout.
+
+This is not a Contract clause. No consumer has been told they can rely on an ownership
+protocol.
 
 ## Known limitation — start-brief can overwrite a ledger
 

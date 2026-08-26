@@ -55,7 +55,9 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - The **dependency structure** (chain vs parallel; which phase is provisional pending which decision).
    - Branch(es) created.
    - Open decisions (with the phase each blocks) and any complications found in step 4.
-   - Commit this file to `main` immediately — before any feature branch is cut — so it's visible on every machine that pulls.
+   - Commit this file to `main` immediately — before any feature branch is cut — so the
+     owner sees it on every machine that pulls. One person owns the serial. That is a
+     convention in `docs/briefs/README.md`, "Ledger status", not a Contract clause.
 
    **Secondary: `project` memory file `brief-<kebab>.md`** in the memory directory. Same content. Keeps MEMORY.md pointing at it for fast in-session lookup. Add/update the entry in MEMORY.md — update in place if it already existed, don't duplicate.
 
