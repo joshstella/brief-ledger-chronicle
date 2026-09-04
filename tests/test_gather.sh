@@ -65,11 +65,31 @@ gather_ledger() {
   } > "$BRIEFS/$folder/ledger.md"
 }
 
+# usage: gather_status <folder> <overall-token>
+# Inserts a blc/1 line under the ledger title. gather_ledger writes none, so a
+# test that needs a real status has to add one.
+gather_status() {
+  local folder="$1" overall="$2" f serial
+  f="$BRIEFS/$folder/ledger.md"
+  serial="${folder%%-*}"
+  {
+    head -1 "$f"
+    echo "\`blc/1 #$serial $overall\`"
+    tail -n +2 "$f"
+  } > "$f.tmp"
+  mv "$f.tmp" "$f"
+}
+
 # usage: gather_commit <iso-date> <message>
 gather_commit() {
   git -C "$REPO" add -A
   GIT_AUTHOR_DATE="$1" GIT_COMMITTER_DATE="$1" \
     git -C "$REPO" commit -qm "$2" >/dev/null 2>&1
+}
+
+# First data row of the brief table: "| #NNNN | ..."
+table_first_serial() {
+  grep -oE '^\| #[0-9]{4} ' "$OUT" | head -1 | tr -d ' |'
 }
 
 # ── The bug this file was written for ────────────────────────────────────────
@@ -99,7 +119,8 @@ test_gather_a_missing_depends_on_renders_as_a_dash() {
   gather_commit "2026-01-01T00:00:00" "seed #0001"
   run_gather
   assert_status 0
-  assert_out "depends-on: —"
+  grep -qE '^\| #0001 \| alpha \| [^|]+ \| [^|]+ \| [^|]+ \| — \|$' "$OUT" \
+    || fail "expected #0001 table row to end with depends-on —"
 }
 
 test_gather_a_present_depends_on_is_extracted() {
@@ -109,7 +130,8 @@ test_gather_a_present_depends_on_is_extracted() {
   gather_commit "2026-01-01T00:00:00" "seed #0002"
   run_gather
   assert_status 0
-  assert_out "depends-on: #0001"
+  grep -qE '^\| #0002 \| beta \| [^|]+ \| [^|]+ \| [^|]+ \| #0001 \|$' "$OUT" \
+    || fail "expected #0002 table row to carry depends-on #0001"
 }
 
 # Mixed is the case that matters: one brief without the line must not stop the
@@ -130,23 +152,28 @@ test_gather_one_brief_without_depends_on_does_not_hide_the_others() {
 
 # ── Chronology ───────────────────────────────────────────────────────────────
 #
-# The header calls git first-commit date authoritative, which is only meaningful
-# if it can disagree with serial order. Committing 0002 first makes them disagree.
+# Row order is last-touch, not serial and not first-commit. 0001 starts earlier
+# and is touched again later; 0002 lives entirely in the middle. 0001 must be
+# the first table row, and its first column must still be the January date.
 
-test_gather_orders_briefs_by_first_commit_not_by_serial() {
+test_gather_orders_the_table_by_last_touch_not_by_serial() {
   gather_repo
-  gather_brief "0002-beta"
-  gather_ledger "0002-beta"
-  gather_commit "2026-01-01T00:00:00" "seed #0002"
   gather_brief "0001-alpha"
   gather_ledger "0001-alpha"
-  gather_commit "2026-06-01T00:00:00" "seed #0001"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  gather_brief "0002-beta"
+  gather_ledger "0002-beta"
+  gather_commit "2026-03-01T00:00:00" "seed #0002"
+  echo "later" >> "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-06-01T00:00:00" "touch #0001"
   run_gather
   assert_status 0
   local first
-  first=$(grep -oE '000[12]-(alpha|beta)' "$OUT" | head -1)
-  [ "$first" = "0002-beta" ] \
-    || fail "expected 0002-beta first by commit date, got ${first:-nothing}"
+  first=$(table_first_serial)
+  [ "$first" = "#0001" ] \
+    || fail "expected #0001 first by last-touch, got ${first:-nothing}"
+  grep -qE '^\| #0001 \| alpha \| [^|]+ \| 2026-01-01T[^|]+ \| 2026-06-01T[^|]+ \|' "$OUT" \
+    || fail "expected #0001 first=January last=June"
 }
 
 # ── Ledger presence and forks ────────────────────────────────────────────────
@@ -160,14 +187,46 @@ test_gather_marks_a_brief_without_a_ledger_as_planned() {
   assert_out "planned"
 }
 
-test_gather_marks_a_brief_with_a_ledger_as_executed() {
+test_gather_marks_a_ledger_without_a_status_line_as_no_line() {
   gather_repo
   gather_brief "0001-alpha"
   gather_ledger "0001-alpha"
   gather_commit "2026-01-01T00:00:00" "seed #0001"
   run_gather
   assert_status 0
-  assert_out "executed"
+  assert_out "| #0001 | alpha | no-line |"
+}
+
+test_gather_reads_status_from_the_blc_line() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_ledger "0001-alpha"
+  gather_status "0001-alpha" "done(PR#9)"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "| #0001 | alpha | done(PR#9) |"
+}
+
+test_gather_reads_a_status_that_contains_a_space() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_ledger "0001-alpha"
+  gather_status "0001-alpha" "done(commit 383ed5b)"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "| #0001 | alpha | done(commit 383ed5b) |"
+}
+
+test_gather_puts_the_brief_title_in_the_table() {
+  gather_repo
+  gather_brief "0001-alpha"
+  printf '%s\n' "# A real title" "" "Body." > "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "| #0001 | A real title | planned |"
 }
 
 test_gather_lists_big_decision_headings_as_forks() {
@@ -226,7 +285,7 @@ test_gather_says_so_when_there_are_no_drafts() {
 
 # ── Incremental mode ─────────────────────────────────────────────────────────
 
-test_gather_incremental_omits_briefs_untouched_since_the_cutoff() {
+test_gather_incremental_table_still_lists_untouched_briefs() {
   gather_repo
   gather_brief "0001-old"
   gather_ledger "0001-old"
@@ -236,8 +295,26 @@ test_gather_incremental_omits_briefs_untouched_since_the_cutoff() {
   gather_commit "2026-06-01T00:00:00" "seed #0002"
   run_gather "2026-03-01"
   assert_status 0
-  assert_out "0002-new"
-  assert_not_contains "0001-old" "$OUT"
+  assert_out "| #0001 | old |"
+  assert_out "| #0002 | new |"
+}
+
+test_gather_incremental_narrate_omits_briefs_untouched_since_the_cutoff() {
+  gather_repo
+  gather_brief "0001-old"
+  gather_ledger "0001-old"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  gather_brief "0002-new"
+  gather_ledger "0002-new"
+  gather_commit "2026-06-01T00:00:00" "seed #0002"
+  run_gather "2026-03-01"
+  assert_status 0
+  local narrate
+  narrate=$(sed -n '/^## To narrate$/,/^## /p' "$OUT")
+  printf '%s\n' "$narrate" | grep -q '0002-new' \
+    || fail "expected 0002-new in To narrate"
+  printf '%s\n' "$narrate" | grep -q '0001-old' \
+    && fail "did not expect 0001-old in To narrate"
 }
 
 test_gather_incremental_names_the_window_it_used() {
@@ -359,6 +436,6 @@ test_gather_runs_clean_against_this_repository() {
   assert_status 0
   assert_out "## Commits referencing a brief serial"
   local briefs
-  briefs=$(grep -cE '^- [0-9]{4}-' "$OUT")
-  [ "$briefs" -ge 4 ] || fail "expected at least 4 briefs in this repo's digest, got $briefs"
+  briefs=$(grep -cE '^\| #[0-9]{4} ' "$OUT")
+  [ "$briefs" -ge 4 ] || fail "expected at least 4 brief table rows in this repo's digest, got $briefs"
 }
