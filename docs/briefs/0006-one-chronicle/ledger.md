@@ -1,16 +1,16 @@
 # Ledger — #0006 One chronicle, newest first, with a brief table
-`blc/1 #0006 pending 1:pending 2:pending 3:pending 4:pending`
+`blc/1 #0006 in-progress 1:in-progress(brief/0006-the-digest) 2:in-progress(brief/0006-the-digest) 3:pending 4:pending`
 
 **Brief:** `docs/briefs/0006-one-chronicle/brief.md`
-**Status:** pending
+**Status:** in-progress (`brief/0006-the-digest`)
 **Date:** 2026-09-04
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — the digest` | pending | `gather.sh` emits a Markdown table of every brief, newest last-touch first, on full and incremental runs. Columns: serial, title, status, first, last, depends-on. Title from the first `#` line of `brief.md`. Status from the ledger `blc/1` overall token, or `planned` if there is no ledger. Incremental filtering stays for commits and for what is new to narrate. The table is not filtered. |
-| `phase 2 — the check` | pending | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. Also rewrite the tests that today pin first-commit list order and the `executed` token — those strings will move or die when the table lands. |
+| `phase 1 — the digest` | in-progress (`brief/0006-the-digest`) | `gather.sh` emits a Markdown table of every brief, newest last-touch first, on full and incremental runs. Columns: serial, title, status, first, last, depends-on. Title from the first `#` line of `brief.md`. Status from the ledger `blc/1` overall token, or `planned` if there is no ledger. Incremental filtering stays for commits and for what is new to narrate. The table is not filtered. |
+| `phase 2 — the check` | in-progress (`brief/0006-the-digest`) | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. Also rewrite the tests that today pin first-commit list order and the `executed` token — those strings will move or die when the table lands. |
 | `phase 3 — the skill and the path` | pending | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
 | `phase 4 — the ignore` | pending | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/chronicles/` may stay ignored. |
 
@@ -38,11 +38,15 @@ None. Resolved 2026-09-04 in the brief.
 
 5. **The existing briefs bullet list will duplicate the table** if phase 1 adds a table and leaves the list. Two orders in one digest. Dropping the list is the cleaner digest and is why complication 1 exists.
 
+6. **`done(commit SHA)` contains a space.** `#0001` and `#0002` use `done(commit 92a7168)`. Taking awk field 3 yields `done(commit`. Status is the text after the serial up to the first `N:` phase field.
+
+7. **Picked `no-line` for a ledger with no `blc/1` line.** See complication 2. Uncommitted last-touch sorts as `0000-uncommitted`, which lands at the bottom of a descending sort.
+
 ## Branches
 
 | branch | phase | state |
 |---|---|---|
-| — | — | none yet; branch after this ledger is on `main` |
+| `brief/0006-the-digest` | phases 1 and 2 | open |
 
 ## Big decisions
 
