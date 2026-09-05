@@ -1,8 +1,8 @@
 # Ledger — #0006 One chronicle, newest first, with a brief table
-`blc/1 #0006 in-progress 1:done(PR#28) 2:done(PR#28) 3:in-progress(brief/0006-the-skill-and-the-path) 4:in-progress(brief/0006-the-skill-and-the-path)`
+`blc/1 #0006 in-progress 1:done(PR#28) 2:done(PR#28) 3:in-progress(brief/0006-the-skill-and-the-path,PR#29) 4:in-progress(brief/0006-the-skill-and-the-path,PR#29)`
 
 **Brief:** `docs/briefs/0006-one-chronicle/brief.md`
-**Status:** in-progress (`brief/0006-the-skill-and-the-path`)
+**Status:** in-progress (`brief/0006-the-skill-and-the-path`, PR#29)
 **Date:** 2026-09-04
 
 ## Phase sequence
@@ -11,8 +11,8 @@
 |---|---|---|
 | `phase 1 — the digest` | done (PR#28) | `gather.sh` emits a Markdown table of every brief, newest last-touch first, on full and incremental runs. Columns: serial, title, status, first, last, depends-on. Title from the first `#` line of `brief.md`. Status from the ledger `blc/1` overall token, or `planned` if there is no ledger. Incremental filtering stays for commits and for what is new to narrate. The table is not filtered. |
 | `phase 2 — the check` | done (PR#28) | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. Also rewrite the tests that today pin first-commit list order and the `executed` token — those strings will move or die when the table lands. |
-| `phase 3 — the skill and the path` | in-progress (`brief/0006-the-skill-and-the-path`) | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
-| `phase 4 — the ignore` | in-progress (`brief/0006-the-skill-and-the-path`) | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/chronicles/` may stay ignored. |
+| `phase 3 — the skill and the path` | in-progress (`brief/0006-the-skill-and-the-path`, PR#29) | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
+| `phase 4 — the ignore` | in-progress (`brief/0006-the-skill-and-the-path`, PR#29) | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/chronicles/` may stay ignored. |
 
 ## Dependency structure
 
@@ -50,7 +50,7 @@ None. Resolved 2026-09-04 in the brief.
 | branch | phase | state |
 |---|---|---|
 | `brief/0006-the-digest` | phases 1 and 2 | merged, PR #28; branch deleted |
-| `brief/0006-the-skill-and-the-path` | phases 3 and 4 | open |
+| `brief/0006-the-skill-and-the-path` | phases 3 and 4 | open, PR #29 |
 
 ## Big decisions
 
