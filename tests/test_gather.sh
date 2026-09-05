@@ -176,6 +176,24 @@ test_gather_orders_the_table_by_last_touch_not_by_serial() {
     || fail "expected #0001 first=January last=June"
 }
 
+# Same civil clock on the string would put +00:00 first (T12 > T09). Unix time
+# puts -04:00 first: 13:56 UTC is later than 12:00 UTC.
+test_gather_orders_the_table_by_unix_time_not_by_offset_string() {
+  gather_repo
+  gather_brief "0001-later-utc"
+  gather_ledger "0001-later-utc"
+  gather_commit "2026-08-26T09:56:07-04:00" "seed #0001"
+  gather_brief "0002-earlier-utc"
+  gather_ledger "0002-earlier-utc"
+  gather_commit "2026-08-26T12:00:00+00:00" "seed #0002"
+  run_gather
+  assert_status 0
+  local first
+  first=$(table_first_serial)
+  [ "$first" = "#0001" ] \
+    || fail "expected #0001 first by unix last-touch, got ${first:-nothing}"
+}
+
 # ── Ledger presence and forks ────────────────────────────────────────────────
 
 test_gather_marks_a_brief_without_a_ledger_as_planned() {
@@ -184,7 +202,7 @@ test_gather_marks_a_brief_without_a_ledger_as_planned() {
   gather_commit "2026-01-01T00:00:00" "seed #0001"
   run_gather
   assert_status 0
-  assert_out "planned"
+  assert_out "| #0001 | alpha | planned |"
 }
 
 test_gather_marks_a_ledger_without_a_status_line_as_no_line() {

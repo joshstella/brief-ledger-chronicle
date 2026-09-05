@@ -105,7 +105,9 @@ the programs and the installer. It does not exercise what a skill instructs an a
    gate before anything is committed.
 5. **`open-briefs.sh`** lists `in-progress` and `deferred` phases. It reports. It does not
    gate. Nothing invokes it on a cadence yet — run it when you want to know what is open.
-6. **`chronicle`** renders the record into prose when you want the story.
+6. **`chronicle`** renders the record into `docs/chronicles/chronicle.md` when you
+   want the story. Briefs, ledgers, and git stay the record. The file is a
+   rendering a later run may refresh.
 
 The brief is the claim you start with. The ledger is what the work taught, including where
 the brief was wrong. A specification, if the work needs one, gets written from that record

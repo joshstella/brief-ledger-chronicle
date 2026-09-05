@@ -18,14 +18,20 @@ test_project_creates_the_expected_tree() {
   assert_file "$TARGET/docs/briefs/_drafts/README.md"
 }
 
-# The installer scaffolds docs/chronicles/, and the chronicle skill forbids committing what
-# lands there. Scaffolding the directory without the ignore rule hands every project a
-# generated file that git immediately offers to commit — the drift the skill warns about.
-test_project_ignores_the_chronicles_output_dir() {
+# The installer scaffolds docs/chronicles/. chronicle.md is the one committed file.
+# Other files in that folder stay ignored so a later archive feature has a place.
+# A parent-directory rule would hide the exception, so the written pair is the
+# contents glob plus the one negation.
+test_project_ignores_other_chronicles_but_not_chronicle_md() {
   run_install y --target "$TARGET"
   assert_status 0
   assert_file "$TARGET/.gitignore"
-  assert_contains "docs/chronicles/" "$TARGET/.gitignore"
+  grep -qxF 'docs/chronicles/*' "$TARGET/.gitignore" \
+    || fail "expected docs/chronicles/* in .gitignore"
+  grep -qxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore" \
+    || fail "expected !docs/chronicles/chronicle.md in .gitignore"
+  grep -qxF 'docs/chronicles/' "$TARGET/.gitignore" \
+    && fail "did not expect a parent-directory docs/chronicles/ rule"
 }
 
 # This is the only file the installer writes that it does not own, so append-never-rewrite
@@ -36,7 +42,10 @@ test_project_appends_to_an_existing_gitignore() {
   assert_status 0
   assert_contains "node_modules/" "$TARGET/.gitignore"
   assert_contains "*.log" "$TARGET/.gitignore"
-  assert_contains "docs/chronicles/" "$TARGET/.gitignore"
+  grep -qxF 'docs/chronicles/*' "$TARGET/.gitignore" \
+    || fail "expected docs/chronicles/* appended to existing .gitignore"
+  grep -qxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore" \
+    || fail "expected !docs/chronicles/chronicle.md appended to existing .gitignore"
 }
 
 # Appending on every run would grow the file without bound. The guard is a match on the
@@ -46,9 +55,11 @@ test_project_gitignore_rule_is_not_duplicated() {
   run_install y --target "$TARGET"
   assert_status 0
   local n
-  n=$(grep -cxF 'docs/chronicles/' "$TARGET/.gitignore")
-  assert_count 1 "$n" "docs/chronicles/ rules in .gitignore after two installs"
-  assert_out "docs/chronicles/ already ignored"
+  n=$(grep -cxF 'docs/chronicles/*' "$TARGET/.gitignore")
+  assert_count 1 "$n" "docs/chronicles/* rules in .gitignore after two installs"
+  n=$(grep -cxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore")
+  assert_count 1 "$n" "chronicle.md exceptions in .gitignore after two installs"
+  assert_out "chronicles ignore rule already present"
 }
 
 # A project that already ignores the directory its own way is left completely alone —

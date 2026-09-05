@@ -74,17 +74,24 @@ for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
   # under `set -o pipefail` plus `set -e` kills this script mid-loop. tail consumes
   # its whole input, so nothing is left writing into a closed pipe.
   fcd=$(git log --format='%aI' -- "$d" 2>/dev/null | tail -1)
-  lcd=$(git log -1 --format='%aI' -- "$d" 2>/dev/null || true)
+  # %at is the sort key. %aI is display. String-sorting %aI mis-orders two
+  # last-touches that differ only by timezone offset.
+  touch_line=$(git log -1 --format='%at %aI' -- "$d" 2>/dev/null || true)
   slug=$(basename "$d")
-  last_key="${lcd:-0000-uncommitted}"
+  if [ -n "$touch_line" ]; then
+    last_key="${touch_line%% *}"
+    last_disp="${touch_line#* }"
+  else
+    last_key=0
+    last_disp=—
+  fi
   first_disp="${fcd:-—}"
-  last_disp="${lcd:-—}"
   printf '%s\t%s\t%s\t%s\t%s\n' "$last_key" "$slug" "$d" "$first_disp" "$last_disp" >> "$tmp"
 done
 
 if [ -s "$tmp" ]; then
-  # Last-touch descending. Slug is the tie-break so the order is stable.
-  sort -r -k1,1 -k2,2 "$tmp" | while IFS=$'\t' read -r _last_key slug d first_disp last_disp; do
+  # Last-touch descending (unix author time). Slug is the tie-break so the order is stable.
+  sort -k1,1nr -k2,2r "$tmp" | while IFS=$'\t' read -r _last_key slug d first_disp last_disp; do
     serial="#${slug%%-*}"
     title=$(brief_title "${d}brief.md")
     status=$(brief_status "${d}ledger.md")
@@ -102,7 +109,7 @@ echo "## To narrate"
 echo
 if [ -s "$tmp" ]; then
   narrated=0
-  # Read into an array so the empty-message count is not trapped in a pipe subshell.
+  # Process substitution, not a pipe, so narrated is not trapped in a subshell.
   while IFS=$'\t' read -r _last_key slug d _first _last; do
     if [ -n "$SINCE" ]; then
       recent=$(git log --since="$SINCE" -1 --format='%aI' -- "$d" 2>/dev/null || true)
@@ -113,7 +120,7 @@ if [ -s "$tmp" ]; then
       awk '/^## [Bb]ig decisions/{f=1;next} /^## /{f=0} f&&/^### /{sub(/^### /,"");print "    fork · "$0}' "${d}ledger.md"
     fi
     narrated=$((narrated + 1))
-  done < <(sort -r -k1,1 -k2,2 "$tmp")
+  done < <(sort -k1,1nr -k2,2r "$tmp")
   if [ -n "$SINCE" ] && [ "$narrated" -eq 0 ]; then
     echo "- (no new briefs since $SINCE)"
   fi

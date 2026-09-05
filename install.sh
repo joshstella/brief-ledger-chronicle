@@ -497,7 +497,7 @@ echo ""
 echo "This will create or update:"
 echo "  $TARGET_DIR/docs/briefs/        (brief/ledger structure)"
 echo "  $TARGET_DIR/docs/contracts/     (Contract v1.1 — the briefs convention)"
-echo "  $TARGET_DIR/docs/chronicles/    (generated chronicles)"
+echo "  $TARGET_DIR/docs/chronicles/    (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh)"
 if [[ "$HOST" == "cursor" ]]; then
@@ -569,27 +569,28 @@ while IFS= read -r dir; do
   fi
 done <<< "$SCAFFOLD_DIRS"
 
-# A chronicle is a rendering of the briefs, ledgers and git history — not a row in that
-# record. Committed beside its own sources it drifts against them, and the `chronicle`
-# skill says never to commit one. Since this installer scaffolds the output directory, the
-# rule that keeps it untracked has to travel with it; otherwise the first chronicle a
-# project generates turns up in `git status` asking to be committed.
+# chronicle.md is the one committed rendering. Other files under docs/chronicles/
+# stay ignored so a later archive feature has a place. A parent-directory rule
+# would hide the exception, so the ignore is the contents, then the one file.
 #
 # This is the one place the installer writes to a file it does not own, so it appends and
-# never rewrites: an existing .gitignore keeps everything it had.
+# never rewrites: an existing .gitignore keeps everything it had. A target that already
+# has the old `docs/chronicles/` directory rule is left alone — that rule still hides
+# chronicle.md. Un-hiding it there is a hand edit, not a --force behaviour.
 GITIGNORE_DST="$TARGET_DIR/.gitignore"
-if [[ -f "$GITIGNORE_DST" ]] && grep -qxF 'docs/chronicles/' "$GITIGNORE_DST"; then
-  log_skipped_as ".gitignore" "docs/chronicles/ already ignored"
+if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/chronicles/' "$GITIGNORE_DST" || grep -qxF '!docs/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
+  log_skipped_as ".gitignore" "chronicles ignore rule already present"
 else
   if [[ -f "$GITIGNORE_DST" ]]; then
     printf '\n' >> "$GITIGNORE_DST"
-    GITIGNORE_LABEL=".gitignore (appended docs/chronicles/)"
+    GITIGNORE_LABEL=".gitignore (appended chronicles ignore)"
   else
     GITIGNORE_LABEL=".gitignore"
   fi
   cat >> "$GITIGNORE_DST" <<'GITIGNORE_EOF'
-# Chronicles are generated from the brief record on demand, not committed to it.
-docs/chronicles/
+# chronicle.md is the one committed rendering. Other files under this folder stay ignored.
+docs/chronicles/*
+!docs/chronicles/chronicle.md
 GITIGNORE_EOF
   log_created "$GITIGNORE_LABEL"
 fi
