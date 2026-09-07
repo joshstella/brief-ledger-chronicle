@@ -115,11 +115,12 @@ crisis.
 Versioned, because a promise holds for a time. A later version supersedes an earlier one
 without making it retroactively false.
 
-A Contract is the only artifact that is both derived from the record and committed to the
-repository. A chronicle is generated and read. A Contract cannot work that way, because
-others depend on it. So it can rot. **A contract that has drifted is worse than no
-contract, because it is believed.** The tie to the code has to be structural. Discipline
-will fail the way hand-synced documents have always failed.
+Both a Contract and a chronicle are derived from the record, and both may sit in the
+repository. They are not the same kind of committed file. A chronicle is a rendering.
+The next run may refresh it. Nobody builds against it. A Contract cannot work that
+way, because others depend on it. So it can rot. **A contract that has drifted is
+worse than no contract, because it is believed.** The tie to the code has to be
+structural. Discipline will fail the way hand-synced documents have always failed.
 
 This one was unbuilt until a consumer existed. The installer puts the briefs convention
 into other people's projects — which is the act of telling someone they can count on it.
