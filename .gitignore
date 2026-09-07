@@ -1,10 +1,10 @@
 .DS_Store
 
-# A chronicle is a rendering of the briefs, ledgers and git history, not a row in that
-# record. Committing one beside its own sources guarantees it drifts against them, so the
-# output directory is scaffolded but never tracked. install.sh writes this same rule into
-# every target it scaffolds a chronicles directory for.
-docs/chronicles/
+# chronicle.md is the one committed rendering. Other files under this folder stay
+# ignored so a later archive feature has a place. install.sh writes this same pair
+# into every target it scaffolds a chronicles directory for.
+docs/chronicles/*
+!docs/chronicles/chronicle.md
 
 # Your global ignore (~/.config/git/ignore) carries `**/.claude/settings.local.json`.
 # That is right for a project — a local permission allowlist is not shared state — but

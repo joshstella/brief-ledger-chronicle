@@ -11,13 +11,17 @@ change and its provenance; git holds the *when* and the *scale*; the ledgers hol
 actually happened*. This skill weaves them into a readable, professional history rather
 than a list.
 
-**A chronicle is a derived artifact, not part of the record.** The briefs, ledgers, and
-git history are the system of record; a chronicle is a *rendering* of them — like a report
-run off a database, not a row added to it. So it is generated on demand and read by a
-human; it does **not** get written back into the repo. (It's the first of a possible family
-of derived views — timeline decks, engagement summaries — all rendered from the same
-`gather.sh` digest. Keeping the mechanical-digest → human-rendering split clean is what
-makes the next rendering cheap.)
+**A chronicle is a derived rendering, not the record.** Briefs, ledgers, and git are the
+record. The file in the tree is a report run off that record. The next run may refresh
+the table, the present-tense paragraph, and the closed-through marker. It may prepend
+new era prose. It does not become a source of truth by sitting in git.
+
+**One file, one path:** `docs/chronicles/chronicle.md`. Edit that file in place. Do not
+write a sibling. Do not write to a notes vault or a user-named path. The folder stays
+for a later archive feature. This skill does not add one.
+
+This file is an instruction to the agent. Nothing in the test suite exercises what it
+tells you to write.
 
 ## What it reads
 
@@ -29,15 +33,15 @@ makes the next rendering cheap.)
   resolved during review, where the human–agent interaction carried information that
   exists nowhere else. These are the *forks the codebase navigated* — weight them heavily.
 - `docs/briefs/_drafts/*.md` — parked/deferred drafts: the roads considered and not taken.
-- **git history** — first-commit date per brief (the authoritative chronology), commit
-  counts (scale), and squash subjects carrying `[#NNNN]` (which changes belong to which
+- **git history** — last-touch date per brief (row and era order), first-commit date
+  (a table column), and squash subjects carrying `[#NNNN]` (which changes belong to which
   brief). The *when*.
 - Optionally `docs/design/` for context on what a change produced — but see the grounding
   rule: a chronicle is the story of *becoming*, not a statement of current state.
 
 ## Closed-date markers
 
-Every written chronicle carries a hidden marker on its last line:
+The one file carries a hidden marker on its last line:
 
 ```
 <!-- chronicle:closed-through:YYYY-MM-DD -->
@@ -45,62 +49,67 @@ Every written chronicle carries a hidden marker on its last line:
 
 `YYYY-MM-DD` is the date of the repo's HEAD commit at time of writing. This marks that
 everything merged on or before that date is already fully narrated. On the next run, the
-skill reads this marker, passes the date to `gather.sh` as a `--since` cutoff, and frames
-the output as an addendum rather than a full retelling.
+skill reads this marker and passes the date to `gather.sh`. The table stays complete.
+The cutoff filters what is new to narrate.
 
 The marker is invisible in rendered Markdown. If the file is read by a human, they see
 prose; if it is scanned by the next run, the marker is the only machine-readable state.
 
 ## Method
 
-1. **Check for a prior closed-date marker.**
-   - Locate the output directory (the notes vault or whatever path the user names).
-   - List `*chronicle*.md` files there; take the most recently modified.
-   - If one exists, grep its last 5 lines for `<!-- chronicle:closed-through:(\d{4}-\d{2}-\d{2}) -->`.
-   - If a date is found, record it as `PRIOR_DATE`. This run is **incremental**; note the
-     prior filename so the narrative can reference it.
-   - If none is found, this is a **full run**; proceed without a cutoff.
+1. **Read the one file, if it exists.**
+   - Path is `docs/chronicles/chronicle.md`. No other path. Do not scan siblings.
+   - If the file exists, grep its last 5 lines for
+     `<!-- chronicle:closed-through:(\d{4}-\d{2}-\d{2}) -->`.
+   - If a date is found, record it as `PRIOR_DATE`. This run is **incremental**.
+   - If the file is missing or has no marker, this is a **full run**.
 
 2. **Gather the timeline.** From the repo root, run `scripts/gather.sh [PRIOR_DATE]`. It
-   emits a structured digest: repo origin and head, every brief ordered by **git
-   first-commit date**, each with its last-touch date, commit count, executed-or-not flag,
-   and depends-on edge; the parked drafts; and the commits that reference a brief serial.
-   When `PRIOR_DATE` is supplied, `gather.sh` limits its output to briefs that have at
-   least one commit after `PRIOR_DATE` and commits in that same window — everything before
-   the cutoff is already narrated. If `gather.sh` does not exist, gather manually using
-   the same filtering logic: read only briefs whose `git log -1 --format='%aI'` is after
-   `PRIOR_DATE`, and limit the commits scan to `git log --since=PRIOR_DATE`.
+   emits a structured digest: repo origin and head; a brief table of every brief, newest
+   last-touch first, with serial, title, status, first, last, and depends-on (the table
+   is never filtered); a **To narrate** list (filtered when a cutoff is set); the parked
+   drafts; and the commits that reference a brief serial. Status is the `blc/1` overall
+   token, `planned` if there is no ledger, or `no-line` if the ledger has no status line.
+   If `gather.sh` does not exist, gather manually using the same filtering logic: the
+   table still lists every brief; only narration and commits take the cutoff.
 
-3. **Read the prose.** Walking the (filtered) briefs in chronological order, read each
-   `brief.md` (purpose, rationale, open decisions) and its `ledger.md` if present.
+3. **Read the prose.** Walk the briefs in **To narrate** (incremental) or every brief
+   (full run), newest last-touch first. Read each `brief.md` and its `ledger.md` if
+   present.
 
 4. **Read the roads not taken.** Skim `_drafts/` for what was considered and parked; on
    an incremental run, only surface drafts added or materially changed since `PRIOR_DATE`.
 
-5. **Assemble the spine.** Chronology from git; causal links from the depends-on edges
-   ("X laid the foundation Y built on"); the *why* from briefs; the *what happened* from
-   ledgers; the **forks** from each ledger's Big decisions; the *considered-but-deferred*
+5. **Assemble the spine.** Last-touch order from git; causal links from the depends-on
+   edges ("X laid the foundation Y built on"); the *why* from briefs; the *what happened*
+   from ledgers; the **forks** from each ledger's Big decisions; the *considered-but-deferred*
    from drafts. The forks and the roads-not-taken are the dramatic beats — clean phases are
    connective tissue.
 
-6. **Write the narrative** (see Voice & structure). On an incremental run, open with a
-   single-paragraph preamble: *"This continues from `<prior-filename>`, which covers
-   everything through `PRIOR_DATE`. The eras below describe work merged after that date."*
-   Do not retell prior eras — reference the prior file. Close with the updated "Where I am
-   now" coda (it supersedes the prior one).
+6. **Write `docs/chronicles/chronicle.md`.** Create `docs/chronicles/` if it is missing.
+   The file always has this shape, top to bottom:
 
-7. **Write to `.md` file(s)** — the chronicle is a Markdown deliverable. Write to a path
-   the user names, kept **outside the tracked repo tree** (a notes vault, a decks folder, a
-   gitignored output dir) so it never drifts against the record it describes. Multi-part
-   cuts (eras, per-workspace) become several `.md` files. Never commit it into the repo;
-   render inline to the conversation only if the user asks instead of a file.
+   1. A title.
+   2. The brief table, pasted from the digest. Refresh it on every run. Do not rebuild
+      the columns by hand.
+   3. A present-tense paragraph: where the work is now. Refresh it on every run.
+   4. Era sections, newest first.
+   5. Origin last. The first commit and the starting shape of the system live here.
+   6. The closed-through marker as the last line.
 
-8. **Append the closed-date marker** as the very last line of every written `.md` file:
+   On an **incremental** run: refresh the table and the present-tense paragraph. Prepend
+   new era prose under the paragraph. Do not rewrite prior era prose. Do not retell
+   origin. Update the marker. Do not add a sibling. Do not open with a "this continues
+   from `<prior-filename>`" preamble.
+
+   On a **full** run: write the whole file in that order.
+
+7. **Stamp the marker** as the very last line:
    ```
    <!-- chronicle:closed-through:YYYY-MM-DD -->
    ```
    `YYYY-MM-DD` is today's date (from the system prompt) — or the date of HEAD if
-   the session date is unavailable. This is what the next run will read.
+   the session date is unavailable.
 
 ## Voice & structure
 
@@ -108,11 +117,11 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
   objectively — "The system began as a single service that did one thing…" / "The team
   chose to…" Tone is clear and direct: the register of a well-written engineering
   retrospective or client engagement summary, not a personal essay.
-- **Chronological spine from git first-commit dates**, not serial order. Serials are
-  *filing* order and can differ from when work actually began; git is the truth.
-- **Group into eras** where the history has natural seams (e.g. the foundation era → the
-  refactor into modules → the feature build-out → the workflow tooling). Each era: the
-  briefs that constituted it, why they happened, what changed, what they enabled.
+- **Newest work first.** Table rows and era sections follow last-touch, not serial and
+  not first-commit. First-commit stays a table column. A brief that started early and
+  moved yesterday sits at the top.
+- **Group into eras** where the history has natural seams. Each era: the briefs that
+  constituted it, why they happened, what changed, what they enabled.
 - **Dependency edges become causal narrative**, not footnotes.
 - **The Big decisions are the forks** — give them weight. Each is a moment where the work
   hit genuine ambiguity and a choice was made with reasoning; that's where a history stops
@@ -120,9 +129,8 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
   the ledger records.
 - **Include the roads not taken.** A draft parked, a brief decomposed rather than built —
   an honest account includes what was weighed and set aside.
-- **Close with a brief "current state" coda**, explicitly noting that present *state*
-  lives in the design docs and READMEs — the chronicle is how the system got here, not a
-  statement of what's here now.
+- **Present tense lives in one paragraph after the table.** That paragraph is current
+  position. Era prose is past tense. Origin is past tense and last.
 
 ## Grounding rules (non-negotiable)
 
@@ -131,23 +139,21 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
   fabricate — stay grounded in what the record shows.
 - **Distinguish recorded fact from inference.** Where the record is silent, stay quiet or
   say so plainly rather than filling the gap with a plausible story.
-- **Chronology from git**, never from serial numbering.
+- **Row and era order from last-touch**, never from serial numbering.
 - **A chronicle is the story of becoming — changes and their reasoning — not current
   state.** The two are complementary layers; don't present the chronicle as system
-  documentation.
+  documentation. The present-tense paragraph is a pointer, not a spec.
 - **Completeness is bounded by what flowed through the registrar.** Work that skipped a
   brief leaves a hole the chronicle inherits. If the history looks suspiciously gapless or
   gappy, say the record is what it is rather than smoothing it over.
 
 ## Output options
 
-- **One `.md` file** (default) — the full chronicle, written to a user-named path outside
-  the tracked tree.
-- **Several `.md` files** — for era / date-range / per-workspace cuts, one file per part.
-  In a monorepo, chronicle one workspace (`apps/syzygy`) by filtering briefs and git paths
-  to it.
-- **Onboarding cut** — a shorter "how did we get here, for someone joining" `.md`.
-- **Inline** — render to the conversation only if the user asks for it instead of a file.
+- **The one file** — default. Always `docs/chronicles/chronicle.md`.
+- **Inline** — also render to the conversation if the user asks for it in addition to
+  the file, or instead of writing the file.
+
+Do not write several `.md` files. Do not write to a user-named path.
 
 ## Portability
 
@@ -159,4 +165,5 @@ deliverable in itself.)
 ## Renaming
 
 To call this `our-story` instead of `chronicle`: rename the folder and the `name:` field
-in this frontmatter. Nothing else depends on the name.
+in this frontmatter. The output path stays `docs/chronicles/chronicle.md` unless a later
+brief changes it. Nothing else depends on the skill name.

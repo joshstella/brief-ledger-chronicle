@@ -43,7 +43,7 @@ A portable workflow that keeps AI-assisted development traceable, reviewable, an
 |---|---|---|
 | **Brief** | The intent — why, what, how | `docs/briefs/NNNN-slug/` |
 | **Ledger** | The execution — what actually happened | `docs/briefs/NNNN-slug/ledger.md` |
-| **Chronicle** | The narrative — the story of the codebase | `docs/chronicles/` |
+| **Chronicle** | The narrative — the story of the codebase | `docs/chronicles/chronicle.md` |
 
 Each layer is a plain Markdown file. No app. No database. Just git.
 
@@ -151,7 +151,7 @@ Run `/chronicle` when you want:
 
 The codebase speaks in first person. It narrates the eras, the forks, the roads not taken.
 
-*The chronicle is a derived artifact — generated on demand, never committed as source of truth. The briefs and ledgers are the record; the chronicle is a rendering of them.*
+*The chronicle is a derived rendering in `docs/chronicles/chronicle.md`. The briefs and ledgers are the record. A later run may refresh the file.*
 
 ---
 
