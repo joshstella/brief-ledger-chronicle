@@ -41,7 +41,7 @@ None. Resolved 2026-09-04 in the brief.
 
 7. **Picked `no-line` for a ledger with no `blc/1` line.** See complication 2. Uncommitted last-touch sorts as unix `0`, which lands at the bottom of a descending numeric sort. Display stays `—`. String-sorting `%aI` mis-orders mixed timezone offsets. Sort key is `%at`.
 
-8. **The Manifesto still says a Contract is the only derived artifact that is committed.** Phase 4 named README and slides, not the Manifesto. The sentence is now false if `chronicle.md` sits in git. This phase does not edit the Manifesto.
+8. **The Manifesto said a Contract is the only derived artifact that is committed.** Phase 4 named README and slides, not the Manifesto, so that PR left it. The sentence was false once `chronicle.md` sat in git. Cleaned after merge: derived-and-committed is no longer a unique property of a Contract. The distinction that remains is dependence. Others build against a Contract. Nobody builds against a chronicle.
 
 9. **PR #28 merged at `aae723b`.** The sort-key commit (`c77fafe`) was on the digest branch and not in that merge. This branch carries it.
 
@@ -54,4 +54,6 @@ None. Resolved 2026-09-04 in the brief.
 
 ## Big decisions
 
-None beyond the brief. Filing resolved the five open decisions. The pairing of 1+2 and 3+4 is a sequencing call from contact with the suite and the ignore, not a reopening.
+None beyond the brief at filing. The pairing of 1+2 and 3+4 is a sequencing call from contact with the suite and the ignore, not a reopening.
+
+- **Derived-and-committed is not unique to a Contract.** 2026-09-07. PR #29 left the Manifesto sentence because phase 4 named README and slides. The review asked whether to accept the stale line. Clean it: a chronicle may sit in git as a rendering. A Contract is still the one others build against, so drift there is a crisis and the tie to the code stays structural.
