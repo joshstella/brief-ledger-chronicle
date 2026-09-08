@@ -1,8 +1,8 @@
 # Ledger — #0006 One chronicle, newest first, with a brief table
-`blc/1 #0006 in-progress 1:done(PR#28) 2:done(PR#28) 3:done(PR#29) 4:done(PR#29) 5:in-progress(brief/0006-manifesto,PR#30)`
+`blc/1 #0006 done(PR#30) 1:done(PR#28) 2:done(PR#28) 3:done(PR#29) 4:done(PR#29) 5:done(PR#30)`
 
 **Brief:** `docs/briefs/0006-one-chronicle/brief.md`
-**Status:** in-progress (`brief/0006-manifesto`, PR#30)
+**Status:** done (PR #30)
 **Date:** 2026-09-04
 
 ## Phase sequence
@@ -13,7 +13,7 @@
 | `phase 2 — the check` | done (PR#28) | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. Also rewrite the tests that today pin first-commit list order and the `executed` token — those strings will move or die when the table lands. |
 | `phase 3 — the skill and the path` | done (PR#29) | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
 | `phase 4 — the ignore` | done (PR#29) | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/chronicles/` may stay ignored. |
-| `phase 5 — the Manifesto` | in-progress (`brief/0006-manifesto`, PR#30) | Phase 4 named README and slides. The Manifesto still said a Contract is the only derived artifact in git. That sentence is false once `chronicle.md` sits in the tree. Rewrite it so a chronicle may be committed as a rendering, and a Contract stays the file others build against. |
+| `phase 5 — the Manifesto` | done (PR#30) | Phase 4 named README and slides. The Manifesto still said a Contract is the only derived artifact in git. That sentence is false once `chronicle.md` sits in the tree. Rewrite it so a chronicle may be committed as a rendering, and a Contract stays the file others build against. |
 
 ## Dependency structure
 
@@ -21,7 +21,8 @@
 - **Strict chain: phase 2 → phase 3.** The skill pastes a table the digest already shaped and that the suite has pinned.
 - **Phase 4 lands with phase 3.** Landed together as PR #29.
 - **Re-plan after PR #28:** remaining 3 and 4 still held. No split, merge, or drop.
-- **Re-plan after PR #29:** original remainder is empty. All four brief phases landed. Phase 4 left the Manifesto false (complication 8). That is now phase 5. No further phases after it. Branch already exists: `brief/0006-manifesto`, PR #30. No new branch.
+- **Re-plan after PR #29:** original remainder was empty. Phase 5 was the Manifesto leftover.
+- **Re-plan after PR #30:** remainder is empty. Phase 5 landed. The brief is done. No next phase.
 
 ## Open decisions
 
@@ -53,7 +54,7 @@ None. Resolved 2026-09-04 in the brief. The Manifesto call was a review Your-cal
 |---|---|---|
 | `brief/0006-the-digest` | phases 1 and 2 | merged, PR #28; branch deleted |
 | `brief/0006-the-skill-and-the-path` | phases 3 and 4 | merged, PR #29; branch deleted |
-| `brief/0006-manifesto` | phase 5 | open, PR #30 |
+| `brief/0006-manifesto` | phase 5 | merged, PR #30; branch deleted |
 
 ## Big decisions
 
