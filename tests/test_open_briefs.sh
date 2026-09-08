@@ -80,7 +80,7 @@ test_open_briefs_a_closed_tree_says_nothing_is_open() {
   commit_all
   run_query docs/briefs
   assert_status 0
-  assert_out "1 brief(s), 0 open phase(s), 0 drift, 0 untracked"
+  assert_out "1 brief(s), 0 open phase(s), 0 not started, 0 drift, 0 untracked"
   assert_out "Nothing open."
 }
 
@@ -186,14 +186,45 @@ test_open_briefs_reports_a_brief_that_is_not_in_git() {
   assert_out "1 untracked"
 }
 
-test_open_briefs_reports_a_brief_with_no_ledger() {
+# Filing and starting are separate acts. A brief that has been filed but not started
+# has no ledger, and that is the state it is supposed to rest in until someone picks
+# it up. It is reported so the wait is visible.
+test_open_briefs_reports_a_filed_brief_as_not_started() {
   make_repo
   mkdir -p "$BRIEFS/0001-ledgerless"
   echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
   commit_all
   run_query docs/briefs
   assert_status 0
-  assert_out "[no-ledger]"
+  assert_out "[not-started]"
+  assert_out "1 not started"
+}
+
+# The bug this replaced: a filed brief was counted as an open phase, so a repo with
+# nothing in flight reported work in flight.
+test_open_briefs_does_not_count_a_not_started_brief_as_open() {
+  make_repo
+  mkdir -p "$BRIEFS/0001-ledgerless"
+  echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_out "0 open phase(s)"
+  assert_out "Nothing open. 1 brief(s) filed and waiting"
+}
+
+# Not started is a resting state; invisible to git is not. A brief nobody else can
+# see is not waiting to be picked up.
+test_open_briefs_flags_a_not_started_brief_that_is_not_in_git() {
+  make_repo
+  commit_all
+  mkdir -p "$BRIEFS/0001-ledgerless"
+  echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[not-started]"
+  assert_out "[untracked]"
+  assert_out "1 untracked"
 }
 
 # ── It reports; it does not gate ─────────────────────────────────────────────
@@ -237,5 +268,7 @@ test_open_briefs_this_repo_scans_without_crashing() {
   assert_status 0
   assert_out "brief(s)"
   assert_not_contains "[no-line]" "$OUT"
-  assert_not_contains "[no-ledger]" "$OUT"
+  # Not asserted as absent: this repo carries filed-but-unstarted briefs, and that
+  # is a healthy state. Asserted instead is that the count is always reported.
+  assert_out "not started"
 }
