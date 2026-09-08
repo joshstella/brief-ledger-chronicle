@@ -68,7 +68,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - branch: `git diff <default-branch>...HEAD`.
 
 2. **Read the governing brief — this is what gives the review teeth on judgment, not just defects.**
-   - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the feature/branch name against `docs/briefs/`, `briefs/`, `docs/`.
+   - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the branch name against `docs/briefs/`, `briefs/`, `docs/`. A branch is `brief/<serial>-<letter>-<kebab>`, so the serial is in it.
    - If found, read its **settled** decisions, its **open** decisions, and which phase this change belongs to.
    - If none is found, note "no governing brief" and review on preferences + AGENTS.md/CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
 

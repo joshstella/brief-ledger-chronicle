@@ -42,7 +42,7 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 
 5. **Plan — a phase sequence WITH its dependency structure, not just a list.**
    - Use the brief's own phase/layer sequence if it has one; derive one if not.
-   - Each phase gets a **stable id** (e.g. `phase 1 — domain types + ephemeris`), the files it creates/modifies, what it accomplishes, and what it depends on.
+   - Each phase gets a **stable id** — a letter and a short lowercase noun-phrase label, e.g. `a — domain types`. Letters run in execution order, so re-ordering phases re-letters them. Plus the files it creates/modifies, what it accomplishes, and what it depends on. The full convention is in `docs/briefs/README.md`, "Phase ids".
    - State the dependency shape explicitly: which phases form a **strict chain** (each needs the prior) versus which are **parallel tracks** (independent, can run on separate branches at once). Do not serialize work that doesn't need it.
    - Flag **open decisions** that block specific phases, naming which phase each blocks.
    - Flag **codebase complications** the brief doesn't address — real ones only, visible from reading the code, not invented.
@@ -53,7 +53,7 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 
    **Primary: `docs/briefs/<name>/ledger.md` in the repo** (same directory as the brief file). This is the source of truth — it travels with the code across machines and branches.
    - Brief path and title; status `pending`; date.
-   - The **status line** directly under the title — `blc/1 #NNNN <status> 1:<status> 2:<status> …` — per `docs/briefs/README.md`, "Ledger status". Update it in the same edit as any status change, never separately.
+   - The **status line** directly under the title — `blc/2 #NNNN <status> a:<status> b:<status> …` — per `docs/briefs/README.md`, "Ledger status". Phase indexes are letters. Update it in the same edit as any status change, never separately. Never write `blc/1`: it is the numeric-index schema, still read but no longer written.
    - The **full phase list** with stable ids and per-phase status. The vocabulary is `pending` / `in-progress` / `deferred` / `done` / `skipped`, defined once in `docs/briefs/README.md` and used at both levels. `in-progress` and `deferred` name their branch, and their PR once one exists.
    - The **dependency structure** (chain vs parallel; which phase is provisional pending which decision).
    - Branch(es) created.
@@ -67,6 +67,6 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 The phase ids written here are the labels later commands rely on: `commit-push-pr` cites them in the PR's `## Brief` line, and `review-pr` checks each diff against its phase's scope. Keep them stable.
 
 7. **Branch — phase-aware.**
-   - Single-phase brief → ask to create one branch `feature/<kebab>`.
-   - Multi-phase brief → present the full sequence, then branch only the **first** phase (or the first parallel set): *"This brief is N phases, <chain/parallel>. Branching for phase 1: `feature/<kebab>-<phase1>`. Later phases branch via `next-brief-phase` as each completes. Proceed?"*
-   - Derive `<kebab>` from the brief title plus the phase label. Wait for confirmation before creating any branch or writing code.
+   - Single-phase brief → ask to create one branch `brief/<serial>-a-<kebab>`.
+   - Multi-phase brief → present the full sequence, then branch only the **first** phase (or the first parallel set): *"This brief is N phases, <chain/parallel>. Branching for phase a: `brief/<serial>-a-<kebab>`. Later phases branch via `next-brief-phase` as each completes. Proceed?"*
+   - Derive `<kebab>` from the phase label. One slash per branch name and it belongs to `brief/` — see `docs/briefs/README.md`, "Phase ids". Wait for confirmation before creating any branch or writing code.

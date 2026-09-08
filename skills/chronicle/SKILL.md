@@ -68,8 +68,9 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
    emits a structured digest: repo origin and head; a brief table of every brief, newest
    last-touch first, with serial, title, status, first, last, and depends-on (the table
    is never filtered); a **To narrate** list (filtered when a cutoff is set); the parked
-   drafts; and the commits that reference a brief serial. Status is the `blc/1` overall
-   token, `planned` if there is no ledger, or `no-line` if the ledger has no status line.
+   drafts; and the commits that reference a brief serial. Status is the overall token from
+   the ledger status line — `blc/1` or `blc/2`, both are read — `planned` if there is no
+   ledger, or `no-line` if the ledger has no status line.
    If `gather.sh` does not exist, gather manually using the same filtering logic: the
    table still lists every brief; only narration and commits take the cutoff.
 

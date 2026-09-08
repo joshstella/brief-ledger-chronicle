@@ -112,13 +112,67 @@ for what that cost looked like when it was measured.
 Every ledger opens with one line under its title, so a scan costs a line instead of a table:
 
 ```
-`blc/1 #0003 done 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR#11)`
+`blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention) c:pending`
 ```
 
-`blc/1` is the schema version. The line restates what the phase table says, deliberately: a
+`blc/2` is the schema version. The line restates what the phase table says, deliberately: a
 reader or a tool gets the whole state without parsing prose. **Redundancy has a price** — a
 stale line is worse than no line, because a cheap scan trusts it and stops looking. Update it
 in the same edit that changes a status, never separately.
+
+#### `blc/1` and `blc/2` — why there are two
+
+`blc/1` indexes phases by number, `blc/2` by letter. That is the whole difference, and it is
+enough to need a version: a reader written for `blc/1` assumes a numeric index and genuinely
+breaks on `a:done`. The version tag exists to announce exactly that.
+
+```
+`blc/1 #0003 done 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR#11)`
+```
+
+**Old lines are never rewritten.** Briefs #0001–#0007 keep numeric indexes forever. Every
+reader in this toolkit dual-reads, so both parse. Write `blc/2` in anything new.
+
+If you are reading #0004 and see `1:done`, then reading a later brief and see `a:done`, that
+is the seam and not a defect. It is left visible on purpose: this repository doubles as a
+teaching example, and a retcon would claim that conventions arrive free. It also could not
+succeed — merged branch names and squash subjects on `main` say `phase 3`, and `gather.sh`
+reads commit subjects into the chronicle, so a rewritten ledger would narrate `c` beside a
+commit saying `phase 3`. A dated, explicable seam beats one that reads as a bug.
+
+### Phase ids
+
+**A phase has one id. The index is a letter. Every other name derives from it.**
+
+Serials are numbers, phases are letters, so speech and chat are never ambiguous. "Do 3 on 6"
+is unparseable; `#0006/c` is not.
+
+| | form | example |
+|---|---|---|
+| id | `<letter> — <label>` | `c — the publisher` |
+| written reference | `#<serial>/<letter>` | `#0007/c` |
+| spoken | serial, then letter | "seven c" |
+| git branch | `brief/<serial>-<letter>-<kebab>` | `brief/0007-c-the-publisher` |
+| PR title | `[#<serial>] <summary>` | `[#0007] Publish phase tickets` |
+| Jira summary | `#<serial>/<letter> — <label>` | `#0007/c — the publisher` |
+
+The label is a short noun phrase, lowercase, two to five words.
+
+**The separator is a slash in writing and a hyphen in branches.** A branch gets exactly one
+slash and it belongs to `brief/`. A second one would make `brief/0007` and `brief/0007/b`
+mutually exclusive refs, so git could not hold both.
+
+**Serials stay zero-padded in anything written down.** `7/b` is speech and chat only. The
+padding only *does work* in the folder name, where lexical order has to equal numeric order —
+unpadded, `10-jira` sorts before `2-multi-user`. It is carried everywhere else so there is one
+written form to teach rather than a rule about which contexts sort.
+
+**`brief/`, not `feature/`.** A brief is an assignment. It can be smaller than a feature (one
+clause, one script) or larger (a contract version, a workflow reversal).
+
+**Reserved, not a phase:** `brief/<serial>-closeout`.
+
+**Ceiling: 26 phases.** A 27th is a new brief, not `aa`.
 
 ## Structural invariants
 

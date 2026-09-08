@@ -1,5 +1,5 @@
 # Ledger — #0009 One name for a phase, used everywhere
-`blc/1 #0009 in-progress 1:in-progress(brief/0009-a-the-readers) 2:pending 3:pending`
+`blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention) c:pending`
 
 **Brief:** `docs/briefs/0009-phase-names/brief.md`
 **Status:** in-progress
@@ -9,17 +9,17 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — the readers` | in-progress (brief/0009-a-the-readers) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
-| `phase 2 — the convention` | pending | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
-| `phase 3 — the check` | pending | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression phase 1 would otherwise ship silently. |
+| `a — the readers` | done (PR#34) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
+| `b — the convention` | in-progress (brief/0009-b-the-convention) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
+| `c — the check` | pending | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
 
 ## Dependency structure
 
-- **Strict chain: phase 1 → phase 2 → phase 3.** Nothing here is parallel.
-- Phase 1 must land before phase 2 because phase 2 is what makes the skills *write*
-  `blc/2`. A reader that cannot yet parse it turns a new ledger invisible.
-- Phase 3 tests both alphabets, so it needs both the widened parsers and a ledger that
-  actually uses letters — which phase 2 produces by converting this file.
+- **Strict chain: `a` → `b` → `c`.** Nothing here is parallel.
+- `a` must land before `b`, because `b` is what makes the skills *write* `blc/2`. A reader
+  that cannot yet parse it turns a new ledger invisible.
+- `c` tests both alphabets, so it needs both the widened parsers and a ledger that actually
+  uses letters — which `b` produces by converting this file.
 
 ## Re-plan against the brief, at initiation
 
@@ -45,9 +45,14 @@ to establish, on the brief's own first execution.
 
 | this ledger | brief's table |
 |---|---|
-| `phase 1 — the readers` | `b — the readers` |
-| `phase 2 — the convention` | `a — the convention` |
-| `phase 3 — the check` | `c — the check` |
+| `a — the readers` | `b — the readers` |
+| `b — the convention` | `a — the convention` |
+| `c — the check` | `c — the check` |
+
+Phases 1–3 above were written `phase 1`/`phase 2`/`phase 3` with a `blc/1` line at
+initiation, because nothing could read letters until `a` landed. Phase `b` converted both
+the status line and the table rows together. PR #34 was opened while the ledger still said
+`phase 1 — the readers`; it is the same phase as `a — the readers` here.
 
 Nothing in the brief's Settled decisions is re-litigated by this. The order lives in the
 Change section, not in a settled decision.
@@ -60,10 +65,10 @@ Change section, not in a settled decision.
 ## Complications found in the code, not addressed by the brief
 
 1. **This ledger cannot use the convention it establishes, yet.** Its phases are letters in
-   the brief, but nothing can read letters until phase 1 lands, and this file has to exist
-   before any phase runs. It is written `blc/1` with numeric indexes and numeric table rows,
-   which parses correctly today and keeps the drift check live — `grep "^|.*phase 1 "` does
-   match `phase 1 — the readers`. Phase 2 converts the status line and the rows together.
+   the brief, but nothing could read letters until `a` landed, and this file had to exist
+   before any phase ran. It was written `blc/1` with numeric indexes and numeric table rows,
+   which parsed correctly and kept the drift check live — `grep "^|.*phase 1 "` matched
+   `phase 1 — the readers`. `b` converted the status line and the rows together.
    This is not the forward-only rule being broken: #0009 is the brief introducing the
    convention, not history being rewritten.
 
@@ -74,7 +79,7 @@ Change section, not in a settled decision.
 3. **The drift check's silence is the dangerous failure, not a loud one.** `open-briefs.sh`
    line 192 guards on `[ -n "$row" ]`, so a row it cannot match produces no finding rather
    than an error. A letter-indexed ledger whose phase table disagrees would therefore report
-   clean. Phase 3's test for this is the only thing that proves phase 1 fixed it.
+   clean. `c`'s test for this is the only thing that proves `a` fixed it.
 
 4. **`gather.sh` line 27–28 comments name `blc/1` in prose.** Not parsing, but they will be
    wrong the moment a `blc/2` ledger exists. Phase 1 should fix the comments it is already
@@ -87,23 +92,39 @@ Change section, not in a settled decision.
    matches nothing, so every phase field survives into the table cell and the chronicle prints
    the whole tail as the status. Widening the version anchor alone would have produced a
    parser that finds the line and then misreads it — quieter than the failure the brief
-   described, and worse. Fixed in phase 1 as `[0-9a-z]+:`.
+   described, and worse. Fixed in `a` as `[0-9a-z]+:`.
 
 6. **The drift scan is unanchored on purpose, and anchoring it would have broken three
    ledgers.** The brief asked for a pattern matching letter indexes. The obvious fix — anchor
    the id to the first cell — silently breaks #0002, #0003, and #0004, which hold the branch
    in the first cell and `phase 1` in the second (`` | `brief/0004-phase-1-limitation-entry` |
    phase 1, the … | ``). That latitude is what the existing comment means by surviving three
-   schemas. Phase 1 therefore branches on the index shape: numeric keeps the unanchored scan
+   schemas. `a` therefore branches on the index shape: numeric keeps the unanchored scan
    untouched, letters get a first-cell anchor, because a bare letter scanned loosely matches
    half the prose in a row. Verified both directions against a fixture before the suite ran.
 
+7. **`b`'s surface was wider than the brief listed.** The brief named `docs/briefs/README.md`,
+   the two execution skills, and Contract v1.1. Three more sites name the schema or the branch
+   shape: `skills/chronicle/SKILL.md` said status comes from "the `blc/1` overall token",
+   `skills/review-pr/SKILL.md` said to match "the feature/branch name", and the README's own
+   status-line section used a `blc/1` line as *the* example while asserting "`blc/1` is the
+   schema version". Left alone, the toolkit would have documented one convention and
+   instructed another.
+
+8. **A rule written in `b` nearly forbade `b`'s own work.** The first draft of the
+   `next-brief-phase` note said a `blc/1` ledger is never converted, because merged PRs cite
+   the phase ids they were opened against. That is a real hazard — PR #34 says
+   `phase 1 — the readers` and this ledger now says `a — the readers` — but as written it also
+   banned the conversion this phase was assigned to perform. The rule became: convert only when
+   it is a phase's stated job, and record the mapping. The mapping is in the re-plan section.
+
 ## Branches
 
-`brief/0009-a-the-readers` — phase 1. Cut from `main` at 962a300.
+- `brief/0009-a-the-readers` — phase `a`. Cut from `main` at 962a300. Merged as PR #34.
+- `brief/0009-b-the-convention` — phase `b`. Cut from `main` at f661f7e.
 
-The branch carries the letter while the table row above still says `phase 1`. That is
-deliberate: the letter is the phase's real id, and the numeric row is a temporary
-accommodation for parsers that cannot read letters until this phase lands. Nothing parses
-a branch name — `open-briefs.sh` resolves whatever string the ledger stored — so the
-branch is free to be the first thing in the repository written in the new convention.
+The phase `a` branch carried the letter before anything else did. At the time the table row
+above still read `phase 1`, because parsers could not read letters until that phase landed.
+Nothing parses a branch name — `open-briefs.sh` resolves whatever string the ledger stored —
+so the branch was free to be the first thing in the repository written in the new
+convention. `b` converted the rest of the file to match it.
