@@ -1,15 +1,15 @@
 # Ledger — #0009 One name for a phase, used everywhere
-`blc/1 #0009 pending 1:pending 2:pending 3:pending`
+`blc/1 #0009 in-progress 1:in-progress(brief/0009-a-the-readers) 2:pending 3:pending`
 
 **Brief:** `docs/briefs/0009-phase-names/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Date:** 2026-09-08
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — the readers` | pending | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
+| `phase 1 — the readers` | in-progress (brief/0009-a-the-readers) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
 | `phase 2 — the convention` | pending | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
 | `phase 3 — the check` | pending | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression phase 1 would otherwise ship silently. |
 
@@ -80,9 +80,27 @@ Change section, not in a settled decision.
    wrong the moment a `blc/2` ledger exists. Phase 1 should fix the comments it is already
    editing around.
 
+5. **`gather.sh` had three alphabet dependencies, not the two the brief counted.** The brief
+   named the `grep -m1 'blc/1'` and the `^blc\/1` anchor. The third is in the same `sed`: the
+   trailing strip was `s/[[:space:]]+[0-9]+:.*$//`, which removes the phase fields so the
+   overall status is what is left. Against `blc/2 #NNNN in-progress a:done b:pending` it
+   matches nothing, so every phase field survives into the table cell and the chronicle prints
+   the whole tail as the status. Widening the version anchor alone would have produced a
+   parser that finds the line and then misreads it — quieter than the failure the brief
+   described, and worse. Fixed in phase 1 as `[0-9a-z]+:`.
+
+6. **The drift scan is unanchored on purpose, and anchoring it would have broken three
+   ledgers.** The brief asked for a pattern matching letter indexes. The obvious fix — anchor
+   the id to the first cell — silently breaks #0002, #0003, and #0004, which hold the branch
+   in the first cell and `phase 1` in the second (`` | `brief/0004-phase-1-limitation-entry` |
+   phase 1, the … | ``). That latitude is what the existing comment means by surviving three
+   schemas. Phase 1 therefore branches on the index shape: numeric keeps the unanchored scan
+   untouched, letters get a first-cell anchor, because a bare letter scanned loosely matches
+   half the prose in a row. Verified both directions against a fixture before the suite ran.
+
 ## Branches
 
-None yet. Phase 1 branches on confirmation as `brief/0009-a-the-readers`.
+`brief/0009-a-the-readers` — phase 1. Cut from `main` at 962a300.
 
 The branch carries the letter while the table row above still says `phase 1`. That is
 deliberate: the letter is the phase's real id, and the numeric row is a temporary

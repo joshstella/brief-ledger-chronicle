@@ -24,25 +24,33 @@ brief_title() {
   printf '%s' "${t:-—}"
 }
 
-# Overall token on the blc/1 line. planned if there is no ledger file.
-# A ledger with no blc/1 line is no-line: the brief named planned only for a
+# Overall token on the status line. planned if there is no ledger file.
+# A ledger with no status line is no-line: the brief named planned only for a
 # missing file, and inventing done/pending here would be a guess.
+#
+# The schema version is matched as blc/N, never as a literal. #0009 introduces
+# blc/2, whose phase indexes are letters rather than numbers, and old blc/1 lines
+# are never rewritten — so both alphabets have to parse here forever.
 brief_status() {
   local ledger="$1" raw
   if [ ! -f "$ledger" ]; then
     printf '%s' "planned"
     return
   fi
-  raw=$(grep -m1 'blc/1' "$ledger" 2>/dev/null || true)
+  raw=$(grep -m1 -E 'blc/[0-9]+' "$ledger" 2>/dev/null || true)
   if [ -z "$raw" ]; then
     printf '%s' "no-line"
     return
   fi
   raw=$(printf '%s' "$raw" | tr -d '`')
-  # Overall status is the token after the serial, up to the first N: phase
-  # field. It can contain spaces (`done(commit 383ed5b)`). Splitting on
-  # whitespace would truncate it.
-  printf '%s' "$raw" | sed -E 's/^blc\/1[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9]+:.*$//'
+  # Overall status is the token after the serial, up to the first phase field.
+  # It can contain spaces (`done(commit 383ed5b)`). Splitting on whitespace
+  # would truncate it.
+  #
+  # The phase index is [0-9a-z]+ and not [0-9]+ because blc/2 indexes phases by
+  # letter. Left numeric, this reads `a:done b:pending` as part of the overall
+  # status and prints the whole tail into the table cell.
+  printf '%s' "$raw" | sed -E 's/^blc\/[0-9]+[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9a-z]+:.*$//'
 }
 
 brief_depends() {
