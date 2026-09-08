@@ -10,7 +10,10 @@
 # a repository exits 2, because those mean the question could not be asked at all.
 #
 # The vocabulary it reads is defined once in docs/briefs/README.md, "Ledger status".
-# This script does not restate it.
+# This script does not restate it. One state is not in that vocabulary because no
+# ledger asserts it: a brief with no ledger.md has not been started. That is derived
+# from absence rather than read, and it is a resting state, not a finding — filing
+# and starting are separate acts, and a brief is meant to wait between them.
 #
 # Deliberately does not decide what counts as "too stale". That threshold is an
 # open decision on brief #0004. Reporting the commit distance and letting a human
@@ -30,6 +33,7 @@ BRIEFS_DIR="${1:-docs/briefs}"
 OPEN=0
 DRIFT=0
 UNTRACKED=0
+NOT_STARTED=0
 
 finding() { printf '  %-11s %s\n' "$1" "$2"; }
 
@@ -115,10 +119,20 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
   name="${dir%/}"; name="${name##*/}"
   BRIEF_COUNT=$((BRIEF_COUNT + 1))
 
+  # A brief with no ledger has not been started. That is a resting state, not a
+  # defect: filing and starting are separate acts, and the gap between them is
+  # where a brief waits to be picked up. Reported so the wait is visible, but not
+  # counted as open, because counting it would report work in flight when none is.
   if [ ! -f "$ledger" ]; then
     printf '%s\n' "$name"
-    finding "[no-ledger]" "no ledger.md; nothing can say whether this is open"
-    OPEN=$((OPEN + 1))
+    finding "[not-started]" "filed; no ledger yet, so execution has not begun"
+    # Untracked still matters here. A brief git has never seen is invisible to
+    # everyone else, so it is not waiting to be picked up — nobody can see it.
+    if ! git ls-files --error-unmatch "$dir/brief.md" >/dev/null 2>&1; then
+      finding "[untracked]" "not in git; no one else can see this brief was filed"
+      UNTRACKED=$((UNTRACKED + 1))
+    fi
+    NOT_STARTED=$((NOT_STARTED + 1))
     continue
   fi
 
@@ -224,11 +238,17 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
   done
 done
 
-printf '\nopen-briefs: %s — %d brief(s), %d open phase(s), %d drift, %d untracked\n' \
-  "$BRIEFS_DIR" "$BRIEF_COUNT" "$OPEN" "$DRIFT" "$UNTRACKED"
+printf '\nopen-briefs: %s — %d brief(s), %d open phase(s), %d not started, %d drift, %d untracked\n' \
+  "$BRIEFS_DIR" "$BRIEF_COUNT" "$OPEN" "$NOT_STARTED" "$DRIFT" "$UNTRACKED"
 
 if [ "$OPEN" -eq 0 ] && [ "$DRIFT" -eq 0 ] && [ "$UNTRACKED" -eq 0 ]; then
-  printf 'Nothing open. Silence here is the intended output, not a failure to run.\n'
+  if [ "$NOT_STARTED" -gt 0 ]; then
+    # The briefs listed above are not a contradiction of "nothing open". They are
+    # filed and waiting, which is the state a brief is supposed to rest in.
+    printf 'Nothing open. %d brief(s) filed and waiting to be started.\n' "$NOT_STARTED"
+  else
+    printf 'Nothing open. Silence here is the intended output, not a failure to run.\n'
+  fi
 fi
 
 exit 0
