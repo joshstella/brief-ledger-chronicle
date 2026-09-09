@@ -1,8 +1,8 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 in-progress a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:in-progress(brief/0008-e-the-read,PR pending)`
+`blc/2 #0008 done(PR#45) a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:done(PR#45)`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
-**Status:** in-progress
+**Status:** done (PR #45)
 **Date:** 2026-09-09
 **Depends on:** #0006 (done, PR #31)
 
@@ -14,7 +14,7 @@
 | `b — the declaration` | done (PR#42) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | done (PR#43) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | done (PR#44) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
-| `e — the read` | in-progress (`brief/0008-e-the-read`) | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
+| `e — the read` | done (PR#45) | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
 
 ## Dependency structure
 
@@ -128,7 +128,7 @@ Found by reading the code, not stated in the brief.
 - `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd. Merged as PR #42.
 - `brief/0008-c-the-verb` — phase `c`. Cut from `main` at 3669df8. Merged as PR #43.
 - `brief/0008-d-the-check` — phase `d`. Cut from `main` at the #43 merge. Merged as PR #44.
-- `brief/0008-e-the-read` — phase `e`. Cut from `main` at the #44 merge.
+- `brief/0008-e-the-read` — phase `e`. Cut from `main` at the #44 merge. Merged as PR #45.
 
 ## Phase `e` — what executing it changed
 
@@ -308,11 +308,12 @@ empty repository runs its chronicle to completion.
 
 ## Closeout
 
-All five phases merged. Checked against the brief's success criteria on 2026-09-09:
+All five phases merged. Re-checked against the brief's success criteria at `3cda4d6`,
+after the last merge rather than from inside the branch that made the claims:
 
 - **One command answers all three questions.** `tools/orient.sh` — in flight, off-limits,
   values.
-- **Under budget, asserted.** 416 tokens against 700, measured against this repository
+- **Under budget, asserted.** 415 tokens against 700, measured against this repository
   rather than a fixture, so the test fails when the record outgrows the premise.
 - **Deterministic.** Two runs with no change produce identical bytes. This is why the
   freshness line counts commits behind the upstream instead of reporting elapsed time.
@@ -349,3 +350,14 @@ first application to a large unrelated repository as the real test.
 it, so `orient` cannot say which paths are safe to edit. Fixing that means recording an
 ownership class in the log, which belongs to `blc-installer-builder`. And `chronicle.md`'s
 merge conflict, named in the brief's settled decisions, still has no answer.
+
+### One thing this brief could not fix about itself
+
+`orient`'s "Off-limits" section reports *"this repo was not set up by the installer"* when
+run here, and that is correct: `install.sh` refuses to install into its own source. The
+same refusal is why Cursor could not load this repository's skills until a symlink was
+added alongside this brief. Both are the cobbler's-shoes problem the brief names in its
+Tension, showing up in the tooling rather than in the token counts. The verb works; the
+repository it was written in is the one place two of its four sources are structurally
+absent. That is an argument for trusting the first application to an unrelated repository
+over anything measured here.
