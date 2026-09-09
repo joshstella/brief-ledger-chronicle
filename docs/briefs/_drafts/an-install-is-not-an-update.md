@@ -139,7 +139,7 @@ Resolved 2026-09-09 during drafting.
    may become the flag that overrides project-owned protection. Blocks `b`.
 2. ~~Does `d` ship a way to customize legitimately?~~ **Answered 2026-09-09, elsewhere.**
    The supported answers are `AGENTS.md` for guidance, which already exists and is
-   project-owned, and project hooks on the gate, drafted separately in
+   project-owned, and project checks in `checks/`, drafted separately in
    `a-project-cannot-add-a-gate.md`. Neither requires editing a toolkit-owned file, which
    is what makes "your edits are lost" a livable policy rather than a dead end. Phase `d`
    points at both instead of inventing a third.
