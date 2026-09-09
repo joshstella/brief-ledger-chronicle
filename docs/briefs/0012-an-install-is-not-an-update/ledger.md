@@ -1,15 +1,15 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 pending a:pending b:pending c:pending d:pending`
+`blc/2 #0012 in-progress a:in-progress b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the ownership map | pending | — |
+| a | the ownership map | in-progress | `brief/0012-a-the-ownership-map` |
 | b | the replace | pending | — |
 | c | the prune | pending | — |
 | d | the socialization | pending | — |
