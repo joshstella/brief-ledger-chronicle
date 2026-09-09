@@ -1,6 +1,6 @@
 # A project cannot add a gate
 
-**Created:** 2026-09-09T12:40:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
+**Serial:** #0011 · **Created:** 2026-09-09T12:40:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
 
 ## Ground
 
