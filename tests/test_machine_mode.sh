@@ -32,7 +32,7 @@ test_machine_links_no_utility_skills_as_commands() {
   run_install y --machine
   assert_status 0
   local s
-  for s in blc-chronicle blc-ste-writing blc-installer-builder; do
+  for s in blc-chronicle blc-ste-writing blc-installer-builder blc-orient; do
     assert_no_file "$CLAUDE_HOME_DIR/commands/$s.md"
   done
 }
