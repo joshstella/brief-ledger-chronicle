@@ -1,5 +1,5 @@
 # Ledger — #0009 One name for a phase, used everywhere
-`blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention,PR#35) c:pending`
+`blc/2 #0009 in-progress a:done(PR#34) b:done(PR#35) c:in-progress(brief/0009-c-the-check)`
 
 **Brief:** `docs/briefs/0009-phase-names/brief.md`
 **Status:** in-progress
@@ -10,8 +10,8 @@
 | id | status | what it does |
 |---|---|---|
 | `a — the readers` | done (PR#34) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
-| `b — the convention` | in-progress (brief/0009-b-the-convention, PR#35) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
-| `c — the check` | pending | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
+| `b — the convention` | done (PR#35) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
+| `c — the check` | in-progress (brief/0009-c-the-check) | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
 
 ## Dependency structure
 
@@ -94,14 +94,23 @@ Change section, not in a settled decision.
    parser that finds the line and then misreads it — quieter than the failure the brief
    described, and worse. Fixed in `a` as `[0-9a-z]+:`.
 
-6. **The drift scan is unanchored on purpose, and anchoring it would have broken three
-   ledgers.** The brief asked for a pattern matching letter indexes. The obvious fix — anchor
-   the id to the first cell — silently breaks #0002, #0003, and #0004, which hold the branch
-   in the first cell and `phase 1` in the second (`` | `brief/0004-phase-1-limitation-entry` |
-   phase 1, the … | ``). That latitude is what the existing comment means by surviving three
-   schemas. `a` therefore branches on the index shape: numeric keeps the unanchored scan
-   untouched, letters get a first-cell anchor, because a bare letter scanned loosely matches
-   half the prose in a row. Verified both directions against a fixture before the suite ran.
+6. **The drift scan needed a second shape for letters — but the reason recorded in `a` was
+   wrong, and is corrected here.** `a` claimed anchoring the phase id to the first cell would
+   break #0002–#0004, which "hold the branch in the first cell and `phase 1` in the second".
+   That is false. Those ledgers carry two tables: a phase table with the id in the first cell
+   like every other ledger, and a separate branches table further down. The scan takes
+   `head -1`, so it lands on the phase table. Checked against all four ledgers in `c`: every
+   phase id in this repository is in the first cell, and anchoring would have broken nothing.
+
+   The conditional `a` shipped is still right, for a smaller reason: `phase N` is a
+   distinctive string and can be found anywhere in a row, while a bare letter cannot and has
+   to be anchored. The numeric scan stays unanchored because it already was and tightening a
+   working scan buys nothing — not because any ledger here depends on it. The code comment on
+   `main` asserted the false version; `c` rewrites it, and pins the latitude with a test so a
+   later tidy-up cannot remove it silently.
+
+   Recorded rather than quietly fixed: PR #34's description carries the wrong reason too, and
+   a merged PR body cannot be corrected. This is where a reader finds out.
 
 7. **`b`'s surface was wider than the brief listed.** The brief named `docs/briefs/README.md`,
    the two execution skills, and Contract v1.1. Three more sites name the schema or the branch
@@ -121,7 +130,8 @@ Change section, not in a settled decision.
 ## Branches
 
 - `brief/0009-a-the-readers` — phase `a`. Cut from `main` at 962a300. Merged as PR #34.
-- `brief/0009-b-the-convention` — phase `b`. Cut from `main` at f661f7e. PR #35.
+- `brief/0009-b-the-convention` — phase `b`. Cut from `main` at f661f7e. Merged as PR #35.
+- `brief/0009-c-the-check` — phase `c`. Cut from `main` at b77b5e3.
 
 The phase `a` branch carried the letter before anything else did. At the time the table row
 above still read `phase 1`, because parsers could not read letters until that phase landed.
