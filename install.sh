@@ -441,7 +441,6 @@ for tpl in \
   "docs/contracts/v1.md" \
   "docs/contracts/v1.1.md" \
   "docs/state/README.md" \
-  "docs/orientation.md" \
   "tools/validate-briefs.sh" \
   "tools/open-briefs.sh" \
   "tools/list-briefs.sh" \
