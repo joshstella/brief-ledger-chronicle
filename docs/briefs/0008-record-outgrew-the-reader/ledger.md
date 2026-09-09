@@ -1,5 +1,5 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 in-progress a:done(PR#41) b:pending c:pending d:pending e:pending`
+`blc/2 #0008 in-progress a:done(PR#41) b:in-progress(brief/0008-b-the-declaration) c:pending d:pending e:pending`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
 **Status:** in-progress
@@ -11,7 +11,7 @@
 | Phase | Status | Notes |
 |---|---|---|
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
-| `b — the declaration` | pending | The `docs/state/` convention: one file per contributor, filename derived from `git config user.email`. Blocked by open decisions 2, 3, 6, 7. |
+| `b — the declaration` | in-progress (`brief/0008-b-the-declaration`) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | pending | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | pending | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
@@ -61,10 +61,24 @@ Carried from the brief, with the phase each blocks. Resolved before that phase, 
    pointing the three existing skills at the command. This is the first time a skill in
    this repo wraps a repo-level tool — `blc-chronicle` wraps its own `scripts/gather.sh`,
    and nothing invokes `tools/` on an agent's behalf today.
-3. Where the authored file lives — a section of `AGENTS.md`, or its own file. Blocks `b`.
+3. ~~Where the authored file lives.~~ **Resolved 2026-09-09:** its own file,
+   `docs/orientation.md`.
+
+   The deciding argument is phase `d`, not taste. `d` asserts a size cap, and a cap is
+   only enforceable on a file with one purpose and one owner. `AGENTS.md` is the file a
+   team fills with stack and build notes, so the cap test would have to parse a section
+   out of a file whose growth nobody controls — and would fail or pass for reasons that
+   have nothing to do with the authored content.
 4. The budget number. Blocks `c`, because `d` asserts it.
 5. Whether the verb ships to targets. Blocks `c`.
-6. How a contributor filename is normalized. Blocks `b`.
+6. ~~How a contributor filename is normalized.~~ **Resolved 2026-09-09:** lowercase the
+   address and use it verbatim — `docs/state/josh.stella@gmail.com.md`.
+
+   Lowercasing is the whole rule, and it exists for the case-insensitive filesystem the
+   brief names. `@` and `.` are legal in a path on every filesystem this runs on, so
+   nothing needs escaping. Verbatim keeps the mapping reversible in both directions —
+   given a file you know the contributor, given a contributor you know the file — which a
+   slug does not, and it cannot collide two addresses into one path.
 7. What prunes an abandoned declaration. Blocks `b`.
 
 ## Complications
@@ -111,6 +125,7 @@ Found by reading the code, not stated in the brief.
 ## Branches
 
 - `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2. Merged as PR #41.
+- `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd.
 
 ## Phase `a` — what executing it changed
 
