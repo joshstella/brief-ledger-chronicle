@@ -137,9 +137,12 @@ Resolved 2026-09-09 during drafting.
 
 1. **What does `--force` mean once the default replaces?** It may have no job left, or it
    may become the flag that overrides project-owned protection. Blocks `b`.
-2. **Does `d` ship a way to customize legitimately?** If editing a skill in place is
-   temporary, a project that needs different behaviour has no supported answer today.
-   Blocks `d`.
+2. ~~Does `d` ship a way to customize legitimately?~~ **Answered 2026-09-09, elsewhere.**
+   The supported answers are `AGENTS.md` for guidance, which already exists and is
+   project-owned, and project hooks on the gate, drafted separately in
+   `a-project-cannot-add-a-gate.md`. Neither requires editing a toolkit-owned file, which
+   is what makes "your edits are lost" a livable policy rather than a dead end. Phase `d`
+   points at both instead of inventing a third.
 3. **Does the prune cover shipped docs and tools, or only skills and commands?** The log's
    `### Created` list reaches further than its skills list. Blocks `c`.
 4. **Is there a dry run, and is it the first release?** Reporting the difference without
