@@ -141,3 +141,30 @@ test_skill_names_no_install_places_to_do() {
   assert_no_dir  "$TARGET/.claude/skills/to-do"
   assert_no_file "$TARGET/.claude/commands/to-do.md"
 }
+
+# ── The toolkit's own checkout ───────────────────────────────────────────────
+#
+# install.sh refuses to install into this repository — "the source of the process,
+# not a target for it" — and Cursor only loads skills from .cursor/skills/. The two
+# together meant the repo that defines this workflow could not invoke it: every
+# blc- command had to be run by hand here while every installed project got them.
+#
+# A symlink resolves it without weakening the guard. It has to stay a symlink: a
+# copy would be a second set of skill files to keep in sync, which is the drift this
+# whole toolkit argues against.
+
+test_skill_names_cursor_can_see_the_skills_in_this_repo() {
+  [ -L "$REPO_ROOT/.cursor/skills" ] \
+    || fail ".cursor/skills is not a symlink — Cursor cannot load this repo's own skills"
+  [ -f "$REPO_ROOT/.cursor/skills/blc-orient/SKILL.md" ] \
+    || fail ".cursor/skills does not resolve to the skills tree"
+}
+
+# Committed as a symlink (git mode 120000), so a clone gets one entry rather than a
+# duplicate copy of every skill.
+test_skill_names_the_cursor_link_is_committed_as_a_link() {
+  local mode
+  mode="$(cd "$REPO_ROOT" && git ls-files -s .cursor/skills | awk '{print $1}')"
+  [ "$mode" = "120000" ] \
+    || fail "expected .cursor/skills committed as a symlink (120000), got ${mode:-untracked}"
+}
