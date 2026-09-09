@@ -1,5 +1,5 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 in-progress a:in-progress b:pending c:pending d:pending`
+`blc/2 #0012 in-progress a:done b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
@@ -9,7 +9,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the ownership map | in-progress | `brief/0012-a-the-ownership-map` |
+| a | the ownership map | done | `brief/0012-a-the-ownership-map` |
 | b | the replace | pending | — |
 | c | the prune | pending | — |
 | d | the socialization | pending | — |
@@ -94,6 +94,47 @@ remove a project's stale skills while leaving the surviving ones un-updated.
    summary and the log entry. After `b`, skipped collapses toward zero and replaced grows.
    Any test asserting those counts breaks for the right reason and must be re-baselined
    rather than relaxed.
+
+## Phase a — what it found
+
+**The two-column table in the brief does not survive contact with the code.** `#0012` names
+two owners, toolkit and project, and lists `.gitignore` as project-owned and "never written
+after creation". The installer appends to `.gitignore`, and appends to the install log on
+every run. Calling either project-owned describes them wrongly; calling them toolkit-owned
+would eventually let phase `b` or `c` replace or remove them. The map therefore declares a
+third owner, `append`. **This deviates from a settled decision and is flagged rather than
+absorbed** — collapsing back to two is possible, but then the brief's table needs correcting
+instead.
+
+**Five copies were found and four were removed.** The template preflight, the docs ship
+loop, the tools ship loop, the skill placement loop, and the install log's skill list all
+now read the map. `SCAFFOLD_DIRS` still stands apart: it creates directories rather than
+placing files, and folding it in would have changed behaviour. It is the remaining
+duplicate.
+
+**The pre-install summary keeps its prose**, per the decision to pin it with a test rather
+than derive it. `ownership_map_backs_every_path_the_summary_promises` fails if the summary
+names a path the map does not know.
+
+**One behaviour changed, deliberately.** The old preflight checked
+`templates/.claude/settings.local.json` on every host. The map only names it on a Claude
+host, so a Cursor install with that template missing no longer aborts. It never used it. The
+map made the check honest rather than broad.
+
+**`--print-ownership` was added.** The map is a shell function inside a script that runs top
+to bottom, so nothing could assert against it without keeping a second copy — which is the
+failure being fixed. The flag prints the map for a host and exits, writing nothing. It is
+exempt from the self-install guard, because refusing it would make the map unreadable from
+the one checkout guaranteed to have it. **This may be most of the answer to open decision 3**
+(dry run): reporting what the installer owns is the static half of reporting what it would
+change.
+
+**The guards were broken on purpose to prove they catch.** Dropping `tools/orient.sh` from
+the map stopped it shipping and two `orient` tests failed — which is the proof that the map
+drives placement rather than sitting beside it. Omitting one skill from the map failed six
+tests across four files, including the coverage guard written for exactly that.
+
+Twenty-three tests added, suite at 244.
 
 ## Notes
 
