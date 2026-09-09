@@ -11,7 +11,7 @@
 | Phase | Status | Notes |
 |---|---|---|
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
-| `b — the declaration` | in-progress (`brief/0008-b-the-declaration`) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
+| `b — the declaration` | in-progress (`brief/0008-b-the-declaration`, PR pending) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | pending | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | pending | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
@@ -126,6 +126,36 @@ Found by reading the code, not stated in the brief.
 
 - `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2. Merged as PR #41.
 - `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd.
+
+## Phase `b` — what executing it changed
+
+**Nothing here is enforced by code, and that is the phase's real weakness.** The
+normalization rule is prose in `docs/state/README.md`. Nothing reads it until phase `c`,
+so between these two phases the rule is exactly the kind of hand-maintained convention
+this brief measured at 43%. `tests/test_state.sh` pins the expected answers against a
+local implementation of the rule so that `c` has something to be wrong against, but that
+is a placeholder for enforcement, not enforcement. Scope was left alone deliberately
+rather than pulling a helper forward out of `c`.
+
+**No declaration was written for this brief, on purpose.** The obvious dogfooding move is
+to declare #0008 in `docs/state/`. It would have been wrong: #0008 is filed and has a
+ledger, so every fact about it is derivable, and the convention says declarations hold
+only what derivation cannot reach. The correct steady state for a contributor with
+nothing unfiled is no file at all. That the directory ships with only a README is the
+convention working.
+
+**The briefs README claimed a race was open that this phase narrows.** `docs/briefs/`
+says single-point assignment *"is what keeps numbers from colliding"*, and Contract v1.1
+separately records that two checkouts can still pick the same number. Both are true and
+the pair read as a contradiction. A pointer now sits at the serial section. The Contract
+is untouched — it is not wrong, and #0009's precedent for rewording it in place does not
+apply to a clause that still describes reality.
+
+**The installer names its docs in four places, not three.** Beyond the template check,
+the ship loop and the summary echo, `docs/state/` needed adding to `SCAFFOLD_DIRS`:
+`place_file` does not create parent directories, so the first install wrote the README
+nowhere and reported success. Caught by installing into an empty repository, not by the
+suite.
 
 ## Phase `a` — what executing it changed
 

@@ -34,6 +34,12 @@ A serial is a zero-padded four-digit identity handle (`0001`, `0002`, …) on th
 That single point of assignment is what keeps numbers from colliding. The serial encodes
 **identity only** — never status or phase.
 
+Single assignment is not the same as no race. Two checkouts can fetch the same
+`origin/main`, compute the same next serial, and both be right until one pushes. Contract
+v1.1 records this as open. The narrow answer is to say out loud that you are taking a
+number, before you take it: see `docs/state/README.md`. It closes the window by making the
+claim visible, not by locking anything.
+
 ## The identity line
 
 Each `brief.md` carries one line directly under its H1:
