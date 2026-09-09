@@ -5,6 +5,9 @@ bypassing them is the defect.
 
 ## Process
 
+- Start with `bash tools/orient.sh` in a repo you have not read today. It answers what is
+  in flight, what an install wrote, and what this project values in ~700 tokens, and it
+  says when your checkout is behind. Reading the record instead costs tens of thousands.
 - `blc-commit-push-pr` is the only path to `main`. Do not use raw `git commit && git push`
   for work headed to `main`.
 - `blc-review-pr` is the review gate. A Request changes verdict blocks the commit.
@@ -12,7 +15,11 @@ bypassing them is the defect.
   before non-trivial work begins (`blc-create-brief`, then `blc-start-brief` /
   `blc-next-brief-phase`). Expect the ledger to correct it. Do not retrofit one after the
   work shipped.
-- `blc-chronicle` renders the record. `blc-init-briefs` is one-time setup.
+- Declare work you have picked up but not yet filed in `docs/state/<your git email>.md`,
+  and clear it when it lands. That window is invisible to every ledger, and it is where two
+  people pick the same serial.
+- `blc-chronicle` renders the record. `blc-orient` reads it cheaply. `blc-init-briefs` is
+  one-time setup.
 
 ## Writing
 

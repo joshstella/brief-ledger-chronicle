@@ -356,3 +356,41 @@ test_orient_authored_file_does_not_ship_to_a_target() {
   assert_status 0
   assert_no_file "$TARGET/docs/orientation.md"
 }
+
+# ── The wiring (phase e) ─────────────────────────────────────────────────────
+#
+# Phase e is skill guards, and "a skill guard is not a check" — nothing can force an
+# agent to run the command. But whether the instruction is *present* is mechanical,
+# and that is the half worth pinning: a verb nothing points at is exactly as useless
+# as a document nothing reads, and a rename could quietly sever the wiring in files
+# no other test reads.
+
+test_orient_is_named_by_the_three_orientation_steps() {
+  local f
+  for f in blc-start-brief blc-next-brief-phase blc-review-pr; do
+    assert_contains "tools/orient.sh" "$REPO_ROOT/skills/$f/SKILL.md"
+  done
+}
+
+# blc-create-brief is where a serial claim is cleared, and where a peer's claim is the
+# only warning available for the half of the race docs/briefs/ cannot show.
+test_orient_create_brief_knows_about_declarations() {
+  assert_contains "docs/state" "$REPO_ROOT/skills/blc-create-brief/SKILL.md"
+}
+
+# The rules file is what a target's agents actually read, so the wiring has to
+# survive installation, not just exist upstream.
+test_orient_is_named_in_the_rules_a_target_receives() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_contains "tools/orient.sh" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_contains "docs/state" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+}
+
+# The brief's Ground: three skills told an agent to read AGENTS.md, and in a fresh
+# target that file said nothing about how to get oriented.
+test_orient_is_named_in_the_stub_agents_file() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_contains "tools/orient.sh" "$TARGET/AGENTS.md"
+}

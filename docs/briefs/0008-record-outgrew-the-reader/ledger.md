@@ -1,5 +1,5 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 in-progress a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:in-progress(brief/0008-e-the-read)`
+`blc/2 #0008 in-progress a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:in-progress(brief/0008-e-the-read,PR pending)`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
 **Status:** in-progress
@@ -129,6 +129,44 @@ Found by reading the code, not stated in the brief.
 - `brief/0008-c-the-verb` — phase `c`. Cut from `main` at 3669df8. Merged as PR #43.
 - `brief/0008-d-the-check` — phase `d`. Cut from `main` at the #43 merge. Merged as PR #44.
 - `brief/0008-e-the-read` — phase `e`. Cut from `main` at the #44 merge.
+
+## Phase `e` — what executing it changed
+
+**`orient` does not replace `AGENTS.md`, and the brief's wording implies it might.** The
+brief says to point the three steps *at the command* where they currently name `AGENTS.md`.
+Read literally that drops architecture rules, which is what `blc-review-pr` needs most in
+step 3 and which `orient` does not answer. `orient` reports state; `AGENTS.md` holds
+project rules. The instruction now runs `orient` **first** and reads `AGENTS.md` after.
+
+**Half of what the brief asks `blc-create-brief` to do would be theatre.** It says write the
+declaration when a serial is claimed and clear it at filing. Both happen inside one run,
+seconds apart, so a claim written there is cleared before it could ever be pushed — nobody
+could read it. The useful half is implemented: clearing your own claim at filing, because
+once the brief is filed the claim is derivable. The write half is documented as *not* done
+and why, because the moment worth writing at is before this command runs, by a person.
+
+**The valuable part of the wiring was not in the brief at all.** `blc-create-brief` now
+checks other contributors' declarations for a claim on the serial it is about to take. That
+is the only warning available for the half of the serial race `docs/briefs/` structurally
+cannot show — the number is taken and unfiled, so the directory looks free. This is what
+made evidence 7 worth acting on, and the brief's phase `e` did not name it.
+
+**Part of the untestable phase turned out to be testable.** *"A skill guard is not a check"*
+holds — nothing can force an agent to run the command. But whether the instruction is
+*present* is mechanical, and a rename could sever the wiring in files no other test reads.
+Four tests now assert that the three skills name `tools/orient.sh`, that `blc-create-brief`
+knows about `docs/state/`, and that both the shipped rules file and the stub `AGENTS.md` a
+target receives name the command. That does not make the guard a check; it makes the
+plumbing a check and leaves the guard a guard.
+
+**#0010's namespace sweep caught this phase writing `create-brief` unprefixed** in a new
+comment. First time that guard has fired on work it was not written for.
+
+**This repository still has no `AGENTS.md`.** The brief's Ground opens with the fact that
+three skills tell an agent to read a file that does not exist here. Phase `e` fixed that for
+every *target* — the stub and rules file both point at `orient` now — and did not fix it
+here, because `docs/orientation.md` carries what this repo would put in one and creating an
+`AGENTS.md` was not in scope. Worth a separate brief, not a silent addition.
 
 ## Phase `d` — what executing it changed
 
@@ -267,3 +305,47 @@ caller.
 of a no-behaviour-change phase. 178 tests pass, 11 of them new. The order guard was
 checked by inverting the tsv sort and confirming it fails. A fresh Cursor install into an
 empty repository runs its chronicle to completion.
+
+## Closeout
+
+All five phases merged. Checked against the brief's success criteria on 2026-09-09:
+
+- **One command answers all three questions.** `tools/orient.sh` — in flight, off-limits,
+  values.
+- **Under budget, asserted.** 416 tokens against 700, measured against this repository
+  rather than a fixture, so the test fails when the record outgrows the premise.
+- **Deterministic.** Two runs with no change produce identical bytes. This is why the
+  freshness line counts commits behind the upstream instead of reporting elapsed time.
+- **Clean on an empty tree.** Every source degrades to a stated absence and exits zero,
+  verified in a bare git repository and in a fresh install.
+- **Nothing written.** A test asserts the repository is untouched after a run.
+- **No shared paths.** One ledger per brief, one declaration per contributor, no committed
+  output.
+- **A claimed-but-unfiled serial is visible to a peer who has fetched**, and
+  `blc-create-brief` now warns on one before taking the number.
+- **The three skills name it** where they named `AGENTS.md`, and so do the rules file and
+  stub `AGENTS.md` that ship to a target.
+
+**What the brief got wrong, in order of consequence.** Its source for "off-limits" —
+`install.sh`'s ownership map — is not present in a target, so that section would have
+worked only here; the install log replaced it. Its phase `e` asks `blc-create-brief` to
+write a claim it would clear seconds later, and misses the check that makes declarations
+pay for themselves. It mis-numbers its own untestable phase. And its central measurement,
+243 tokens for the state table, was 348 by the time work started — the scaling tension it
+listed as a future risk was already live.
+
+**What it got right.** The verb framing, which made every noun formulation's problems not
+arise. The three-mechanism split — derived, declared, authored — which is what stopped this
+design stalling a third time. And the insistence on a script over a skill, which is the only
+reason phases `c` and `e` could be checked at all.
+
+**The claim this brief cannot support.** *"This repository is the worst available test of
+the premise."* Still true. `orient` saves perhaps nine thousand tokens here against a
+62,000-token record. The design is aimed at repositories where orientation costs hundreds
+of thousands, and nothing local will show whether the filtering rule holds there. Treat the
+first application to a large unrelated repository as the real test.
+
+**Still open, deliberately.** The install log records what an install wrote, not who owns
+it, so `orient` cannot say which paths are safe to edit. Fixing that means recording an
+ownership class in the log, which belongs to `blc-installer-builder`. And `chronicle.md`'s
+merge conflict, named in the brief's settled decisions, still has no answer.
