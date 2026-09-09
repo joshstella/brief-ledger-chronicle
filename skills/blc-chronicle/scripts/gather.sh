@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# chronicle/scripts/gather.sh [SINCE_DATE]
+# blc-chronicle/scripts/gather.sh [SINCE_DATE]
 # Extract the structured timeline the chronicle is written from.
 # Run from the repository root. Emits a markdown digest to stdout.
 #
@@ -13,52 +13,14 @@ BRIEFS_DIR="docs/briefs"
 SINCE="${1:-}"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
+
 [ -d "$BRIEFS_DIR" ] || { echo "No $BRIEFS_DIR — run from the repo root of a brief-workflow project." >&2; exit 1; }
-
-# Markdown table cells cannot contain a raw pipe.
-cell() { printf '%s' "$1" | tr '|' '/'; }
-
-brief_title() {
-  local t
-  t=$(grep -m1 '^# ' "$1" 2>/dev/null | sed 's/^# //' || true)
-  printf '%s' "${t:-—}"
-}
-
-# Overall token on the status line. planned if there is no ledger file.
-# A ledger with no status line is no-line: the brief named planned only for a
-# missing file, and inventing done/pending here would be a guess.
-#
-# The schema version is matched as blc/N, never as a literal. #0009 introduces
-# blc/2, whose phase indexes are letters rather than numbers, and old blc/1 lines
-# are never rewritten — so both alphabets have to parse here forever.
-brief_status() {
-  local ledger="$1" raw
-  if [ ! -f "$ledger" ]; then
-    printf '%s' "planned"
-    return
-  fi
-  raw=$(grep -m1 -E 'blc/[0-9]+' "$ledger" 2>/dev/null || true)
-  if [ -z "$raw" ]; then
-    printf '%s' "no-line"
-    return
-  fi
-  raw=$(printf '%s' "$raw" | tr -d '`')
-  # Overall status is the token after the serial, up to the first phase field.
-  # It can contain spaces (`done(commit 383ed5b)`). Splitting on whitespace
-  # would truncate it.
-  #
-  # The phase index is [0-9a-z]+ and not [0-9]+ because blc/2 indexes phases by
-  # letter. Left numeric, this reads `a:done b:pending` as part of the overall
-  # status and prints the whole tail into the table cell.
-  printf '%s' "$raw" | sed -E 's/^blc\/[0-9]+[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9a-z]+:.*$//'
-}
-
-brief_depends() {
-  local dep
-  dep=$(grep -m1 -oE 'Depends on:[^<]*' "$1" 2>/dev/null \
-        | sed 's/Depends on://; s/\*//g; s/^[[:space:]]*//; s/[[:space:]]*$//' || true)
-  printf '%s' "${dep:-—}"
-}
+# The brief table comes from tools/list-briefs.sh — see the call sites below. It is
+# located from the repository root rather than relative to this script, because the
+# depth between the two differs by host: skills/ here, .cursor/skills/ or
+# .claude/skills/ in an install target. The root is the one fixed point both share.
+LIST_BRIEFS="$(git rev-parse --show-toplevel)/tools/list-briefs.sh"
+[ -x "$LIST_BRIEFS" ] || { echo "Missing $LIST_BRIEFS — the chronicle reads the brief table from it." >&2; exit 1; }
 
 echo "# Chronicle source digest"
 echo
@@ -72,46 +34,14 @@ echo
 
 echo "## Briefs — newest last-touch first"
 echo
-echo "| serial | title | status | first | last | depends-on |"
-echo "|---|---|---|---|---|---|"
-
-tmp=$(mktemp)
-for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
-  [ -d "$d" ] || continue
-  # `git log | head -1` takes SIGPIPE once git writes past the first line, which
-  # under `set -o pipefail` plus `set -e` kills this script mid-loop. tail consumes
-  # its whole input, so nothing is left writing into a closed pipe.
-  fcd=$(git log --format='%aI' -- "$d" 2>/dev/null | tail -1)
-  # %at is the sort key. %aI is display. String-sorting %aI mis-orders two
-  # last-touches that differ only by timezone offset.
-  touch_line=$(git log -1 --format='%at %aI' -- "$d" 2>/dev/null || true)
-  slug=$(basename "$d")
-  if [ -n "$touch_line" ]; then
-    last_key="${touch_line%% *}"
-    last_disp="${touch_line#* }"
-  else
-    last_key=0
-    last_disp=—
-  fi
-  first_disp="${fcd:-—}"
-  printf '%s\t%s\t%s\t%s\t%s\n' "$last_key" "$slug" "$d" "$first_disp" "$last_disp" >> "$tmp"
-done
-
-if [ -s "$tmp" ]; then
-  # Last-touch descending (unix author time). Slug is the tie-break so the order is stable.
-  sort -k1,1nr -k2,2r "$tmp" | while IFS=$'\t' read -r _last_key slug d first_disp last_disp; do
-    serial="#${slug%%-*}"
-    title=$(brief_title "${d}brief.md")
-    status=$(brief_status "${d}ledger.md")
-    dep=$(brief_depends "${d}brief.md")
-    printf '| %s | %s | %s | %s | %s | %s |\n' \
-      "$(cell "$serial")" "$(cell "$title")" "$(cell "$status")" \
-      "$(cell "$first_disp")" "$(cell "$last_disp")" "$(cell "$dep")"
-  done
-else
-  echo "| — | — | — | — | — | — |"
-fi
+# The chronicle is one of the table's two consumers, so it does not own it.
+bash "$LIST_BRIEFS" "$BRIEFS_DIR"
 echo
+
+# Same scan, same order as the table above.
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+bash "$LIST_BRIEFS" --tsv "$BRIEFS_DIR" > "$tmp"
 
 echo "## To narrate"
 echo
@@ -128,7 +58,7 @@ if [ -s "$tmp" ]; then
       awk '/^## [Bb]ig decisions/{f=1;next} /^## /{f=0} f&&/^### /{sub(/^### /,"");print "    fork · "$0}' "${d}ledger.md"
     fi
     narrated=$((narrated + 1))
-  done < <(sort -k1,1nr -k2,2r "$tmp")
+  done < "$tmp"
   if [ -n "$SINCE" ] && [ "$narrated" -eq 0 ]; then
     echo "- (no new briefs since $SINCE)"
   fi

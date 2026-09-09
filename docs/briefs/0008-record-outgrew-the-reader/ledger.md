@@ -1,8 +1,8 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 pending a:pending b:pending c:pending d:pending e:pending`
+`blc/2 #0008 in-progress a:in-progress(brief/0008-a-the-layering) b:pending c:pending d:pending e:pending`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Date:** 2026-09-09
 **Depends on:** #0006 (done, PR #31)
 
@@ -10,7 +10,7 @@
 
 | Phase | Status | Notes |
 |---|---|---|
-| `a — the layering` | pending | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
+| `a — the layering` | in-progress (`brief/0008-a-the-layering`) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
 | `b — the declaration` | pending | The `docs/state/` convention: one file per contributor, filename derived from `git config user.email`. Blocked by open decisions 2, 3, 6, 7. |
 | `c — the verb` | pending | The tool itself. Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | pending | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
@@ -33,7 +33,9 @@ user before their blocked phase starts, not discovered by executing an earlier o
 
 Carried from the brief, with the phase each blocks. Resolved before that phase, not now.
 
-1. Where the current-state table lives. Blocks `a`.
+1. ~~Where the current-state table lives.~~ **Resolved 2026-09-09:** `tools/`, with the
+   chronicle calling it. The coupling the brief priced in turned out to be near-free — see
+   complication 3 — and the alternative left one of two consumers owning the generator.
 2. What the tool is called. Blocks `b`.
 3. Where the authored file lives — a section of `AGENTS.md`, or its own file. Blocks `b`.
 4. The budget number. Blocks `c`, because `d` asserts it.
@@ -84,4 +86,45 @@ Found by reading the code, not stated in the brief.
 
 ## Branches
 
-None yet. Phase `a` branches as `brief/0008-a-the-layering` once decision 1 is settled.
+- `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2.
+
+## Phase `a` — what executing it changed
+
+**The extraction was not as clean as complication 3 said.** The four helpers were
+table-only, as recorded, but the *scan loop* was not: the chronicle's "To narrate"
+section reads the same sorted briefs from the same temp file. Moving only the table
+would have left a second copy of the scan behind — the drift this brief exists to argue
+against. So the tool has two modes: the table, and `--tsv`, the sorted scan behind it.
+One implementation of "which briefs, in what order"; two renderings.
+
+**Resolving the tool by relative path was wrong and the tests caught it.** The first cut
+called `tools/list-briefs.sh` on the strength of both scripts running from the repository
+root. Twenty-seven gather tests failed at once. The fixtures are bare repositories with no
+`tools/`, which is the shallow reason; the real one is that relative-to-CWD is a guess
+about how the caller was invoked. It now resolves from `git rev-parse --show-toplevel`,
+because the depth between skill and tool differs by host — `skills/` here,
+`.cursor/skills/` or `.claude/skills/` in a target — and the root is the only fixed point
+both share.
+
+**Check order is part of the interface.** Adding the dependency check above the
+`docs/briefs` check changed which error a user standing in the wrong directory sees. One
+test failed on exactly that. The missing-directory message is the common case and stays
+first; the missing-tool message is a broken install and comes second.
+
+**The move forced a shipping change the brief did not anticipate, and it is not
+optional.** `gather.sh` now exits non-zero without the tool, so any target with the skill
+and not the tool has a chronicle that cannot run. `install.sh` names its tools literally
+in three places (complication 4), all three updated. This is *not* open decision 5, which
+is about the orientation verb; this one had no choice in it.
+
+**Naming, flagged.** The tool is `tools/list-briefs.sh`, following the existing
+`<verb>-<noun>.sh` convention and reading as the third question about the same directory:
+`validate-briefs` asks if the record is well-formed, `open-briefs` asks what needs
+attention, `list-briefs` asks what the state is. This is my choice, not the brief's — the
+brief's open decision 2 names the *verb*, not this. Cheap to change while it has one
+caller.
+
+**Verification.** The digest is byte-identical before and after, which is the whole claim
+of a no-behaviour-change phase. 178 tests pass, 11 of them new. The order guard was
+checked by inverting the tsv sort and confirming it fails. A fresh Cursor install into an
+empty repository runs its chronicle to completion.
