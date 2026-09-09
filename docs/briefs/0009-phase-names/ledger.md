@@ -1,8 +1,8 @@
 # Ledger — #0009 One name for a phase, used everywhere
-`blc/2 #0009 in-progress a:done(PR#34) b:done(PR#35) c:in-progress(brief/0009-c-the-check,PR#36)`
+`blc/2 #0009 done(PR#36) a:done(PR#34) b:done(PR#35) c:done(PR#36)`
 
 **Brief:** `docs/briefs/0009-phase-names/brief.md`
-**Status:** in-progress
+**Status:** done (PR #36)
 **Date:** 2026-09-08
 
 ## Phase sequence
@@ -11,7 +11,7 @@
 |---|---|---|
 | `a — the readers` | done (PR#34) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
 | `b — the convention` | done (PR#35) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
-| `c — the check` | in-progress (brief/0009-c-the-check, PR#36) | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
+| `c — the check` | done (PR#36) | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
 
 ## Dependency structure
 
@@ -20,6 +20,13 @@
   that cannot yet parse it turns a new ledger invisible.
 - `c` tests both alphabets, so it needs both the widened parsers and a ledger that actually
   uses letters — which `b` produces by converting this file.
+- **Re-plan after PR #34:** remaining `b` and `c` held. The order swap made at initiation was
+  the only sequence change this brief needed.
+- **Re-plan after PR #35:** remaining `c` held, with one addition — `b` found three prose
+  sites the brief had not listed, and `c` gained a test for the status-strip leak that `a`
+  fixed but nothing pinned.
+- **Re-plan after PR #36:** remainder is empty. `c` also corrected a false justification `a`
+  had recorded and shipped. The brief is done.
 
 ## Re-plan against the brief, at initiation
 
@@ -138,3 +145,33 @@ above still read `phase 1`, because parsers could not read letters until that ph
 Nothing parses a branch name — `open-briefs.sh` resolves whatever string the ledger stored —
 so the branch was free to be the first thing in the repository written in the new
 convention. `b` converted the rest of the file to match it.
+
+## Closeout
+
+All three phases merged. Checked against the brief's success criteria on 2026-09-09, at
+`8b37af7`:
+
+- `docs/briefs/README.md` states the letter index, the `<letter> — <label>` id, the branch
+  derivation, the reserved closeout suffix, the Jira summary shape, the 26-phase ceiling, and
+  the numeric-to-letter seam.
+- `start-brief` and `next-brief-phase` write `blc/2` with letters and derive `brief/` branches.
+  No skill still says `feature/`.
+- Both readers parse `blc/1` with numeric indexes and `blc/2` with letters, and the drift check
+  fires under either. Five tests pin it; 157 pass.
+- No Contract text names a schema version, and no new version file ships. v1.1 stays current.
+- `#0001`–`#0006` ledgers are still `blc/1`. Forward-only held: nothing historical was
+  rewritten and no merged branch was renamed.
+
+This ledger converted from `blc/1` to `blc/2` in phase `b`. That is not a breach of
+forward-only — #0009 is the brief introducing the convention, and the mapping from its numeric
+initiation ids to its letters is recorded above.
+
+**One open decision survives the brief.** The Jira summary format (`#0007/b — the publisher`)
+binds #0007 and blocked no phase here. It is carried, not resolved.
+
+**What this brief got wrong, kept visible.** Phase `a` recorded a justification that was false
+— that anchoring the drift scan to the first cell would break #0002–#0004 — and shipped it in a
+code comment and in PR #34's description. Phase `c` found it by writing a test to protect a
+dependency that did not exist. The code was right for a smaller reason; the reason is corrected
+in complication 6 and in the comment on `main`. A merged PR body cannot be edited, so this
+ledger is where a reader following #34 finds out.
