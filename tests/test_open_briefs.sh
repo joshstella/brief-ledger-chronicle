@@ -227,6 +227,58 @@ test_open_briefs_flags_a_not_started_brief_that_is_not_in_git() {
   assert_out "1 untracked"
 }
 
+# ── Two index alphabets ──────────────────────────────────────────────────────
+#
+# blc/1 indexes phases by number, blc/2 by letter, and #0009 ruled that old lines
+# are never rewritten. Both alphabets therefore have to resolve, and the drift
+# scan has to find a row under either one. Both failures below are silent rather
+# than loud, which is why each has a fixture: nothing else would notice them.
+
+test_open_briefs_resolves_a_letter_index_from_a_blc2_line() {
+  make_repo
+  add_ledger 0001-letters '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
+    '| `a — the thing` | in-progress (`feature/x`) | doing it |'
+  commit_all
+  make_branch feature/x
+  advance_main 2
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[in-progress] phase a: feature/x"
+  assert_out "2 commit(s) of main landed since"
+}
+
+# Before #0009 the drift scan looked for the literal word `phase a`, which a
+# letter-indexed table never contains. The row was never found, and the guard on an
+# empty row reports clean rather than erroring — so a ledger whose table contradicts
+# its status line passed as healthy. That silence is the regression this pins.
+test_open_briefs_reports_drift_on_a_letter_indexed_ledger() {
+  make_repo
+  add_ledger 0001-letters '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
+    '| `a — the thing` | pending | the table and the line disagree |'
+  commit_all
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[drift]"
+  assert_out "phase a"
+}
+
+# The numeric scan is unanchored, so `phase N` is found wherever in the row it sits.
+# No ledger in this repository needs that — every phase table here puts the id in the
+# first cell — but an install target may lay its tables out differently, and this pins
+# the latitude so a later tidy-up cannot quietly remove it.
+test_open_briefs_reports_drift_when_a_numeric_id_is_not_in_the_first_cell() {
+  make_repo
+  add_ledger 0001-oldschema '`blc/1 #0001 in-progress 1:in-progress(feature/x)`' \
+    '| `brief/0001-thing` | phase 1 of the thing | parked |'
+  commit_all
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[drift]"
+  assert_out "phase 1"
+}
+
 # ── It reports; it does not gate ─────────────────────────────────────────────
 
 test_open_briefs_exits_zero_even_when_everything_is_wrong() {

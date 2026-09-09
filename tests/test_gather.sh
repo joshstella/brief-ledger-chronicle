@@ -80,6 +80,21 @@ gather_status() {
   mv "$f.tmp" "$f"
 }
 
+# usage: gather_status_line <folder> <whole-line-without-backticks>
+# gather_status covers the common case and always writes blc/1. The schema-version
+# and phase-index tests have to control the tag and the phase fields verbatim, so
+# they write the line themselves.
+gather_status_line() {
+  local folder="$1" line="$2" f
+  f="$BRIEFS/$folder/ledger.md"
+  {
+    head -1 "$f"
+    echo "\`$line\`"
+    tail -n +2 "$f"
+  } > "$f.tmp"
+  mv "$f.tmp" "$f"
+}
+
 # usage: gather_commit <iso-date> <message>
 gather_commit() {
   git -C "$REPO" add -A
@@ -224,6 +239,41 @@ test_gather_reads_status_from_the_blc_line() {
   run_gather
   assert_status 0
   assert_out "| #0001 | alpha | done(PR#9) |"
+}
+
+# ── Two schema versions, two index alphabets ─────────────────────────────────
+#
+# blc/1 indexes phases by number, blc/2 by letter. #0009 introduced the split and
+# ruled that old lines are never rewritten, so both parse for good. The test above
+# pins blc/1; these two pin blc/2 and the failure that nearly shipped with it.
+
+test_gather_reads_a_status_from_a_blc2_line() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_ledger "0001-alpha"
+  gather_status_line "0001-alpha" "blc/2 #0001 done(PR#9) a:done(PR#9)"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "| #0001 | alpha | done(PR#9) |"
+}
+
+# The regression that would have shipped silently. Widening only the version match
+# leaves the phase-field strip as [0-9]+:, which matches no letter index — so the
+# line is found and then misread, and every phase field survives into the status
+# cell. Asserting the cell alone would pass on a leak that starts with the right
+# word, so the leaked text is asserted absent too.
+test_gather_blc2_phase_fields_do_not_leak_into_the_status() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_ledger "0001-alpha"
+  gather_status_line "0001-alpha" \
+    "blc/2 #0001 in-progress a:done(PR#1) b:in-progress(brief/0001-b-x) c:pending"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "| #0001 | alpha | in-progress |"
+  assert_not_contains "a:done" "$OUT"
 }
 
 test_gather_reads_a_status_that_contains_a_space() {

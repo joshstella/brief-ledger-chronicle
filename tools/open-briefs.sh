@@ -190,16 +190,16 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     # parse: three schemas are in use across the existing ledgers, and a scan for
     # the token survives all three where a column index does not.
     #
-    # The two index alphabets need different scans, and the difference is not
-    # cosmetic. A blc/1 index appears as the word `phase N`, which older ledgers
-    # put in whatever column suited them — #0002 through #0004 hold the branch in
-    # the first cell and `phase 1` in the second. That unanchored scan is exactly
-    # what lets one pattern survive all three schemas, so it is left alone.
+    # The two index alphabets need different scans. A blc/1 index appears as the
+    # word `phase N`, distinctive enough to find anywhere in the row. A blc/2
+    # index is a bare letter, and scanning for one loosely would match half the
+    # prose in the row, so it is anchored to the first cell — where `start-brief`
+    # writes it and where every ledger in this repository already puts it.
     #
-    # A blc/2 index is a bare letter. Scanning for one loosely would match half
-    # the prose in the row, so it is anchored to the first cell, which is where
-    # `start-brief` writes it and where every letter-indexed ledger will be new
-    # enough to have put it.
+    # The numeric scan stays unanchored because it already was, not because any
+    # ledger here needs it: every phase table in this repository puts the id in
+    # the first cell. An install target may not, and tightening a scan that works
+    # buys nothing, so it is left as found.
     case "$idx" in
       [0-9]*) row="$(grep -n "^|.*phase $idx " "$ledger" | head -1)" ;;
       *)      row="$(grep -nE "^\|[[:space:]]*~*\`?${idx}[[:space:]]+—" "$ledger" | head -1)" ;;
