@@ -1,5 +1,5 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 in-progress a:done(PR#41) b:done(PR#42) c:done(PR#43) d:in-progress(brief/0008-d-the-check) e:pending`
+`blc/2 #0008 in-progress a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:in-progress(brief/0008-e-the-read)`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
 **Status:** in-progress
@@ -13,8 +13,8 @@
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
 | `b — the declaration` | done (PR#42) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | done (PR#43) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
-| `d — the check` | in-progress (`brief/0008-d-the-check`, PR pending) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
-| `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
+| `d — the check` | done (PR#44) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
+| `e — the read` | in-progress (`brief/0008-e-the-read`) | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
 
 ## Dependency structure
 
@@ -127,7 +127,8 @@ Found by reading the code, not stated in the brief.
 - `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2. Merged as PR #41.
 - `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd. Merged as PR #42.
 - `brief/0008-c-the-verb` — phase `c`. Cut from `main` at 3669df8. Merged as PR #43.
-- `brief/0008-d-the-check` — phase `d`. Cut from `main` at the #43 merge.
+- `brief/0008-d-the-check` — phase `d`. Cut from `main` at the #43 merge. Merged as PR #44.
+- `brief/0008-e-the-read` — phase `e`. Cut from `main` at the #44 merge.
 
 ## Phase `d` — what executing it changed
 
