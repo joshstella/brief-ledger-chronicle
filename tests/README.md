@@ -2,7 +2,7 @@
 
 Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validator), for
 `tools/open-briefs.sh` (the open-briefs query), and for
-`skills/chronicle/scripts/gather.sh` (the chronicle's source digest).
+`skills/blc-chronicle/scripts/gather.sh` (the chronicle's source digest).
 Run them:
 
 ```bash

@@ -1,10 +1,10 @@
 ---
-name: create-brief
+name: blc-create-brief
 description: >-
-  File an unnumbered draft into docs/briefs/ with the next serial. Use when the user asks to create-brief or file a draft brief.
+  File an unnumbered draft into docs/briefs/ with the next serial. Use when the user asks to blc-create-brief or file a draft brief.
 ---
 
-# create-brief
+# blc-create-brief
 
 File an authored, **unnumbered** brief into `docs/briefs/` under the next serial. This
 command is the **single point of serial assignment** — briefs are authored number-free
@@ -12,7 +12,7 @@ and get their identity here, at filing time, not while being written.
 
 ## Input
 
-`create-brief <path-to-draft.md> [slug]`
+`blc-create-brief <path-to-draft.md> [slug]`
 
 - `<path-to-draft.md>` — an unnumbered draft brief (usually from `docs/briefs/_drafts/`,
   or any path). It contains a `# H1` title and a provenance line stamped at draft-write
@@ -26,8 +26,8 @@ and get their identity here, at filing time, not while being written.
 ## Steps
 
 0. **Preflight.** If `docs/briefs/` or `docs/briefs/_drafts/` is missing, **stop** and
-   tell the user to run `init-briefs` first. Do not scaffold the structure here — setup
-   is `init-briefs`'s job; this command assumes it exists.
+   tell the user to run `blc-init-briefs` first. Do not scaffold the structure here — setup
+   is `blc-init-briefs`'s job; this command assumes it exists.
 1. **Compute the next serial.** List `docs/briefs/`; from each entry **whose name begins
    with four digits**, parse `NNNN`; take the max and add 1; zero-pad to four. Entries
    without a leading four-digit prefix (`_drafts/`, `README`, etc.) are ignored. If there
@@ -56,7 +56,7 @@ and get their identity here, at filing time, not while being written.
    keep in sync.
 5. **Clean up.** Remove the draft file if it was a staging file.
 6. **Report** the created path, serial, and depends-on. Do **not** auto-commit — leave
-   that to `commit-push-pr` (which carries `#NNNN` into the PR title).
+   that to `blc-commit-push-pr` (which carries `#NNNN` into the PR title).
 
 ## Rules
 

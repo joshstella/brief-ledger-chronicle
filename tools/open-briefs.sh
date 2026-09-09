@@ -193,7 +193,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     # The two index alphabets need different scans. A blc/1 index appears as the
     # word `phase N`, distinctive enough to find anywhere in the row. A blc/2
     # index is a bare letter, and scanning for one loosely would match half the
-    # prose in the row, so it is anchored to the first cell — where `start-brief`
+    # prose in the row, so it is anchored to the first cell — where `blc-start-brief`
     # writes it and where every ledger in this repository already puts it.
     #
     # The numeric scan stays unanchored because it already was, not because any

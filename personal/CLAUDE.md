@@ -50,11 +50,11 @@ Adopt it as written or edit it to taste — it is a starting position, not a sta
   no tests until they merge — a sandbox you'll delete never does. Genuinely
   untestable merges (pure config, generated boilerplate) get an explicit
   "test-exempt because…" in the PR, not a silent gap. Each project's `CLAUDE.md`
-  defines what "covered" means there; `/review-pr` and `/commit-push-pr` enforce it.
+  defines what "covered" means there; `/blc-review-pr` and `/blc-commit-push-pr` enforce it.
 
 ## Code reviews
 
-After any code review (via `/review-pr` or a direct multi-angle review), write a `project` type memory entry for any CONFIRMED or PLAUSIBLE correctness findings: file, line, one-line summary, commit hash reviewed, and open/fixed status. Skip cleanup, simplification, and conventions findings — only correctness bugs are worth a memory slot. Before starting a review on a diff, check MEMORY.md for an existing entry covering the same commit and skip re-deriving findings already recorded there.
+After any code review (via `/blc-review-pr` or a direct multi-angle review), write a `project` type memory entry for any CONFIRMED or PLAUSIBLE correctness findings: file, line, one-line summary, commit hash reviewed, and open/fixed status. Skip cleanup, simplification, and conventions findings — only correctness bugs are worth a memory slot. Before starting a review on a diff, check MEMORY.md for an existing entry covering the same commit and skip re-deriving findings already recorded there.
 
 ## Honesty
 

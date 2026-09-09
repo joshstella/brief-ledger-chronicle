@@ -1,5 +1,5 @@
 ---
-name: installer-builder
+name: blc-installer-builder
 description: Package a set of files into a .tgz with a safe, self-installing shell script that mirrors a destination tree and copies each file to the right place. Use whenever the user wants to "make an installer", "package this for install", "create a tgz/installer", "make these files installable", "bundle this so it drops into ~/.cursor/skills (or ~/.config, or a project dir)", "create a self-installing archive", or distribute a skill/command/dotfile set to other machines. Trigger even if they just say "package these up" or "make this easy to install somewhere".
 ---
 

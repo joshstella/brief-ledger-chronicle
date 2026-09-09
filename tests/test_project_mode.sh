@@ -101,10 +101,10 @@ test_project_never_overwrites_an_existing_claude_md() {
 
 test_project_never_overwrites_a_tuned_command() {
   mkdir -p "$TARGET/.claude/commands"
-  echo "LOCALLY TUNED" > "$TARGET/.claude/commands/review-pr.md"
+  echo "LOCALLY TUNED" > "$TARGET/.claude/commands/blc-review-pr.md"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_contains "LOCALLY TUNED" "$TARGET/.claude/commands/review-pr.md"
+  assert_contains "LOCALLY TUNED" "$TARGET/.claude/commands/blc-review-pr.md"
 }
 
 test_project_never_overwrites_an_existing_briefs_readme() {
@@ -121,7 +121,7 @@ test_project_second_run_creates_nothing() {
   assert_out "Created (0):"
 }
 
-# The installer must not file briefs at all. /create-brief is the single point of
+# The installer must not file briefs at all. /blc-create-brief is the single point of
 # serial assignment; a writer outside that pipeline gets neither its max+1
 # allocation nor its collision guard.
 test_project_writes_no_numbered_brief() {

@@ -138,7 +138,7 @@ argues against.
 
 Two further limits are worth stating because they are easy to overclaim:
 
-- **Skills are prompts, not programs.** `start-brief`, `create-brief`, and the rest
+- **Skills are prompts, not programs.** `blc-start-brief`, `blc-create-brief`, and the rest
   instruct an agent. The test suite checks that they get installed. It does not check
   that the agent follows them. A sentence in a skill is not a guarantee.
 - **`open-briefs.sh` reports. It does not run itself.** A ledger can sit unfinished
@@ -176,8 +176,8 @@ What is controllable:
 
 - **Keep the provided surface small.** Few mandatory fields.
 - **Use is permissive.** Write what is worth writing. Skip what is not.
-- **Some tools report, some tools gate, and the difference is named.** `chronicle` and
-  `open-briefs.sh` observe. `review-pr` and `validate-briefs.sh` gate. A gate earns its
+- **Some tools report, some tools gate, and the difference is named.** `blc-chronicle` and
+  `open-briefs.sh` observe. `blc-review-pr` and `validate-briefs.sh` gate. A gate earns its
   place the same way any other rule does: it makes the work better, or it goes.
 - **Treat everything external as optional.** If a team already has an issue tracker,
   carry a correlation ID. No integration is load-bearing. None requires the other tool

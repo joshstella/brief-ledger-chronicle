@@ -3,7 +3,7 @@
 *Practical overview for new projects and collaborators.*
 *16 slides. Suggested layout: dark background, monospace accents, minimal decoration.*
 
-> **A note on the examples.** The deck shows Claude Code throughout — `/create-brief`,
+> **A note on the examples.** The deck shows Claude Code throughout — `/blc-create-brief`,
 > `.claude/`, `CLAUDE.md`. On Cursor the same six process files install to
 > `.cursor/skills/`; the process contract is `.cursor/rules/brief-ledger-chronicle.mdc`
 > and `AGENTS.md` is a project-owned architecture stub. Invoke skills by name rather
@@ -90,11 +90,11 @@ This line is what lets the review gate find the governing intent for any PR.
 
 ```
 _drafts/idea.md          ← author writes, no number yet
-       ↓  /create-brief
+       ↓  /blc-create-brief
 0017-slug/brief.md       ← serial assigned, one-way door
-       ↓  /start-brief
+       ↓  /blc-start-brief
 0017-slug/ledger.md      ← execution begins, phases tracked
-       ↓  /next-brief-phase (repeat per phase)
+       ↓  /blc-next-brief-phase (repeat per phase)
 PR title: [#0017] …     ← serial rides into main
 ```
 
@@ -122,9 +122,9 @@ The Big decisions section is the most valuable part. It's where the human–AI i
 **Nothing reaches `main` unreviewed.**
 
 ```
-/commit-push-pr
+/blc-commit-push-pr
   → stages files
-  → calls /review-pr automatically
+  → calls /blc-review-pr automatically
   → if: Request changes → STOP. Nothing is committed.
   → if: Approve → commit, push, open PR
 ```
@@ -143,7 +143,7 @@ The review checks:
 
 **The chronicle renders the brief/ledger history into a narrative.**
 
-Run `/chronicle` when you want:
+Run `/blc-chronicle` when you want:
 - The story of how the codebase got here
 - Onboarding context for a new collaborator
 - A retrospective
@@ -161,17 +161,17 @@ The codebase speaks in first person. It narrates the eras, the forks, the roads 
 
 | Command | When |
 |---|---|
-| `/create-brief` | Before starting anything non-trivial |
-| `/start-brief` | When you're ready to execute |
-| `/next-brief-phase` | Moving to the next phase |
-| `/commit-push-pr` | Every time work is ready to merge |
+| `/blc-create-brief` | Before starting anything non-trivial |
+| `/blc-start-brief` | When you're ready to execute |
+| `/blc-next-brief-phase` | Moving to the next phase |
+| `/blc-commit-push-pr` | Every time work is ready to merge |
 
 Two more for setup and history:
 
 | Command | When |
 |---|---|
-| `/init-briefs` | Once, when onboarding a new repo |
-| `/chronicle` | When you want the narrative |
+| `/blc-init-briefs` | Once, when onboarding a new repo |
+| `/blc-chronicle` | When you want the narrative |
 
 ---
 
@@ -182,16 +182,16 @@ Two more for setup and history:
 ```
 .claude/
   skills/
-    chronicle/          → /chronicle
-    installer-builder/  → package skills for distribution
-    to-do/              → /to-do
+    blc-chronicle/          → /blc-chronicle
+    blc-installer-builder/  → package skills for distribution
+    blc-ste-writing/        → house voice for the record
   commands/
-    commit-push-pr.md   → /commit-push-pr
-    review-pr.md        → /review-pr
-    create-brief.md     → /create-brief
-    start-brief.md      → /start-brief
-    next-brief-phase.md → /next-brief-phase
-    init-briefs.md      → /init-briefs
+    blc-commit-push-pr.md   → /blc-commit-push-pr
+    blc-review-pr.md        → /blc-review-pr
+    blc-create-brief.md     → /blc-create-brief
+    blc-start-brief.md      → /blc-start-brief
+    blc-next-brief-phase.md → /blc-next-brief-phase
+    blc-init-briefs.md      → /blc-init-briefs
 
 docs/briefs/
   README.md             ← brief convention reference
@@ -226,7 +226,7 @@ bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/
 # Machine mode (--machine) symlinks into ~/.claude:
 # - CLAUDE.md            → personal working agreement, applies everywhere
 # - commands/            → commands available in every repo
-# - briefs/README.template.md → the template /init-briefs reads
+# - briefs/README.template.md → the template /blc-init-briefs reads
 # Symlinks, so `git pull` updates every machine-level artifact at once.
 # Never overwrites a real file — reports a conflict and leaves it alone.
 
@@ -257,10 +257,10 @@ Process rules land in `.claude/rules/brief-ledger-chronicle.md` (Claude Code) or
 file, plus an empty project-specific section. The installer never overwrites them.
 
 Key process rules:
-- Use the skills — don't bypass them (`commit-push-pr`, not raw `git push`)
+- Use the skills — don't bypass them (`blc-commit-push-pr`, not raw `git push`)
 - Tests gate `main` — no silent exemptions
 - Brief required for non-trivial work before the first commit
-- Default prose is STE-flavored via `ste-writing`
+- Default prose is STE-flavored via `blc-ste-writing`
 
 Working style and code style live in `personal/CLAUDE.md` (Claude Code machine-level)
 and in user-level Cursor rules, not in the project stub.
@@ -301,8 +301,8 @@ bash install.sh --target /path/to/your-project
 # → edit CLAUDE.md / AGENTS.md (fill in the project-specific section)
 # → git add -A && git commit -m "Bootstrap: brief-ledger-chronicle install"
 # → write your first draft in docs/briefs/_drafts/
-# → run /create-brief to file it
-# → run /start-brief to begin
+# → run /blc-create-brief to file it
+# → run /blc-start-brief to begin
 ```
 
 **Source:**

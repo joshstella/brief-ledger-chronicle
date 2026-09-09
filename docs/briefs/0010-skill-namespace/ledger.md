@@ -1,15 +1,15 @@
 # Ledger — #0010 The skills live in someone else's namespace
-`blc/2 #0010 pending a:pending b:pending`
+`blc/2 #0010 in-progress a:in-progress(brief/0010-a-the-names) b:pending`
 
 **Brief:** `docs/briefs/0010-skill-namespace/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Date:** 2026-09-09
 
 ## Phase sequence
 
 | id | status | what it does |
 |---|---|---|
-| `a — the names` | pending | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update the three structural sites in `install.sh` — `PROCESS_SKILLS`, the machine-mode symlink loop, the template-presence check — and its inline process-rules text. Update `templates/process-rules.md`, `README.md`, `Manifesto.md`, `docs/slides-process-overview.md`, `personal/CLAUDE.md`, the skill prose, and the skill names in `tools/open-briefs.sh` and `tools/validate-briefs.sh`. Reword the two `create-brief` mentions in Contract v1.1 in place. Write the naming rule into `docs/briefs/README.md`. Carries the minimum test edit needed to keep the suite green — see the re-plan below. |
+| `a — the names` | in-progress (brief/0010-a-the-names) | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update the three structural sites in `install.sh` — `PROCESS_SKILLS`, the machine-mode symlink loop, the template-presence check — and its inline process-rules text. Update `templates/process-rules.md`, `README.md`, `Manifesto.md`, `docs/slides-process-overview.md`, `personal/CLAUDE.md`, the skill prose, and the skill names in `tools/open-briefs.sh` and `tools/validate-briefs.sh`. Reword the two `create-brief` mentions in Contract v1.1 in place. Write the naming rule into `docs/briefs/README.md`. Carries the minimum test edit needed to keep the suite green — see the re-plan below. |
 | `b — the check` | pending | New coverage: a fresh install places nine skills all prefixed and six slash-commands all prefixed; no unprefixed skill name and no `to-do` survives outside `docs/briefs/`; both hosts agree on the six. |
 
 ## Dependency structure
@@ -64,10 +64,25 @@ None. The brief resolved its own before filing.
    reference skill names in comments and findings. Neither parses one, so nothing breaks, but
    both would describe a toolkit that no longer exists.
 
-4. **`personal/CLAUDE.md` is machine-mode, not project-mode.** It is installed to `~/.claude`
+4. **`chronicle` is a skill name and a common noun, and only one of them renames.**
+   The other eight names never appear as ordinary English, so they were renamed mechanically.
+   `chronicle` appears as the artifact throughout the Manifesto, the README, and the slides —
+   "a chronicle is generated and read" — and as the path `docs/chronicles/chronicle.md`, which
+   contains the substring `/chronicle` and would have been corrupted by a blanket pass on the
+   slash-command form. Renamed by inspection instead: backticked `` `chronicle` ``, the
+   `skills/chronicle/` path, and `` `/chronicle` `` as a command. Every prose use of the word
+   as an artifact was left alone.
+
+5. **The slides were already wrong, and removing `to-do` made them right.** Slide 11 says
+   "Three skills" over a list of `chronicle`, `installer-builder`, and `to-do` — omitting
+   `ste-writing`, which has shipped as a utility skill the whole time. Dropping `to-do` and
+   listing `ste-writing` makes the count true for the first time. Not a goal of this brief;
+   noticed because the block had to be edited by hand anyway.
+
+6. **`personal/CLAUDE.md` is machine-mode, not project-mode.** It is installed to `~/.claude`
    rather than to a target, so it is invisible to the project-mode tests. A rename that misses
    it fails only on the author's own machine, and only later.
 
 ## Branches
 
-None yet. Phase `a` branches as `brief/0010-a-the-names`.
+`brief/0010-a-the-names` — phase `a`. Cut from `main` at 2a70c4c.

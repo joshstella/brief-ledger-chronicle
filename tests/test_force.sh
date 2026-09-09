@@ -30,23 +30,23 @@ test_force_does_not_overwrite_an_existing_claude_md() {
 
 test_force_overwrites_a_tuned_command() {
   mkdir -p "$TARGET/.claude/commands"
-  echo "LOCALLY TUNED" > "$TARGET/.claude/commands/review-pr.md"
+  echo "LOCALLY TUNED" > "$TARGET/.claude/commands/blc-review-pr.md"
   run_install y --force --target "$TARGET"
   assert_status 0
-  assert_not_contains "LOCALLY TUNED" "$TARGET/.claude/commands/review-pr.md"
-  assert_matches "^name: review-pr" "$TARGET/.claude/commands/review-pr.md"
-  assert_out ".claude/commands/review-pr.md (replaced)"
+  assert_not_contains "LOCALLY TUNED" "$TARGET/.claude/commands/blc-review-pr.md"
+  assert_matches "^name: blc-review-pr" "$TARGET/.claude/commands/blc-review-pr.md"
+  assert_out ".claude/commands/blc-review-pr.md (replaced)"
 }
 
 test_force_overwrites_a_tuned_cursor_skill() {
-  mkdir -p "$TARGET/.cursor/skills/ste-writing"
-  echo "OLD SKILL" > "$TARGET/.cursor/skills/ste-writing/SKILL.md"
+  mkdir -p "$TARGET/.cursor/skills/blc-ste-writing"
+  echo "OLD SKILL" > "$TARGET/.cursor/skills/blc-ste-writing/SKILL.md"
   run_install y --host cursor --force --target "$TARGET"
   assert_status 0
-  assert_not_contains "OLD SKILL" "$TARGET/.cursor/skills/ste-writing/SKILL.md"
+  assert_not_contains "OLD SKILL" "$TARGET/.cursor/skills/blc-ste-writing/SKILL.md"
   assert_contains "Default writing style for brief-ledger-chronicle" \
-                  "$TARGET/.cursor/skills/ste-writing/SKILL.md"
-  assert_out ".cursor/skills/ste-writing (replaced)"
+                  "$TARGET/.cursor/skills/blc-ste-writing/SKILL.md"
+  assert_out ".cursor/skills/blc-ste-writing (replaced)"
 }
 
 test_force_does_not_overwrite_agents_md() {
@@ -75,7 +75,7 @@ test_force_replaces_claude_process_rules() {
   run_install y --force --target "$TARGET"
   assert_status 0
   assert_not_contains "OLD PROCESS" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
-  assert_contains "ste-writing" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_contains "blc-ste-writing" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_out ".claude/rules/brief-ledger-chronicle.md (replaced)"
 }
 

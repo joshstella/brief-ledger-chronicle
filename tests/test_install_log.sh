@@ -36,7 +36,7 @@ test_log_entry_records_version_skills_and_commands() {
   assert_contains "**Installer version:**" "$TARGET/$LOG_REL"
   assert_contains "### Skills installed"   "$TARGET/$LOG_REL"
   assert_contains "### Commands installed" "$TARGET/$LOG_REL"
-  assert_contains "  - review-pr"          "$TARGET/$LOG_REL"
+  assert_contains "  - blc-review-pr"          "$TARGET/$LOG_REL"
 }
 
 test_log_first_entry_lists_what_was_created() {

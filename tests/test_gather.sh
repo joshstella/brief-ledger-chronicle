@@ -1,4 +1,4 @@
-# The chronicle's source digest — skills/chronicle/scripts/gather.sh.
+# The chronicle's source digest — skills/blc-chronicle/scripts/gather.sh.
 #
 # This script had no tests until after it shipped broken on one of its two paths,
 # and the failure it shipped with is the reason the fixtures below are shaped the
@@ -11,7 +11,7 @@
 # So the assertions are about completeness, not just content. A test that only
 # checked for a header would pass against every truncation this script has had.
 
-GATHER() { printf '%s' "$REPO_ROOT/skills/chronicle/scripts/gather.sh"; }
+GATHER() { printf '%s' "$REPO_ROOT/skills/blc-chronicle/scripts/gather.sh"; }
 
 run_gather() {
   ( cd "$REPO" && bash "$(GATHER)" "$@" ) >"$OUT" 2>"$ERR"

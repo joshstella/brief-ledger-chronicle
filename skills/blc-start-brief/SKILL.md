@@ -1,14 +1,14 @@
 ---
-name: start-brief
+name: blc-start-brief
 description: >-
-  Initiate brief execution: plan phases, write ledger, branch first phase. Use when the user asks to start-brief.
+  Initiate brief execution: plan phases, write ledger, branch first phase. Use when the user asks to blc-start-brief.
 ---
 
-# start-brief
+# blc-start-brief
 
-Initiate implementation from a feature or refactor brief: read it, plan the full phase sequence **with its dependency structure**, and branch the first phase. To continue an already-initiated brief, use `next-brief-phase` instead.
+Initiate implementation from a feature or refactor brief: read it, plan the full phase sequence **with its dependency structure**, and branch the first phase. To continue an already-initiated brief, use `blc-next-brief-phase` instead.
 
-Usage: start-brief <path-or-name>
+Usage: blc-start-brief <path-or-name>
 If no argument is given, list candidate brief files (search `docs/briefs/`, `briefs/`, `docs/`) and ask which to use.
 
 ---
@@ -24,8 +24,8 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - Primary: look for `ledger.md` in the same directory as the brief file (e.g. `docs/briefs/refactor/ledger.md`). Read it if it exists.
    - Fallback: read MEMORY.md for a `brief-<kebab>` pointer if the repo ledger wasn't found.
    - If a ledger file exists, **STOP**. Report its status, branch, completed phases, and remaining phases. Do not silently re-initiate and do not overwrite it.
-     - `in-progress`: tell the user to run `next-brief-phase`.
-     - `pending`: the plan is already in the ledger. Stop. There is no continue command for this status; `next-brief-phase` requires `in-progress`.
+     - `in-progress`: tell the user to run `blc-next-brief-phase`.
+     - `pending`: the plan is already in the ledger. Stop. There is no continue command for this status; `blc-next-brief-phase` requires `in-progress`.
      - `deferred`: wait. Do not re-initiate.
      - `done`: the brief is finished. Do not continue from it.
      - `skipped`: this work was not taken. Do not continue from it.
@@ -46,7 +46,7 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
    - State the dependency shape explicitly: which phases form a **strict chain** (each needs the prior) versus which are **parallel tracks** (independent, can run on separate branches at once). Do not serialize work that doesn't need it.
    - Flag **open decisions** that block specific phases, naming which phase each blocks.
    - Flag **codebase complications** the brief doesn't address — real ones only, visible from reading the code, not invented.
-   - If a phase's job is to *resolve* an open decision that could reorder later phases, say so: the sequence past that phase is **provisional** until it completes, and `next-brief-phase` will re-plan from there.
+   - If a phase's job is to *resolve* an open decision that could reorder later phases, say so: the sequence past that phase is **provisional** until it completes, and `blc-next-brief-phase` will re-plan from there.
    - Keep each phase small enough to review in one sitting.
 
 6. **Write the ledger entry — two places.**
@@ -64,9 +64,9 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 
    **Secondary: `project` memory file `brief-<kebab>.md`** in the memory directory. Same content. Keeps MEMORY.md pointing at it for fast in-session lookup. Add/update the entry in MEMORY.md — update in place if it already existed, don't duplicate.
 
-The phase ids written here are the labels later commands rely on: `commit-push-pr` cites them in the PR's `## Brief` line, and `review-pr` checks each diff against its phase's scope. Keep them stable.
+The phase ids written here are the labels later commands rely on: `blc-commit-push-pr` cites them in the PR's `## Brief` line, and `blc-review-pr` checks each diff against its phase's scope. Keep them stable.
 
 7. **Branch — phase-aware.**
    - Single-phase brief → ask to create one branch `brief/<serial>-a-<kebab>`.
-   - Multi-phase brief → present the full sequence, then branch only the **first** phase (or the first parallel set): *"This brief is N phases, <chain/parallel>. Branching for phase a: `brief/<serial>-a-<kebab>`. Later phases branch via `next-brief-phase` as each completes. Proceed?"*
+   - Multi-phase brief → present the full sequence, then branch only the **first** phase (or the first parallel set): *"This brief is N phases, <chain/parallel>. Branching for phase a: `brief/<serial>-a-<kebab>`. Later phases branch via `blc-next-brief-phase` as each completes. Proceed?"*
    - Derive `<kebab>` from the phase label. One slash per branch name and it belongs to `brief/` — see `docs/briefs/README.md`, "Phase ids". Wait for confirmation before creating any branch or writing code.

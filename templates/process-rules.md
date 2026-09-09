@@ -5,18 +5,18 @@ bypassing them is the defect.
 
 ## Process
 
-- `commit-push-pr` is the only path to `main`. Do not use raw `git commit && git push`
+- `blc-commit-push-pr` is the only path to `main`. Do not use raw `git commit && git push`
   for work headed to `main`.
-- `review-pr` is the review gate. A Request changes verdict blocks the commit.
+- `blc-review-pr` is the review gate. A Request changes verdict blocks the commit.
 - A brief is the hypothesis you start with, not a spec you deliver against. File it
-  before non-trivial work begins (`create-brief`, then `start-brief` /
-  `next-brief-phase`). Expect the ledger to correct it. Do not retrofit one after the
+  before non-trivial work begins (`blc-create-brief`, then `blc-start-brief` /
+  `blc-next-brief-phase`). Expect the ledger to correct it. Do not retrofit one after the
   work shipped.
-- `chronicle` renders the record. `init-briefs` is one-time setup.
+- `blc-chronicle` renders the record. `blc-init-briefs` is one-time setup.
 
 ## Writing
 
-Default prose uses the `ste-writing` skill in STE-flavored mode. Apply it to briefs,
+Default prose uses the `blc-ste-writing` skill in STE-flavored mode. Apply it to briefs,
 ledgers, chronicles, commit messages, PR bodies, reviews, comments, and docs. Do not
 apply it to code, identifiers, command syntax, or the user's own words.
 

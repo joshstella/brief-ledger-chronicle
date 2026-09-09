@@ -20,7 +20,7 @@ test_machine_links_each_process_skill_as_a_command() {
   run_install y --machine
   assert_status 0
   local s
-  for s in commit-push-pr create-brief init-briefs next-brief-phase review-pr start-brief; do
+  for s in blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief; do
     assert_symlink_to "$CLAUDE_HOME_DIR/commands/$s.md" \
                       "$REPO_ROOT/skills/$s/SKILL.md"
   done
@@ -32,7 +32,7 @@ test_machine_links_no_utility_skills_as_commands() {
   run_install y --machine
   assert_status 0
   local s
-  for s in chronicle ste-writing to-do installer-builder; do
+  for s in blc-chronicle blc-ste-writing blc-installer-builder; do
     assert_no_file "$CLAUDE_HOME_DIR/commands/$s.md"
   done
 }

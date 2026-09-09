@@ -23,7 +23,7 @@ FORCE=false
 # The six skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
 # ordinary skills. Everything else in skills/ installs as a skill on both hosts.
-PROCESS_SKILLS="commit-push-pr create-brief init-briefs next-brief-phase review-pr start-brief"
+PROCESS_SKILLS="blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 
 is_process_skill() {
   case " $PROCESS_SKILLS " in *" $1 "*) return 0 ;; *) return 1 ;; esac
@@ -312,7 +312,7 @@ fi
 # per-project and never touches $HOME.
 #
 # Why this mode exists: the commands reference user-level paths that no per-project
-# install creates — `/init-briefs` reads the brief README template from
+# install creates — `/blc-init-briefs` reads the brief README template from
 # $CLAUDE_HOME/briefs/, and Claude Code reads the personal working agreement from
 # $CLAUDE_HOME/CLAUDE.md. Without this step those resolve to nothing, and because the
 # commands degrade gracefully rather than erroring, a machine can look configured while
@@ -680,7 +680,7 @@ fi
 # hardcoded `docs/briefs/0001-bootstrap/` and guarded on `[[ ! -d "$BRIEF_DIR" ]]`,
 # which asks "does 0001-bootstrap/ exist?" when the question is "is serial 0001 free?".
 # Installing into a repo that already had briefs therefore wrote a *second* #0001,
-# deterministically, every time — bypassing `/create-brief`, which is the single point
+# deterministically, every time — bypassing `/blc-create-brief`, which is the single point
 # of serial assignment precisely so that cannot happen. A log has no serial to collide
 # with, so the whole class of bug goes away rather than being guarded against.
 #
