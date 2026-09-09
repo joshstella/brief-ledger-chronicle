@@ -1,5 +1,5 @@
 # Ledger — #0009 One name for a phase, used everywhere
-`blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention) c:pending`
+`blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention,PR#35) c:pending`
 
 **Brief:** `docs/briefs/0009-phase-names/brief.md`
 **Status:** in-progress
@@ -10,7 +10,7 @@
 | id | status | what it does |
 |---|---|---|
 | `a — the readers` | done (PR#34) | Make both parsers dual-read before any writer emits the new format. `gather.sh` hardcodes the version twice — `grep -m1 'blc/1'` at line 36 and the `^blc\/1` anchor in the status `sed` at line 45; both become `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row with `grep "^\|.*phase $idx "` at line 192, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent, reporting no drift rather than erroring. No skill and no prose changes here. |
-| `b — the convention` | in-progress (brief/0009-b-the-convention) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
+| `b — the convention` | in-progress (brief/0009-b-the-convention, PR#35) | Write the id shape (letter + label), the branch derivation `brief/<serial>-<letter>-<kebab>`, the reserved `closeout` suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Document the numeric-to-letter seam so a reader hitting `1:done` in #0004 and `a:done` later finds a reason, not a defect. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Reword Contract v1.1 line 107 from "ledger `blc/1` line" to "ledger status line". Convert this ledger to `blc/2` with letter indexes — its own record is the first thing written in the new convention. |
 | `c — the check` | pending | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression `a` would otherwise ship silently. |
 
 ## Dependency structure
@@ -121,7 +121,7 @@ Change section, not in a settled decision.
 ## Branches
 
 - `brief/0009-a-the-readers` — phase `a`. Cut from `main` at 962a300. Merged as PR #34.
-- `brief/0009-b-the-convention` — phase `b`. Cut from `main` at f661f7e.
+- `brief/0009-b-the-convention` — phase `b`. Cut from `main` at f661f7e. PR #35.
 
 The phase `a` branch carried the letter before anything else did. At the time the table row
 above still read `phase 1`, because parsers could not read letters until that phase landed.
