@@ -11,7 +11,14 @@
 #
 # The record is deliberately exempt. Briefs and ledgers back to #0001 name the old
 # skills; they are the hypothesis as entered and are never rewritten, so every sweep
-# here excludes `docs/briefs/` and the superseded Contract.
+# here excludes the numbered brief folders, the drafts, and the superseded Contract.
+#
+# The exemption is by *file*, not by directory, and that distinction was bought the
+# hard way. The first version excluded `docs/briefs/` wholesale, which also excluded
+# `docs/briefs/README.md` and `docs/briefs/_drafts/README.md` — two files that are not
+# record at all. They ship to every install target and tell agents which commands to
+# run, and they sat naming `/create-brief` for two briefs after that skill was renamed.
+# A directory is not a category.
 #
 # This file is exempt too, and for a duller reason: it is the only place outside the
 # record that has to write the old names down, because it is what searches for them.
@@ -61,17 +68,21 @@ test_skill_names_to_do_is_gone_from_the_source_tree() {
 test_skill_names_no_unprefixed_name_survives_outside_the_record() {
   local hits
   hits="$(cd "$REPO_ROOT" && grep -rnP "(?<!blc-)\b($BLC_OLD_NAMES)\b" \
-    --exclude-dir=.git --exclude-dir=briefs --exclude-dir=chronicles . 2>/dev/null \
+    --exclude-dir=.git --exclude-dir=chronicles . 2>/dev/null \
     | grep -v '^\./docs/contracts/v1\.md:' \
-    | grep -v '^\./tests/test_skill_names\.sh:' || true)"
+    | grep -v '^\./tests/test_skill_names\.sh:' \
+    | grep -vE '^\./docs/briefs/[0-9]{4}-' \
+    | grep -vP '^\./docs/briefs/_drafts/(?!README)' || true)"
   [ -z "$hits" ] || fail "unprefixed skill name outside the record: ${hits%%$'\n'*}"
 }
 
 test_skill_names_to_do_is_gone_outside_the_record() {
   local hits
   hits="$(cd "$REPO_ROOT" && grep -rn 'to-do' \
-    --exclude-dir=.git --exclude-dir=briefs --exclude-dir=chronicles . 2>/dev/null \
-    | grep -v '^\./tests/test_skill_names\.sh:' || true)"
+    --exclude-dir=.git --exclude-dir=chronicles . 2>/dev/null \
+    | grep -v '^\./tests/test_skill_names\.sh:' \
+    | grep -vE '^\./docs/briefs/[0-9]{4}-' \
+    | grep -vP '^\./docs/briefs/_drafts/(?!README)' || true)"
   [ -z "$hits" ] || fail "to-do still named outside the record: ${hits%%$'\n'*}"
 }
 
@@ -167,4 +178,32 @@ test_skill_names_the_cursor_link_is_committed_as_a_link() {
   mode="$(cd "$REPO_ROOT" && git ls-files -s .cursor/skills | awk '{print $1}')"
   [ "$mode" = "120000" ] \
     || fail "expected .cursor/skills committed as a symlink (120000), got ${mode:-untracked}"
+}
+
+# The two READMEs under docs/briefs/ are documentation, not record, and they install
+# into every target as the instructions an agent follows. They named `/create-brief`
+# for two briefs after that skill was renamed, because the sweep excluded their whole
+# directory. This asserts the distinction the exemption now makes.
+test_skill_names_the_shipped_briefs_docs_are_swept() {
+  local f
+  for f in docs/briefs/README.md docs/briefs/_drafts/README.md; do
+    if grep -qP "(?<!blc-)\b(create-brief|start-brief|init-briefs|next-brief-phase|review-pr)\b" "$REPO_ROOT/$f"; then
+      fail "$f names a skill that no longer exists"
+    fi
+  done
+  return 0
+}
+
+# What a target actually receives. Upstream being correct is not the same as the
+# installed copy being correct.
+test_skill_names_a_target_gets_instructions_that_name_real_skills() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  local f
+  for f in docs/briefs/README.md docs/briefs/_drafts/README.md; do
+    if grep -qP "(?<!blc-)\b(create-brief|start-brief|init-briefs)\b" "$TARGET/$f"; then
+      fail "installed $f tells an agent to run a command that does not exist"
+    fi
+  done
+  return 0
 }
