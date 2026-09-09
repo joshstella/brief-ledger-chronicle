@@ -1,5 +1,5 @@
 # Ledger — #0008 The record outgrew the reader
-`blc/2 #0008 in-progress a:in-progress(brief/0008-a-the-layering) b:pending c:pending d:pending e:pending`
+`blc/2 #0008 in-progress a:done(PR#41) b:pending c:pending d:pending e:pending`
 
 **Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
 **Status:** in-progress
@@ -10,9 +10,9 @@
 
 | Phase | Status | Notes |
 |---|---|---|
-| `a — the layering` | in-progress (`brief/0008-a-the-layering`) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
+| `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
 | `b — the declaration` | pending | The `docs/state/` convention: one file per contributor, filename derived from `git config user.email`. Blocked by open decisions 2, 3, 6, 7. |
-| `c — the verb` | pending | The tool itself. Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
+| `c — the verb` | pending | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | pending | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
 
@@ -36,7 +36,31 @@ Carried from the brief, with the phase each blocks. Resolved before that phase, 
 1. ~~Where the current-state table lives.~~ **Resolved 2026-09-09:** `tools/`, with the
    chronicle calling it. The coupling the brief priced in turned out to be near-free — see
    complication 3 — and the alternative left one of two consumers owning the generator.
-2. What the tool is called. Blocks `b`.
+2. ~~What the tool is called.~~ **Resolved 2026-09-09:** `tools/orient.sh`, plus a thin
+   `blc-orient` skill over it.
+
+   Two artifacts, and the split is deliberate. The brief is emphatic that this is a
+   script — *"This is a script, so unlike a skill it can actually be asserted"* — and its
+   whole testability argument rests on that, so the script is where the behaviour lives.
+   But the brief's plan reaches an agent only through phase `e`, which points three
+   existing skills at the command. A fresh agent that is not already running
+   `blc-start-brief` is exactly the *"new agent arriving at this repository"* from the
+   Ground, and it has no way to learn the tool exists. The skill is the discovery path:
+   `/blc-` completes into the workflow.
+
+   No `blc-` prefix on the script. #0010's convention exists because skills land in the
+   host's shared namespace; `tools/` is a directory in the repository and has nothing to
+   collide with. `validate-briefs.sh`, `open-briefs.sh` and `list-briefs.sh` are all
+   unprefixed for the same reason.
+
+   The name breaks the `<verb>-<noun>.sh` pattern of the other three, and that is the
+   honest signal: they query the briefs directory, this one summarizes the repository.
+
+   **Plan impact.** The skill is an artifact the brief did not scope. It belongs in phase
+   `c`, which ships the verb, rather than `e`, which stays what the brief says it is:
+   pointing the three existing skills at the command. This is the first time a skill in
+   this repo wraps a repo-level tool — `blc-chronicle` wraps its own `scripts/gather.sh`,
+   and nothing invokes `tools/` on an agent's behalf today.
 3. Where the authored file lives — a section of `AGENTS.md`, or its own file. Blocks `b`.
 4. The budget number. Blocks `c`, because `d` asserts it.
 5. Whether the verb ships to targets. Blocks `c`.
@@ -86,7 +110,7 @@ Found by reading the code, not stated in the brief.
 
 ## Branches
 
-- `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2.
+- `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2. Merged as PR #41.
 
 ## Phase `a` — what executing it changed
 
