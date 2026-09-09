@@ -36,7 +36,12 @@ If no argument is given, list candidate brief files (search `docs/briefs/`, `bri
 3. **Read the brief in full.** Do not skim. Apply the consumption protocol, which is stated here because this is where it is used: settled decisions are fixed and are not re-litigated; open decisions resolve before the phase each one blocks; the brief's code conventions bind; and the rationale survives as an inline comment at the site that implements it, so the reasoning outlives the brief. Note the phase/layer sequence and any PR boundaries the brief defines.
 
 4. **Read codebase context.**
-   - Read the repo `AGENTS.md` or `CLAUDE.md` (whichever exists; root, and any subdirectory governing affected files).
+   - **Run `bash tools/orient.sh` first.** It answers what is in flight, what an install
+     wrote, and what the project values, in ~700 tokens — including work a peer has picked
+     up but not filed, which no ledger can tell you. If it reports the checkout is behind
+     its upstream, fetch and re-run before trusting anything below. If the script is
+     absent, say so and continue; do not reconstruct it by reading the repository.
+   - Read the repo `AGENTS.md` or `CLAUDE.md` (whichever exists; root, and any subdirectory governing affected files). `orient` does not replace this — it reports state, and `AGENTS.md` holds architecture rules.
    - For each area the brief touches, read the relevant existing files: what's already there, what the brief adds, what it modifies or replaces.
    - Note anything already built for this brief.
 

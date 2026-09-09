@@ -188,6 +188,9 @@ This repo uses brief-ledger-chronicle. The installed skills are the gates; bypas
 them is the defect. Process rules live in \`$PROCESS_RULES_REL\` and are updated by
 the installer. Architecture and stack live in the section below.
 
+Start with \`bash tools/orient.sh\` if you have not read this repo today: it reports what
+is in flight, what the installer wrote, and what this project values, in ~700 tokens.
+
 ## Project-specific
 
 <!-- Add stack, build commands, architecture notes, and project-specific rules here. -->

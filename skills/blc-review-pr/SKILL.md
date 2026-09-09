@@ -72,7 +72,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - If found, read its **settled** decisions, its **open** decisions, and which phase this change belongs to.
    - If none is found, note "no governing brief" and review on preferences + AGENTS.md/CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
 
-3. **Read the repo `AGENTS.md` or `CLAUDE.md`** (whichever exists; root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
+3. **Get oriented, then read the repo `AGENTS.md` or `CLAUDE.md`.** Run `bash tools/orient.sh` for what is in flight and what the project values — a diff is easier to judge against the work around it, and a phase that contradicts an open brief is only visible from there. Then read `AGENTS.md` or `CLAUDE.md` (whichever exists; root, and any subdirectory governing the touched files) for project-specific architecture rules. These are the project's own gates; apply them on top of the cross-project preferences above.
 
 4. **If the diff touches visual surfaces, read the design doc.**
    Visual surfaces: any `.css` file, `src/theme/`, files with inline `style=` strings, `src/ui/` components, or any HTML shell.

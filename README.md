@@ -72,6 +72,7 @@ places, which is what makes a single source possible.
 
 | | Purpose |
 |---|---|
+| `blc-orient` | The cheapest read of a repo: in flight, off-limits, values (~700 tokens) |
 | `blc-chronicle` | Narrative history from briefs, ledgers, and git |
 | `blc-ste-writing` | ASD-STE100 prose pass; default for process prose |
 | `blc-installer-builder` | Package a file set into a distributable `.tgz` |

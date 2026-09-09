@@ -35,6 +35,10 @@ and get their identity here, at filing time, not while being written.
 2. **Collision guard.** If `docs/briefs/NNNN-*` already exists, increment until free —
    defensive against a stale read. Assignment must reflect the directory *now*. Enacts
    `BRIEFS-3` (unique serials); its race is the known limitation recorded in the Contract.
+   Then check `docs/state/*.md` for another contributor claiming this serial. A claim there
+   is the only warning available for the half of the race the directory cannot show: they
+   have taken the number and not filed yet, so `docs/briefs/` looks free and is not. If one
+   is found in a file that is not yours, surface it and ask before taking the number.
 3. **Resolve the slug.** By the precedence above. Strip any leading `NNNN-` from a
    derived slug (in case the draft filename was pre-numbered). Validate `^[a-z0-9-]+$`
    per `BRIEFS-2` —
@@ -54,7 +58,14 @@ and get their identity here, at filing time, not while being written.
    draft should have carried them from write time, then proceed. Git config is the only
    identity source — every repo already has one, so there is nothing extra to install or
    keep in sync.
-5. **Clean up.** Remove the draft file if it was a staging file.
+5. **Clean up.** Remove the draft file if it was a staging file. If your own
+   `docs/state/<git user.email lowercased>.md` claimed this serial, delete that entry — the
+   brief is filed, so the claim is now derivable from `docs/briefs/` and a declaration that
+   repeats the record is the stale second copy this convention exists to avoid.
+   *Note:* this command does not write a claim on the way in. The serial is computed and
+   filed in the same run, so a claim written here would be cleared seconds later without
+   ever being pushed. A claim is worth writing when a person decides to take a number and
+   before they run this — see `docs/state/README.md`.
 6. **Report** the created path, serial, and depends-on. Do **not** auto-commit — leave
    that to `blc-commit-push-pr` (which carries `#NNNN` into the PR title).
 
