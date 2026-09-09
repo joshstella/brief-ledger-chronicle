@@ -1,8 +1,8 @@
 # Ledger — #0010 The skills live in someone else's namespace
-`blc/2 #0010 in-progress a:done(PR#38) b:in-progress(brief/0010-b-the-check)`
+`blc/2 #0010 done(PR#39) a:done(PR#38) b:done(PR#39)`
 
 **Brief:** `docs/briefs/0010-skill-namespace/brief.md`
-**Status:** in-progress
+**Status:** done (PR #39)
 **Date:** 2026-09-09
 
 ## Phase sequence
@@ -10,7 +10,7 @@
 | id | status | what it does |
 |---|---|---|
 | `a — the names` | done (PR#38) | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update the three structural sites in `install.sh` — `PROCESS_SKILLS`, the machine-mode symlink loop, the template-presence check — and its inline process-rules text. Update `templates/process-rules.md`, `README.md`, `Manifesto.md`, `docs/slides-process-overview.md`, `personal/CLAUDE.md`, the skill prose, and the skill names in `tools/open-briefs.sh` and `tools/validate-briefs.sh`. Reword the two `create-brief` mentions in Contract v1.1 in place. Write the naming rule into `docs/briefs/README.md`. Carries the minimum test edit needed to keep the suite green — see the re-plan below. |
-| `b — the check` | in-progress (brief/0010-b-the-check) | New coverage: a fresh install places nine skills all prefixed and six slash-commands all prefixed; no unprefixed skill name and no `to-do` survives outside `docs/briefs/`; both hosts agree on the six. |
+| `b — the check` | done (PR#39) | New coverage: a fresh install places nine skills all prefixed and six slash-commands all prefixed; no unprefixed skill name and no `to-do` survives outside `docs/briefs/`; both hosts agree on the six. |
 
 ## Dependency structure
 
@@ -98,4 +98,39 @@ result. That is a standing property of the suite, not something #0010 created.
 ## Branches
 
 - `brief/0010-a-the-names` — phase `a`. Cut from `main` at 2a70c4c. Merged as PR #38.
-- `brief/0010-b-the-check` — phase `b`. Cut from `main` at ae81bcc.
+- `brief/0010-b-the-check` — phase `b`. Cut from `main` at ae81bcc. Merged as PR #39.
+
+## Closeout
+
+Both phases merged. Checked against the brief's success criteria on 2026-09-09, at
+`8777171`:
+
+- A fresh install into an empty project places nine skills, all `blc-`-prefixed. On Claude
+  Code six of them land as `blc-`-prefixed slash-commands; on Cursor all nine land as skills.
+- No unprefixed skill name and no `to-do` survives outside `docs/briefs/`. Two repository
+  sweeps assert it, and both were verified to fail when a name is reintroduced.
+- `docs/briefs/README.md` states the naming rule under "Skill names", so the next skill is
+  born prefixed rather than renamed later.
+- The record still names the old skills, which is the promise the brief made about history.
+- 167 tests pass.
+
+**What the brief planned and did not need.** The filed version carried a third phase — the
+installer learning to remove the unprefixed files it had previously written — and two open
+decisions about how dangerous that removal should be. Both were dropped before filing once
+the install count was established as one, owned by the author. Reinstalling was the
+migration, and it cost nothing.
+
+**What the brief did not see.** Four sites named skills outside the list in phase `a`:
+`templates/process-rules.md`, which ships to every target and tells agents which skills are
+the gates; `install.sh`'s inline copy of that text; both tools' prose; and `personal/CLAUDE.md`,
+which installs to `~/.claude` and is invisible to the project-mode tests. The first of those
+would have shipped agent instructions pointing at skills that no longer exist.
+
+**One thing left open on purpose.** Machine-mode installed output is covered more thinly than
+project-mode. `b`'s sweep catches `personal/CLAUDE.md` as a source file because it lives in the
+repository, but not the installed result. That is a standing property of the suite rather than
+something this brief created, and closing it here would have been scope creep.
+
+**The decision that expires.** No migration path was correct exactly once — one install, owned
+by the author, renamed before anyone else adopted the toolkit. The next rename will have to
+build what this one skipped. This brief should not be cited as precedent for skipping it again.
