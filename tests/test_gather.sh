@@ -28,6 +28,11 @@ gather_repo() {
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email t@example.com
   git -C "$REPO" config user.name Test
+  # gather.sh reads the brief table from tools/list-briefs.sh, which install.sh ships
+  # into every project. A fixture without it is not a project the skill could run in.
+  mkdir -p "$REPO/tools"
+  cp "$REPO_ROOT/tools/list-briefs.sh" "$REPO/tools/list-briefs.sh"
+  chmod +x "$REPO/tools/list-briefs.sh"
   echo "# Briefs" > "$BRIEFS/README.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "root" >/dev/null 2>&1
