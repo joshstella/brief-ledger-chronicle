@@ -1,6 +1,5 @@
 # Ledger — #0012 An install is not an update
-
-blc/2 #0012 pending a:pending b:pending c:pending d:pending
+`blc/2 #0012 pending a:pending b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
