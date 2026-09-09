@@ -13,7 +13,7 @@
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
 | `b — the declaration` | done (PR#42) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | done (PR#43) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
-| `d — the check` | in-progress (`brief/0008-d-the-check`) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
+| `d — the check` | in-progress (`brief/0008-d-the-check`, PR pending) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
 
 ## Dependency structure
@@ -128,6 +128,37 @@ Found by reading the code, not stated in the brief.
 - `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd. Merged as PR #42.
 - `brief/0008-c-the-verb` — phase `c`. Cut from `main` at 3669df8. Merged as PR #43.
 - `brief/0008-d-the-check` — phase `d`. Cut from `main` at the #43 merge.
+
+## Phase `d` — what executing it changed
+
+**Writing the tests found two bugs and one design mistake in `c`.**
+
+*The empty-tree placeholder was read as an open brief.* `list-briefs.sh` emits a row of
+dashes when there are no briefs, and that row has no status to filter on, so rung 0 showed
+it as work in flight. A fresh install — the case the brief cares most about — displayed a
+dash row instead of "Nothing open." The filter now requires a serial in the first cell.
+
+*`docs/orientation.md` was checked for but never placed.* Phase `c` added it to the
+installer's template-existence list and not to the loop that copies files, so the installer
+verified a file it never shipped.
+
+*And it should not ship at all.* That is the design mistake. The authored file is the one
+part of the output that is not derived, and it is a statement about **this** project.
+Shipping this repository's copy would install our principles into someone else's
+repository — the same category error as shipping a numbered brief folder, which the
+installer has always refused to do. A target authors its own, and orient's absence message
+is what asks for it. The test now asserts it is *not* present after an install.
+
+**Two of the tests are canaries, not checks.** The budget and cap tests measure this
+repository's real output rather than a fixture, so they fail when the record outgrows the
+budget — which is #0008's thesis failing, and should be loud. Both were verified by
+padding `docs/orientation.md` until they broke: the cap at 352 tokens against 250, the
+budget at 798 against 700. The first attempt at the budget canary did not trip, because
+100 extra tokens still fit; that is the headroom decision 4 was chosen to have.
+
+**The cost-does-not-grow test is the one that matters most.** Seven additional closed
+briefs move the output by no more than ten tokens. That is the flat-rung property stated as
+an assertion rather than an intention, and it is what decision 8 bought.
 
 ## Phase `c` — what executing it changed
 

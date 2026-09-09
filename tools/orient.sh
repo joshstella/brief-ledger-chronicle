@@ -62,8 +62,10 @@ if [ -d "$BRIEFS_DIR" ] && [ -x "$ROOT/tools/list-briefs.sh" ]; then
   # table stays complete; this is the same generator read by a different consumer
   # with a different rule. Unfiltered it costs ~35 tokens per brief forever, which
   # breaks the flat rung cost somewhere around twenty briefs.
-  open_rows="$(printf '%s\n' "$table" | awk -F'|' 'NR>2 && $4 !~ /done|skipped/ {print}')"
-  closed="$(printf '%s\n' "$table" | awk -F'|' 'NR>2 && $4 ~ /done|skipped/' | grep -c . || true)"
+  # $2 is the serial cell; list-briefs emits a row of dashes for an empty tree, and
+  # that row has no status to filter on.
+  open_rows="$(printf '%s\n' "$table" | awk -F'|' 'NR>2 && $2 ~ /#/ && $4 !~ /done|skipped/ {print}')"
+  closed="$(printf '%s\n' "$table" | awk -F'|' 'NR>2 && $2 ~ /#/ && $4 ~ /done|skipped/' | grep -c . || true)"
   if [ -n "$open_rows" ]; then
     printf '%s\n' "| serial | title | status |"
     printf '%s\n' "|---|---|---|"
