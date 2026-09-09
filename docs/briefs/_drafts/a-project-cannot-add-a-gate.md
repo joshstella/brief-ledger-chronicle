@@ -21,13 +21,13 @@ toolkit's eight are enforced.
 
 ## The claim
 
-**A project puts an executable in `checks/`. `validate-briefs.sh` runs it and honours its
-verdict.**
+**A project puts a shell script in `brief-checks/`. `validate-briefs.sh` runs it and honours
+its verdict.**
 
 Not a second place to write prose — that is `AGENTS.md`, and it works. The missing piece is
 that a project's rule can fail a check the way `BRIEFS-3` can.
 
-- Checks live in **`checks/` at the repository root**, a directory the installer never
+- Checks live in **`brief-checks/` at the repository root**, a directory the installer never
   creates, writes to, or scans.
 - A check prints findings in the gate's existing vocabulary — `defect` fails the run,
   `judgment` reports and does not — and exits accordingly.
@@ -72,9 +72,9 @@ suggestion, and the first time one is skipped nothing notices.
 
 | Phase | Work |
 |---|---|
-| `a — the check contract` | Write down the interface: that checks live in `checks/`, how they are discovered and ordered, what arguments they receive, what output the gate parses, what each exit status means, and that a check cannot touch a toolkit clause. Documentation and a worked example. No behaviour change. |
-| `b — the runner` | `validate-briefs.sh` discovers, runs, and aggregates `checks/`. Deterministic order. Toolkit clauses are evaluated first and independently, so a broken check can never mask them. Errors fail closed. |
-| `c — the proof` | Tests: a passing check, a failing check, a check emitting a judgment, a crashing check, a non-executable file, no `checks/` directory at all, and two checks running in a fixed order. Plus the negative that matters — a check that tries to clear a toolkit defect does not. And that an install leaves `checks/` untouched. |
+| `a — the check contract` | Write down the interface: that checks live in `brief-checks/`, how they are discovered and ordered, what arguments they receive, what output the gate parses, what each exit status means, and that a check cannot touch a toolkit clause. Documentation and a worked example. No behaviour change. |
+| `b — the runner` | `validate-briefs.sh` discovers, runs, and aggregates `brief-checks/`. Deterministic order. Toolkit clauses are evaluated first and independently, so a broken check can never mask them. Errors fail closed. |
+| `c — the proof` | Tests: a passing check, a failing check, a check emitting a judgment, a crashing check, a non-executable file, no `brief-checks/` directory at all, and two checks running in a fixed order. Plus the negative that matters — a check that tries to clear a toolkit defect does not. And that an install leaves `brief-checks/` untouched. |
 
 ## Tension
 
@@ -88,13 +88,13 @@ the project's own, in its own repository, executed by its own contributor. It is
 change in what `install.sh`'s output does, and it deserves saying out loud rather than
 discovering.
 
-**`checks/` is a new top-level directory and the name is not ours alone.** A project may
-already have one, meaning something entirely different. The toolkit cannot claim it, only
-read it — which is the correct posture for a project-owned path, and also means a collision
-is the project's to resolve, with no help from us.
+**A project may already have a `brief-checks/`.** Unlikely, but the toolkit cannot claim the
+name, only read it — which is the correct posture for a project-owned path, and also means a
+collision is the project's to resolve, with no help from us. The `blc-` prefix would have
+removed even that risk, and was rejected for a larger one: see the settled decision below.
 
 **The installer must now promise never to touch a path.** Ownership has so far been a
-question of what the installer writes. `checks/` makes it also a question of what it must
+question of what the installer writes. `brief-checks/` makes it also a question of what it must
 refrain from writing, and that promise has to be recorded in the ownership map rather than
 merely observed. This is a direct dependency on the install brief's phase `a`.
 
@@ -130,23 +130,32 @@ Resolved 2026-09-09 during drafting.
 - **They are called checks, not hooks.** The gate already says `defect` and `judgment`;
   "hook" implies a general event system this brief explicitly does not build, and
   "skill hook" would advertise skill extension, which was rejected above.
-- **They live in `checks/` at the repository root.** Chosen because the installer has no
+- **They live in `brief-checks/` at the repository root.** Chosen because the installer has no
   claim on it — not because it is convenient. Every `docs/` and `tools/` candidate sits in
   a tree the installer scaffolds and prunes.
+- **The directory does not take the `blc-` prefix.** `blc-` marks the ten skills, and the
+  install policy is about to teach that everything so marked is replaced on update and local
+  edits are lost. This is the one directory where the opposite holds. Wearing that prefix
+  would tell an adopter not to edit the single path where their edits are safe. The name
+  says what it checks instead, and ownership is stated in the install brief's ownership map
+  rather than inferred from a prefix.
+- **A check is a shell script.** This keeps the toolkit's zero-dependency posture and means
+  the gate never probes for a runtime or interprets a shebang. It is a thin constraint: a
+  shell check may call `python3`, `jq`, or anything else the project already depends on, so
+  it restricts the file the gate executes and not what a project can actually check.
 - **Checks add; they never subtract.** No check can suppress or downgrade a toolkit clause.
 - **Fail closed.** A check that cannot run is a defect.
 - **Checks are project-owned.** Never shipped, never replaced, never pruned by the installer.
 
 ## Open decisions
 
-1. ~~Where do checks live?~~ **Resolved 2026-09-09: `checks/` at the repository root.**
+1. ~~Where do checks live?~~ **Resolved 2026-09-09: `brief-checks/` at the repository root.**
 2. **What is the check interface?** Arguments in and text out, or a stricter structured
    format that is easier to parse and harsher to write. Blocks `a`.
 3. **Which tools take checks?** `validate-briefs.sh` is the gate and is obvious.
    `open-briefs.sh` and `orient` are observers — extending them is a different feature with
    a different risk profile. Blocks `b`.
-4. **Any executable, or shell only?** Shell keeps the toolkit's zero-dependency posture.
-   Any executable is more useful and drags a runtime into the gate. Blocks `a`.
+4. ~~Any executable, or shell only?~~ **Resolved 2026-09-09: shell only.**
 5. **Does the toolkit ship an example check?** An example teaches the interface and is one
    more toolkit-owned file in a project-owned directory. Blocks `a`.
 
@@ -166,6 +175,6 @@ Resolved 2026-09-09 during drafting.
 - A project finding and a toolkit clause are distinguishable in the output by name.
 - A check cannot clear a toolkit defect, and a test proves it.
 - A check that crashes fails the run and says which check it was.
-- A project with no `checks/` behaves exactly as it does today, byte for byte.
-- An install run against a project with `checks/` leaves every file in it unmodified.
+- A project with no `brief-checks/` behaves exactly as it does today, byte for byte.
+- An install run against a project with `brief-checks/` leaves every file in it unmodified.
 - Two checks run in a stated, deterministic order.
