@@ -1,9 +1,9 @@
 ---
-name: ste-writing
+name: blc-ste-writing
 description: Default writing style for brief-ledger-chronicle process prose (briefs, ledgers, chronicles, commits, PRs, reviews, comments, docs — never code). Rewrite into ASD-STE100 Simplified Technical English. Use for all process writing, and when asked to make writing not sound like AI, make docs clear or plain, or enforce a controlled style. Two modes — strict (procedures/safety) and STE-flavored (general prose).
 ---
 
-# ste-writing
+# blc-ste-writing
 
 Write prose in ASD-STE100 Simplified Technical English. This applies to documentation, READMEs, pull-request text, error messages, release notes, and comments. It does not apply to code, identifiers, or command syntax. It is not for marketing copy, essays, or anything that needs a voice — STE strips voice on purpose.
 

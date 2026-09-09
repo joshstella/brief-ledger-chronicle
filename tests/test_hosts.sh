@@ -5,8 +5,8 @@
 # tests pin both layouts and, more importantly, pin that neither host leaks the other's
 # files into a project.
 
-PROCESS="commit-push-pr create-brief init-briefs next-brief-phase review-pr start-brief"
-UTILITY="chronicle installer-builder ste-writing to-do"
+PROCESS="blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+UTILITY="blc-chronicle blc-installer-builder blc-ste-writing"
 
 # ── Cursor ───────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ test_host_cursor_writes_process_rules_under_cursor_rules() {
   assert_status 0
   assert_file "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
   assert_contains "alwaysApply: true" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
-  assert_contains "ste-writing" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_contains "blc-ste-writing" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
   assert_no_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
 }
 
@@ -86,7 +86,7 @@ test_host_claude_writes_process_rules_under_claude_rules() {
   run_install y --host claude --target "$TARGET"
   assert_status 0
   assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
-  assert_contains "ste-writing" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_contains "blc-ste-writing" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_not_contains "alwaysApply:" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_no_file "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
 }
@@ -103,10 +103,10 @@ test_host_claude_is_the_default() {
 # silently produce skills it cannot index.
 test_host_shared_frontmatter_survives_into_both_layouts() {
   run_install y --host claude --target "$TARGET"
-  assert_matches "^name: review-pr" "$TARGET/.claude/commands/review-pr.md"
+  assert_matches "^name: blc-review-pr" "$TARGET/.claude/commands/blc-review-pr.md"
   rm -rf "$TARGET"; mkdir -p "$TARGET"
   run_install y --host cursor --target "$TARGET"
-  assert_matches "^name: review-pr" "$TARGET/.cursor/skills/review-pr/SKILL.md"
+  assert_matches "^name: blc-review-pr" "$TARGET/.cursor/skills/blc-review-pr/SKILL.md"
 }
 
 # On Claude Code a process skill is flattened to a single commands/<name>.md file, so

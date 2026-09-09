@@ -32,7 +32,7 @@ if [ ! -d "$BRIEFS_DIR" ]; then
 fi
 
 # An entry is a brief candidate if it begins with four digits — the same test
-# create-brief uses to find the maximum serial. Classifying on the prefix rather
+# blc-create-brief uses to find the maximum serial. Classifying on the prefix rather
 # than on the full pattern keeps a malformed name in exactly one clause: it is a
 # brief that is named wrong (BRIEFS-2), not an unexpected entry (BRIEFS-1).
 is_brief_candidate() {

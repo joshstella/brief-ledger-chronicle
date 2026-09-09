@@ -33,8 +33,8 @@ The installer warns if the target is not a git repository. `validate-briefs.sh` 
 runs there. `open-briefs.sh` does not: it reads git history.
 
 **Skipping the machine step is the failure mode this repo learned the hard way.** Process
-files degrade when user-level paths are missing — `init-briefs` hand-writes a README,
-`create-brief` falls back to git config — so a machine can look configured and still be
+files degrade when user-level paths are missing — `blc-init-briefs` hand-writes a README,
+`blc-create-brief` falls back to git config — so a machine can look configured and still be
 unrunnable from clean.
 
 ## What lands where
@@ -61,21 +61,20 @@ places, which is what makes a single source possible.
 
 | | Purpose |
 |---|---|
-| `commit-push-pr` | Stage → review gate → commit → push → open PR |
-| `review-pr` | Review a diff or PR against the governing brief and project rules |
-| `create-brief` | File a draft into `docs/briefs/NNNN-slug/` |
-| `start-brief` | Plan phases, write the ledger, branch the first phase |
-| `next-brief-phase` | Continue a multi-phase brief, re-planning from what finished phases taught |
-| `init-briefs` | One-time idempotent `docs/briefs/` scaffold |
+| `blc-commit-push-pr` | Stage → review gate → commit → push → open PR |
+| `blc-review-pr` | Review a diff or PR against the governing brief and project rules |
+| `blc-create-brief` | File a draft into `docs/briefs/NNNN-slug/` |
+| `blc-start-brief` | Plan phases, write the ledger, branch the first phase |
+| `blc-next-brief-phase` | Continue a multi-phase brief, re-planning from what finished phases taught |
+| `blc-init-briefs` | One-time idempotent `docs/briefs/` scaffold |
 
 **Skills** — useful alongside it:
 
 | | Purpose |
 |---|---|
-| `chronicle` | Narrative history from briefs, ledgers, and git |
-| `ste-writing` | ASD-STE100 prose pass; default for process prose |
-| `to-do` | Append timestamped notes to `docs/to-dos/todo.md` |
-| `installer-builder` | Package a file set into a distributable `.tgz` |
+| `blc-chronicle` | Narrative history from briefs, ledgers, and git |
+| `blc-ste-writing` | ASD-STE100 prose pass; default for process prose |
+| `blc-installer-builder` | Package a file set into a distributable `.tgz` |
 
 **Templates** — the process-rules contract (installed as a host rules file), a stub
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
@@ -98,14 +97,14 @@ the programs and the installer. It does not exercise what a skill instructs an a
 
 1. **Author a brief** in `docs/briefs/_drafts/` — unnumbered. Drafts are committed to git.
    Filing, not committing, is the decision to do the work.
-2. **File it** with `create-brief`, which assigns the serial. This is the one-way door.
-3. **Execute** with `start-brief`. Continue with `next-brief-phase`, which re-plans the
+2. **File it** with `blc-create-brief`, which assigns the serial. This is the one-way door.
+3. **Execute** with `blc-start-brief`. Continue with `blc-next-brief-phase`, which re-plans the
    remaining sequence from what the finished phases taught.
-4. **Every commit to `main`** goes through `commit-push-pr`, which runs `review-pr` as a
+4. **Every commit to `main`** goes through `blc-commit-push-pr`, which runs `blc-review-pr` as a
    gate before anything is committed.
 5. **`open-briefs.sh`** lists `in-progress` and `deferred` phases. It reports. It does not
    gate. Nothing invokes it on a cadence yet — run it when you want to know what is open.
-6. **`chronicle`** renders the record into `docs/chronicles/chronicle.md` when you
+6. **`blc-chronicle`** renders the record into `docs/chronicles/chronicle.md` when you
    want the story. Briefs, ledgers, and git stay the record. The file is a
    rendering a later run may refresh.
 
@@ -116,7 +115,7 @@ afterwards. See the [Manifesto](Manifesto.md).
 Ledger status uses one vocabulary at both levels: `pending`, `in-progress`, `deferred`,
 `done`, `skipped`. Defined in `docs/briefs/README.md`.
 
-The installer never files a brief. `create-brief` is the single point of serial assignment.
+The installer never files a brief. `blc-create-brief` is the single point of serial assignment.
 Anything else writing a `NNNN-slug/` folder bypasses both its allocation and its collision
 guard — see "Known limitation — writers outside the pipeline" in `docs/briefs/README.md`.
 

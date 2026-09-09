@@ -52,7 +52,7 @@ citation.
 | `[judgment]` | Surfaced for a human to decide. Never blocks. |
 
 `[judgment]` was called `[advisory]` in earlier prose. One name survives because the
-`review-pr` skill already reads `[judgment]` out of design documents, and renaming the read
+`blc-review-pr` skill already reads `[judgment]` out of design documents, and renaming the read
 tag would have failed silently there.
 
 ### Scope — who the clause binds

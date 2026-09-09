@@ -140,6 +140,22 @@ succeed — merged branch names and squash subjects on `main` say `phase 3`, and
 reads commit subjects into the chronicle, so a rewritten ledger would narrate `c` beside a
 commit saying `phase 3`. A dated, explicable seam beats one that reads as a bug.
 
+### Skill names
+
+**Every skill this toolkit ships is `blc-<name>`.** All of them, with no exceptions for the
+ones that read fine unprefixed.
+
+A skill name is not scoped to the repository that installed it. The host merges every skill
+it can see into one flat list and asks a model to choose from it, so an unprefixed name
+competes with whatever the host ships — and hosts add skills without asking.
+
+The prefix earns its keep before any collision, though: typing `/blc-` completes into the
+whole workflow, which is how someone new learns what is here without being handed
+documentation.
+
+A new skill is born prefixed. Renaming one later is a migration, and this toolkit has
+already spent that once.
+
 ### Phase ids
 
 **A phase has one id. The index is a letter. Every other name derives from it.**

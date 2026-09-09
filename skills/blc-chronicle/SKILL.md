@@ -1,5 +1,5 @@
 ---
-name: chronicle
+name: blc-chronicle
 description: Generate a narrative history — a "chronicle" — of a codebase by interrogating its brief registry (docs/briefs/), execution ledgers, and git history, telling the story of how the system came to be. Use whenever the user wants a project origin story, a "how did we get here" narrative, onboarding context for a new hire, a retrospective or postmortem-of-progress, an engagement summary for a client, or wants to synthesize the docs/briefs record and git timeline into prose. Trigger even on casual phrasings like "tell the story of this repo", "what's the journey of this project", "our story", or "write up how this came together" — and even if the user doesn't say the word "chronicle".
 ---
 

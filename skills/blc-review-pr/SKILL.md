@@ -1,16 +1,16 @@
 ---
-name: review-pr
+name: blc-review-pr
 description: >-
-  Review a staged diff or PR against the governing brief and project rules. Use when the user asks for review-pr or a pre-merge review.
+  Review a staged diff or PR against the governing brief and project rules. Use when the user asks for blc-review-pr or a pre-merge review.
 ---
 
-# review-pr
+# blc-review-pr
 
 Review a change for correctness, intent, and fitness against my cross-project preferences **before it merges**. This review can BLOCK: a `Request changes` verdict means do not commit / do not push / do not merge.
 
-Usage: review-pr [PR number | --staged]
+Usage: blc-review-pr [PR number | --staged]
 - **PR number** → review that PR's diff.
-- **--staged** (or no argument when staged changes exist) → review the staged, not-yet-committed diff. This is the mid-chain mode called by `commit-push-pr`.
+- **--staged** (or no argument when staged changes exist) → review the staged, not-yet-committed diff. This is the mid-chain mode called by `blc-commit-push-pr`.
 - **no argument, nothing staged** → review the current branch's open PR; if there is none, review the current branch against the default branch.
 
 ---
@@ -90,7 +90,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - **Cross-project preferences** — types, modules, comments, scope, tests, security.
    - **Project architecture** — the rules from `AGENTS.md` or `CLAUDE.md`.
 
-6. **Report in three separate buckets, in this order — do not merge them.** Run each bucket's prose through the `ste-writing` skill (STE-flavored mode) before presenting it — file/line locators and code excerpts stay as-is, only the surrounding sentences get the pass.
+6. **Report in three separate buckets, in this order — do not merge them.** Run each bucket's prose through the `blc-ste-writing` skill (STE-flavored mode) before presenting it — file/line locators and code excerpts stay as-is, only the surrounding sentences get the pass.
    - **Couldn't verify — look here:** located blind spots, each naming what wasn't confirmable and why. Often the most valuable section — it directs the human's interrogation to where automation can't vouch for itself.
    - **Your call:** judgment-laden questions only the reviewer can settle (intent-vs-ticket, team-binding changes, architecture), each located and specific.
    - **Findings:** the ordinary located defects — file, line, problem, what to do instead. Skip matters of taste with no clear better option.
@@ -99,7 +99,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 7. **Verdict** (one line), scoped explicitly to the mechanical floor: **Approve**, **Approve with suggestions**, or **Request changes** — and why. State plainly that the verdict covers what was *verified*, and that any **Your call** and **Couldn't verify** items remain open regardless of it — a human must close them. "Mechanically clean" is not "this is the right change."
    - **Missing tests on merge-bound code → Request changes**, unless an explicit "test-exempt because…" is declared (in the PR's `## Test plan`, or stated when the gate runs mid-chain). A hard gate, not a suggestion: untested code does not reach `main`.
    - **`[defect]` design invariant violation → Request changes**, same force as a type error.
-   - When called mid-chain by `commit-push-pr`: **Request changes** halts the chain before the commit; **Approve with suggestions** passes, and its suggestions plus any open **Your call** / **Couldn't verify** items are carried forward into the PR handoff so the downstream human reviewer inherits them.
+   - When called mid-chain by `blc-commit-push-pr`: **Request changes** halts the chain before the commit; **Approve with suggestions** passes, and its suggestions plus any open **Your call** / **Couldn't verify** items are carried forward into the PR handoff so the downstream human reviewer inherits them.
 
 8. **Bug ledger.** Save confirmed **correctness** bugs (not preference/convention findings) to a `project` memory file keyed by branch: `review-<branch>.md`. Each entry: file, line, summary, status (`open`/`fixed`). On re-review of the same branch, flip previously-open bugs to `fixed` if the new diff resolves them — update in place, don't duplicate. Record the PR number in the file once it exists. Add/update the entry in MEMORY.md.
 
