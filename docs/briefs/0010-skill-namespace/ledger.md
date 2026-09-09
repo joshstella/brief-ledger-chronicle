@@ -1,5 +1,5 @@
 # Ledger — #0010 The skills live in someone else's namespace
-`blc/2 #0010 in-progress a:in-progress(brief/0010-a-the-names) b:pending`
+`blc/2 #0010 in-progress a:done(PR#38) b:in-progress(brief/0010-b-the-check)`
 
 **Brief:** `docs/briefs/0010-skill-namespace/brief.md`
 **Status:** in-progress
@@ -9,8 +9,8 @@
 
 | id | status | what it does |
 |---|---|---|
-| `a — the names` | in-progress (brief/0010-a-the-names) | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update the three structural sites in `install.sh` — `PROCESS_SKILLS`, the machine-mode symlink loop, the template-presence check — and its inline process-rules text. Update `templates/process-rules.md`, `README.md`, `Manifesto.md`, `docs/slides-process-overview.md`, `personal/CLAUDE.md`, the skill prose, and the skill names in `tools/open-briefs.sh` and `tools/validate-briefs.sh`. Reword the two `create-brief` mentions in Contract v1.1 in place. Write the naming rule into `docs/briefs/README.md`. Carries the minimum test edit needed to keep the suite green — see the re-plan below. |
-| `b — the check` | pending | New coverage: a fresh install places nine skills all prefixed and six slash-commands all prefixed; no unprefixed skill name and no `to-do` survives outside `docs/briefs/`; both hosts agree on the six. |
+| `a — the names` | done (PR#38) | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update the three structural sites in `install.sh` — `PROCESS_SKILLS`, the machine-mode symlink loop, the template-presence check — and its inline process-rules text. Update `templates/process-rules.md`, `README.md`, `Manifesto.md`, `docs/slides-process-overview.md`, `personal/CLAUDE.md`, the skill prose, and the skill names in `tools/open-briefs.sh` and `tools/validate-briefs.sh`. Reword the two `create-brief` mentions in Contract v1.1 in place. Write the naming rule into `docs/briefs/README.md`. Carries the minimum test edit needed to keep the suite green — see the re-plan below. |
+| `b — the check` | in-progress (brief/0010-b-the-check) | New coverage: a fresh install places nine skills all prefixed and six slash-commands all prefixed; no unprefixed skill name and no `to-do` survives outside `docs/briefs/`; both hosts agree on the six. |
 
 ## Dependency structure
 
@@ -83,6 +83,19 @@ None. The brief resolved its own before filing.
    rather than to a target, so it is invisible to the project-mode tests. A rename that misses
    it fails only on the author's own machine, and only later.
 
+## Re-plan after PR #38
+
+Remainder held: `b` was the only phase left and its scope did not change. `a` resolved
+complications 1, 2, 3, 4 and 5 as it went, and fixed the file named in 6. What `b` adds is
+different in kind — those fixes happened because they were noticed, and `b` converts them
+into a guard that fails the suite if an unprefixed name returns.
+
+Complication 6's actual point is not resolved and is not being resolved here: machine-mode
+*installed output* is covered more thinly than project-mode. `b`'s sweep catches
+`personal/CLAUDE.md` as a source file, because it is in the repository, but not the installed
+result. That is a standing property of the suite, not something #0010 created.
+
 ## Branches
 
-`brief/0010-a-the-names` — phase `a`. Cut from `main` at 2a70c4c.
+- `brief/0010-a-the-names` — phase `a`. Cut from `main` at 2a70c4c. Merged as PR #38.
+- `brief/0010-b-the-check` — phase `b`. Cut from `main` at ae81bcc.
