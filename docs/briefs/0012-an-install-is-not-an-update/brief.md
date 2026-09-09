@@ -1,6 +1,6 @@
 # An install is not an update
 
-**Created:** 2026-09-09T11:39:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
+**Serial:** #0012 · **Created:** 2026-09-09T11:39:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
 
 ## Ground
 

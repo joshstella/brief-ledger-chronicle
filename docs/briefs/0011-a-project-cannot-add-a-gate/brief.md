@@ -1,6 +1,6 @@
 # A project cannot add a gate
 
-**Serial:** #0011 · **Created:** 2026-09-09T12:40:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
+**Serial:** #0011 · **Created:** 2026-09-09T12:40:00Z · **Author:** josh.stella@gmail.com · **Depends on:** #0012
 
 ## Ground
 
@@ -98,7 +98,7 @@ removed even that risk, and was rejected for a larger one: see the settled decis
 **The installer must now promise never to touch a path.** Ownership has so far been a
 question of what the installer writes. `brief-checks/` makes it also a question of what it
 must refrain from writing, and that promise has to be recorded in the ownership map rather
-than merely observed. This is a direct dependency on the install brief's phase `a`.
+than merely observed. This is a direct dependency on #0012's phase `a`.
 
 **This does nothing for the skills.** Guidance stays unenforceable — that is what guidance
 is. A project can now enforce rules about the *record*, because a script can read the
@@ -135,7 +135,7 @@ Resolved 2026-09-09 during drafting.
   install policy is about to teach that everything so marked is replaced on update and local
   edits are lost. This is the one directory where the opposite holds. Wearing that prefix
   would tell an adopter not to edit the single path where their edits are safe. The name
-  says what it checks instead, and ownership is stated in the install brief's ownership map.
+  says what it checks instead, and ownership is stated in #0012's ownership map.
 - **A check is a shell script, run with `bash`.** Keeps the zero-dependency posture and means
   the gate never probes for a runtime, interprets a shebang, or cares about the executable
   bit. Barely a restriction: a shell script may call `python3`, `jq`, or anything else the
