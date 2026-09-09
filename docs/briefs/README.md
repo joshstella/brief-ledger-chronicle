@@ -9,7 +9,7 @@ whole lifecycle.
 1. **Draft** — authored number-free in `_drafts/`. Unnumbered, unordered, and committed
    to git, so a parked idea is available from any workstation and survives indefinitely.
    Deferring a draft costs nothing and leaves no gap in the sequence.
-2. **Filed** — `/create-brief` moves a draft into a serial-numbered folder
+2. **Filed** — `/blc-create-brief` moves a draft into a serial-numbered folder
    `NNNN-slug/brief.md`. Filing is the one-way door: this is the moment a draft becomes
    committed work and earns its identity.
 3. **Executed** — a `ledger.md` joins the folder as the work is carried out, and the
@@ -29,7 +29,7 @@ docs/briefs/
 ## Serials
 
 A serial is a zero-padded four-digit identity handle (`0001`, `0002`, …) on the
-**folder**. It is **assigned at filing time by `/create-brief`** — next serial = max in
+**folder**. It is **assigned at filing time by `/blc-create-brief`** — next serial = max in
 `docs/briefs/` + 1 — never chosen by the author and never assigned during authoring.
 That single point of assignment is what keeps numbers from colliding. The serial encodes
 **identity only** — never status or phase.
@@ -48,7 +48,7 @@ Each `brief.md` carries one line directly under its H1:
 **Serial:** #0010 · **Created:** 2026-06-23T14:20:00Z · **Author:** name@org.tld · **Depends on:** #0004
 ```
 
-- **Serial** — assigned by `/create-brief` at filing.
+- **Serial** — assigned by `/blc-create-brief` at filing.
 - **Created** — ISO-8601 UTC, stamped when the draft is written into `_drafts/` (not
   modified-time; git tracks that). It is the staleness cue: an old `Created` means
   re-ground the brief against current code before executing.
@@ -64,12 +64,12 @@ external keys stay external; they reference each other, they don't merge.
 
 ## Commands
 
-- **`/init-briefs`** — one-time, idempotent repo setup: creates this structure and these
+- **`/blc-init-briefs`** — one-time, idempotent repo setup: creates this structure and these
   READMEs. Run once when adopting the convention in a repo.
-- **`/create-brief <draft>`** — files an unnumbered draft into `NNNN-slug/brief.md`,
-  assigning the serial and carrying provenance forward. Errors toward `/init-briefs` if
+- **`/blc-create-brief <draft>`** — files an unnumbered draft into `NNNN-slug/brief.md`,
+  assigning the serial and carrying provenance forward. Errors toward `/blc-init-briefs` if
   the structure is absent. One brief per invocation.
-- **`/start-brief` / `/next-brief-phase`** — read `NNNN-slug/brief.md`, write the ledger
+- **`/blc-start-brief` / `/blc-next-brief-phase`** — read `NNNN-slug/brief.md`, write the ledger
   to `NNNN-slug/ledger.md`.
 
 ## Ledger status
@@ -86,7 +86,7 @@ Five states, and no others:
 | `skipped` | not being done | a reason |
 
 **One person owns a serial.** A team member is given the brief. That person runs
-`start-brief` and the later phases. Phases are that person's sequence, not a way to split
+`blc-start-brief` and the later phases. Phases are that person's sequence, not a way to split
 the brief across people. `Author` on the identity line is who filed. The owner is who
 executes. Those can be different people. They are not two fields to merge.
 
@@ -94,7 +94,7 @@ This is a team convention, not a Contract clause. Nothing checks it. Relaxing it
 allowed. Designing the ledger for two executors on one serial is not the use case.
 
 The ledger stays **one file** per brief, `NNNN-slug/ledger.md`. One owner, one narrative.
-`start-brief` commits that file to `main` before any feature branch is cut so the owner
+`blc-start-brief` commits that file to `main` before any feature branch is cut so the owner
 sees it on every machine that pulls.
 
 **`in-progress` names its branch.** That is what makes it the only state anything can
@@ -207,7 +207,7 @@ This file explains the convention. The Contract states it.
 
 ## Known limitation — writers outside the pipeline
 
-`/create-brief` is the single point of serial assignment, but nothing *enforces* that it
+`/blc-create-brief` is the single point of serial assignment, but nothing *enforces* that it
 is the only writer. Any script, installer, or agent that creates a `NNNN-slug/` folder
 directly bypasses both the max+1 allocation and the collision guard.
 
@@ -218,7 +218,7 @@ briefs wrote a duplicate `#0001` — deterministically, not as a race. One proje
 the duplicate for six weeks. The fix was to stop writing briefs from the installer at
 all: install records are an append-only log, not a unit of work.
 
-If you automate anything that files briefs, route it through `/create-brief`.
+If you automate anything that files briefs, route it through `/blc-create-brief`.
 
 ## Known limitation — the ledger is an archive, and a bad inbox
 
@@ -273,7 +273,7 @@ is one file, and that file is committed to `main` before a feature branch so the
 sees it on their other machines.
 
 Nothing enforces any of that. An agent that skips the commit, or a second person who runs
-`next-brief-phase` on a serial they were not given, is not caught. Git will merge or
+`blc-next-brief-phase` on a serial they were not given, is not caught. Git will merge or
 conflict if two branches edit the same file. This toolkit will not notice until then.
 
 Two executors on one serial is out of scope for now. The remaining cost for the intended
@@ -283,17 +283,17 @@ file-per-phase layout.
 This is not a Contract clause. No consumer has been told they can rely on an ownership
 protocol.
 
-## Known limitation — start-brief's clobber stop is an instruction, not a check
+## Known limitation — blc-start-brief's clobber stop is an instruction, not a check
 
-`start-brief` is a markdown prompt. It now tells the agent to stop when *any* ledger file
+`blc-start-brief` is a markdown prompt. It now tells the agent to stop when *any* ledger file
 already exists, not only one with status `in-progress`, and to overwrite only after the
 user confirms a restart. That is the instruction. It is not a check.
 
-Found 2026-08-24 in this toolkit's own `start-brief`. Unifying the status vocabulary put
+Found 2026-08-24 in this toolkit's own `blc-start-brief`. Unifying the status vocabulary put
 `pending` and `in-progress` in one set. Only `in-progress` was guarded. The hole is older
 than that vocabulary. The previous word, `initiated`, had the same gap.
 
 The remaining hole is the same class as every other skill instruction: an agent that skips
 the stop is indistinguishable from one that followed it, except by reading the ledger
-afterwards. The test suite asserts that `start-brief` is installed. It does not assert
+afterwards. The test suite asserts that `blc-start-brief` is installed. It does not assert
 that this stop ran.

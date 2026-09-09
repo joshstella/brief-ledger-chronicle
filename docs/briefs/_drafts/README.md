@@ -9,9 +9,9 @@ work, not a git commit — nothing here is untracked.
 
 Rules:
 - Filenames must **not** begin with four digits (that format is reserved for filed briefs).
-  Never rename or number a draft by hand — `/create-brief` owns numbering.
+  Never rename or number a draft by hand — `/blc-create-brief` owns numbering.
 - A draft may stay here indefinitely. Deferring costs nothing and leaves no gap in the
   sequence.
-- When you decide to do the work, run `/create-brief <filename>` from the repo root. That
+- When you decide to do the work, run `/blc-create-brief <filename>` from the repo root. That
   is the one-way door: it assigns the serial, moves the draft into
   `docs/briefs/NNNN-slug/brief.md`, and stamps the identity line.
