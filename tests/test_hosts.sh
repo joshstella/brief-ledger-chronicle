@@ -6,7 +6,7 @@
 # files into a project.
 
 PROCESS="blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
-UTILITY="blc-chronicle blc-installer-builder blc-ste-writing"
+UTILITY="blc-chronicle blc-installer-builder blc-orient blc-ste-writing"
 
 # ── Cursor ───────────────────────────────────────────────────────────────────
 

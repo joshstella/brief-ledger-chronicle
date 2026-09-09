@@ -12,7 +12,7 @@
 |---|---|---|
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
 | `b — the declaration` | done (PR#42) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
-| `c — the verb` | in-progress (`brief/0008-c-the-verb`) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
+| `c — the verb` | in-progress (`brief/0008-c-the-verb`, PR pending) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | pending | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | pending | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
 
@@ -127,6 +127,42 @@ Found by reading the code, not stated in the brief.
 - `brief/0008-a-the-layering` — phase `a`. Cut from `main` at c6c82c2. Merged as PR #41.
 - `brief/0008-b-the-declaration` — phase `b`. Cut from `main` at 832b5cd. Merged as PR #42.
 - `brief/0008-c-the-verb` — phase `c`. Cut from `main` at 3669df8.
+
+## Phase `c` — what executing it changed
+
+**The brief's source for "off-limits" does not exist where it is needed.** The brief says
+to derive it from *"the installer's ownership map"* in `install.sh`, and names the coupling
+that creates as a standing tension. Both miss the harder problem: `install.sh` is not in a
+target. Deriving from it would have produced a section that works only in this repository —
+the cobbler's-shoes failure the brief warns about, in the one place it did not look.
+
+`docs/install-log/install-log.md` is the answer. The installer writes it into every target,
+append-only, listing every path it created. It is the installer's own record rather than a
+restatement of it, so it cannot drift, and it is present exactly where the verb runs. The
+tension is dissolved, not accepted.
+
+**The log records what was written, not who owns it, and the first draft overclaimed.** A
+run against a real target listed `AGENTS.md` and `.gitignore` as upstream-owned. Both are
+project-owned by design — the installer creates them once and never clobbers them — so the
+output was telling a reader not to edit the two files most likely to be theirs. Inferring
+ownership would mean restating `install.sh`'s rules here, which is the drift this brief
+argues against, so the section now says strictly what the log supports: these are paths an
+install wrote. **Recording ownership class in the install log is the real fix and it is not
+in this brief** — it belongs to `blc-installer-builder`, which owns that file.
+
+**The cap did its job on the first file written against it.** `docs/orientation.md` came in
+at 348 tokens against a 250 cap and went through three rounds of cutting to reach 248. No
+principle was dropped; the prose was. That is the mechanism working as designed — quantity
+forced triage — and it is also the limit of it, since nothing about a cap says the eight
+principles are the right eight.
+
+**Determinism ruled out the obvious freshness stamp.** Reporting "last fetched N days ago"
+reads better and is not deterministic. Counting commits behind the upstream is exact,
+derived from refs, and identical across two runs, so that is what the header does.
+
+**Measured, not estimated.** 418 tokens total against the 700 budget, with the filtered
+state section at 68 where the full table is 348. The brief's two unverified estimates —
+~200 for off-limits and ~250 for authored — came in near enough that the premise holds.
 
 ## Phase `b` — what executing it changed
 

@@ -441,9 +441,11 @@ for tpl in \
   "docs/contracts/v1.md" \
   "docs/contracts/v1.1.md" \
   "docs/state/README.md" \
+  "docs/orientation.md" \
   "tools/validate-briefs.sh" \
   "tools/open-briefs.sh" \
-  "tools/list-briefs.sh"; do
+  "tools/list-briefs.sh" \
+  "tools/orient.sh"; do
   if [[ ! -f "$SCRIPT_DIR/$tpl" ]]; then
     echo "  [✗] $tpl — missing"
     MISSING_TEMPLATES+=("$tpl")
@@ -502,7 +504,7 @@ echo "  $TARGET_DIR/docs/contracts/     (Contract v1.1 — the briefs convention
 echo "  $TARGET_DIR/docs/chronicles/    (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 echo "  $TARGET_DIR/docs/state/         (one declaration per contributor)"
-echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, list-briefs.sh)"
+echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, list-briefs.sh, orient.sh)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
@@ -624,7 +626,7 @@ done
 # list-briefs.sh is here for a stronger reason than prose: the blc-chronicle skill
 # reads its brief table from it and exits non-zero without it, so a target that got
 # the skill and not the tool would have a chronicle that cannot run.
-for tool_rel in "tools/validate-briefs.sh" "tools/open-briefs.sh" "tools/list-briefs.sh"; do
+for tool_rel in "tools/validate-briefs.sh" "tools/open-briefs.sh" "tools/list-briefs.sh" "tools/orient.sh"; do
   tool_dst="$TARGET_DIR/$tool_rel"
   if [[ -f "$tool_dst" ]]; then
     tool_is_new=false
