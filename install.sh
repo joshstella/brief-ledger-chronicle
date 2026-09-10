@@ -379,6 +379,7 @@ ownership_map() {
   printf 'project\ttree\t-\tdocs/briefs\n'
   printf 'project\ttree\t-\tdocs/state\n'
   printf 'project\ttree\t-\tdocs/chronicles\n'
+  printf 'project\ttree\t-\tbrief-checks\n'
 
   printf 'append\tfile\t-\t.gitignore\n'
   printf 'append\tfile\t-\tdocs/install-log/install-log.md\n'
