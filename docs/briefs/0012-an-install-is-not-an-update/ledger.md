@@ -1,9 +1,10 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 in-progress a:done(PR#50) b:done(PR#51) c:done(PR#51) d:in-progress`
+`blc/2 #0012 done a:done(PR#50) b:done(PR#51) c:done(PR#51) d:done(PR#52)`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-09-10
 
 ## Phases
 
@@ -12,7 +13,7 @@
 | a | the ownership map | done(PR#50) | `brief/0012-a-the-ownership-map` |
 | b | the replace | done(PR#51) | `brief/0012-bc-replace-and-prune` |
 | c | the prune | done(PR#51) | `brief/0012-bc-replace-and-prune` |
-| d | the socialization | in-progress | `brief/0012-d-the-socialization` |
+| d | the socialization | done(PR#52) | `brief/0012-d-the-socialization` |
 
 **a — the ownership map.** One declared list naming every path the toolkit owns, and the
 project-owned paths it must never write after creation. Replaces knowledge currently spread
