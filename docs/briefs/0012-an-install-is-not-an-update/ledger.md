@@ -1,5 +1,5 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 in-progress a:done b:pending c:pending d:pending`
+`blc/2 #0012 in-progress a:done(PR#50) b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
@@ -9,7 +9,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the ownership map | done | `brief/0012-a-the-ownership-map` |
+| a | the ownership map | done(PR#50) | `brief/0012-a-the-ownership-map` |
 | b | the replace | pending | — |
 | c | the prune | pending | — |
 | d | the socialization | pending | — |
@@ -48,8 +48,8 @@ remove a project's stale skills while leaving the surviving ones un-updated.
 
 ## Open decisions
 
-1. **What does `--force` mean once the default replaces?** It may have no job left, or it
-   may become the flag that overrides project-owned protection. **Blocks `b`.**
+1. ~~What does `--force` mean once the default replaces?~~ **Resolved 2026-09-10: retire
+   it.** Phase `b` removes the flag.
 2. **Does the prune cover shipped docs and tools, or only skills and commands?** The log's
    `### Created` list reaches further than its skills list. **Blocks `c`.**
 3. **Is there a dry run, and is it the first release?** Reporting the difference without
@@ -97,20 +97,15 @@ remove a project's stale skills while leaving the surviving ones un-updated.
 
 ## Phase a — what it found
 
-**The two-column table in the brief does not survive contact with the code.** `#0012` names
-two owners, toolkit and project, and lists `.gitignore` as project-owned and "never written
-after creation". The installer appends to `.gitignore`, and appends to the install log on
-every run. Calling either project-owned describes them wrongly; calling them toolkit-owned
-would eventually let phase `b` or `c` replace or remove them. The map therefore declares a
-third owner, `append`. **This deviates from a settled decision and is flagged rather than
-absorbed** — collapsing back to two is possible, but then the brief's table needs correcting
-instead.
+**The two-column table in the brief did not survive contact with the code.** The installer
+appends to `.gitignore` and the install log on every run. The map declares a third owner,
+`append`. Resolved 2026-09-10: keep three owners; the brief's table is corrected to match.
 
-**Five copies were found and four were removed.** The template preflight, the docs ship
+**Six copies were found and four were removed.** The template preflight, the docs ship
 loop, the tools ship loop, the skill placement loop, and the install log's skill list all
-now read the map. `SCAFFOLD_DIRS` still stands apart: it creates directories rather than
-placing files, and folding it in would have changed behaviour. It is the remaining
-duplicate.
+now read the map. Two remain by design: `SCAFFOLD_DIRS` (creates empty containers rather
+than placing files; folding it in would have changed behaviour) and the pre-install summary
+(prose kept readable; pinned with a test instead of derived).
 
 **The pre-install summary keeps its prose**, per the decision to pin it with a test rather
 than derive it. `ownership_map_backs_every_path_the_summary_promises` fails if the summary
@@ -134,7 +129,15 @@ the map stopped it shipping and two `orient` tests failed — which is the proof
 drives placement rather than sitting beside it. Omitting one skill from the map failed six
 tests across four files, including the coverage guard written for exactly that.
 
-Twenty-three tests added, suite at 244.
+Twenty-six tests added, suite at 247.
+
+**Review found four bugs before merge.** (1) A missing process skill no longer aborted — the
+map-derived preflight could not notice what the map never mentioned. Restored a roster check
+against `PROCESS_SKILLS`. (2) `PRINT_OWNERSHIP` was environment-injectable and turned an
+install into a silent no-op; initialized like every other flag. (3) One test asserted an
+untouched temp dir stayed empty; fixed to pass `--target`. (4) Nothing asserted install ⊆
+map; added, with scaffold directories as the declared exception. Also refused
+`--machine --print-ownership`, which was answering the wrong question with exit 0.
 
 ## Notes
 

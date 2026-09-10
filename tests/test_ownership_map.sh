@@ -14,6 +14,22 @@ print_map() {
   PATH="$STUB_BIN:$PATH" bash "$REPO_ROOT/install.sh" --host "$1" --print-ownership 2>"$ERR"
 }
 
+# Every shape test below reads "collect the bad rows, expect none". That phrasing passes
+# just as happily when there were no rows at all, so a crashed installer would look clean.
+# This is the backstop: the map has to have printed something before absence means anything.
+assert_map_is_not_empty() {
+  local n
+  n="$(print_map "$1" | wc -l | tr -d ' ')"
+  [ "$n" -gt 20 ] || fail "map for $1 has $n rows; expected the full set"
+}
+
+# Skill names as the map reports them, on either host. awk's split is used rather than a
+# sed bracket expression containing \t, which GNU sed reads as a tab and BSD sed reads as
+# a backslash and a t — collapsing blc-start-brief and blc-ste-writing to the same string.
+map_skill_names() {
+  print_map "$1" | awk -F'\t' '$3 ~ /^skills\// { split($3, a, "/"); print a[2] }'
+}
+
 # Same map, on disk, because assert_contains reads a file rather than a string.
 map_file() {
   local f="$TMP/map-$1.tsv"
@@ -26,18 +42,22 @@ map_field() { print_map "$1" | awk -F'\t' -v c="$2" '{print $c}'; }
 # ── Shape ────────────────────────────────────────────────────────────────────
 
 test_ownership_map_prints_four_tab_separated_fields() {
+  assert_map_is_not_empty cursor
+  assert_map_is_not_empty claude
   local bad
   bad="$(print_map cursor | awk -F'\t' 'NF != 4' | head -1)"
   [ -z "$bad" ] || fail "every row needs 4 tab-separated fields; got: $bad"
 }
 
 test_ownership_map_uses_only_the_three_declared_owners() {
+  assert_map_is_not_empty cursor
   local bad
   bad="$(map_field cursor 1 | sort -u | grep -vE '^(toolkit|project|append)$' || true)"
   [ -z "$bad" ] || fail "unexpected owner(s): $bad"
 }
 
 test_ownership_map_uses_only_the_declared_kinds() {
+  assert_map_is_not_empty cursor
   local bad
   bad="$(map_field cursor 2 | sort -u | grep -vE '^(file|dir|tree)$' || true)"
   [ -z "$bad" ] || fail "unexpected kind(s): $bad"
@@ -46,12 +66,14 @@ test_ownership_map_uses_only_the_declared_kinds() {
 # Project-owned means nothing is shipped. A project row carrying a source would be a
 # contradiction the rest of the installer would happily act on.
 test_ownership_map_project_rows_ship_nothing() {
+  assert_map_is_not_empty cursor
   local bad
   bad="$(print_map cursor | awk -F'\t' '$1 != "toolkit" && $3 != "-"' | head -1)"
   [ -z "$bad" ] || fail "non-toolkit row names a source: $bad"
 }
 
 test_ownership_map_toolkit_rows_all_ship_something() {
+  assert_map_is_not_empty cursor
   local bad
   bad="$(print_map cursor | awk -F'\t' '$1 == "toolkit" && $3 == "-"' | head -1)"
   [ -z "$bad" ] || fail "toolkit row ships nothing: $bad"
@@ -72,6 +94,7 @@ test_ownership_map_every_toolkit_source_exists() {
 }
 
 test_ownership_map_no_destination_is_claimed_twice() {
+  assert_map_is_not_empty cursor
   local dupes
   dupes="$(map_field cursor 4 | sort | uniq -d)"
   [ -z "$dupes" ] || fail "two rows claim the same destination: $dupes"
@@ -116,15 +139,14 @@ test_ownership_map_covers_every_skill_in_the_repo() {
   local missing="" name
   for d in "$REPO_ROOT"/skills/*/; do
     name="$(basename "$d")"
-    print_map cursor | grep -q "skills/$name" || missing="$missing $name"
+    map_skill_names cursor | grep -qx -- "$name" || missing="$missing $name"
   done
   [ -z "$missing" ] || fail "skills absent from the map:$missing"
 }
 
 test_ownership_map_lists_each_skill_once_per_host() {
   local dupes
-  dupes="$(print_map claude | awk -F'\t' '$3 ~ /^skills\//' \
-    | sed -E 's#^[^\t]*\t[^\t]*\tskills/([^/\t]+).*#\1#' | sort | uniq -d)"
+  dupes="$(map_skill_names claude | sort | uniq -d)"
   [ -z "$dupes" ] || fail "skill listed twice: $dupes"
 }
 
@@ -168,8 +190,9 @@ test_ownership_map_agrees_with_the_install_logs_skill_list() {
   local missing="" name
   for d in "$REPO_ROOT"/skills/*/; do
     name="$(basename "$d")"
-    grep -q -- "- $name" "$TARGET/docs/install-log/install-log.md" \
-      || missing="$missing $name"
+    awk '/^### Skills installed/{on=1;next} /^### /{on=0} on' \
+      "$TARGET/docs/install-log/install-log.md" \
+      | grep -qx -- "  - $name" || missing="$missing $name"
   done
   [ -z "$missing" ] || fail "install log omits skills the map ships:$missing"
 }
@@ -187,6 +210,37 @@ test_ownership_map_backs_every_path_the_summary_promises() {
     grep -qF -- "${path%/}" "$map_text" || unmatched="$unmatched $path"
   done
   [ -z "$unmatched" ] || fail "summary names paths the map does not:$unmatched"
+}
+
+# The other direction, and the one that was missing: everything above asserts that what
+# the map promises gets written. This asserts that what gets written was promised. Without
+# it the map can quietly stop describing the install — which is the failure the map exists
+# to prevent, arriving from the far side.
+#
+# The scaffold directories are the declared exception, listed in install.sh beside the map.
+# They are empty containers, so there is nothing in them the installer authored. Naming
+# them here rather than pattern-matching them means the set cannot grow without this test
+# noticing.
+test_ownership_map_names_every_path_an_install_writes() {
+  run_install "y" --host cursor --target "$TARGET" --yes
+  assert_status 0
+
+  local scaffold=".cursor .cursor/rules .cursor/skills docs docs/contracts docs/install-log tools"
+  local map_dsts unowned="" rel
+  map_dsts="$(print_map cursor | awk -F'\t' '{print $4}')"
+
+  while IFS= read -r rel; do
+    printf '%s\n' "$map_dsts" | grep -qx -- "$rel" && continue          # named outright
+    printf '%s\n' "$map_dsts" | grep -q "^${rel}/" && continue          # a parent of one
+    case " $scaffold " in *" $rel "*) continue ;; esac                  # declared exception
+    # Inside a project-owned or toolkit-owned tree.
+    printf '%s\n' "$map_dsts" | awk -v r="$rel" '
+      index(r, $0 "/") == 1 { found = 1 } END { exit !found }' && continue
+    unowned="$unowned $rel"
+  done < <(cd "$TARGET" && find . -mindepth 1 -not -path '*/.git/*' \
+             | sed 's|^\./||' | sort)
+
+  [ -z "$unowned" ] || fail "an install wrote paths no owner claims:$unowned"
 }
 
 # ── Project-owned means never written ────────────────────────────────────────
@@ -216,9 +270,35 @@ test_ownership_map_project_owned_trees_survive_a_reinstall() {
 
 # ── The flag itself ──────────────────────────────────────────────────────────
 
+# Pointed at a real target, because without --target the flag defaults to the runner's
+# working directory and the old version of this test watched an untouched mktemp dir stay
+# empty. Nothing could have made it fail.
 test_ownership_map_printing_writes_nothing_to_a_target() {
-  print_map cursor >/dev/null
+  PATH="$STUB_BIN:$PATH" bash "$REPO_ROOT/install.sh" \
+    --host cursor --target "$TARGET" --print-ownership >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_out "toolkit"
   [ -z "$(ls -A "$TARGET")" ] || fail "--print-ownership wrote into the target"
+}
+
+# The flag is a reader. An exported variable of the same name must not be able to turn a
+# real install into a no-op that exits 0 and reports success.
+test_ownership_map_printing_cannot_be_switched_on_from_the_environment() {
+  printf 'y\n' | PATH="$STUB_BIN:$PATH" PRINT_OWNERSHIP=true CLAUDE_HOME="$CLAUDE_HOME_DIR" \
+    bash "$REPO_ROOT/install.sh" --host cursor --target "$TARGET" --yes >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_dir "$TARGET/.cursor/skills"
+}
+
+# Machine mode owns nothing in this map. Printing it there answers a question nobody asked.
+test_ownership_map_printing_refuses_machine_mode() {
+  PATH="$STUB_BIN:$PATH" CLAUDE_HOME="$CLAUDE_HOME_DIR" \
+    bash "$REPO_ROOT/install.sh" --machine --print-ownership >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 1
+  assert_err "owns no project paths"
 }
 
 # Refusing this from the source checkout would make the map unreadable from the one

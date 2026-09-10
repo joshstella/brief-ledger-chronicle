@@ -19,6 +19,10 @@ MODE="project"
 HOST="claude"
 ASSUME_YES=false
 FORCE=false
+# Initialized like every other flag. Left unset with a `${VAR:-false}` reader it
+# would be settable from the caller's environment, which turns an install into a
+# silent no-op that exits 0 and skips the self-install guard.
+PRINT_OWNERSHIP=false
 
 # The six skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
@@ -124,7 +128,7 @@ fi
 # --print-ownership, which has no target at all: it reports what the installer owns for a
 # given host and writes nothing, and refusing it here would make the map unreadable from
 # the one checkout that always has it.
-if [[ "$MODE" == "project" && "${PRINT_OWNERSHIP:-false}" != true && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
+if [[ "$MODE" == "project" && "$PRINT_OWNERSHIP" != true && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
   echo "error: cannot install into brief-ledger-chronicle itself." >&2
   echo "  This repo is the source of the process, not a target for it." >&2
   echo "  Use --target <path> to install into another project." >&2
@@ -314,7 +318,7 @@ fi
 #
 # Emits tab-separated `owner<TAB>kind<TAB>source<TAB>destination`:
 #
-#   owner        toolkit — shipped by this installer, and therefore its to replace
+#   owner        toolkit — shipped by this installer, and therefore this installer's to replace
 #                project — authored by the project; never written after creation
 #                append  — added to, never rewritten, so neither of the above fits
 #   kind         file | dir | tree
@@ -324,6 +328,19 @@ fi
 # A `file` entry beats an enclosing `tree` entry. `docs/briefs/` is the project's, but
 # `docs/briefs/README.md` inside it is shipped — stated here once so no reader has to
 # infer the precedence from path lengths.
+#
+# A `tree` row means the installer may *create* the directory and may never write inside
+# it. Creating `docs/chronicles/` and handing it over is not the same act as putting a
+# file in it, and the two would be indistinguishable if creation were also disowned.
+#
+# What this map does NOT cover: the empty directories `SCAFFOLD_DIRS` makes so that
+# placement has somewhere to land — `.cursor/`, `.cursor/rules/`, `.cursor/skills/`,
+# `docs/`, `docs/contracts/`, `docs/install-log/`, `tools/`, and the Claude equivalents.
+# They hold nothing this installer authored, so replacing them is meaningless. Removing
+# them is not, and a later phase that prunes will have to decide about an emptied
+# `.cursor/skills/` on its own evidence. Stated here because a boundary nobody wrote down
+# is one a prune will guess at. `ownership_map_names_every_path_an_install_writes` fails
+# if this list stops matching what an install leaves behind.
 #
 # `append` is a third category because the two-column story does not survive contact
 # with the code: this installer *does* write `.gitignore` and the install log, and calling
@@ -349,7 +366,10 @@ ownership_map() {
     printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
   done
 
-  # The one file whose destination name is the host's, not ours.
+  # The one file whose destination name is the host's, not ours — and the one row whose
+  # source is not copied verbatim: on Cursor, place_process_rules prepends the YAML
+  # frontmatter that makes the rule always-apply. A later phase that replaces toolkit rows
+  # with a plain `cp $src $dst` would strip it and silently disable the rule.
   printf 'toolkit\tfile\ttemplates/process-rules.md\t%s\n' "$PROCESS_RULES_REL"
 
   if [[ "$HOST" == "claude" ]]; then
@@ -387,11 +407,28 @@ ownership_map() {
 # meaningful: everything under `skills/` is a skill however the host lays it out.
 map_rows() { ownership_map | awk -F'\t' -v want="$1" '$1 == want'; }
 
+# Skill names as the map sees them, whichever shape the host gave them: `skills/<name>`
+# on Cursor, `skills/<name>/SKILL.md` on Claude. Split on `/` rather than matched with a
+# regex so this stays identical under BSD and GNU awk.
+map_skill_names() {
+  map_rows toolkit | awk -F'\t' '$3 ~ /^skills\// { split($3, a, "/"); print a[2] }'
+}
+
 # Reading the map is how anything else can be held to it — the tests assert against this
 # output rather than against a second copy of the list, and a person onboarding a project
 # can ask what an install is about to take over before running one. Exits before the
 # dependency check, because answering "what do you own" requires nothing to be installed.
-if [[ "${PRINT_OWNERSHIP:-false}" == true ]]; then
+if [[ "$PRINT_OWNERSHIP" == true ]]; then
+  # The map describes a project install. Machine mode writes into $CLAUDE_HOME by symlink
+  # and owns none of these paths, so printing this map under --machine would answer a
+  # question nobody asked, quietly and with exit 0. Refused rather than extended: what
+  # machine mode owns is a real question, and it deserves its own map rather than being
+  # smuggled into this one.
+  if [[ "$MODE" == "machine" ]]; then
+    echo "error: --print-ownership describes a project install; --machine owns no project paths." >&2
+    echo "  Drop --machine to see what an install into a target would own." >&2
+    exit 1
+  fi
   ownership_map
   exit 0
 fi
@@ -584,6 +621,18 @@ while IFS=$'\t' read -r _owner kind src _dst; do
       ;;
   esac
 done < <(map_rows toolkit)
+
+# The map is built by globbing the source tree, so a process skill missing from skills/
+# produces no row — and a check derived from the map cannot notice what the map never
+# mentions. PROCESS_SKILLS is the roster each host is promised, so it is asserted against
+# the map rather than derived from it. Without this a Claude install ships five
+# slash-commands, reports "Done.", and exits 0.
+for s in $PROCESS_SKILLS; do
+  if ! map_skill_names | grep -qx -- "$s"; then
+    echo "  [✗] skills/$s/SKILL.md — missing"
+    MISSING_TEMPLATES+=("skills/$s/SKILL.md")
+  fi
+done
 
 if [[ ${#MISSING_TEMPLATES[@]} -gt 0 ]]; then
   echo ""
