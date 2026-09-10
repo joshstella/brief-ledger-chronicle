@@ -234,10 +234,11 @@ bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/
 # - checks all dependencies and tells you what's missing
 # - creates docs/briefs/, docs/contracts/, docs/chronicles/, docs/install-log/, tools/,
 #   and the host skill dirs
-# - writes a process-rules file the installer owns (.claude/rules or .cursor/rules)
+# - replaces every toolkit-owned path each run (skills, commands, process rules, tools,
+#   shipped brief docs) — local edits to them do not survive
+# - removes stale skills/commands named in docs/install-log/install-log.md
 # - writes a CLAUDE.md / AGENTS.md stub only if absent — never overwrites
 # - appends an entry to docs/install-log/install-log.md recording what was installed
-# - default is idempotent; --force replaces installer-owned copies, not the stub
 ```
 
 **Why step 2 is called out:** the commands degrade gracefully when their user-level paths
@@ -251,10 +252,13 @@ reproduced from clean. This was found by doing a first from-clean install and hi
 **The installer owns the process. The project owns architecture.**
 
 Process rules land in `.claude/rules/brief-ledger-chronicle.md` (Claude Code) or
-`.cursor/rules/brief-ledger-chronicle.mdc` (Cursor). `--force` replaces that file.
+`.cursor/rules/brief-ledger-chronicle.mdc` (Cursor). The installer replaces that file
+every run — do not edit it in place expecting the change to stick.
 
 `CLAUDE.md` / `AGENTS.md` are a stub written only if absent: a pointer at the process
 file, plus an empty project-specific section. The installer never overwrites them.
+Customize through `AGENTS.md` (guidance) and `brief-checks/` (enforced project rules),
+not by tuning installed skills or tools.
 
 Key process rules:
 - Use the skills — don't bypass them (`blc-commit-push-pr`, not raw `git push`)

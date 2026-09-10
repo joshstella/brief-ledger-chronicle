@@ -12,5 +12,8 @@ test_socialization_process_rules_name_the_two_customization_paths() {
 test_socialization_process_rules_ship_on_claude_too() {
   run_install y --host claude --target "$TARGET"
   assert_status 0
-  assert_contains "do not survive" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  local rules="$TARGET/.claude/rules/brief-ledger-chronicle.md"
+  assert_contains "do not survive" "$rules"
+  assert_contains "AGENTS.md" "$rules"
+  assert_contains "brief-checks/" "$rules"
 }

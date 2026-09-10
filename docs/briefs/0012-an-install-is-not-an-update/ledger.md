@@ -165,9 +165,10 @@ Removals land in `### Removed` on the run's log entry.
 project-owned" section: local edits to toolkit paths do not survive install; customize through
 `AGENTS.md` and `brief-checks/`.
 
-**Docs and comments aligned.** `README.md`, `tests/README.md`, machine-mode comments in
-`install.sh` and `test_machine_mode.sh`, and `blc-installer-builder` no longer describe
-`--force` or idempotent skip.
+**Docs and comments aligned.** `README.md`, `tests/README.md`, `docs/slides-process-overview.md`,
+machine-mode comments in `install.sh` and `test_machine_mode.sh` no longer describe
+`--force` or idempotent skip. `blc-installer-builder` left unchanged — it describes a
+different installer (backup-on-overwrite template), not BLC's `install.sh`.
 
 **`test_force.sh` renamed to `test_replace.sh`.** Two socialization tests assert the shipped
 rules on both hosts. Suite at 253.
