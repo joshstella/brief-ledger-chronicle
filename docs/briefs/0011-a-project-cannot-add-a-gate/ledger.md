@@ -1,5 +1,5 @@
 # Ledger — #0011 A project cannot add a gate
-`blc/2 #0011 in-progress a:in-progress b:pending`
+`blc/2 #0011 in-progress a:done(PR#53) b:pending`
 
 **Brief:** `docs/briefs/0011-a-project-cannot-add-a-gate/brief.md`
 **Started:** 2026-09-10
@@ -9,7 +9,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the runner | in-progress | `brief/0011-a-the-runner` |
+| a | the runner | done(PR#53) | `brief/0011-a-the-runner` |
 | b | the proof | pending | — |
 
 **a — the runner.** `validate-briefs.sh` runs `brief-checks/*.sh` after toolkit clauses
