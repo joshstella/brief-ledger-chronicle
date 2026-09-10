@@ -31,3 +31,13 @@ None in the brief. All settled at filing.
 ## Complications
 
 None found at initiation. #0012 is done — ownership map and replace policy are in place.
+
+## Phase a — what it does
+
+**Runner wired.** `validate-briefs.sh` calls `brief-checks/*.sh` after toolkit clauses pass,
+sorted, failing on non-zero exit with the script's output under its filename.
+
+**Ownership recorded.** `brief-checks/` added to the ownership map as project-owned.
+
+**Documented.** `docs/briefs/README.md` carries the directory, argument, exit convention,
+installer non-touch, and an example snippet (no example script ships).

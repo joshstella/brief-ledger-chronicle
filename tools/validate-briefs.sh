@@ -22,6 +22,7 @@ KNOWN_NON_NUMBERED="_drafts README.md"
 
 DEFECTS=0
 JUDGMENTS=0
+PROJECT_CHECK_FAILURES=0
 
 defect()   { printf '%s [defect] %s\n' "$1" "$2"; DEFECTS=$((DEFECTS + 1)); }
 judgment() { printf '%s [judgment] %s\n' "$1" "$2"; JUDGMENTS=$((JUDGMENTS + 1)); }
@@ -193,6 +194,35 @@ $UNIQUE_SERIALS
 EOF
 fi
 
+# ── Project checks (brief-checks/) ───────────────────────────────────────────
+#
+# After toolkit clauses pass, run each script in brief-checks/*.sh in sorted
+# order. The directory lives at the repository root; the installer never creates
+# or writes it. Exit 0 passes; anything else fails and the script's output is
+# echoed under its filename.
+
+run_project_checks() {
+  local repo_root checks_dir script output status
+
+  repo_root="$(cd "$BRIEFS_DIR/../.." && pwd)"
+  checks_dir="$repo_root/brief-checks"
+  [ -d "$checks_dir" ] || return 0
+
+  for script in $(find "$checks_dir" -maxdepth 1 -type f -name '*.sh' | sort); do
+    output="$(bash "$script" "$BRIEFS_DIR" 2>&1)" || status=$?
+    status="${status:-0}"
+    if [ "$status" -ne 0 ]; then
+      printf '%s:\n%s\n' "$(basename "$script")" "$output"
+      PROJECT_CHECK_FAILURES=$((PROJECT_CHECK_FAILURES + 1))
+    fi
+    status=0
+  done
+}
+
+if [ "$DEFECTS" -eq 0 ]; then
+  run_project_checks
+fi
+
 # ── Report ───────────────────────────────────────────────────────────────────
 #
 # The count is of clauses this script decides, not of clauses in the Contract.
@@ -205,8 +235,13 @@ fi
 
 BRIEF_COUNT=$(printf '%s' "$WELL_FORMED" | grep -c '[^[:space:]]')
 
-printf '\nvalidate-briefs: %s — %d brief(s), 8 clauses decided, %d defect(s), %d judgment(s)\n' \
-  "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS"
+if [ "$PROJECT_CHECK_FAILURES" -gt 0 ]; then
+  printf '\nvalidate-briefs: %s — %d brief(s), 8 clauses decided, %d defect(s), %d judgment(s), %d project check failure(s)\n' \
+    "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS" "$PROJECT_CHECK_FAILURES"
+else
+  printf '\nvalidate-briefs: %s — %d brief(s), 8 clauses decided, %d defect(s), %d judgment(s)\n' \
+    "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS"
+fi
 
-[ "$DEFECTS" -eq 0 ] || exit 1
+[ "$DEFECTS" -eq 0 ] && [ "$PROJECT_CHECK_FAILURES" -eq 0 ] || exit 1
 exit 0

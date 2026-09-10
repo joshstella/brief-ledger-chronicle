@@ -205,6 +205,36 @@ the clauses are unchanged.
 
 This file explains the convention. The Contract states it.
 
+## Project checks (`brief-checks/`)
+
+A project can enforce rules about its own records that the Contract does not cover. Put
+shell scripts in **`brief-checks/` at the repository root**. The installer never creates,
+writes to, or scans that directory — it is project-owned.
+
+After `tools/validate-briefs.sh` finishes the eight Contract clauses, it runs
+`brief-checks/*.sh` in sorted filename order. Each script receives the briefs directory as
+its first argument (the same path you passed to `validate-briefs.sh`, default
+`docs/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
+script printed is echoed under its filename.
+
+Toolkit defects are evaluated first. A project check cannot suppress, downgrade, or clear a
+`BRIEFS-N` defect — it can only add a reason to fail. No `brief-checks/` directory, or an
+empty one, changes nothing.
+
+Example:
+
+```bash
+#!/usr/bin/env bash
+# brief-checks/no-drafts-without-title.sh
+briefs_dir="$1"
+for draft in "$briefs_dir/_drafts"/*.md; do
+  [ -f "$draft" ] || continue
+  grep -q '^# ' "$draft" || { echo "missing H1: $draft"; exit 1; }
+done
+```
+
+This is a project convention, not a Contract clause.
+
 ## Known limitation — writers outside the pipeline
 
 `/blc-create-brief` is the single point of serial assignment, but nothing *enforces* that it
