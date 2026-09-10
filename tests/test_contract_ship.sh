@@ -148,26 +148,15 @@ test_ship_no_second_copy_of_the_briefs_docs_exists() {
   assert_no_dir "$REPO_ROOT/templates/docs"
 }
 
-# The Contract is installer-owned, so --force takes this checkout over a stale copy.
-test_ship_force_replaces_a_stale_contract() {
+# The Contract is toolkit-owned and replaced every run (#0012b).
+test_ship_default_replaces_a_stale_contract() {
   mkdir -p "$TARGET/docs/contracts"
   echo "OLD CONTRACT" > "$TARGET/docs/contracts/v1.md"
   echo "OLD CURRENT" > "$TARGET/docs/contracts/v1.1.md"
-  run_install y --force --target "$TARGET"
+  run_install y --target "$TARGET"
   assert_status 0
   assert_not_contains "OLD CONTRACT" "$TARGET/docs/contracts/v1.md"
   assert_not_contains "OLD CURRENT" "$TARGET/docs/contracts/v1.1.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
-}
-
-# Default posture is unchanged: a project that tuned its Contract keeps it.
-test_ship_without_force_keeps_a_projects_own_contract() {
-  mkdir -p "$TARGET/docs/contracts"
-  echo "PROJECT-OWNED CONTRACT" > "$TARGET/docs/contracts/v1.md"
-  echo "PROJECT-OWNED CURRENT" > "$TARGET/docs/contracts/v1.1.md"
-  run_install y --target "$TARGET"
-  assert_status 0
-  assert_contains "PROJECT-OWNED CONTRACT" "$TARGET/docs/contracts/v1.md"
-  assert_contains "PROJECT-OWNED CURRENT" "$TARGET/docs/contracts/v1.1.md"
 }

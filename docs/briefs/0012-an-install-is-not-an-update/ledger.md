@@ -1,5 +1,5 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 in-progress a:done(PR#50) b:pending c:pending d:pending`
+`blc/2 #0012 in-progress a:done(PR#50) b:done c:done d:pending`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
@@ -10,8 +10,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the ownership map | done(PR#50) | `brief/0012-a-the-ownership-map` |
-| b | the replace | pending | — |
-| c | the prune | pending | — |
+| b | the replace | done | `brief/0012-bc-replace-and-prune` |
+| c | the prune | done | `brief/0012-bc-replace-and-prune` |
 | d | the socialization | pending | — |
 
 **a — the ownership map.** One declared list naming every path the toolkit owns, and the
@@ -50,10 +50,12 @@ remove a project's stale skills while leaving the surviving ones un-updated.
 
 1. ~~What does `--force` mean once the default replaces?~~ **Resolved 2026-09-10: retire
    it.** Phase `b` removes the flag.
-2. **Does the prune cover shipped docs and tools, or only skills and commands?** The log's
-   `### Created` list reaches further than its skills list. **Blocks `c`.**
-3. **Is there a dry run, and is it the first release?** Reporting the difference without
-   removing is releasable on its own. **Blocks `c`.**
+2. ~~Does the prune cover shipped docs and tools, or only skills and commands?~~
+   **Resolved 2026-09-10: skills and commands only.** The brief's claim names those two
+   lists as the ownership evidence for removal; `### Created` includes scaffold dirs that
+   must never be pruned.
+3. ~~Is there a dry run, and is it the first release?~~ **Resolved 2026-09-10: no.**
+   `--print-ownership` is the static half; removal ships with the first prune release.
 
 `a` is unblocked.
 
@@ -138,6 +140,24 @@ install into a silent no-op; initialized like every other flag. (3) One test ass
 untouched temp dir stayed empty; fixed to pass `--target`. (4) Nothing asserted install ⊆
 map; added, with scaffold directories as the declared exception. Also refused
 `--machine --print-ownership`, which was answering the wrong question with exit 0.
+
+## Phases b and c — what they did
+
+**`place_file` and `place_dir` now replace by default.** Toolkit-owned paths are written
+every run. Project-owned paths (`write_project_stub`, numbered brief folders) unchanged.
+Second install on a tuned target reports `Replaced`, not `Skipped`.
+
+**`--force` is retired, not repurposed.** Passing it exits 1 with a message. A flag that
+does nothing would be a trap for anyone who remembers what it used to do.
+
+**Prune reads `### Skills installed` and `### Commands installed` only** — not
+`### Created`, which names scaffold dirs that must never be removed. Stale is a name the
+log recorded and the current source no longer ships. No log means no removal and a line
+saying why. A symlinked skills or commands tree refuses the whole prune with exit 1.
+Removals land in `### Removed` on the run's log entry.
+
+**Six prune tests added.** Suite at 250. `test_force.sh` rewritten for replace-by-default;
+`test_project_mode.sh` and `test_contract_ship.sh` updated to match.
 
 ## Notes
 

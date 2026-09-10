@@ -47,11 +47,12 @@ test_log_first_entry_lists_what_was_created() {
   assert_contains "### Skipped — already present" "$TMP/entry1.txt"
 }
 
-test_log_second_entry_reports_nothing_created() {
+test_log_second_entry_reports_replacements() {
   run_install y --target "$TARGET"
   run_install y --target "$TARGET"
   extract_log_entry "$TARGET/$LOG_REL" 2 "$TMP/entry2.txt"
   assert_contains "**Created:** 0" "$TMP/entry2.txt"
+  assert_contains "**Replaced:**" "$TMP/entry2.txt"
 }
 
 # An append is neither a create nor a skip. Recording it as skipped made the log
