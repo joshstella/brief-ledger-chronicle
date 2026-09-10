@@ -31,3 +31,20 @@ apply it to code, identifiers, command syntax, or the user's own words.
 
 Tests gate `main`. Merges to `main` need tests covering the change, run and passing.
 An untestable merge gets an explicit "test-exempt because…" in the PR, not a silent gap.
+
+## Toolkit-owned vs project-owned
+
+Every install replaces toolkit-owned paths: `blc-*` skills, `tools/*.sh`, this rules
+file, and the shipped brief docs. Local edits to them do not survive the next install.
+Stale skills and commands named in `docs/install-log/install-log.md` are removed.
+
+Project-owned paths are never written after creation: `AGENTS.md` / `CLAUDE.md`, numbered
+brief folders, ledgers, declarations, and chronicles.
+
+To customize without fighting the installer:
+- **`AGENTS.md` / `CLAUDE.md`** — project architecture, stack, and rules for agents.
+- **`brief-checks/`** — shell scripts the gate runs; project-enforced rules about the
+  record (see `docs/briefs/` for the brief when filed).
+
+Do not edit installed skills or tools in place expecting the change to stick. Change the
+toolkit upstream, or use the project-owned paths above.
