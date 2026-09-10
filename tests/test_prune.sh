@@ -76,6 +76,16 @@ test_prune_records_removals_in_the_log_entry() {
   assert_contains ".cursor/skills/zzz-stale-skill" "$TMP/entry2.txt"
 }
 
+# A Claude-era log lists commands under ### Commands installed. Reinstalling with
+# --host cursor must not abort on an unset COMMANDS_DST_REL.
+test_prune_cursor_reinstall_after_claude_does_not_crash() {
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_dir "$TARGET/.cursor/skills"
+}
+
 test_prune_removes_a_stale_command_on_claude() {
   run_install y --host claude --target "$TARGET"
   assert_status 0

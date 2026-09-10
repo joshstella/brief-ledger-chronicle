@@ -445,9 +445,10 @@ prune_stale_toolkit_paths() {
   fi
 
   refuse_symlinked_tree "$SKILLS_DST_REL"
-  if [[ "$HOST" == "claude" ]]; then
-    refuse_symlinked_tree "$COMMANDS_DST_REL"
-  fi
+  # Commands always live under .claude/commands/, even when this run is for Cursor.
+  # A target may hold a Claude-era log after a host change; pruning must reach that
+  # tree without reading $COMMANDS_DST_REL, which is unset on Cursor hosts.
+  refuse_symlinked_tree ".claude/commands"
 
   local logged_skills logged_cmds current_skills current_cmds name
   logged_skills="$(log_names_under_heading "$log" "### Skills installed")"
@@ -466,7 +467,7 @@ prune_stale_toolkit_paths() {
     [[ -z "$name" ]] && continue
     [[ "$name" == \(* ]] && continue
     printf '%s\n' "$current_cmds" | grep -qx -- "$name" && continue
-    safe_remove_toolkit_path "$COMMANDS_DST_REL/$name.md"
+    safe_remove_toolkit_path ".claude/commands/$name.md"
   done <<< "$logged_cmds"
 }
 
