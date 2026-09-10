@@ -63,8 +63,8 @@ EXEC_GLOBS=("*.sh")
 
 - **Mirror payload → generic install.** Adding a file later needs no installer code change
   — drop it in the right `payload/` subdir.
-- **Backup-on-overwrite.** Re-running is safe; a user's local edits to an installed file go
-  to a timestamped backup dir rather than being lost.
+- **Replace on re-run.** Re-running replaces toolkit-owned payload paths. Local edits to
+  those paths do not survive; project-owned data files are never clobbered.
 - **Exec-bit restoration.** A download or move drops the executable bit; the installer
   re-sets it for the declared globs.
 - **Data-file protection.** Configs and identity files are the user's; the installer never

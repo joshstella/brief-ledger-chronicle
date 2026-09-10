@@ -538,11 +538,10 @@ fi
 # commands immediately, including mid-session — deliberate, and the reason a project
 # install still copies rather than links (a project pins what it was onboarded with).
 #
-# Skills are deliberately NOT linked here. They install per-project so a project can
-# tune its own copy; a machine-wide link would silently override every such tune with
-# whatever the repo happens to be at, and the tune would come back the moment someone
-# ran `git pull`. Project mode copies for the same reason; each run replaces toolkit-owned
-# paths with whatever this checkout ships.
+# Skills are not linked here. They install per-project, and each project run replaces
+# toolkit-owned paths with whatever this checkout ships — local edits do not survive.
+# Machine mode only links the six slash-commands and personal CLAUDE.md; a machine-wide
+# skills link would override every target on `git pull` with no per-project boundary.
 
 if [[ "$MODE" == "machine" ]]; then
   echo ""
@@ -805,7 +804,7 @@ done <<< "$SCAFFOLD_DIRS"
 # This is the one place the installer writes to a file it does not own, so it appends and
 # never rewrites: an existing .gitignore keeps everything it had. A target that already
 # has the old `docs/chronicles/` directory rule is left alone — that rule still hides
-# chronicle.md. Un-hiding it there is a hand edit, not a --force behaviour.
+# chronicle.md. Un-hiding it there is a hand edit, not an installer behaviour.
 GITIGNORE_DST="$TARGET_DIR/.gitignore"
 if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/chronicles/' "$GITIGNORE_DST" || grep -qxF '!docs/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
   log_skipped_as ".gitignore" "chronicles ignore rule already present"

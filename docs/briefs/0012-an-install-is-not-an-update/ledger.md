@@ -1,5 +1,5 @@
 # Ledger — #0012 An install is not an update
-`blc/2 #0012 in-progress a:done(PR#50) b:done c:done d:pending`
+`blc/2 #0012 in-progress a:done(PR#50) b:done(PR#51) c:done(PR#51) d:in-progress`
 
 **Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
@@ -10,9 +10,9 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the ownership map | done(PR#50) | `brief/0012-a-the-ownership-map` |
-| b | the replace | done | `brief/0012-bc-replace-and-prune` |
-| c | the prune | done | `brief/0012-bc-replace-and-prune` |
-| d | the socialization | pending | — |
+| b | the replace | done(PR#51) | `brief/0012-bc-replace-and-prune` |
+| c | the prune | done(PR#51) | `brief/0012-bc-replace-and-prune` |
+| d | the socialization | in-progress | `brief/0012-d-the-socialization` |
 
 **a — the ownership map.** One declared list naming every path the toolkit owns, and the
 project-owned paths it must never write after creation. Replaces knowledge currently spread
@@ -158,6 +158,19 @@ Removals land in `### Removed` on the run's log entry.
 
 **Six prune tests added.** Suite at 250. `test_force.sh` rewritten for replace-by-default;
 `test_project_mode.sh` and `test_contract_ship.sh` updated to match.
+
+## Phase d — what it does
+
+**Shipped rules name the policy.** `templates/process-rules.md` gains a "Toolkit-owned vs
+project-owned" section: local edits to toolkit paths do not survive install; customize through
+`AGENTS.md` and `brief-checks/`.
+
+**Docs and comments aligned.** `README.md`, `tests/README.md`, machine-mode comments in
+`install.sh` and `test_machine_mode.sh`, and `blc-installer-builder` no longer describe
+`--force` or idempotent skip.
+
+**`test_force.sh` renamed to `test_replace.sh`.** Two socialization tests assert the shipped
+rules on both hosts. Suite at 253.
 
 ## Notes
 

@@ -37,8 +37,8 @@ test_machine_links_no_utility_skills_as_commands() {
   done
 }
 
-# Skills are deliberately per-project so they can be tuned. Linking them
-# machine-wide would silently override that.
+# Skills install per-project and are replaced each run. Linking them machine-wide
+# would override every target on git pull with no per-project boundary.
 test_machine_does_not_link_skills() {
   run_install y --machine
   assert_no_dir "$CLAUDE_HOME_DIR/skills"

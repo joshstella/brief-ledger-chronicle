@@ -23,11 +23,13 @@ bash /path/to/brief-ledger-chronicle/install.sh --target /path/to/my-project
 bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/my-project
 ```
 
-Add `--yes` to skip the confirmation prompt. Default is idempotent: re-running skips what
-already exists. Add `--force` to replace installer-owned copies (skills, commands, process
-rules, brief READMEs, settings) with this checkout. `AGENTS.md` / `CLAUDE.md`, numbered
-briefs, ledgers, chronicles, and the install log are never replaced. `--force` is project
-mode only.
+Add `--yes` to skip the confirmation prompt. Re-running replaces every toolkit-owned path
+(skills, commands, process rules, shipped brief docs, tools) with this checkout. Stale
+skills and commands named in the install log are removed. `AGENTS.md` / `CLAUDE.md`,
+numbered briefs, ledgers, declarations, and chronicles are never written after creation.
+Local edits to toolkit-owned files do not survive an install. Customize through
+`AGENTS.md` (guidance) and `brief-checks/` (enforced project rules), not by editing the
+installed copy.
 
 The installer warns if the target is not a git repository. `validate-briefs.sh` still
 runs there. `open-briefs.sh` does not: it reads git history.
@@ -135,9 +137,10 @@ bash tests/run.sh              # everything
 bash tests/run.sh host_        # just the host-layout tests
 ```
 
-Covers the installer (arguments, both hosts, `--force`, install log, machine-mode
-symlinks), the briefs Contract, the open-briefs query, and `gather.sh`. Plain bash, no
-dependencies. CI runs them on every push and pull request. See `tests/README.md`.
+Covers the installer (arguments, both hosts, replace-by-default, prune, install log,
+machine-mode symlinks), the briefs Contract, the open-briefs query, and `gather.sh`.
+Plain bash, no dependencies. CI runs them on every push and pull request. See
+`tests/README.md`.
 
 The count is not written here. `bash tests/run.sh` prints it.
 
