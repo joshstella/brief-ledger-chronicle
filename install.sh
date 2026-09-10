@@ -3,7 +3,7 @@
 # Two modes:
 #   project (default) — bootstraps the brief/ledger/review workflow into a target project
 #   --machine         — links the once-per-machine user-level config into ~/.claude
-# Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes] [--force]
+# Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes]
 #        bash install.sh --machine
 #
 # One source, two hosts. Every skill under skills/ is host-neutral prose; only where the
@@ -18,7 +18,6 @@ TARGET_DIR=""
 MODE="project"
 HOST="claude"
 ASSUME_YES=false
-FORCE=false
 # Initialized like every other flag. Left unset with a `${VAR:-false}` reader it
 # would be settable from the caller's environment, which turns an install into a
 # silent no-op that exits 0 and skips the self-install guard.
@@ -58,15 +57,16 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --force|-f)
-      FORCE=true
-      shift
+      echo "error: --force was retired in #0012. Toolkit-owned paths are replaced on every run." >&2
+      echo "  Project-owned files (AGENTS.md, numbered briefs, ledgers) are still never touched." >&2
+      exit 1
       ;;
     --print-ownership)
       PRINT_OWNERSHIP=true
       shift
       ;;
     --help|-h)
-      echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes] [--force]"
+      echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes]"
       echo "       bash install.sh --machine"
       echo ""
       echo "  --host <name>     Agent host to install for: claude (default) or cursor."
@@ -74,10 +74,6 @@ while [[ $# -gt 0 ]]; do
       echo "                    cursor → .cursor/skills + .cursor/rules"
       echo "  --target <path>   Install the process into <path> instead of current directory"
       echo "  --yes, -y         Skip the confirmation prompt (for scripted installs)"
-      echo "  --force, -f       Replace existing installer-owned files (skills, commands,"
-      echo "                    process rules, brief READMEs, settings). AGENTS.md/CLAUDE.md,"
-      echo "                    numbered briefs, ledgers, chronicles, and the install log"
-      echo "                    are not touched. Project mode only."
       echo "  --machine         Install the once-per-machine user-level config into"
       echo "                    \$CLAUDE_HOME (default ~/.claude). Run once per machine,"
       echo "                    before or after any project install. Claude Code only."
@@ -100,14 +96,6 @@ fi
 if [[ "$MODE" == "machine" && -n "$TARGET_DIR" ]]; then
   echo "error: --machine and --target are mutually exclusive." >&2
   echo "  --machine writes to \$CLAUDE_HOME (default ~/.claude); --target writes to a project." >&2
-  exit 1
-fi
-
-# Machine mode's contract is that a real file in $CLAUDE_HOME is never clobbered.
-# --force is the project-mode escape hatch for pinned copies; it does not apply here.
-if [[ "$MODE" == "machine" && "$FORCE" == true ]]; then
-  echo "error: --force is project mode only; --machine never overwrites real files." >&2
-  echo "  Move or delete the conflicting file, then re-run --machine." >&2
   exit 1
 fi
 
@@ -140,6 +128,7 @@ fi
 CREATED=()
 SKIPPED=()
 REPLACED=()
+REMOVED=()
 CONFLICTS=()
 
 log_created() { CREATED+=("$1"); echo "  [+] $1"; }
@@ -149,36 +138,28 @@ log_relinked() { CREATED+=("$1 (replaced dangling symlink)"); echo "  [+] $1 (re
 # Skip with an explicit reason, for cases where "already exists" is the wrong wording.
 log_skipped_as() { SKIPPED+=("$1 ($2)"); echo "  [~] $1 ($2)"; }
 log_conflict() { SKIPPED+=("$1"); echo "  [!] $1 ($2 — NOT replaced; see below)"; }
+log_removed() { REMOVED+=("$1"); echo "  [-] $1 (removed — no longer shipped)"; }
 
-# Copy a file into the target. Default skips an existing dest; --force replaces it.
+# Toolkit-owned files are replaced every run. Project-owned paths never reach here.
 place_file() {
   local src="$1" dst="$2" label="$3"
   if [[ -f "$dst" ]]; then
-    if [[ "$FORCE" == true ]]; then
-      cp "$src" "$dst"
-      log_replaced "$label"
-    else
-      log_skipped "$label"
-    fi
+    cp "$src" "$dst"
+    log_replaced "$label"
   else
     cp "$src" "$dst"
     log_created "$label"
   fi
 }
 
-# Copy a directory into the target. Default skips an existing dest; --force replaces
-# the whole tree. Extra files a project added inside a skill directory are lost on
-# --force — that is the point of the flag.
+# Toolkit-owned trees are replaced every run. Anything a project added inside a skill
+# directory is lost — that is the trade #0012 makes deliberately.
 place_dir() {
   local src="$1" dst="$2" label="$3"
   if [[ -e "$dst" ]]; then
-    if [[ "$FORCE" == true ]]; then
-      rm -rf "$dst"
-      cp -r "$src" "$dst"
-      log_replaced "$label"
-    else
-      log_skipped "$label"
-    fi
+    rm -rf "$dst"
+    cp -r "$src" "$dst"
+    log_replaced "$label"
   else
     cp -r "$src" "$dst"
     log_created "$label"
@@ -186,7 +167,7 @@ place_dir() {
 }
 
 # AGENTS.md / CLAUDE.md are project-owned. Write a stub only when the file is
-# absent. Never replace — --force does not apply. Process policy lives in the
+# absent. Never replace. Process policy lives in the
 # host rules file, not here.
 write_project_stub() {
   local dst="$TARGET_DIR/$RULES_FILE"
@@ -414,6 +395,81 @@ map_skill_names() {
   map_rows toolkit | awk -F'\t' '$3 ~ /^skills\// { split($3, a, "/"); print a[2] }'
 }
 
+# Process skills on Claude become flat command files; everything else is a skill directory.
+map_command_names() {
+  map_rows toolkit | awk -F'\t' '$3 ~ /^skills\// && $2 == "file" {
+    split($3, a, "/"); print a[2]
+  }'
+}
+
+# Names under a log heading, unioned across every entry. The log is the only evidence of
+# what this toolkit put here; a path it never named is never removed.
+log_names_under_heading() {
+  local log="$1" heading="$2"
+  awk -v h="$heading" '
+    $0 == h { on = 1; next }
+    /^### / { on = 0 }
+    on && /^  - / { sub(/^  - /, ""); print }
+  ' "$log" | sort -u
+}
+
+refuse_symlinked_tree() {
+  local rel="$1"
+  if [[ -L "$TARGET_DIR/$rel" ]]; then
+    echo "error: refusing to prune: $rel is a symlink" >&2
+    echo "  Removing through a symlink would delete the link target, not a stale copy." >&2
+    exit 1
+  fi
+}
+
+safe_remove_toolkit_path() {
+  local rel="$1"
+  local abs="$TARGET_DIR/$rel"
+  [[ -e "$abs" ]] || return 0
+  if [[ -L "$abs" ]]; then
+    echo "error: refusing to remove symlink: $rel" >&2
+    exit 1
+  fi
+  rm -rf "$abs"
+  log_removed "$rel"
+}
+
+# Stale is a name the log recorded and the current source no longer ships. Only skills
+# and commands lists are read — not ### Created, which names scaffold dirs that must
+# never be pruned.
+prune_stale_toolkit_paths() {
+  local log="$TARGET_DIR/docs/install-log/install-log.md"
+  if [[ ! -f "$log" ]]; then
+    echo "  [~] no install log yet — stale skills and commands are not removed"
+    return 0
+  fi
+
+  refuse_symlinked_tree "$SKILLS_DST_REL"
+  if [[ "$HOST" == "claude" ]]; then
+    refuse_symlinked_tree "$COMMANDS_DST_REL"
+  fi
+
+  local logged_skills logged_cmds current_skills current_cmds name
+  logged_skills="$(log_names_under_heading "$log" "### Skills installed")"
+  logged_cmds="$(log_names_under_heading "$log" "### Commands installed")"
+  current_skills="$(map_skill_names | sort -u)"
+  current_cmds="$(map_command_names | sort -u)"
+
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    [[ "$name" == \(* ]] && continue
+    printf '%s\n' "$current_skills" | grep -qx -- "$name" && continue
+    safe_remove_toolkit_path "$SKILLS_DST_REL/$name"
+  done <<< "$logged_skills"
+
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    [[ "$name" == \(* ]] && continue
+    printf '%s\n' "$current_cmds" | grep -qx -- "$name" && continue
+    safe_remove_toolkit_path "$COMMANDS_DST_REL/$name.md"
+  done <<< "$logged_cmds"
+}
+
 # Reading the map is how anything else can be held to it — the tests assert against this
 # output rather than against a second copy of the list, and a person onboarding a project
 # can ask what an install is about to take over before running one. Exits before the
@@ -484,8 +540,8 @@ fi
 # Skills are deliberately NOT linked here. They install per-project so a project can
 # tune its own copy; a machine-wide link would silently override every such tune with
 # whatever the repo happens to be at, and the tune would come back the moment someone
-# ran `git pull`. Project mode copies for the same reason; `--force` is the explicit
-# opt-in to take this checkout over those copies.
+# ran `git pull`. Project mode copies for the same reason; each run replaces toolkit-owned
+# paths with whatever this checkout ships.
 
 if [[ "$MODE" == "machine" ]]; then
   echo ""
@@ -675,12 +731,10 @@ else
   echo "  $TARGET_DIR/.claude/settings.local.json  (permission allowlist)"
 fi
 echo "  $TARGET_DIR/$RULES_FILE           (project architecture stub — if absent, never replaced)"
-if [[ "$FORCE" == true ]]; then
-  echo ""
-  echo "--force is on. Existing skills, process rules, brief READMEs, the Contract, the"
-  echo "validator, and settings will be replaced with this checkout. $RULES_FILE, numbered"
-  echo "briefs, ledgers, chronicles, and the install log are not touched."
-fi
+echo ""
+echo "Toolkit-owned paths above are replaced every run. Local edits to them do not survive."
+echo "Project-owned files ($RULES_FILE, numbered briefs, ledgers, declarations, chronicles)"
+echo "are never written after creation."
 
 # open-briefs.sh reads git history, so a target outside a repository receives a
 # documented tool that cannot run there — the briefs README tells the reader it reads
@@ -707,6 +761,14 @@ fi
 
 echo ""
 echo "Installing..."
+echo ""
+
+# ── Step 3b: Prune stale skills and commands ─────────────────────────────────
+# Runs before replacement so a project is not left with stale trees beside fresh copies.
+# Reads only what previous log entries recorded; no log means no removal.
+
+echo "Pruning stale toolkit paths..."
+prune_stale_toolkit_paths
 echo ""
 
 # ── Step 4: Scaffold docs structure ──────────────────────────────────────────
@@ -761,8 +823,8 @@ GITIGNORE_EOF
   log_created "$GITIGNORE_LABEL"
 fi
 
-# Copy the briefs docs and the Contract. Default skips if present; --force replaces.
-# Numbered brief folders are never written here, force or not.
+# Copy the briefs docs and the Contract. Toolkit-owned: replaced every run.
+# Numbered brief folders are never written here.
 #
 # These ship from this repository's own docs/ rather than from a template copy. A
 # second copy under templates/ was hand-synced against these files and had already
@@ -790,10 +852,7 @@ while IFS=$'\t' read -r _owner _kind src dst; do
     tool_is_new=true
   fi
   place_file "$SCRIPT_DIR/$src" "$tool_dst" "$dst"
-  # cp keeps an existing destination's mode, so set the bit only on a copy this run wrote.
-  if [[ "$tool_is_new" == true || "$FORCE" == true ]]; then
-    chmod +x "$tool_dst"
-  fi
+  chmod +x "$tool_dst"
 done < <(map_rows toolkit)
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
@@ -817,8 +876,8 @@ done < <(map_rows toolkit)
 
 # ── Step 6: Process rules and project stub ───────────────────────────────────
 #
-# Two owners, two files. The process contract is installer-owned and --force
-# replaces it. AGENTS.md / CLAUDE.md are project-owned: a stub is written only
+# Two owners, two files. The process contract is installer-owned and replaced
+# every run. AGENTS.md / CLAUDE.md are project-owned: a stub is written only
 # if absent, and never replaced, so architecture notes survive an upgrade.
 
 echo ""
@@ -863,9 +922,8 @@ Every run of `brief-ledger-chronicle`'s `install.sh` against this repository, ol
 first. Appended automatically — add entries by running the installer, not by hand.
 
 This is a record of *what was installed here and when*. The reasoning behind how the
-toolchain is put together (per-project skills, default never-overwrite, `--force` to
-take upstream copies, and so on) lives upstream in the brief-ledger-chronicle
-repository, not duplicated into every project it onboards.
+toolchain is put together lives upstream in the brief-ledger-chronicle repository,
+not duplicated into every project it onboards.
 
 LOGHEAD_EOF
   log_created "docs/install-log/install-log.md"
@@ -898,7 +956,7 @@ cat >> "$LOG_FILE" <<ENTRY_EOF
 
 - **Host:** $HOST
 - **Installer version:** $VERSION
-- **Created:** ${#CREATED[@]} · **Skipped:** ${#SKIPPED[@]} · **Replaced:** ${#REPLACED[@]}
+- **Created:** ${#CREATED[@]} · **Skipped:** ${#SKIPPED[@]} · **Replaced:** ${#REPLACED[@]} · **Removed:** ${#REMOVED[@]}
 
 ### Skills installed
 
@@ -918,6 +976,14 @@ fi)
 
 $(if [[ ${#REPLACED[@]} -gt 0 ]]; then
   for r in ${REPLACED[@]+"${REPLACED[@]}"}; do echo "  - $r"; done
+else
+  echo "  (none)"
+fi)
+
+### Removed
+
+$(if [[ ${#REMOVED[@]} -gt 0 ]]; then
+  for r in ${REMOVED[@]+"${REMOVED[@]}"}; do echo "  - $r"; done
 else
   echo "  (none)"
 fi)
@@ -949,6 +1015,12 @@ if [[ ${#REPLACED[@]} -gt 0 ]]; then
   for item in ${REPLACED[@]+"${REPLACED[@]}"}; do echo "  $item"; done
 fi
 
+if [[ ${#REMOVED[@]} -gt 0 ]]; then
+  echo ""
+  echo "Removed (${#REMOVED[@]}):"
+  for item in ${REMOVED[@]+"${REMOVED[@]}"}; do echo "  $item"; done
+fi
+
 if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   echo ""
   echo "Skipped — already exist (${#SKIPPED[@]}):"
@@ -964,7 +1036,7 @@ if [[ "$HOST" == "claude" ]]; then
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
   echo "  5. Open docs/install-log/install-log.md to see what this run did."
 else
-  echo "  3. Skills are under .cursor/skills/ — tune any of them for this project."
+  echo "  3. Skills are under .cursor/skills/ — local edits are replaced on the next install."
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
   echo "  5. Open docs/install-log/install-log.md to see what this run did."
 fi

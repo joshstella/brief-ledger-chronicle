@@ -148,10 +148,12 @@ Resolved 2026-09-09 during drafting.
    Neither requires editing a toolkit-owned file, which
    is what makes "your edits are lost" a livable policy rather than a dead end. Phase `d`
    points at both instead of inventing a third.
-3. **Does the prune cover shipped docs and tools, or only skills and commands?** The log's
-   `### Created` list reaches further than its skills list. Blocks `c`.
-4. **Is there a dry run, and is it the first release?** Reporting the difference without
-   removing is releasable on its own. Blocks `c`.
+3. ~~Does the prune cover shipped docs and tools, or only skills and commands?~~
+   **Resolved 2026-09-10: skills and commands only.** The claim names those two lists as
+   the ownership evidence for removal; `### Created` includes scaffold dirs that must never
+   be pruned.
+4. ~~Is there a dry run, and is it the first release?~~ **Resolved 2026-09-10: no.**
+   `--print-ownership` is the static half; removal ships with the first prune release.
 
 ## Non-goals
 

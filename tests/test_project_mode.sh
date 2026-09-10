@@ -88,9 +88,7 @@ test_project_places_every_source_skill_somewhere() {
   assert_count 6 "$cmds" "process skills installed as commands"
 }
 
-# The installer's whole posture is that it never overwrites. #0001 settles that
-# per-project copies exist so a project can tune them; clobbering a tune would make
-# that promise false.
+# Project-owned stubs survive every run. Toolkit-owned paths are replaced (#0012b).
 test_project_never_overwrites_an_existing_claude_md() {
   echo "PROJECT-OWNED CONTENT" > "$TARGET/CLAUDE.md"
   run_install y --target "$TARGET"
@@ -99,26 +97,26 @@ test_project_never_overwrites_an_existing_claude_md() {
   assert_out "CLAUDE.md (already exists, skipped)"
 }
 
-test_project_never_overwrites_a_tuned_command() {
+test_project_replaces_a_tuned_command_on_reinstall() {
   mkdir -p "$TARGET/.claude/commands"
   echo "LOCALLY TUNED" > "$TARGET/.claude/commands/blc-review-pr.md"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_contains "LOCALLY TUNED" "$TARGET/.claude/commands/blc-review-pr.md"
+  assert_not_contains "LOCALLY TUNED" "$TARGET/.claude/commands/blc-review-pr.md"
 }
 
-test_project_never_overwrites_an_existing_briefs_readme() {
+test_project_replaces_an_existing_briefs_readme() {
   mkdir -p "$TARGET/docs/briefs"
   echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/briefs/README.md"
   run_install y --target "$TARGET"
-  assert_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/briefs/README.md"
+  assert_not_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/briefs/README.md"
 }
 
-test_project_second_run_creates_nothing() {
+test_project_second_run_replaces_toolkit_owned() {
   run_install y --target "$TARGET"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_out "Created (0):"
+  assert_out "Replaced ("
 }
 
 # The installer must not file briefs at all. /blc-create-brief is the single point of
