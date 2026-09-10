@@ -19,6 +19,10 @@ MODE="project"
 HOST="claude"
 ASSUME_YES=false
 FORCE=false
+# Initialized like every other flag. Left unset with a `${VAR:-false}` reader it
+# would be settable from the caller's environment, which turns an install into a
+# silent no-op that exits 0 and skips the self-install guard.
+PRINT_OWNERSHIP=false
 
 # The six skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
@@ -57,6 +61,10 @@ while [[ $# -gt 0 ]]; do
       FORCE=true
       shift
       ;;
+    --print-ownership)
+      PRINT_OWNERSHIP=true
+      shift
+      ;;
     --help|-h)
       echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes] [--force]"
       echo "       bash install.sh --machine"
@@ -73,6 +81,8 @@ while [[ $# -gt 0 ]]; do
       echo "  --machine         Install the once-per-machine user-level config into"
       echo "                    \$CLAUDE_HOME (default ~/.claude). Run once per machine,"
       echo "                    before or after any project install. Claude Code only."
+      echo "  --print-ownership Print what this installer owns and what it will never"
+      echo "                    write, for the chosen host, and exit. Touches nothing."
       exit 0
       ;;
     *)
@@ -114,8 +124,11 @@ if [[ -z "$TARGET_DIR" ]]; then
 fi
 
 # Guard: refuse to install into the repo itself — it's the source, not a target.
-# Machine mode is exempt: it writes to $CLAUDE_HOME, never into a project.
-if [[ "$MODE" == "project" && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
+# Machine mode is exempt: it writes to $CLAUDE_HOME, never into a project. So is
+# --print-ownership, which has no target at all: it reports what the installer owns for a
+# given host and writes nothing, and refusing it here would make the map unreadable from
+# the one checkout that always has it.
+if [[ "$MODE" == "project" && "$PRINT_OWNERSHIP" != true && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
   echo "error: cannot install into brief-ledger-chronicle itself." >&2
   echo "  This repo is the source of the process, not a target for it." >&2
   echo "  Use --target <path> to install into another project." >&2
@@ -278,6 +291,148 @@ install_hint() {
   esac
 }
 
+# ── Host layout ───────────────────────────────────────────────────────────────
+# Resolved before anything reads it, because the ownership map below is host-shaped:
+# the same source file becomes a skill directory on one host and a flat command file
+# on the other.
+
+if [[ "$HOST" == "cursor" ]]; then
+  SKILLS_DST_REL=".cursor/skills"
+  RULES_FILE="AGENTS.md"
+  PROCESS_RULES_REL=".cursor/rules/brief-ledger-chronicle.mdc"
+else
+  SKILLS_DST_REL=".claude/skills"
+  COMMANDS_DST_REL=".claude/commands"
+  RULES_FILE="CLAUDE.md"
+  PROCESS_RULES_REL=".claude/rules/brief-ledger-chronicle.md"
+fi
+
+# ── The ownership map ─────────────────────────────────────────────────────────
+#
+# One declaration of what this installer owns and what it must never write. Every
+# step below reads it: the preflight checks these sources, the placement steps ship
+# these entries, and the log records them. Before this existed the same knowledge was
+# spelled out in five places that had to be edited together and were not, which is how
+# a rename shipped skills that landed beside their predecessors instead of replacing
+# them.
+#
+# Emits tab-separated `owner<TAB>kind<TAB>source<TAB>destination`:
+#
+#   owner        toolkit — shipped by this installer, and therefore this installer's to replace
+#                project — authored by the project; never written after creation
+#                append  — added to, never rewritten, so neither of the above fits
+#   kind         file | dir | tree
+#   source       path under $SCRIPT_DIR, or `-` when nothing is shipped
+#   destination  path under $TARGET_DIR
+#
+# A `file` entry beats an enclosing `tree` entry. `docs/briefs/` is the project's, but
+# `docs/briefs/README.md` inside it is shipped — stated here once so no reader has to
+# infer the precedence from path lengths.
+#
+# A `tree` row means the installer may *create* the directory and may never write inside
+# it. Creating `docs/chronicles/` and handing it over is not the same act as putting a
+# file in it, and the two would be indistinguishable if creation were also disowned.
+#
+# What this map does NOT cover: the empty directories `SCAFFOLD_DIRS` makes so that
+# placement has somewhere to land — `.cursor/`, `.cursor/rules/`, `.cursor/skills/`,
+# `docs/`, `docs/contracts/`, `docs/install-log/`, `tools/`, and the Claude equivalents.
+# They hold nothing this installer authored, so replacing them is meaningless. Removing
+# them is not, and a later phase that prunes will have to decide about an emptied
+# `.cursor/skills/` on its own evidence. Stated here because a boundary nobody wrote down
+# is one a prune will guess at. `ownership_map_names_every_path_an_install_writes` fails
+# if this list stops matching what an install leaves behind.
+#
+# `append` is a third category because the two-column story does not survive contact
+# with the code: this installer *does* write `.gitignore` and the install log, and calling
+# them project-owned would describe them wrongly while calling them toolkit-owned would
+# eventually let something replace them. Appending is its own posture and is named as one.
+ownership_map() {
+  local same skill_dir skill_name
+
+  # Shipped docs, the Contract, and the tools its clauses name. Source and destination
+  # are the same path: these travel from this repository's own docs/, so a target lives
+  # by the files this repository lives by rather than by a template copy that drifts.
+  for same in \
+    docs/briefs/README.md \
+    docs/briefs/_drafts/README.md \
+    docs/contracts/README.md \
+    docs/contracts/v1.md \
+    docs/contracts/v1.1.md \
+    docs/state/README.md \
+    tools/validate-briefs.sh \
+    tools/open-briefs.sh \
+    tools/list-briefs.sh \
+    tools/orient.sh; do
+    printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
+  done
+
+  # The one file whose destination name is the host's, not ours — and the one row whose
+  # source is not copied verbatim: on Cursor, place_process_rules prepends the YAML
+  # frontmatter that makes the rule always-apply. A later phase that replaces toolkit rows
+  # with a plain `cp $src $dst` would strip it and silently disable the rule.
+  printf 'toolkit\tfile\ttemplates/process-rules.md\t%s\n' "$PROCESS_RULES_REL"
+
+  if [[ "$HOST" == "claude" ]]; then
+    printf 'toolkit\tfile\ttemplates/.claude/settings.local.json\t.claude/settings.local.json\n'
+  fi
+
+  # Skills, read from the source tree rather than listed. A hardcoded roster needs
+  # editing at exactly the moment someone is adding or renaming a skill and thinking
+  # about something else.
+  for skill_dir in "$SCRIPT_DIR/skills"/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    skill_name="$(basename "$skill_dir")"
+    if [[ "$HOST" == "claude" ]] && is_process_skill "$skill_name"; then
+      printf 'toolkit\tfile\tskills/%s/SKILL.md\t%s/%s.md\n' \
+        "$skill_name" "$COMMANDS_DST_REL" "$skill_name"
+    else
+      printf 'toolkit\tdir\tskills/%s\t%s/%s\n' \
+        "$skill_name" "$SKILLS_DST_REL" "$skill_name"
+    fi
+  done
+
+  # The project's own. Listed rather than left implicit so that "never written" is a
+  # thing this file says, not a thing it fails to say — #0011's brief-checks/ attaches
+  # here, and an absent entry would be indistinguishable from an oversight.
+  printf 'project\tfile\t-\t%s\n' "$RULES_FILE"
+  printf 'project\ttree\t-\tdocs/briefs\n'
+  printf 'project\ttree\t-\tdocs/state\n'
+  printf 'project\ttree\t-\tdocs/chronicles\n'
+
+  printf 'append\tfile\t-\t.gitignore\n'
+  printf 'append\tfile\t-\tdocs/install-log/install-log.md\n'
+}
+
+# Rows for one owner. Callers filter further on the source column, which is stable and
+# meaningful: everything under `skills/` is a skill however the host lays it out.
+map_rows() { ownership_map | awk -F'\t' -v want="$1" '$1 == want'; }
+
+# Skill names as the map sees them, whichever shape the host gave them: `skills/<name>`
+# on Cursor, `skills/<name>/SKILL.md` on Claude. Split on `/` rather than matched with a
+# regex so this stays identical under BSD and GNU awk.
+map_skill_names() {
+  map_rows toolkit | awk -F'\t' '$3 ~ /^skills\// { split($3, a, "/"); print a[2] }'
+}
+
+# Reading the map is how anything else can be held to it — the tests assert against this
+# output rather than against a second copy of the list, and a person onboarding a project
+# can ask what an install is about to take over before running one. Exits before the
+# dependency check, because answering "what do you own" requires nothing to be installed.
+if [[ "$PRINT_OWNERSHIP" == true ]]; then
+  # The map describes a project install. Machine mode writes into $CLAUDE_HOME by symlink
+  # and owns none of these paths, so printing this map under --machine would answer a
+  # question nobody asked, quietly and with exit 0. Refused rather than extended: what
+  # machine mode owns is a real question, and it deserves its own map rather than being
+  # smuggled into this one.
+  if [[ "$MODE" == "machine" ]]; then
+    echo "error: --print-ownership describes a project install; --machine owns no project paths." >&2
+    echo "  Drop --machine to see what an install into a target would own." >&2
+    exit 1
+  fi
+  ownership_map
+  exit 0
+fi
+
 # ── Step 1: Dependency check ──────────────────────────────────────────────────
 #
 # Project mode only. Machine mode creates symlinks and needs nothing but coreutils,
@@ -435,34 +590,45 @@ echo ""
 echo "Checking install sources..."
 
 MISSING_TEMPLATES=()
-for tpl in \
-  "templates/process-rules.md" \
-  "templates/.claude/settings.local.json" \
-  "docs/briefs/README.md" \
-  "docs/briefs/_drafts/README.md" \
-  "docs/contracts/README.md" \
-  "docs/contracts/v1.md" \
-  "docs/contracts/v1.1.md" \
-  "docs/state/README.md" \
-  "tools/validate-briefs.sh" \
-  "tools/open-briefs.sh" \
-  "tools/list-briefs.sh" \
-  "tools/orient.sh"; do
-  if [[ ! -f "$SCRIPT_DIR/$tpl" ]]; then
-    echo "  [✗] $tpl — missing"
-    MISSING_TEMPLATES+=("$tpl")
-  fi
-done
 
+# Checked before the skills glob so a missing tree is reported as one missing thing
+# rather than as silence — the map's skill loop simply yields nothing without it.
 if [[ ! -d "$SCRIPT_DIR/skills" ]]; then
   echo "  [✗] skills — missing"
   MISSING_TEMPLATES+=("skills")
 fi
 
-# Every process skill must be present before anything is written: on Claude Code these
-# are the slash-commands, and a half-installed command set is worse than none.
+# Every toolkit source the map names, checked in the shape it will be shipped in. A
+# directory entry must also carry its SKILL.md: an empty skill directory copies without
+# error and leaves the host offering a skill that says nothing.
+while IFS=$'\t' read -r _owner kind src _dst; do
+  [[ "$src" != "-" ]] || continue
+  case "$kind" in
+    file)
+      if [[ ! -f "$SCRIPT_DIR/$src" ]]; then
+        echo "  [✗] $src — missing"
+        MISSING_TEMPLATES+=("$src")
+      fi
+      ;;
+    dir)
+      if [[ ! -d "$SCRIPT_DIR/$src" ]]; then
+        echo "  [✗] $src — missing"
+        MISSING_TEMPLATES+=("$src")
+      elif [[ ! -f "$SCRIPT_DIR/$src/SKILL.md" ]]; then
+        echo "  [✗] $src/SKILL.md — missing"
+        MISSING_TEMPLATES+=("$src/SKILL.md")
+      fi
+      ;;
+  esac
+done < <(map_rows toolkit)
+
+# The map is built by globbing the source tree, so a process skill missing from skills/
+# produces no row — and a check derived from the map cannot notice what the map never
+# mentions. PROCESS_SKILLS is the roster each host is promised, so it is asserted against
+# the map rather than derived from it. Without this a Claude install ships five
+# slash-commands, reports "Done.", and exits 0.
 for s in $PROCESS_SKILLS; do
-  if [[ ! -f "$SCRIPT_DIR/skills/$s/SKILL.md" ]]; then
+  if ! map_skill_names | grep -qx -- "$s"; then
     echo "  [✗] skills/$s/SKILL.md — missing"
     MISSING_TEMPLATES+=("skills/$s/SKILL.md")
   fi
@@ -480,21 +646,13 @@ echo "  [✓] all install sources present"
 
 # ── Step 3: Target confirmation ───────────────────────────────────────────────
 
-# Host layout, resolved once and used by every step below.
+# Skill counts are only used for the summary below, and are computed here rather than
+# beside the host layout because they read the source tree — which Step 2 has just
+# finished proving is intact. Reading it earlier would fail on a broken checkout with a
+# shell error instead of the preflight's report.
 ALL_SKILL_COUNT="$(ls -d "$SCRIPT_DIR"/skills/*/ | wc -l | tr -d ' ')"
 PROCESS_COUNT="$(echo $PROCESS_SKILLS | wc -w | tr -d ' ')"
 UTILITY_COUNT=$((ALL_SKILL_COUNT - PROCESS_COUNT))
-
-if [[ "$HOST" == "cursor" ]]; then
-  SKILLS_DST_REL=".cursor/skills"
-  RULES_FILE="AGENTS.md"
-  PROCESS_RULES_REL=".cursor/rules/brief-ledger-chronicle.mdc"
-else
-  SKILLS_DST_REL=".claude/skills"
-  COMMANDS_DST_REL=".claude/commands"
-  RULES_FILE="CLAUDE.md"
-  PROCESS_RULES_REL=".claude/rules/brief-ledger-chronicle.md"
-fi
 
 echo ""
 echo "Target directory: $TARGET_DIR"
@@ -610,15 +768,10 @@ fi
 # second copy under templates/ was hand-synced against these files and had already
 # diverged, which is the drift the Contract was extracted to end. The files a target
 # receives are now the files this repository lives by.
-for src_rel in \
-  "docs/briefs/README.md" \
-  "docs/briefs/_drafts/README.md" \
-  "docs/contracts/README.md" \
-  "docs/contracts/v1.md" \
-  "docs/contracts/v1.1.md" \
-  "docs/state/README.md"; do
-  place_file "$SCRIPT_DIR/$src_rel" "$TARGET_DIR/$src_rel" "$src_rel"
-done
+while IFS=$'\t' read -r _owner _kind src dst; do
+  case "$src" in docs/*) ;; *) continue ;; esac
+  place_file "$SCRIPT_DIR/$src" "$TARGET_DIR/$dst" "$dst"
+done < <(map_rows toolkit)
 
 # Every clause in the current Contract names validate-briefs.sh, and the briefs README that
 # ships beside it names open-briefs.sh. Shipping the prose without the tools would
@@ -628,19 +781,20 @@ done
 # list-briefs.sh is here for a stronger reason than prose: the blc-chronicle skill
 # reads its brief table from it and exits non-zero without it, so a target that got
 # the skill and not the tool would have a chronicle that cannot run.
-for tool_rel in "tools/validate-briefs.sh" "tools/open-briefs.sh" "tools/list-briefs.sh" "tools/orient.sh"; do
-  tool_dst="$TARGET_DIR/$tool_rel"
+while IFS=$'\t' read -r _owner _kind src dst; do
+  case "$src" in tools/*) ;; *) continue ;; esac
+  tool_dst="$TARGET_DIR/$dst"
   if [[ -f "$tool_dst" ]]; then
     tool_is_new=false
   else
     tool_is_new=true
   fi
-  place_file "$SCRIPT_DIR/$tool_rel" "$tool_dst" "$tool_rel"
+  place_file "$SCRIPT_DIR/$src" "$tool_dst" "$dst"
   # cp keeps an existing destination's mode, so set the bit only on a copy this run wrote.
   if [[ "$tool_is_new" == true || "$FORCE" == true ]]; then
     chmod +x "$tool_dst"
   fi
-done
+done < <(map_rows toolkit)
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
 #
@@ -652,20 +806,14 @@ done
 
 echo ""
 echo "Skills:"
-for skill_dir in "$SCRIPT_DIR/skills"/*/; do
-  skill_name="$(basename "$skill_dir")"
-
-  if [[ "$HOST" == "claude" ]] && is_process_skill "$skill_name"; then
-    place_file "$skill_dir/SKILL.md" \
-               "$TARGET_DIR/$COMMANDS_DST_REL/$skill_name.md" \
-               "$COMMANDS_DST_REL/$skill_name.md"
-    continue
+while IFS=$'\t' read -r _owner kind src dst; do
+  case "$src" in skills/*) ;; *) continue ;; esac
+  if [[ "$kind" == "file" ]]; then
+    place_file "$SCRIPT_DIR/$src" "$TARGET_DIR/$dst" "$dst"
+  else
+    place_dir "$SCRIPT_DIR/$src" "$TARGET_DIR/$dst" "$dst"
   fi
-
-  place_dir "$skill_dir" \
-            "$TARGET_DIR/$SKILLS_DST_REL/$skill_name" \
-            "$SKILLS_DST_REL/$skill_name"
-done
+done < <(map_rows toolkit)
 
 # ── Step 6: Process rules and project stub ───────────────────────────────────
 #
@@ -733,14 +881,16 @@ fi
 # rather than what the source happens to contain.
 SKILL_LIST=""
 CMD_LIST=""
-for skill_dir in "$SCRIPT_DIR/skills"/*/; do
-  skill_name="$(basename "$skill_dir")"
-  if [[ "$HOST" == "claude" ]] && is_process_skill "$skill_name"; then
+while IFS=$'\t' read -r _owner kind src _dst; do
+  case "$src" in skills/*) ;; *) continue ;; esac
+  skill_name="${src#skills/}"
+  skill_name="${skill_name%/SKILL.md}"
+  if [[ "$kind" == "file" ]]; then
     CMD_LIST+="  - $skill_name"$'\n'
   else
     SKILL_LIST+="  - $skill_name"$'\n'
   fi
-done
+done < <(map_rows toolkit)
 [[ -n "$CMD_LIST" ]] || CMD_LIST="  (none — this host takes them all as skills)"$'\n'
 
 cat >> "$LOG_FILE" <<ENTRY_EOF

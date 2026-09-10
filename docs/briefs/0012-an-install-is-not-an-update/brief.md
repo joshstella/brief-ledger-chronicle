@@ -44,7 +44,8 @@ The line is ownership, not existence:
 | | policy | examples |
 |---|---|---|
 | **Toolkit-owned** | replaced every run, pruned when upstream drops it | `skills/`, host command files, `tools/*.sh`, `docs/briefs/README.md`, `docs/contracts/*` |
-| **Project-owned** | never written after creation, never removed | `AGENTS.md`, `.gitignore`, `docs/briefs/NNNN-*/`, `docs/state/*`, `docs/orientation.md`, chronicles |
+| **Project-owned** | never written after creation, never removed | `AGENTS.md`, `docs/briefs/NNNN-*/`, `docs/state/*`, `docs/orientation.md`, chronicles |
+| **Append** | added to, never rewritten or removed | `.gitignore`, `docs/install-log/install-log.md` |
 
 **Local edits to toolkit-owned files are lost on the next install, by design.** That is the
 trade being made deliberately: a file with two writers has no owner, and the alternative —
@@ -132,11 +133,15 @@ Resolved 2026-09-09 during drafting.
 - **Absence of evidence is absence of ownership.** No log, no entry, no removal.
 - **A removal is logged like an install.** An append-only record that omits its own
   destructive acts is not a record.
+- **Three owners, not two.** Phase `a` found the installer appends to `.gitignore` and the
+  install log on every run. Neither "project-owned, never written" nor "toolkit-owned,
+  replaced" describes that. An `append` category names it.
+- **`--force` is retired.** Once replacement is the default it has no job. A flag that does
+  nothing is a trap for anyone who remembers what it used to do. Phase `b` removes it.
 
 ## Open decisions
 
-1. **What does `--force` mean once the default replaces?** It may have no job left, or it
-   may become the flag that overrides project-owned protection. Blocks `b`.
+1. ~~What does `--force` mean once the default replaces?~~ **Resolved 2026-09-10: retire it.**
 2. ~~Does `d` ship a way to customize legitimately?~~ **Answered 2026-09-09, elsewhere.**
    The supported answers are `AGENTS.md` for guidance, which already exists and is
    project-owned, and project checks in `brief-checks/`, filed separately as #0011.
@@ -154,7 +159,8 @@ Resolved 2026-09-09 during drafting.
 - **Not versioning.** There are no toolkit versions to reason about, only what a log entry
   says was installed.
 - **Not a fix for pre-log installs.** Unreachable, stated above.
-- **Not a change to project-owned protection.** `AGENTS.md` and `.gitignore` keep it.
+- **Not a change to project-owned protection.** `AGENTS.md`, briefs, ledgers, declarations,
+  and chronicles keep it. Append-owned files keep their append-only posture.
 
 ## Success criteria
 
@@ -164,8 +170,8 @@ Resolved 2026-09-09 during drafting.
 - A skill the log never recorded is never named and never removed, including one whose name
   matches an old toolkit skill.
 - A target with no install log gets no removal and a clear statement of why.
-- `AGENTS.md`, `.gitignore`, briefs, ledgers, declarations and chronicles are byte-identical
-  across a reinstall.
+- `AGENTS.md`, briefs, ledgers, declarations and chronicles are byte-identical across a
+  reinstall. Append-owned files gain only what this run adds; nothing is rewritten.
 - The log entry for a run names what that run removed.
 - The suite proves removal is refused when it would leave the target, including through a
   symlinked skills directory.
