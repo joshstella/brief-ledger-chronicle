@@ -1,16 +1,17 @@
 # Ledger — #0011 A project cannot add a gate
-`blc/2 #0011 in-progress a:done(PR#53) b:in-progress`
+`blc/2 #0011 done a:done(PR#53) b:done(PR#54)`
 
 **Brief:** `docs/briefs/0011-a-project-cannot-add-a-gate/brief.md`
 **Started:** 2026-09-10
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-09-10
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the runner | done(PR#53) | `brief/0011-a-the-runner` |
-| b | the proof | in-progress | `brief/0011-b-the-proof` |
+| b | the proof | done(PR#54) | `brief/0011-b-the-proof` |
 
 **a — the runner.** `validate-briefs.sh` runs `brief-checks/*.sh` after toolkit clauses
 pass, in sorted order, failing on any non-zero exit. Document the directory, argument, exit
