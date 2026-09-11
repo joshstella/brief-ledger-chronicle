@@ -1,5 +1,5 @@
 # Ledger — #0011 A project cannot add a gate
-`blc/2 #0011 in-progress a:done(PR#53) b:pending`
+`blc/2 #0011 in-progress a:done(PR#53) b:in-progress`
 
 **Brief:** `docs/briefs/0011-a-project-cannot-add-a-gate/brief.md`
 **Started:** 2026-09-10
@@ -10,7 +10,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the runner | done(PR#53) | `brief/0011-a-the-runner` |
-| b | the proof | pending | — |
+| b | the proof | in-progress | `brief/0011-b-the-proof` |
 
 **a — the runner.** `validate-briefs.sh` runs `brief-checks/*.sh` after toolkit clauses
 pass, in sorted order, failing on any non-zero exit. Document the directory, argument, exit
@@ -41,3 +41,10 @@ sorted, failing on non-zero exit with the script's output under its filename.
 
 **Documented.** `docs/briefs/README.md` carries the directory, argument, exit convention,
 installer non-touch, and an example snippet (no example script ships).
+
+## Phase b — what it does
+
+**Eight tests in `test_brief_checks.sh`.** Passing, failing, and crashing scripts; sorted
+order; absent and empty directory; toolkit defect blocks project checks; install leaves
+`brief-checks/` unmodified. Helpers prefixed to avoid collision with `test_briefs.sh` in
+the single-shell runner.
