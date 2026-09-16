@@ -1,16 +1,17 @@
 # Ledger — #0013 A reader that cannot find it reports it missing
-`blc/2 #0013 in-progress a:done(PR#55) b:in-progress(brief/0013-b-the-lines-home)`
+`blc/2 #0013 done a:done(PR#55) b:done(PR#56)`
 
 **Brief:** `docs/briefs/0013-reader-blames-the-record/brief.md`
 **Started:** 2026-09-16
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-09-16
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the row scan | done(PR#55) | `brief/0013-a-the-row-scan` |
-| b | the line's home | in-progress | `brief/0013-b-the-lines-home` |
+| b | the line's home | done(PR#56) | `brief/0013-b-the-lines-home` |
 
 **a — the row scan.** One matcher in `tools/open-briefs.sh`, serving both index alphabets:
 the id standing alone in the first cell, plus `phase N` anywhere in the row for `blc/1` and
@@ -92,6 +93,27 @@ this phase. A mutated row in #0011 now reports drift and still exits 0.
 
 **Four tests.** Three fail before the change and pass after. The fourth guards the opposite
 error, a matcher loose enough to fire on everything.
+
+## Phase b — what it does
+
+**`status_line()` replaces the row-2 read.** It skips a leading `---` block, skips the blank
+lines after it, takes the title, and reads the line below. A ledger with no frontmatter reads
+row 2 exactly as before. Only a leading block counts: line 1 exactly, closed by the next `---`.
+
+**All three readers now agree.** `list-briefs` and `orient` always read the line under the
+title. `open-briefs` was the one that could not, and reported `[no-line]` about a line a reader
+can see. Checked end to end on a throwaway repository.
+
+**Row 2 is a cost rule, not a boundary.** The first draft of both the README paragraph and the
+code comment claimed the positional read exists to stop a reader trusting a `blc/` line quoted
+in prose. That rationale was invented at the keyboard and is wrong. The line exists so a scan
+costs a line instead of a table. Reading further is allowed. The review gate blocked on the
+README version. The same error sat in the shipped code comment, where it would have outlived
+the brief.
+
+**Four tests.** One regression test, two guards that keep skipping from becoming searching, and
+one in `test_list_briefs.sh` that pins the readers agreeing. `add_frontmatter_ledger` is a second
+fixture helper, because `add_ledger` is built from the assumption this phase removed.
 
 ## Big decisions
 
