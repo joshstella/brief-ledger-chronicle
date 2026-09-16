@@ -122,9 +122,34 @@ had written it down. An independent review of the diff also passed it. It was fo
 running the binary through a symlink on purpose.
 
 `phase_row_open_briefs_runs_through_a_symlink` now pins it, and the mutation that proves
-it — restoring the plain `dirname` — fails that one test and no other, with the remaining
-283 green. **A property that costs nothing to hold is the kind that disappears silently,
-because its test was never written.**
+it — restoring the plain `dirname` — fails that one test and no other. **A property that
+costs nothing to hold is the kind that disappears silently, because its test was never
+written.**
+
+## A guard whose pattern stops matching its own target
+
+The same phase shipped a test whose entire job was to fail if any tool re-derived the
+shared matcher. It could not fail. The fingerprint was written as the ERE `~\*\`\?`,
+which asks for `` ~*`? ``; the source it searches for contains `` ~*\`? ``, with a
+backslash before the backtick because the backtick is escaped inside a double-quoted
+shell string. It matched nothing in the repository — not a copy, not the library it was
+guarding, nothing.
+
+A verbatim copy of the whole matcher, planted at `tools/copycat.sh`, passed it. The PR
+body called it "the test that matters" and the ledger offered it as the compensating
+control for deferring half the phase's deliverable. It was a tautology, and it was found
+by review, not by the suite.
+
+The pattern is now a literal searched with `grep -F`, and two positive controls sit in
+front of the guard: one asserts the fingerprint still appears in the library, the other
+plants a copy in a temporary directory and requires the scan to find it. Rotting the
+fingerprint back to the broken ERE fails both and leaves the guard itself green — which
+is the point, because the guard alone could never have told you.
+
+**A scan that matches nothing reports success.** This file already says that about
+`checked > 0` in `test_source_tree.sh`. The lesson did not transfer to the next scan
+written, three days later, by someone who had read it. Guard the search itself, not only
+the thing being searched for.
 
 ## An assertion downstream of a repair cannot see the break
 

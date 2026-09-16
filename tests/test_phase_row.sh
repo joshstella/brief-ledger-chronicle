@@ -10,9 +10,16 @@
 
 PR_LIB="tools/lib/phase-row.sh"
 
-# A fragment of the pattern that is distinctive enough that finding it outside the
-# library means someone re-derived the matcher rather than sourced it.
-PR_FINGERPRINT='~\*\`\?'
+# A fragment of the pattern distinctive enough that finding it outside the library means
+# someone re-derived the matcher rather than sourced it.
+#
+# Searched with `grep -F`, as a literal. The first version of this was an ERE reading
+# `~\*\`\?`, which asks for `~*`?` — no backslash between the asterisk and the backtick.
+# The source has one, because the backtick is escaped inside a double-quoted string. So
+# the guard matched nothing at all, including the library it guards, and a verbatim copy
+# of the whole matcher planted in tools/ passed it. A regex here buys nothing: the thing
+# being searched for is a fixed string.
+PR_FINGERPRINT='~*\`?'
 
 pr_source_lib() {
   # shellcheck source=/dev/null
@@ -24,12 +31,32 @@ pr_fixture() {
   printf '%s\n' "$@" > "$PR_FILE"
 }
 
+pr_matchers_under() {
+  grep -rlF "$PR_FINGERPRINT" "$1" 2>/dev/null
+}
+
+# The two tests below are positive controls for the guard that follows them. A scan that
+# matches nothing reports success, so "no second matcher was found" and "the search is
+# broken" produce identical output. These separate the two.
+
+test_phase_row_the_fingerprint_still_matches_the_library() {
+  grep -qF "$PR_FINGERPRINT" "$REPO_ROOT/$PR_LIB" \
+    || fail "the fingerprint no longer appears in $PR_LIB, so the guard cannot fail"
+}
+
+test_phase_row_the_guard_catches_a_planted_copy() {
+  local planted="$TMP/tools"
+  mkdir -p "$planted"
+  cp "$REPO_ROOT/$PR_LIB" "$planted/copycat.sh"
+  pr_matchers_under "$planted" | grep -q copycat.sh \
+    || fail "the scan did not find a second matcher planted in front of it"
+}
+
+# Searches tools/ only. A re-derived matcher in a skill or in brief-checks/ would not be
+# seen — narrow on purpose, because tools/ is where the drift this brief is about happens.
 test_phase_row_no_tool_defines_its_own_matcher() {
   local hits
-  # Every .sh outside the library. If the fingerprint shows up in one, the tool is
-  # building the pattern itself again and the two can drift apart on the next edit.
-  hits="$(grep -rlE "$PR_FINGERPRINT" "$REPO_ROOT/tools" 2>/dev/null \
-    | grep -v "$PR_LIB" || true)"
+  hits="$(pr_matchers_under "$REPO_ROOT/tools" | grep -v "$PR_LIB" || true)"
   [ -z "$hits" ] || fail "a second phase-row matcher exists outside $PR_LIB: $hits"
 }
 
@@ -95,6 +122,40 @@ test_phase_row_open_briefs_runs_from_a_path_with_spaces() {
   mkdir -p "$linkdir"
   ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/ob.sh"
   pr_assert_runs_from "a path containing spaces" "$linkdir/ob.sh"
+}
+
+# install.sh skips `chmod +x` for tools/lib/*. Nothing asserted the result, so deleting
+# that skip left the suite green — the same shape as "An assertion downstream of a repair
+# cannot see the break" in tests/README.md, inherited by the new branch of that loop.
+# Both directions are checked here: removing the skip fails the first assertion, and
+# removing the chmod entirely fails the second.
+test_phase_row_the_installed_library_is_not_executable() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+
+  local lib="$TARGET/tools/lib/phase-row.sh"
+  assert_file "$lib"
+  [ ! -x "$lib" ] || fail "the installed library is executable; it is sourced, not invoked"
+  [ -x "$TARGET/tools/open-briefs.sh" ] || fail "an installed tool lost its execute bit"
+}
+
+# The property the ledger sells: a scan that cannot run must not report a clean tree.
+# Exit 2 is this tool's "the question could not be asked" status, and the absence of a
+# summary line is the part that matters — a clean summary from a tool that never loaded
+# its matcher is precisely the silent-pass failure this brief exists to end.
+test_phase_row_a_missing_library_refuses_to_report_a_clean_tree() {
+  local orphan="$TMP/orphan" out status
+  mkdir -p "$orphan"
+  cp "$REPO_ROOT/tools/open-briefs.sh" "$orphan/open-briefs.sh"
+
+  out="$(cd "$REPO_ROOT" && bash "$orphan/open-briefs.sh" 2>&1)"
+  status=$?
+
+  assert_count 2 "$status" "exit status with no library beside it"
+  case "$out" in
+    *"open-briefs: "*) fail "printed a summary without ever loading its matcher" ;;
+  esac
+  return 0
 }
 
 # ── The shapes it knows ──────────────────────────────────────────────────────

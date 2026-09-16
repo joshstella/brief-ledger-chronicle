@@ -13,10 +13,13 @@
 | b | the clause | pending | — |
 | c | the upgrade | pending | — |
 
-**a — the shared matcher.** One implementation of the phase-row matcher in `tools/lib/`, read
-by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the two ever
-disagree. No behaviour change. Carries the installer and ownership-map work in complications
-1 and 2 below.
+**a — the shared matcher.** One implementation of the phase-row matcher in `tools/lib/`,
+read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour
+change. Carries the installer and ownership-map work in complications 1 and 2 below.
+
+The brief's row for `a` says "read by both `open-briefs.sh` and `validate-briefs.sh`, with
+a test that fails if the two ever disagree". That is not what `a` delivers, and it cannot
+be — see the scope call below and complication 5.
 
 ### Phase a — what it does
 
@@ -101,3 +104,19 @@ the draft was written. Phase `a` carries 1, 2, and 4.
 4. **No shell library exists yet.** `tools/lib/` is the first, so phase `a` sets the
    precedent for how sourced code is laid out, named, and tested here. Worth deciding
    deliberately rather than by whatever the first file happens to do.
+
+5. **The brief's phase `a` row cannot be satisfied by phase `a`.** It requires the matcher
+   "read by both" tools and "a test that fails if the two ever disagree". An agreement
+   test needs two call sites, and `validate-briefs.sh` has no reason to read a phase table
+   until `BRIEFS-9` exists in phase `b`. The brief concedes the point in its own settled
+   decisions — "sharing source does not prove both tools call it alike" is an argument
+   about call sites, not about files. So the requirement belongs in `b`. **The brief still
+   says otherwise, and a ledger that argues with its brief is the failure this toolkit
+   exists to prevent.** Amending `brief.md` is the author's call, not this ledger's.
+
+6. **The compensating control shipped broken.** The guard offered in place of the
+   agreement test could not fail: its fingerprint was an ERE missing a backslash, so it
+   matched nothing, and a verbatim copy of the matcher planted in `tools/` passed it.
+   Found by review, not by the suite. Now a literal `grep -F` with two positive controls
+   in front of it, mutation-tested in both directions. Written up in `tests/README.md`
+   under "A guard whose pattern stops matching its own target".

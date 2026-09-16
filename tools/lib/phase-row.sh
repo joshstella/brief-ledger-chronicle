@@ -4,12 +4,15 @@
 # whose name carries that meaning, and `tests/test_source_tree.sh` exempts it from the
 # executable-mode rule on that basis alone.
 #
-# Two readers need to find a phase-table row for a given id: `open-briefs.sh`, which
-# reports drift, and `validate-briefs.sh`, which gates on findability. #0013's second
-# defect was two readers disagreeing about where the status line lives. A second
-# independent copy of this pattern would reproduce that defect on purpose, so there is
-# one definition here and both tools read it. Nothing may re-derive it locally — see
-# `tests/test_phase_row.sh`, which fails if a second definition appears.
+# `open-briefs.sh` reads this today, and it is the only reader. `validate-briefs.sh`
+# joins in #0014 phase `b`, when BRIEFS-9 gives it a reason to look at a phase table;
+# it has none before that, and an unused import would have cost phase `a` the
+# no-behaviour-change property that made it reviewable.
+#
+# There is one definition because #0013's second defect was two readers disagreeing
+# about where the status line lives, and a second independent copy would reproduce that
+# defect on purpose. Nothing may re-derive it locally — see `tests/test_phase_row.sh`,
+# which plants a copy in front of its own scan to prove the scan can still see one.
 #
 # Function names are prefixed `blc_`. This file is sourced into tools that already have
 # globals of their own, and an unprefixed helper is one collision away from being
