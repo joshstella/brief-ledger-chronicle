@@ -94,8 +94,14 @@ This is a team convention, not a Contract clause. Nothing checks it. Relaxing it
 allowed. Designing the ledger for two executors on one serial is not the use case.
 
 The ledger stays **one file** per brief, `NNNN-slug/ledger.md`. One owner, one narrative.
-`blc-start-brief` commits that file to `main` before any feature branch is cut so the owner
-sees it on every machine that pulls.
+`blc-start-brief` commits **and pushes** that file to `main` before any feature branch is cut
+so the owner sees it on every machine that pulls. A commit left unpushed achieves none of that.
+
+**That is the only ledger write that goes straight to `main`.** After initiation the ledger
+evolves on the phase branch and returns by merge, the same way code does. `blc-next-brief-phase`
+marks the previous phase `done` on the next phase's branch, because that phase is already merged
+by then, and its branch — whether or not it still exists — is no longer a path to `main`. The
+last phase has no successor, so `brief/<serial>-closeout` carries the close.
 
 **`in-progress` names its branch.** That is what makes it the only state anything can
 interrogate: whether the branch still exists, whether a PR was ever opened, how far `main`
@@ -204,7 +210,9 @@ written form to teach rather than a rule about which contexts sort.
 **`brief/`, not `feature/`.** A brief is an assignment. It can be smaller than a feature (one
 clause, one script) or larger (a contract version, a workflow reversal).
 
-**Reserved, not a phase:** `brief/<serial>-closeout`.
+**Reserved, not a phase:** `brief/<serial>-closeout`. It carries the brief's close, because the
+ledger does not go straight to `main` after initiation and the final phase has no successor
+branch to ride.
 
 **Ceiling: 26 phases.** A 27th is a new brief, not `aa`.
 
