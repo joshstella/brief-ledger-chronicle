@@ -41,8 +41,21 @@ BRIEFS_DIR="${1:-docs/briefs}"
 # external dependency and ran from wherever it was reached, and that property is kept
 # here rather than surrendered to the refactor. Walked by hand instead of `readlink -f`,
 # which is GNU-only and absent on macOS.
+#
+# The walk is bounded. A cycle cannot reach this loop by the ordinary route — the kernel
+# resolves the path before bash executes anything, so a circular link fails at exec with
+# ELOOP and this script never starts. That is an argument from the caller's behaviour,
+# not from this loop's, and it stops holding the moment someone sources this file with a
+# path they built themselves. The bound costs one comparison and removes the need to
+# trust the argument.
 BLC_SELF="${BASH_SOURCE[0]}"
+BLC_HOPS=0
 while [ -L "$BLC_SELF" ]; do
+  BLC_HOPS=$((BLC_HOPS + 1))
+  if [ "$BLC_HOPS" -gt 40 ]; then
+    printf 'error: too many symbolic links resolving %s\n' "${BASH_SOURCE[0]}" >&2
+    exit 2
+  fi
   BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
   BLC_SELF="$(readlink "$BLC_SELF")"
   # A relative link target is relative to the directory holding the link, not to $PWD.

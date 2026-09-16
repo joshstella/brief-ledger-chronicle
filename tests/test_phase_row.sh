@@ -53,21 +53,48 @@ test_phase_row_library_is_not_executable_in_the_index() {
 # before, and a dependency found by `dirname "$BASH_SOURCE"` is found relative to however
 # the script was reached. A symlink on a PATH directory is the ordinary way to reach a
 # tool, and it sent the first version of this looking for lib/ beside the link.
-test_phase_row_open_briefs_runs_through_a_symlink() {
-  local linkdir="$TMP/bin" out status
-  mkdir -p "$linkdir"
-  ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/open-briefs.sh"
-
-  out="$(cd "$REPO_ROOT" && bash "$linkdir/open-briefs.sh" 2>&1)"
+pr_assert_runs_from() {
+  local what="$1" script="$2" out status
+  out="$(cd "$REPO_ROOT" && bash "$script" 2>&1)"
   status=$?
-
   # Exit 2 is this tool's "the question could not be asked" status, which is what a
   # library it cannot locate produces.
-  [ "$status" -ne 2 ] || fail "running through a symlink could not find its library"
+  [ "$status" -ne 2 ] || fail "$what: could not find its library"
   case "$out" in
-    *"cannot read"*) fail "symlinked run looked for lib/ beside the link: $out" ;;
+    *"cannot read"*) fail "$what: looked for lib/ beside the link" ;;
+    *"too many symbolic links"*) fail "$what: hit the hop bound on a legal chain" ;;
   esac
-  return 0
+}
+
+test_phase_row_open_briefs_runs_through_a_symlink() {
+  local linkdir="$TMP/bin"
+  mkdir -p "$linkdir"
+  ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/open-briefs.sh"
+  pr_assert_runs_from "a single symlink" "$linkdir/open-briefs.sh"
+}
+
+# A link to a link is ordinary — a package manager's bin/ entry pointing at a versioned
+# path that is itself a link. The walk has to follow the whole chain, and a relative
+# target resolves against the directory holding the link rather than $PWD.
+test_phase_row_open_briefs_runs_through_a_symlink_chain() {
+  local linkdir="$TMP/chain" i
+  mkdir -p "$linkdir"
+  ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/l1.sh"
+  for i in 2 3 4 5; do
+    ln -s "$linkdir/l$((i - 1)).sh" "$linkdir/l$i.sh"
+  done
+  pr_assert_runs_from "a five-link chain" "$linkdir/l5.sh"
+
+  (cd "$linkdir" && ln -sf ./l5.sh rel.sh)
+  pr_assert_runs_from "a relative link" "$linkdir/rel.sh"
+}
+
+# Every path in the resolution walk is quoted; this is the fixture that says so.
+test_phase_row_open_briefs_runs_from_a_path_with_spaces() {
+  local linkdir="$TMP/dir with space"
+  mkdir -p "$linkdir"
+  ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/ob.sh"
+  pr_assert_runs_from "a path containing spaces" "$linkdir/ob.sh"
 }
 
 # ── The shapes it knows ──────────────────────────────────────────────────────
