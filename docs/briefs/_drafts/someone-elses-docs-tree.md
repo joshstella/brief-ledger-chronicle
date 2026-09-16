@@ -123,8 +123,8 @@ Resolved 2026-09-16 during drafting.
 - **#0013 finishes first.** It edits `open-briefs.sh` and `docs/briefs/README.md`; moving the
   tree beneath an in-flight brief would conflict on every phase for no gain. This brief is not
   started until #0013 is closed.
-- **v1.2 is published once.** If the findability clause from `_drafts/the-shape-nothing-prescribes.md`
-  also lands, whichever brief finishes second carries the publication and cites both changes.
+- **v1.2 is published once.** If the findability clause from #0014 also lands, whichever brief
+  finishes second carries the publication and cites both changes.
 
 ## Open decisions
 
