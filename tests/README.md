@@ -33,6 +33,8 @@ tests/
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
   test_source_tree.sh     file modes in this repo's own tree, which no install test can see
   test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
+  test_status_line.sh     the shared status-line locator, and the shapes that separated its
+                          two predecessors (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -125,6 +127,34 @@ running the binary through a symlink on purpose.
 it — restoring the plain `dirname` — fails that one test and no other. **A property that
 costs nothing to hold is the kind that disappears silently, because its test was never
 written.**
+
+## Two tools can disagree for a year with every test green
+
+`open-briefs.sh` and `list-briefs.sh` both had to find a ledger's status line, and they did
+it differently. One read positionally — title, then the next line. The other searched the
+whole file. The divergence was deliberate and documented, and on all thirteen ledgers in
+this repository the two returned identical results. No test written against real data could
+have separated them.
+
+They were not equivalent. Three shapes tell them apart, and each one is now a fixture in
+`test_status_line.sh`: a blank line after the title, a status line further down the file,
+and prose quoting an example status line above the real one. The positional reader reported
+the first two as having no status line at all. The whole-file reader answered the third with
+**the prose sentence**.
+
+The last one was found by building a baseline before writing any code, and it reversed the
+design: the phase had been planned around adopting the whole-file search, on the reasoning
+that a permissive form can only widen what is found. A gate reading that sentence would
+parse garbage phase ids and fail a correct ledger. Finding the wrong line is worse than
+finding none. The shared locator searches the whole file **and** anchors the match.
+
+The suite already contained the contradiction, pinned on one side.
+`open-briefs_reports_no_line_on_unterminated_frontmatter` asserted that an unclosed `---`
+block means no status line, while `list-briefs.sh` read the same fixture and reported its
+status as `done`. One stray `---` hid a ledger's entire status from one tool and not the
+other, and a passing test said that was correct.
+
+**A test that pins one side of a disagreement makes the disagreement look like a decision.**
 
 ## A guard whose pattern stops matching its own target
 

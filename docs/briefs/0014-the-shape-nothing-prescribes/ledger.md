@@ -62,6 +62,33 @@ callers to disagree.
 read by `open-briefs.sh` and `list-briefs.sh`. Inserted after phase `a` on a finding phase
 `a` could not have seen — see complication 7.
 
+### Phase b — what it does
+
+- `tools/lib/status-line.sh` holds `blc_status_line`: whole-file search, anchored match,
+  leading whitespace and backticks stripped so callers do not each re-decide what to trim.
+- `open-briefs.sh` lost its positional `status_line()`; its bootstrap now loads a list of
+  libraries rather than one. `list-briefs.sh` lost its unanchored `grep` and gained the same
+  bootstrap — which is the one thing that cannot be shared, being the code that finds the
+  shared code.
+- `install.sh` ships the new library through the ownership map. Dropping that row is caught
+  by `status_line_an_installed_list_briefs_finds_its_library` and by
+  `orient_runs_inside_a_fresh_install`.
+- `tests/lib.sh` gains `fixture_install_tool`. Two fixtures hand-copied `list-briefs.sh`
+  alone and broke the moment a tool became two files; the helper keeps the next such tool
+  from breaking them again.
+- **Orient is unaffected:** its output is byte-identical to `main` — 45 lines, 270 words,
+  1683 bytes — and five runs take 2.021s against 2.018s. The positional read was a cost
+  rule about file I/O, never about tokens, and `grep -m1` stops at the first match, so a
+  normal ledger still costs two lines.
+- 303 tests pass, up from 290. Four mutations, each failing only its intended tests.
+
+**Reversal — the unterminated-frontmatter test.** `open-briefs.sh` reported `[no-line]` for
+a ledger whose frontmatter never closes, and a test asserted that was correct. It was not a
+decision, it was half of a disagreement: `list-briefs.sh` read the same ledger and reported
+its status as `done`. The skip is unbounded when the block never closes, so one stray `---`
+hid a ledger's whole status from one tool and not the other. Resolved toward finding the
+line, which is what the anchored locator does; the test is inverted and carries the history.
+
 **c — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
 table. Validator check citing the clause, Contract text, and tests — including the three
 shapes #0013 left unmatched, which become failures instead of silences.

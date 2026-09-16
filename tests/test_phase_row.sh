@@ -61,7 +61,10 @@ test_phase_row_no_tool_defines_its_own_matcher() {
 }
 
 test_phase_row_open_briefs_sources_the_library() {
-  assert_contains 'lib/phase-row.sh' "$REPO_ROOT/tools/open-briefs.sh"
+  # Named in the bootstrap's library list rather than as a full path: open-briefs.sh
+  # loads several libraries in one loop since #0014 phase b.
+  assert_contains 'phase-row' "$REPO_ROOT/tools/open-briefs.sh"
+  assert_contains 'BLC_LIB_DIR' "$REPO_ROOT/tools/open-briefs.sh"
 }
 
 test_phase_row_library_is_not_executable_in_the_index() {

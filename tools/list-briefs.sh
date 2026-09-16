@@ -28,6 +28,30 @@ MODE=table
 if [ "${1:-}" = "--tsv" ]; then MODE=tsv; shift; fi
 BRIEFS_DIR="${1:-docs/briefs}"
 
+# The status-line locator is shared with open-briefs.sh, so it lives in lib/. Symlinks are
+# resolved first: `dirname "$BASH_SOURCE"` reports the directory this was *reached* through,
+# and a link on a PATH directory would send it looking for lib/ beside the link. This
+# bootstrap is the one thing that cannot be shared — it is the code that finds the shared
+# code — so it is duplicated in open-briefs.sh on purpose.
+BLC_SELF="${BASH_SOURCE[0]}"
+BLC_HOPS=0
+while [ -L "$BLC_SELF" ]; do
+  BLC_HOPS=$((BLC_HOPS + 1))
+  if [ "$BLC_HOPS" -gt 40 ]; then
+    echo "error: too many symbolic links resolving ${BASH_SOURCE[0]}" >&2
+    exit 1
+  fi
+  BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
+  BLC_SELF="$(readlink "$BLC_SELF")"
+  case "$BLC_SELF" in
+    /*) ;;
+    *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
+  esac
+done
+BLC_LIB="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib/status-line.sh"
+[ -r "$BLC_LIB" ] || { echo "error: cannot read $BLC_LIB" >&2; exit 1; }
+. "$BLC_LIB"
+
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
 [ -d "$BRIEFS_DIR" ] || { echo "No $BRIEFS_DIR — run from the repo root of a brief-workflow project." >&2; exit 1; }
 
@@ -48,12 +72,13 @@ brief_status() {
     printf '%s' "planned"
     return
   fi
-  raw=$(grep -m1 -E 'blc/[0-9]+' "$1" 2>/dev/null || true)
+  # Shared with open-briefs.sh. This used to search unanchored, which returned a prose
+  # sentence for a ledger that quoted an example status line above its own.
+  raw=$(blc_status_line "$1" || true)
   if [ -z "$raw" ]; then
     printf '%s' "no-line"
     return
   fi
-  raw=$(printf '%s' "$raw" | tr -d '`')
   # The token can contain a space — `done(commit 383ed5b)` — so this strips the
   # schema and serial off the front and the phase fields off the back rather than
   # taking a field by position. Taking $3 would cut that status in half.
