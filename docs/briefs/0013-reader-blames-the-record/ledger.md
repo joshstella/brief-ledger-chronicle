@@ -77,3 +77,23 @@ file — including drift in the record of the work to fix that.
 `docs/briefs/README.md`, `Manifesto.md`, and `.cursor/rules/no-cq-leak.mdc`, which is
 `alwaysApply` and governs how both defects may be described: the install target is a
 destination, never a source. Every fixture in both phases is synthetic.
+
+## Big decisions
+
+**The phase-table shape is unprescribed, and it drifted without a decision.** Found
+2026-09-16 at the review gate.
+
+`blc-start-brief` has said a phase id looks like `a — domain types` since the initial commit
+and has never been edited. Nothing in `skills/`, `templates/`, or `docs/briefs/README.md`
+prescribes a phase-table header. On 2026-09-09 a run wrote `| id | label | status | branch |`
+into #0012; the next two runs imitated the newest ledger rather than the instruction. The
+letter matcher shipped 2026-09-08 was therefore dead for the week that followed — across two
+PR cycles and their reviews — and no test noticed.
+
+Phase `a` fixes the reader, not the shape. Pinning the shape is a different brief: #0011 built
+`brief-checks/` for this class of rule. Drafted as `_drafts/the-shape-nothing-prescribes.md`.
+
+The matcher still misses `` | `a` | ``, `| ~~a~~ |`, and ``| ~~`a`~~ |``; `` `?~* `` after the
+id closes all three. Left open in the bug ledger — no ledger writes those shapes today, and
+widening at the gate would put an untested change into a diff whose claim is that the
+behaviour is now pinned by fixtures.

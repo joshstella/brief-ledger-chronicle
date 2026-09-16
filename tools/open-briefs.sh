@@ -185,28 +185,40 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     state="$(entry_state "$entry")"
     ptr="$(entry_pointer "$entry")"
 
-    # Does the phase table agree? Found by locating the row for this phase and
-    # asking whether the state word appears in it. Deliberately not a full table
-    # parse: three schemas are in use across the existing ledgers, and a scan for
-    # the token survives all three where a column index does not.
+    # Does the phase table agree? Found by collecting every row that could be this
+    # phase's row and asking whether any of them carries the state word. Deliberately
+    # not a full table parse: three schemas are in use across the existing ledgers, and
+    # a scan for the token survives all three where a column index does not.
     #
-    # The two index alphabets need different scans. A blc/1 index appears as the
-    # word `phase N`, distinctive enough to find anywhere in the row. A blc/2
-    # index is a bare letter, and scanning for one loosely would match half the
-    # prose in the row, so it is anchored to the first cell — where `blc-start-brief`
-    # writes it and where every ledger in this repository already puts it.
+    # One matcher serves both index alphabets, because the shapes overlap. A phase row
+    # writes its id one of three ways:
     #
-    # The numeric scan stays unanchored because it already was, not because any
-    # ledger here needs it: every phase table in this repository puts the id in
-    # the first cell. An install target may not, and tightening a scan that works
-    # buys nothing, so it is left as found.
+    #   | a | the row scan | done |         the id alone in the first cell
+    #   | `a — the row scan` | done |       id and label em-dashed into one cell
+    #   | `brief/0001-x` | phase 1 of it |  the id in prose, numeric schema only
+    #
+    # The first two are anchored to the first cell and are what `blc-start-brief` writes.
+    # The third cannot be anchored: #0009 left the numeric scan loose for install targets
+    # that put the id elsewhere, and a test pins that latitude. It is *added* to the
+    # numeric pattern, never substituted for the anchored form — the two-column shape and
+    # the prose shape both occur, and matching only one of them is how this broke.
+    #
+    # Every match is considered, and drift is reported only when *none* of them agrees.
+    # Taking the first match meant a row from a second table — a cost or timing table
+    # whose cells mention `phase 2` — could shadow the real phase row and report a record
+    # that was correct as self-contradictory. The price of the rule is the opposite error:
+    # a stale row goes unreported when some other matching row happens to carry the word.
+    # That trade is deliberate. This tool never gates, so a false positive spends trust in
+    # every finding it will ever emit, while a false negative costs one missed drift that
+    # the next reader of the ledger still sees. A reporter nobody believes reports nothing.
+    row_pattern="^\|[[:space:]]*~*\`?${idx}[[:space:]]*(\||—)"
     case "$idx" in
-      [0-9]*) row="$(grep -n "^|.*phase $idx " "$ledger" | head -1)" ;;
-      *)      row="$(grep -nE "^\|[[:space:]]*~*\`?${idx}[[:space:]]+—" "$ledger" | head -1)" ;;
+      [0-9]*) row_pattern="${row_pattern}|^\|.*phase ${idx} " ;;
     esac
-    if [ -n "$row" ] && ! printf '%s' "$row" | grep -q "$state"; then
+    rows="$(grep -nE "$row_pattern" "$ledger")"
+    if [ -n "$rows" ] && ! printf '%s\n' "$rows" | grep -qF "$state"; then
       print_header
-      finding "[drift]" "phase $idx: status line says '$state'; the phase table row does not"
+      finding "[drift]" "phase $idx: status line says '$state'; no phase table row agrees"
       DRIFT=$((DRIFT + 1))
     fi
 
