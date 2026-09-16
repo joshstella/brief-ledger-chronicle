@@ -67,6 +67,28 @@ entry_state()   { printf '%s' "${1#*:}" | sed 's/(.*//'; }
 entry_pointer() { printf '%s' "$1" | sed -n 's/.*(\(.*\))$/\1/p'; }
 entry_index()   { printf '%s' "${1%%:*}"; }
 
+# The status line sits directly under the title. A ledger whose first line is `---` opens
+# with YAML frontmatter, so its title cannot start until that block closes, and the line
+# lands further down through no fault of its author. That placement is legal: a docs
+# pipeline pins the frontmatter, and `list-briefs` and `orient` already read the line there,
+# so refusing it made this the one reader that could not see a line the others could.
+#
+# The read stays positional because that is what the line is for: a scan costs a line instead
+# of a table. Skip a leading block, skip the blank lines after it, take the title, and the
+# status line is the next line down. This is a cost rule and not a boundary — `list-briefs`
+# searches the whole file on purpose, which is why it read this placement correctly for as
+# long as this reader could not.
+status_line() {
+  awk '
+    NR == 1 && $0 == "---" { in_fm = 1; next }
+    in_fm && $0 == "---"   { in_fm = 0; next }
+    in_fm                  { next }
+    !titled && $0 ~ /^[[:space:]]*$/ { next }
+    !titled                { titled = 1; next }
+    { print; exit }
+  ' "$1" | tr -d '`'
+}
+
 # Pull the branch out of a pointer, which may hold a branch, a PR, a commit, or
 # a comma-separated pair. Anything that is not a PR or a bare commit is a branch.
 pointer_branch() {
@@ -142,7 +164,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
   tracked=1
   git ls-files --error-unmatch "$ledger" >/dev/null 2>&1 || tracked=0
 
-  line="$(sed -n '2p' "$ledger" | tr -d '`')"
+  line="$(status_line "$ledger")"
   case "$line" in
     blc/*) ;;
     *) line="" ;;
@@ -150,7 +172,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
 
   if [ -z "$line" ]; then
     printf '%s\n' "$name"
-    finding "[no-line]" "no blc/N status line under the title; cannot be scanned cheaply"
+    finding "[no-line]" "no blc/N status line on the line below the title, after any leading --- block"
     [ "$tracked" -eq 0 ] && finding "[untracked]" "not in git; invisible to every branch measure"
     DRIFT=$((DRIFT + 1))
     continue

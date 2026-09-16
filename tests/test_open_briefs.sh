@@ -52,6 +52,31 @@ add_ledger() {
   echo "# ${folder#*-}" > "$BRIEFS/$folder/brief.md"
 }
 
+# `add_ledger` puts the title on line 1 and the status line on line 2. It is built from the
+# assumption this fixture exists to disprove, so it cannot express one — hence a second helper
+# rather than a flag on the first.
+# usage: add_frontmatter_ledger <folder> <status-line> [phase-table-rows...]
+add_frontmatter_ledger() {
+  local folder="$1" line="$2"
+  shift 2
+  mkdir -p "$BRIEFS/$folder"
+  {
+    echo "---"
+    echo "title: ${folder#*-}"
+    echo "tags: [ledger]"
+    echo "---"
+    echo ""
+    echo "# Ledger — ${folder#*-}"
+    echo "$line"
+    echo ""
+    echo "| id | status | what |"
+    echo "|---|---|---|"
+    local row
+    for row in "$@"; do echo "$row"; done
+  } > "$BRIEFS/$folder/ledger.md"
+  echo "# ${folder#*-}" > "$BRIEFS/$folder/brief.md"
+}
+
 commit_all() {
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "briefs" >/dev/null 2>&1
@@ -350,6 +375,54 @@ test_open_briefs_accepts_a_two_column_letter_row_that_agrees() {
   assert_status 0
   assert_not_contains "[drift]" "$OUT"
   assert_out "0 drift"
+}
+
+# ── Where the status line lives ──────────────────────────────────────────────
+#
+# A ledger whose first line must be `---` cannot put its status line on row 2 without
+# breaking its own frontmatter, so the line goes under the title once the block closes.
+# `list-briefs` and `orient` always read it there. This reader did not, and reported
+# `[no-line]` about a line the reader of the file can see. #0013 ruled the placement legal
+# rather than demanding the ledger move a line its own docs pipeline pins.
+
+test_open_briefs_reads_a_status_line_under_frontmatter() {
+  make_repo
+  add_frontmatter_ledger 0001-fm '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
+    '| a | the thing | in-progress (`feature/x`) |'
+  commit_all
+  make_branch feature/x
+  advance_main 2
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "[no-line]" "$OUT"
+  assert_out "[in-progress] phase a: feature/x"
+  assert_out "2 commit(s) of main landed since"
+}
+
+# Skipping the block must not become searching the file. A ledger that genuinely has no
+# status line still has to say so, whether or not it opens with frontmatter.
+test_open_briefs_still_reports_no_line_under_frontmatter() {
+  make_repo
+  add_frontmatter_ledger 0001-fmbare 'Just some prose, not a status line.' \
+    '| a | the thing | pending |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[no-line]"
+}
+
+# An unterminated block has no title and no line under it. Reporting `[no-line]` is correct;
+# reading into the body looking for something that parses would not be.
+test_open_briefs_reports_no_line_on_unterminated_frontmatter() {
+  make_repo
+  mkdir -p "$BRIEFS/0001-broken"
+  printf -- '---\ntitle: broken\n\n# Ledger — broken\n`blc/2 #0001 done a:done`\n' \
+    > "$BRIEFS/0001-broken/ledger.md"
+  echo "# broken" > "$BRIEFS/0001-broken/brief.md"
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[no-line]"
 }
 
 # ── It reports; it does not gate ─────────────────────────────────────────────

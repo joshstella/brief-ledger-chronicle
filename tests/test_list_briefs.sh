@@ -70,6 +70,22 @@ test_list_briefs_renders_an_empty_tree_as_a_dash_row() {
   assert_out "| — | — | — | — | — | — |"
 }
 
+# #0013 phase b legalized the frontmatter placement in `open-briefs`. This reader always
+# accepted it, and pinning that keeps the two from drifting apart again — the disagreement
+# was the defect, not either reader on its own.
+test_list_briefs_reads_a_status_line_under_frontmatter() {
+  list_repo
+  mkdir -p "$REPO/docs/briefs/0001-fm"
+  printf '# The thing\n' > "$REPO/docs/briefs/0001-fm/brief.md"
+  printf -- '---\ntitle: fm\ntags: [ledger]\n---\n\n# Ledger\n`blc/2 #0001 done a:done`\n' \
+    > "$REPO/docs/briefs/0001-fm/ledger.md"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -qm "add 0001-fm" >/dev/null 2>&1
+  run_list docs/briefs
+  assert_status 0
+  assert_out "| #0001 | The thing | done |"
+}
+
 test_list_briefs_refuses_without_a_briefs_directory() {
   REPO="$TMP/bare"
   mkdir -p "$REPO"

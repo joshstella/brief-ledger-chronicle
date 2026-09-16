@@ -115,7 +115,8 @@ for what that cost looked like when it was measured.
 
 ### The status line
 
-Every ledger opens with one line under its title, so a scan costs a line instead of a table:
+Every ledger carries one line directly under its title, so a scan costs a line instead of a
+table:
 
 ```
 `blc/2 #0009 in-progress a:done(PR#34) b:in-progress(brief/0009-b-the-convention) c:pending`
@@ -125,6 +126,17 @@ Every ledger opens with one line under its title, so a scan costs a line instead
 reader or a tool gets the whole state without parsing prose. **Redundancy has a price** — a
 stale line is worse than no line, because a cheap scan trusts it and stops looking. Update it
 in the same edit that changes a status, never separately.
+
+**Under the title, wherever the title is.** A ledger that opens with YAML frontmatter puts its
+title after the closing `---`, and the status line follows the title there. No reader may require
+row 2 — a docs pipeline that pins frontmatter is not something a ledger can argue with.
+`open-briefs` skips a leading block, and only a leading one: line 1 exactly, closed by the next
+`---`.
+
+**Row 2 is a cost rule, not a boundary.** The line exists so a scan costs a line instead of a
+table, so a reader starts where the line should be. Reading further is allowed when a reader
+needs it. `list-briefs` searches the file and accepts a superset, which is why it read the
+frontmatter placement correctly for as long as `open-briefs` could not.
 
 #### `blc/1` and `blc/2` — why there are two
 
