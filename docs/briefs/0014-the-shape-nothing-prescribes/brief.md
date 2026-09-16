@@ -1,7 +1,6 @@
 # The shape nothing prescribes
 
-**Created:** 2026-09-16T10:52:17Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0013
+**Serial:** #0014 · **Created:** 2026-09-16T10:52:17Z · **Author:** josh.stella@gmail.com · **Depends on:** #0013
 
 ## Ground
 
