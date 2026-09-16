@@ -31,6 +31,7 @@ tests/
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_contract_ship.sh   what a target receives of the Contract and its validator
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
+  test_source_tree.sh     file modes in this repo's own tree, which no install test can see
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -104,6 +105,26 @@ count stayed at 1 while the install history was destroyed. The suite did catch i
 through the entry-count tests rather than the header test — but only because those
 existed. The lesson is in the file: **assert on what must survive, not only on
 what must not repeat.**
+
+## An assertion downstream of a repair cannot see the break
+
+`install.sh` runs `chmod +x` on every tool it places. Five tests assert that an
+installed tool is executable. All five read the copy on the far side of that
+`chmod`, so none of them can fail for a source file whose mode is wrong.
+
+`tools/open-briefs.sh` went to mode `100644` in `f0dc92d`, stayed there through
+the next merge and both PR reviews, and was found by hand in a `git pull` summary.
+The suite was green throughout. `test_source_tree.sh` now asserts the mode in this
+repository's own tree, and the mutation that proves it — `git update-index
+--chmod=-x tools/open-briefs.sh` — fails that one test while all 41 install and
+ship tests stay green. That green is the finding, not a side note.
+
+The assertion reads the **git index**, not the filesystem. The index is what a
+fresh clone materializes. A `chmod` that was never staged repairs one working
+copy and leaves every other one broken.
+
+**Assert on the artifact you ship, not on a copy something else has already
+normalized.**
 
 ## Helper names are shared across every test file
 
