@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:pending c:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:in-progress(brief/0014-b-the-shared-locator) c:pending d:pending`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -10,8 +10,13 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the shared matcher | done | PR#61 |
-| b | the clause | pending | — |
-| c | the upgrade | pending | — |
+| b | the shared locator | in-progress | `brief/0014-b-the-shared-locator` |
+| c | the clause | pending | — |
+| d | the upgrade | pending | — |
+
+Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
+`d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
+Nothing is stranded — `a` is the only phase with a PR, and it did not move.
 
 **a — the shared matcher.** One implementation of the phase-row matcher in `tools/lib/`,
 read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour
@@ -53,29 +58,36 @@ guarantee that makes "used by both" enforceable when `b` arrives:
 fails if one appears. The brief's agreement test belongs in `b`, where there are two
 callers to disagree.
 
-**b — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
+**b — the shared locator.** One implementation of the status-line locator in `tools/lib/`,
+read by `open-briefs.sh` and `list-briefs.sh`. Inserted after phase `a` on a finding phase
+`a` could not have seen — see complication 7.
+
+**c — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
 table. Validator check citing the clause, Contract text, and tests — including the three
 shapes #0013 left unmatched, which become failures instead of silences.
 
-**c — the upgrade.** How an existing repository crosses into a clause that did not exist
+**d — the upgrade.** How an existing repository crosses into a clause that did not exist
 yesterday. Blocked by open decision 2.
 
 ## Dependency structure
 
-Strict chain: `a → b → c`. `b` needs the matcher; `c` needs the clause to exist before it
-can decide how to introduce it.
+Strict chain: `a → b → c → d`. `c` needs both shared pieces; `d` needs the clause to exist
+before it can decide how to introduce it.
 
 ## Open decisions
 
 1. ~~Where the shared matcher lives.~~ Resolved on initiation; see the brief's settled
    decisions. The answer was forced rather than chosen — see complication 3.
-2. **Whether `BRIEFS-9` gates immediately or reports for one version.** Blocks phase `c`.
-   #0003 faced this question and demoted a gate to a report.
+2. **Whether `BRIEFS-9` gates immediately or reports for one version.** Blocks phase `d`,
+   which the 2026-09-16 re-lettering moved from `c`. #0003 faced this question and demoted
+   a gate to a report.
 
 ## Complications
 
-Found on initiation, reading the brief against `main` at `afe97e4`. None were visible when
-the draft was written. Phase `a` carries 1, 2, and 4.
+1 to 6 were found on initiation and during phase `a`, reading the brief against `main` at
+`afe97e4`. 7 to 9 were found planning phase `b`, and none of them was visible before phase
+`a` landed. Phase `a` carried 1, 2, 4, 5 and 6; phase `b` carries 7; phase `c` carries 8
+and 9.
 
 1. **`tools/lib/` is not a free path.** The ownership map hardcodes the four tools at
    `install.sh:343-346`; a fifth entry is a hand edit there. `install.sh:856` runs
@@ -120,3 +132,31 @@ the draft was written. Phase `a` carries 1, 2, and 4.
    Found by review, not by the suite. Now a literal `grep -F` with two positive controls
    in front of it, mutation-tested in both directions. Written up in `tests/README.md`
    under "A guard whose pattern stops matching its own target".
+
+7. **Two status-line locators already exist, and they disagree by design.** Found while
+   planning the clause. `open-briefs.sh` walks structurally — skip frontmatter, skip to the
+   title, take the next line — and `list-briefs.sh` greps the whole file for `blc/`. The
+   divergence is documented in `open-briefs.sh` as a cost rule, and checked against all
+   thirteen ledgers here: they **agree on every one**, so nothing is broken today.
+
+   It matters because the clause adds a third reader that *gates*. A gate that disagrees
+   with a reader about where the status line lives is #0013's second defect rebuilt inside
+   the brief written to prevent it. Hence the inserted phase `b`.
+
+   **Decision — the shared locator takes the permissive semantics** (whole-file search, as
+   `list-briefs` does). A gate must never fail a ledger that a reader can read correctly;
+   the permissive form can only widen what is found. The cost is a behaviour change for
+   `open-briefs.sh`, confined to ledgers it currently reports `[no-line]` for, which is a
+   finding appearing rather than disappearing. Reversible before `c` if the author disagrees.
+
+8. **Two written claims go false when the validator sources the library.** Contract v1.1
+   line 17 says the script "travels with this document, so a repository that holds the
+   Contract also holds the check", and `validate-briefs.sh:15` says "No dependency beyond a
+   POSIX shell and grep." Both stop being true in `c`. v1.2 is already scheduled by the
+   settled decisions, so the text lands there; the header comment is `c`'s to fix.
+
+9. **`BRIEFS-9` is the first clause that reads `ledger.md`.** All eight existing clauses
+   govern the briefs directory and `brief.md`. This widens what the Contract governs from
+   "the record is well-formed" to "the ledger is internally consistent". Worth taking
+   deliberately rather than as a side effect of adding a ninth item. `#0007` has no ledger,
+   so the check must skip a brief that has not been started.
