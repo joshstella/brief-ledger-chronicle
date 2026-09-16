@@ -343,7 +343,8 @@ ownership_map() {
     tools/validate-briefs.sh \
     tools/open-briefs.sh \
     tools/list-briefs.sh \
-    tools/orient.sh; do
+    tools/orient.sh \
+    tools/lib/phase-row.sh; do
     printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
   done
 
@@ -721,7 +722,7 @@ echo "  $TARGET_DIR/docs/contracts/     (Contract v1.1 — the briefs convention
 echo "  $TARGET_DIR/docs/chronicles/    (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 echo "  $TARGET_DIR/docs/state/         (one declaration per contributor)"
-echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, list-briefs.sh, orient.sh)"
+echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, list-briefs.sh, orient.sh, lib/)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
@@ -780,6 +781,7 @@ $TARGET_DIR/docs/chronicles
 $TARGET_DIR/docs/install-log
 $TARGET_DIR/docs/state
 $TARGET_DIR/tools
+$TARGET_DIR/tools/lib
 $TARGET_DIR/$SKILLS_DST_REL"
 if [[ "$HOST" == "claude" ]]; then
   SCAFFOLD_DIRS="$SCAFFOLD_DIRS
@@ -853,7 +855,13 @@ while IFS=$'\t' read -r _owner _kind src dst; do
     tool_is_new=true
   fi
   place_file "$SCRIPT_DIR/$src" "$tool_dst" "$dst"
-  chmod +x "$tool_dst"
+  # tools/lib/ is sourced, never invoked. An execute bit there would advertise an entry
+  # point that does not exist — the same claim tests/test_source_tree.sh declines to make
+  # about these files in our own tree.
+  case "$src" in
+    tools/lib/*) ;;
+    *) chmod +x "$tool_dst" ;;
+  esac
 done < <(map_rows toolkit)
 
 # ── Step 5: Place the skills ─────────────────────────────────────────────────

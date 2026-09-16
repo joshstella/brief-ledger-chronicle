@@ -18,6 +18,29 @@ by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the
 disagree. No behaviour change. Carries the installer and ownership-map work in complications
 1 and 2 below.
 
+### Phase a — what it does
+
+- `tools/lib/phase-row.sh` holds the matcher, as `blc_phase_row_pattern` and
+  `blc_phase_row_find`. No shebang, no execute bit, `blc_` prefix on both functions
+  because the file is sourced into tools that already have globals.
+- `open-briefs.sh` sources it and lost its inline `row_pattern`. A missing library exits
+  2 with the other environment failures, so a scan that cannot run never reports clean.
+- `install.sh`: `tools/lib` scaffolded, `tools/lib/phase-row.sh` in the ownership map,
+  the `chmod +x` loop skips `tools/lib/*`, and the pre-install summary names `lib/`.
+  Verified against a real install — the library lands `-rw-r--r--` beside four
+  `-rwxr-xr-x` tools, and the installed `open-briefs.sh` runs from there.
+- `tests/test_source_tree.sh` exempts `tools/lib/*.sh` by path.
+- `tests/test_phase_row.sh` is new: 283 tests pass, up from 276.
+
+**Scope call — `validate-briefs.sh` does not source it yet.** The brief's phase `a` says
+the matcher is "used by both" tools, but `validate-briefs.sh` has no phase-row logic until
+`BRIEFS-9` exists in phase `b`, so sourcing it now would add an unused import and phase
+`a` would stop being provably behaviour-preserving. What phase `a` ships instead is the
+guarantee that makes "used by both" enforceable when `b` arrives:
+`phase_row_no_tool_defines_its_own_matcher` scans `tools/` for a re-derived pattern and
+fails if one appears. The brief's agreement test belongs in `b`, where there are two
+callers to disagree.
+
 **b — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
 table. Validator check citing the clause, Contract text, and tests — including the three
 shapes #0013 left unmatched, which become failures instead of silences.

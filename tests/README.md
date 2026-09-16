@@ -32,6 +32,7 @@ tests/
   test_contract_ship.sh   what a target receives of the Contract and its validator
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
   test_source_tree.sh     file modes in this repo's own tree, which no install test can see
+  test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
