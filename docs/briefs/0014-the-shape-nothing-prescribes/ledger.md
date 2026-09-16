@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:in-progress(brief/0014-a-the-shared-matcher) b:pending c:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:pending c:pending`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -9,7 +9,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the shared matcher | in-progress | `brief/0014-a-the-shared-matcher` |
+| a | the shared matcher | done | PR#61 |
 | b | the clause | pending | — |
 | c | the upgrade | pending | — |
 
