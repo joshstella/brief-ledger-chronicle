@@ -1,5 +1,5 @@
 # Ledger — #0013 A reader that cannot find it reports it missing
-`blc/2 #0013 in-progress a:in-progress(brief/0013-a-the-row-scan) b:pending`
+`blc/2 #0013 in-progress a:done(PR#55) b:pending`
 
 **Brief:** `docs/briefs/0013-reader-blames-the-record/brief.md`
 **Started:** 2026-09-16
@@ -9,7 +9,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the row scan | in-progress | `brief/0013-a-the-row-scan` |
+| a | the row scan | done(PR#55) | `brief/0013-a-the-row-scan` |
 | b | the line's home | pending | — |
 
 **a — the row scan.** One matcher in `tools/open-briefs.sh`, serving both index alphabets:
@@ -77,6 +77,21 @@ file — including drift in the record of the work to fix that.
 `docs/briefs/README.md`, `Manifesto.md`, and `.cursor/rules/no-cq-leak.mdc`, which is
 `alwaysApply` and governs how both defects may be described: the install target is a
 destination, never a source. Every fixture in both phases is synthetic.
+
+## Phase a — what it does
+
+**One matcher, both alphabets.** The id alone in the first cell, the em-dashed form, and
+`phase N` in prose for `blc/1`. The numeric pattern gained the anchored form and kept the
+prose form, so an install target that puts the id elsewhere still works.
+
+**Every match considered.** `head -1` is gone. Drift is reported only when no matching row
+agrees, so a decoy row from a second table can no longer shadow a real row that agrees.
+
+**#0011 and #0012 became scannable.** The letter scan matched zero rows in either file before
+this phase. A mutated row in #0011 now reports drift and still exits 0.
+
+**Four tests.** Three fail before the change and pass after. The fourth guards the opposite
+error, a matcher loose enough to fire on everything.
 
 ## Big decisions
 
