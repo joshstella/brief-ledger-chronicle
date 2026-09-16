@@ -61,6 +61,23 @@ mismatch breaks the same way in all of them. That puts it with the other eight c
 second defect was two readers disagreeing about where the status line lives. Writing a second
 independent matcher for the gate would reproduce that defect deliberately.
 
+## The finding this inherits
+
+#0013 phase `a` left one gap open. Its bug ledger is keyed to `brief/0013-a-the-row-scan`, a
+branch that has since merged, so the finding is tracked against nothing. It moves here.
+
+`tools/open-briefs.sh` builds `row_pattern` to accept a leading `~~` and a leading backtick, but permits nothing
+after the id. Three shapes therefore match no row and report clean: `` | `a` | ``,
+`| ~~a~~ |`, and ``| ~~`a`~~ |``. Appending `` `?~* `` after the id closes all three and
+changes no shape that currently matches, checked against six fixtures.
+
+It was not taken at the review gate, deliberately. Widening the matcher treats the symptom —
+the cause is that nothing prescribes the phase-table shape, so the next shape nobody chose
+will be silent in the same way. Under this brief the gap stops being silent either way: a
+status line naming `a` against a table no reader can match becomes a defect
+`validate-briefs.sh` reports, whether the answer is a wider matcher or a corrected ledger.
+That is the difference between a gap someone has to remember and one the gate finds.
+
 ## Change
 
 | Phase | Work |
