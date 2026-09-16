@@ -92,6 +92,21 @@ run_install_with_path() {
   LAST_STATUS=$?
 }
 
+# Copy a toolkit tool into a fixture repo, with the library it sources.
+#
+# Tools became two files in #0014: the script and what it reads out of tools/lib/. A
+# fixture that copies the script alone builds a broken install rather than a working one,
+# and the tool exits non-zero before doing anything the test meant to measure. Kept here
+# rather than inline so the next tool that gains a library dependency does not silently
+# break every fixture that hand-copies it.
+fixture_install_tool() {
+  local repo="$1" tool="$2"
+  mkdir -p "$repo/tools/lib"
+  cp "$REPO_ROOT/tools/$tool" "$repo/tools/$tool"
+  chmod +x "$repo/tools/$tool"
+  cp "$REPO_ROOT"/tools/lib/*.sh "$repo/tools/lib/"
+}
+
 # ── Assertions ───────────────────────────────────────────────────────────────
 
 assert_status() {

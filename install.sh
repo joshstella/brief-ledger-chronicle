@@ -344,7 +344,8 @@ ownership_map() {
     tools/open-briefs.sh \
     tools/list-briefs.sh \
     tools/orient.sh \
-    tools/lib/phase-row.sh; do
+    tools/lib/phase-row.sh \
+    tools/lib/status-line.sh; do
     printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
   done
 

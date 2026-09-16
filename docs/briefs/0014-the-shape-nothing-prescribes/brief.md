@@ -82,11 +82,31 @@ That is the difference between a gap someone has to remember and one the gate fi
 | Phase | Work |
 |---|---|
 | `a — the shared matcher` | One implementation of the phase-row matcher in `tools/lib/`, read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour change. Carries the installer and ownership-map work a new `tools/` path brings with it. |
-| `b — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. `validate-briefs.sh` becomes the matcher's second reader, with a test that fails if the two ever disagree. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
-| `c — the upgrade` | How an existing repository crosses into a clause that did not exist yesterday. Blocked by open decision 2. |
+| `b — the shared locator` | One implementation of the status-line locator in `tools/lib/`, read by `open-briefs.sh` and `list-briefs.sh`. The two disagree today by design — one walks structurally past frontmatter, the other searches the whole file — and `c` adds a third reader that gates. Resolves to a whole-file search with an anchored match: the line must begin with the token. That form finds the placements the structural reader misses and refuses the prose the unanchored search swallows, and returns identical results on every ledger here. |
+| `c — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. `validate-briefs.sh` becomes the second reader of both shared pieces, with a test that fails if the readers ever disagree. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
+| `d — the upgrade` | How an existing repository crosses into a clause that did not exist yesterday. Blocked by open decision 2. |
 
-Strict chain. `b` needs the matcher; `c` needs the clause to exist before it can decide how to
-introduce it.
+Strict chain. `b` reconciles the locator; `c` needs both shared pieces; `d` needs the clause to
+exist before it can decide how to introduce it.
+
+**Re-lettered 2026-09-16, after phase `a` merged.** A new `b` was inserted and the former `b`
+and `c` moved down one letter:
+
+| was | is |
+|---|---|
+| `a — the shared matcher` | `a` — unchanged, merged as PR#61 |
+| `b — the clause` | `c` |
+| `c — the upgrade` | `d` |
+
+The mapping is recorded rather than applied quietly because merged PRs cite phase ids as they
+were, and a silent re-lettering strands them. Only `a` has merged, and it keeps its letter, so
+nothing is stranded here.
+
+The insertion came from a finding phase `a` could not have seen: `open-briefs.sh` and
+`list-briefs.sh` already locate the status line two different ways, deliberately. They agree on
+all thirteen ledgers in this repository today, so nothing is broken — but the clause adds a
+third reader that *gates*, and a gate that disagrees with a reader about where the line lives
+is #0013's second defect rebuilt inside the brief written to prevent it.
 
 **Amended 2026-09-16, after phase `a` was reviewed.** The `a` row originally required the
 matcher "used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the
@@ -164,7 +184,9 @@ Resolved 2026-09-16 during drafting.
    so the reference from phase `c` still resolves.
 2. **Whether `BRIEFS-9` gates immediately or reports for one version.** A clause that lands
    already failing is the honest signal; a clause that reports first is the kinder upgrade.
-   #0003 faced this exact question and demoted a gate to a report. Blocks phase `c`.
+   #0003 faced this exact question and demoted a gate to a report. Blocks phase `d` — the
+   phase this decision blocks is the upgrade, which the 2026-09-16 re-lettering moved from
+   `c` to `d`.
 
 ## Non-goals
 
