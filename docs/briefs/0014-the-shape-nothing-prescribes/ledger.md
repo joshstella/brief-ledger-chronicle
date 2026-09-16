@@ -143,11 +143,23 @@ and 9.
    with a reader about where the status line lives is #0013's second defect rebuilt inside
    the brief written to prevent it. Hence the inserted phase `b`.
 
-   **Decision — the shared locator takes the permissive semantics** (whole-file search, as
-   `list-briefs` does). A gate must never fail a ledger that a reader can read correctly;
-   the permissive form can only widen what is found. The cost is a behaviour change for
-   `open-briefs.sh`, confined to ledgers it currently reports `[no-line]` for, which is a
-   finding appearing rather than disappearing. Reversible before `c` if the author disagrees.
+   **Decision — the shared locator searches the whole file but anchors the match.** The
+   line must begin with the token, allowing only leading whitespace and a backtick.
+
+   This corrects an earlier decision recorded here, which said to take `list-briefs`'
+   unanchored whole-file search on the reasoning that a permissive form "can only widen
+   what is found, never fail a ledger that reads correctly today". That reasoning was
+   wrong, and a baseline run before writing any code is what showed it. Against a ledger
+   whose prose quotes an example status line above its own, the unanchored search returns
+   **the prose sentence** — a gate parsing it would read garbage phase ids and fail a
+   correct ledger. Finding the wrong line is worse than finding none.
+
+   The anchored form dominates both existing locators on every fixture: it finds the two
+   legitimate placements the structural reader misses (a blank line after the title, a line
+   further down the file) and refuses the sentence the unanchored search accepts. On all
+   thirteen ledgers here it returns byte-identical results to the structural reader, so it
+   is not a behaviour change in this repository at all — it only decides shapes this
+   repository does not yet contain.
 
 8. **Two written claims go false when the validator sources the library.** Contract v1.1
    line 17 says the script "travels with this document, so a repository that holds the
