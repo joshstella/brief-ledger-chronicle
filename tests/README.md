@@ -32,6 +32,7 @@ tests/
   test_contract_ship.sh   what a target receives of the Contract and its validator
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
   test_source_tree.sh     file modes in this repo's own tree, which no install test can see
+  test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -105,6 +106,50 @@ count stayed at 1 while the install history was destroyed. The suite did catch i
 through the entry-count tests rather than the header test — but only because those
 existed. The lesson is in the file: **assert on what must survive, not only on
 what must not repeat.**
+
+## A refactor can remove a property nobody wrote down
+
+Extracting the phase-row matcher into `tools/lib/phase-row.sh` (#0014 phase `a`) was
+declared a no-behaviour-change change, and against the whole suite it was one: 283 tests
+stayed green. It still removed something. Before the extraction `open-briefs.sh` had no
+external dependency and ran from wherever it was reached. After it, the script located
+`lib/` with `dirname "${BASH_SOURCE[0]}"` — the directory it was *reached* through — so
+reaching it by a symlink, the ordinary way a tool lands on a `PATH`, made it exit 2
+looking for a library beside the link.
+
+No test covered it because no test had needed to: the property was free before, so nobody
+had written it down. An independent review of the diff also passed it. It was found by
+running the binary through a symlink on purpose.
+
+`phase_row_open_briefs_runs_through_a_symlink` now pins it, and the mutation that proves
+it — restoring the plain `dirname` — fails that one test and no other. **A property that
+costs nothing to hold is the kind that disappears silently, because its test was never
+written.**
+
+## A guard whose pattern stops matching its own target
+
+The same phase shipped a test whose entire job was to fail if any tool re-derived the
+shared matcher. It could not fail. The fingerprint was written as the ERE `~\*\`\?`,
+which asks for `` ~*`? ``; the source it searches for contains `` ~*\`? ``, with a
+backslash before the backtick because the backtick is escaped inside a double-quoted
+shell string. It matched nothing in the repository — not a copy, not the library it was
+guarding, nothing.
+
+A verbatim copy of the whole matcher, planted at `tools/copycat.sh`, passed it. The PR
+body called it "the test that matters" and the ledger offered it as the compensating
+control for deferring half the phase's deliverable. It was a tautology, and it was found
+by review, not by the suite.
+
+The pattern is now a literal searched with `grep -F`, and two positive controls sit in
+front of the guard: one asserts the fingerprint still appears in the library, the other
+plants a copy in a temporary directory and requires the scan to find it. Rotting the
+fingerprint back to the broken ERE fails both and leaves the guard itself green — which
+is the point, because the guard alone could never have told you.
+
+**A scan that matches nothing reports success.** This file already says that about
+`checked > 0` in `test_source_tree.sh`. The lesson did not transfer to the next scan
+written, three days later, by someone who had read it. Guard the search itself, not only
+the thing being searched for.
 
 ## An assertion downstream of a repair cannot see the break
 

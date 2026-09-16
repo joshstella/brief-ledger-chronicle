@@ -30,6 +30,47 @@
 
 BRIEFS_DIR="${1:-docs/briefs}"
 
+# The phase-row matcher is shared with validate-briefs.sh, so it lives in lib/ rather
+# than here. A missing library is a broken install, not a finding: it exits 2 with the
+# other environment failures below, because a scan that cannot run must not report a
+# clean tree it never looked at.
+#
+# Symlinks are resolved first. `dirname "${BASH_SOURCE[0]}"` alone reports the directory
+# the script was *reached* through, so a link on a PATH directory would send this looking
+# for lib/ next to the link. Before the matcher moved out of this file the script had no
+# external dependency and ran from wherever it was reached, and that property is kept
+# here rather than surrendered to the refactor. Walked by hand instead of `readlink -f`,
+# which is GNU-only and absent on macOS.
+#
+# The walk is bounded. A cycle cannot reach this loop by the ordinary route — the kernel
+# resolves the path before bash executes anything, so a circular link fails at exec with
+# ELOOP and this script never starts. That is an argument from the caller's behaviour,
+# not from this loop's, and it stops holding the moment someone sources this file with a
+# path they built themselves. The bound costs one comparison and removes the need to
+# trust the argument.
+BLC_SELF="${BASH_SOURCE[0]}"
+BLC_HOPS=0
+while [ -L "$BLC_SELF" ]; do
+  BLC_HOPS=$((BLC_HOPS + 1))
+  if [ "$BLC_HOPS" -gt 40 ]; then
+    printf 'error: too many symbolic links resolving %s\n' "${BASH_SOURCE[0]}" >&2
+    exit 2
+  fi
+  BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
+  BLC_SELF="$(readlink "$BLC_SELF")"
+  # A relative link target is relative to the directory holding the link, not to $PWD.
+  case "$BLC_SELF" in
+    /*) ;;
+    *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
+  esac
+done
+BLC_LIB="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib/phase-row.sh"
+if [ ! -r "$BLC_LIB" ]; then
+  printf 'error: cannot read %s\n' "$BLC_LIB" >&2
+  exit 2
+fi
+. "$BLC_LIB"
+
 OPEN=0
 DRIFT=0
 UNTRACKED=0
@@ -208,22 +249,9 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     ptr="$(entry_pointer "$entry")"
 
     # Does the phase table agree? Found by collecting every row that could be this
-    # phase's row and asking whether any of them carries the state word. Deliberately
-    # not a full table parse: three schemas are in use across the existing ledgers, and
-    # a scan for the token survives all three where a column index does not.
-    #
-    # One matcher serves both index alphabets, because the shapes overlap. A phase row
-    # writes its id one of three ways:
-    #
-    #   | a | the row scan | done |         the id alone in the first cell
-    #   | `a — the row scan` | done |       id and label em-dashed into one cell
-    #   | `brief/0001-x` | phase 1 of it |  the id in prose, numeric schema only
-    #
-    # The first two are anchored to the first cell and are what `blc-start-brief` writes.
-    # The third cannot be anchored: #0009 left the numeric scan loose for install targets
-    # that put the id elsewhere, and a test pins that latitude. It is *added* to the
-    # numeric pattern, never substituted for the anchored form — the two-column shape and
-    # the prose shape both occur, and matching only one of them is how this broke.
+    # phase's row and asking whether any of them carries the state word. What counts as
+    # a candidate row is `blc_phase_row_find`'s business, and the shapes it knows are
+    # documented there rather than restated here.
     #
     # Every match is considered, and drift is reported only when *none* of them agrees.
     # Taking the first match meant a row from a second table — a cost or timing table
@@ -233,11 +261,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     # That trade is deliberate. This tool never gates, so a false positive spends trust in
     # every finding it will ever emit, while a false negative costs one missed drift that
     # the next reader of the ledger still sees. A reporter nobody believes reports nothing.
-    row_pattern="^\|[[:space:]]*~*\`?${idx}[[:space:]]*(\||—)"
-    case "$idx" in
-      [0-9]*) row_pattern="${row_pattern}|^\|.*phase ${idx} " ;;
-    esac
-    rows="$(grep -nE "$row_pattern" "$ledger")"
+    rows="$(blc_phase_row_find "$idx" "$ledger")"
     if [ -n "$rows" ] && ! printf '%s\n' "$rows" | grep -qF "$state"; then
       print_header
       finding "[drift]" "phase $idx: status line says '$state'; no phase table row agrees"

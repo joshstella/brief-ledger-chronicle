@@ -34,8 +34,9 @@ An untestable merge gets an explicit "test-exempt because…" in the PR, not a s
 
 ## Toolkit-owned vs project-owned
 
-Every install replaces toolkit-owned paths: `blc-*` skills, `tools/*.sh`, this rules
-file, and the shipped brief docs. Local edits to them do not survive the next install.
+Every install replaces toolkit-owned paths: `blc-*` skills, everything under `tools/`
+including `tools/lib/`, this rules file, and the shipped brief docs. Local edits to them
+do not survive the next install.
 Stale skills and commands named in `docs/install-log/install-log.md` are removed.
 
 Project-owned paths are never written after creation: `AGENTS.md` / `CLAUDE.md`, numbered

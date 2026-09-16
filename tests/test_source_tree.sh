@@ -10,11 +10,18 @@
 # what a fresh clone materializes, and a chmod that was never staged leaves
 # every other checkout broken while looking repaired on the one that ran it.
 
-# Sourced by run.sh rather than invoked, so their mode carries no meaning.
-# Matched by pattern, not listed, so adding a test file needs no edit here.
+# Sourced rather than invoked, so their mode carries no meaning.
+# Matched by pattern, not listed, so adding a file to either place needs no edit here.
+#
+# tools/lib/ is exempt by path, not by inspecting the file. The directory is the
+# declaration: putting code there is how an author says "this is sourced", and
+# install.sh reads the same path the same way when it decides not to chmod it. The
+# alternative considered was deriving it from a missing shebang, which infers the
+# intent from a detail an author can omit by accident.
 source_tree_is_sourced_not_invoked() {
   case "$1" in
     tests/lib.sh|tests/test_*.sh) return 0 ;;
+    tools/lib/*.sh) return 0 ;;
     *) return 1 ;;
   esac
 }
