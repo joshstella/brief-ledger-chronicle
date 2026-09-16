@@ -148,6 +148,41 @@ that a permissive form can only widen what is found. A gate reading that sentenc
 parse garbage phase ids and fail a correct ledger. Finding the wrong line is worse than
 finding none. The shared locator searches the whole file **and** anchors the match.
 
+A fourth shape survived even that, and review found it: an example at column 0 **inside a
+code fence**. Anchoring defeats an example with prose in front of it; it does nothing about
+one that is already at the start of its line. That is how `docs/briefs/README.md` prints
+the status line, so the first ledger to document its own format would have handed every
+reader the example. The locator now tracks fences.
+
+## A test can be named for the property it does not check
+
+The agreement test this phase shipped ran both tools against every ledger and threw one
+result away — `: "$in_open"` — leaving a single assertion that spoke only about
+`list-briefs.sh`. Blinding `open-briefs.sh` completely failed eighteen other tests and left
+the agreement test green.
+
+Two things make this worth a heading rather than a bug fix. The first is that it is the same
+defect as the section below, one phase later: a guard that names a property and does not
+hold it. The second is the name. A later phase owing an agreement test would have found one
+already written, with the right words on it, and had no reason to look inside. **A wrong
+test is worse than a missing one**, because a missing one still reads as missing.
+
+It was also written against the wrong corpus. Running over this repository's real ledgers
+feels thorough and proves nothing here: those ledgers agreed under *both* old locators, which
+is why the disagreement lasted. The rewrite uses the five shapes that actually divide the two
+readers, each planted in a real repo and read by both tools.
+
+## A lesson recorded under one tool's name does not reach the second
+
+Phase `a` found that `open-briefs.sh` broke when reached through a symlink, fixed it, and
+pinned it with `test_phase_row_open_briefs_runs_through_a_symlink`. Phase `b` copied that
+walk into `list-briefs.sh` — with the comment explaining why it matters — and copied no
+test. Replacing the whole walk with a plain `dirname` left all 303 tests green.
+
+The write-up sat two headings up this file the whole time. It did not help, because the
+protection was filed under the name of the first tool to need it. When a property moves to a
+second implementation, the test has to move with it; the prose does not travel on its own.
+
 The suite already contained the contradiction, pinned on one side.
 `open-briefs_reports_no_line_on_unterminated_frontmatter` asserted that an unclosed `---`
 block means no status line, while `list-briefs.sh` read the same fixture and reported its

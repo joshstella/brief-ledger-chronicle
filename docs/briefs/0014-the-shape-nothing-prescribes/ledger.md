@@ -65,11 +65,13 @@ read by `open-briefs.sh` and `list-briefs.sh`. Inserted after phase `a` on a fin
 ### Phase b — what it does
 
 - `tools/lib/status-line.sh` holds `blc_status_line`: whole-file search, anchored match,
-  leading whitespace and backticks stripped so callers do not each re-decide what to trim.
+  code fences skipped, leading whitespace stripped and every backtick removed, so callers do
+  not each re-decide what to trim.
 - `open-briefs.sh` lost its positional `status_line()`; its bootstrap now loads a list of
   libraries rather than one. `list-briefs.sh` lost its unanchored `grep` and gained the same
   bootstrap — which is the one thing that cannot be shared, being the code that finds the
-  shared code.
+  shared code. The duplication is accepted deliberately; keeping the copies *identical* is
+  the part that needed saying, and did not hold on the first attempt — see complication 10.
 - `install.sh` ships the new library through the ownership map. Dropping that row is caught
   by `status_line_an_installed_list_briefs_finds_its_library` and by
   `orient_runs_inside_a_fresh_install`.
@@ -80,7 +82,38 @@ read by `open-briefs.sh` and `list-briefs.sh`. Inserted after phase `a` on a fin
   1683 bytes — and five runs take 2.021s against 2.018s. The positional read was a cost
   rule about file I/O, never about tokens, and `grep -m1` stops at the first match, so a
   normal ledger still costs two lines.
-- 303 tests pass, up from 290. Four mutations, each failing only its intended tests.
+- 312 tests pass, up from 290. Seven mutations, each failing only its intended tests.
+
+### Phase b — what review found, and it was the same defect twice
+
+Three findings, all of them the shape this brief exists to address: a record that says a
+property is held, and no mechanism holding it.
+
+1. **The agreement test could not detect disagreement.** It ran both tools per ledger, then
+   discarded one result with `: "$in_open"`, so the only live assertion concerned
+   `list-briefs.sh`. Blinding `open-briefs.sh` entirely failed eighteen other tests and left
+   this one green. It is phase `a`'s defect one phase later, under a name claiming the
+   opposite — and worse than phase `a`'s, because a later phase owing an agreement test
+   would have found one already written. Rewritten against the five shapes that used to
+   divide the two readers; this repository's own ledgers agreed under *both* old locators
+   and could therefore never have proved anything.
+2. **`list-briefs.sh`'s symlink walk had no test.** Phase `a` added that walk to
+   `open-briefs.sh` after review found the missing property, and pinned it. Phase `b` copied
+   the walk into the second tool and copied no test: replacing it with a plain `dirname`
+   left all 303 tests green while the tool broke when reached through a link. The lesson
+   from `a` was recorded in a test named after one tool, so the second tool did not inherit
+   it.
+3. **The anchor did not defeat a fenced example.** Prose in front of an example loses to the
+   anchor; an example at column 0 inside a fence does not — and that is precisely how
+   `docs/briefs/README.md` prints the status line. A ledger documenting its own format would
+   have handed both readers `#9999`. Nothing here does it yet, which is the only reason it
+   was invisible. The locator now tracks fences.
+
+**The control worked.** Moving the locator from `grep` to `awk` required escaping the slash,
+which left `SL_FINGERPRINT` no longer matching the library it fingerprints — the identical
+stale-pattern defect phase `a` shipped. This time the two positive controls added after that
+review failed on the next run and named it. That is the mechanism doing its job unprompted,
+and the reason the controls stay.
 
 **Reversal — the unterminated-frontmatter test.** `open-briefs.sh` reported `[no-line]` for
 a ledger whose frontmatter never closes, and a test asserted that was correct. It was not a
@@ -199,3 +232,19 @@ and 9.
    "the record is well-formed" to "the ledger is internally consistent". Worth taking
    deliberately rather than as a side effect of adding a ninth item. `#0007` has no ledger,
    so the check must skip a brief that has not been started.
+
+10. **The two bootstrap copies drifted in the commit that created the second one.** The
+    duplication is accepted — it is the code that finds the shared code, so it cannot be
+    shared. What was not accepted, and not noticed, is that the copies differed: one used
+    `printf` and the other `echo`, one carried the comment explaining relative link targets
+    and the other dropped it, one looped over a library list and the other hardcoded a path.
+    The ledger said `list-briefs.sh` "gained the same bootstrap". It had not. Now aligned to
+    character-identical apart from the exit status, which each tool documents separately.
+    Phase `c` writes the third copy and will copy from one of these two.
+
+11. **A malformed frontmatter block no longer draws any complaint.** Inverting the
+    unterminated-frontmatter test was right — `main` did not merely stay silent, it counted
+    that ledger as drift while `list-briefs.sh` reported it `done`, so the old behaviour was
+    a false finding rather than a missing one. But the block is still malformed, and phase
+    `b` converted a stated problem into an unstated one. No clause complains about it.
+    Unowned; not scheduled.

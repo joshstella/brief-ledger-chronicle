@@ -197,7 +197,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
 
   if [ -z "$line" ]; then
     printf '%s\n' "$name"
-    finding "[no-line]" "no blc/N status line on the line below the title, after any leading --- block"
+    finding "[no-line]" "no line in the file begins with a blc/N status token, outside code fences"
     [ "$tracked" -eq 0 ] && finding "[untracked]" "not in git; invisible to every branch measure"
     DRIFT=$((DRIFT + 1))
     continue

@@ -26,10 +26,27 @@
 # of them. The two shapes above do not occur here yet, which is exactly why the disagreement
 # survived unnoticed — see tests/test_status_line.sh, where they are fixtures.
 #
-# Leading whitespace and the surrounding backticks are stripped, so callers can match on
-# `blc/*` without each one re-deciding what to trim.
+# Fenced blocks are skipped, and that is not a refinement — it is the third way these two
+# readers could disagree. Anchoring defeats an example with prose in front of it, but not an
+# example sitting at column 0 inside a fence, which is exactly how `docs/briefs/README.md`
+# shows the line. A ledger that documents its own format would have handed a reader the
+# example instead of its own status. Found in review, before any ledger here did it.
+#
+# Every backtick on the line is removed, not only the enclosing pair. No status line carries
+# a backtick anywhere else, and both predecessors did the same, so this is stated rather
+# than narrowed — a caller that trusted "the surrounding backticks" would be trusting
+# something the code does not do.
+#
+# Leading and trailing whitespace go too, so callers can match on `blc/*` without each one
+# re-deciding what to trim.
 blc_status_line() {
-  grep -m1 -E '^[[:space:]]*`?blc/[0-9]+[[:space:]]' "$1" 2>/dev/null \
+  awk '
+    # ``` and ~~~ both open a fence. A status line starts with a single backtick, so it
+    # can never be mistaken for one.
+    /^[[:space:]]*(```|~~~)/ { fence = 1 - fence; next }
+    fence                    { next }
+    /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ { print; exit }
+  ' "$1" 2>/dev/null \
     | tr -d '`' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }

@@ -33,24 +33,34 @@ BRIEFS_DIR="${1:-docs/briefs}"
 # and a link on a PATH directory would send it looking for lib/ beside the link. This
 # bootstrap is the one thing that cannot be shared — it is the code that finds the shared
 # code — so it is duplicated in open-briefs.sh on purpose.
+# Kept character-identical to open-briefs.sh's copy apart from the exit status, which each
+# tool documents for itself, and the library list. Two copies that drift are worse than two
+# copies: review found this one had already lost a comment and swapped printf for echo,
+# while the ledger claimed both tools "gained the same bootstrap".
 BLC_SELF="${BASH_SOURCE[0]}"
 BLC_HOPS=0
 while [ -L "$BLC_SELF" ]; do
   BLC_HOPS=$((BLC_HOPS + 1))
   if [ "$BLC_HOPS" -gt 40 ]; then
-    echo "error: too many symbolic links resolving ${BASH_SOURCE[0]}" >&2
+    printf 'error: too many symbolic links resolving %s\n' "${BASH_SOURCE[0]}" >&2
     exit 1
   fi
   BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
   BLC_SELF="$(readlink "$BLC_SELF")"
+  # A relative link target is relative to the directory holding the link, not to $PWD.
   case "$BLC_SELF" in
     /*) ;;
     *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
   esac
 done
-BLC_LIB="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib/status-line.sh"
-[ -r "$BLC_LIB" ] || { echo "error: cannot read $BLC_LIB" >&2; exit 1; }
-. "$BLC_LIB"
+BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
+for BLC_LIB in status-line; do
+  if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
+    printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
+    exit 1
+  fi
+  . "$BLC_LIB_DIR/$BLC_LIB.sh"
+done
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
 [ -d "$BRIEFS_DIR" ] || { echo "No $BRIEFS_DIR — run from the repo root of a brief-workflow project." >&2; exit 1; }
