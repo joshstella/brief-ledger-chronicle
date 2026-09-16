@@ -30,7 +30,17 @@ disagree. No behaviour change. Carries the installer and ownership-map work in c
   Verified against a real install — the library lands `-rw-r--r--` beside four
   `-rwxr-xr-x` tools, and the installed `open-briefs.sh` runs from there.
 - `tests/test_source_tree.sh` exempts `tools/lib/*.sh` by path.
-- `tests/test_phase_row.sh` is new: 283 tests pass, up from 276.
+- `tests/test_phase_row.sh` is new: 284 tests pass, up from 276.
+
+**A property was lost and recovered during review.** The extraction gave `open-briefs.sh`
+an external dependency it never had, located by `dirname "${BASH_SOURCE[0]}"` — the
+directory the script was *reached* through. Reaching it by symlink, the ordinary way a
+tool lands on a `PATH`, made it exit 2 looking for `lib/` beside the link. The whole
+suite stayed green and an independent review of the diff passed it; it was found by
+running the tool through a symlink on purpose. `open-briefs.sh` now walks the link chain
+by hand — not `readlink -f`, which is GNU-only — and
+`phase_row_open_briefs_runs_through_a_symlink` pins it. Written up in `tests/README.md`
+under "A refactor can remove a property nobody wrote down".
 
 **Scope call — `validate-briefs.sh` does not source it yet.** The brief's phase `a` says
 the matcher is "used by both" tools, but `validate-briefs.sh` has no phase-row logic until

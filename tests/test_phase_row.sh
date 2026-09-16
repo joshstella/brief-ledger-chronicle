@@ -49,6 +49,27 @@ test_phase_row_library_is_not_executable_in_the_index() {
   [ "$mode" = "100644" ] || fail "$PR_LIB is sourced, so it should be 100644, not $mode"
 }
 
+# Moving the matcher into lib/ gave this script an external dependency it did not have
+# before, and a dependency found by `dirname "$BASH_SOURCE"` is found relative to however
+# the script was reached. A symlink on a PATH directory is the ordinary way to reach a
+# tool, and it sent the first version of this looking for lib/ beside the link.
+test_phase_row_open_briefs_runs_through_a_symlink() {
+  local linkdir="$TMP/bin" out status
+  mkdir -p "$linkdir"
+  ln -s "$REPO_ROOT/tools/open-briefs.sh" "$linkdir/open-briefs.sh"
+
+  out="$(cd "$REPO_ROOT" && bash "$linkdir/open-briefs.sh" 2>&1)"
+  status=$?
+
+  # Exit 2 is this tool's "the question could not be asked" status, which is what a
+  # library it cannot locate produces.
+  [ "$status" -ne 2 ] || fail "running through a symlink could not find its library"
+  case "$out" in
+    *"cannot read"*) fail "symlinked run looked for lib/ beside the link: $out" ;;
+  esac
+  return 0
+}
+
 # ── The shapes it knows ──────────────────────────────────────────────────────
 
 test_phase_row_matches_the_three_shapes_in_use() {

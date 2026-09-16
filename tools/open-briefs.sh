@@ -34,7 +34,24 @@ BRIEFS_DIR="${1:-docs/briefs}"
 # than here. A missing library is a broken install, not a finding: it exits 2 with the
 # other environment failures below, because a scan that cannot run must not report a
 # clean tree it never looked at.
-BLC_LIB="$(dirname "${BASH_SOURCE[0]}")/lib/phase-row.sh"
+#
+# Symlinks are resolved first. `dirname "${BASH_SOURCE[0]}"` alone reports the directory
+# the script was *reached* through, so a link on a PATH directory would send this looking
+# for lib/ next to the link. Before the matcher moved out of this file the script had no
+# external dependency and ran from wherever it was reached, and that property is kept
+# here rather than surrendered to the refactor. Walked by hand instead of `readlink -f`,
+# which is GNU-only and absent on macOS.
+BLC_SELF="${BASH_SOURCE[0]}"
+while [ -L "$BLC_SELF" ]; do
+  BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
+  BLC_SELF="$(readlink "$BLC_SELF")"
+  # A relative link target is relative to the directory holding the link, not to $PWD.
+  case "$BLC_SELF" in
+    /*) ;;
+    *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
+  esac
+done
+BLC_LIB="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib/phase-row.sh"
 if [ ! -r "$BLC_LIB" ]; then
   printf 'error: cannot read %s\n' "$BLC_LIB" >&2
   exit 2

@@ -107,6 +107,25 @@ through the entry-count tests rather than the header test — but only because t
 existed. The lesson is in the file: **assert on what must survive, not only on
 what must not repeat.**
 
+## A refactor can remove a property nobody wrote down
+
+Extracting the phase-row matcher into `tools/lib/phase-row.sh` (#0014 phase `a`) was
+declared a no-behaviour-change change, and against the whole suite it was one: 283 tests
+stayed green. It still removed something. Before the extraction `open-briefs.sh` had no
+external dependency and ran from wherever it was reached. After it, the script located
+`lib/` with `dirname "${BASH_SOURCE[0]}"` — the directory it was *reached* through — so
+reaching it by a symlink, the ordinary way a tool lands on a `PATH`, made it exit 2
+looking for a library beside the link.
+
+No test covered it because no test had needed to: the property was free before, so nobody
+had written it down. An independent review of the diff also passed it. It was found by
+running the binary through a symlink on purpose.
+
+`phase_row_open_briefs_runs_through_a_symlink` now pins it, and the mutation that proves
+it — restoring the plain `dirname` — fails that one test and no other, with the remaining
+283 green. **A property that costs nothing to hold is the kind that disappears silently,
+because its test was never written.**
+
 ## An assertion downstream of a repair cannot see the break
 
 `install.sh` runs `chmod +x` on every tool it places. Five tests assert that an
