@@ -81,7 +81,7 @@ That is the difference between a gap someone has to remember and one the gate fi
 
 | Phase | Work |
 |---|---|
-| `a — the shared matcher` | One implementation of the phase-row matcher, used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the two ever disagree. No behaviour change. Blocked by open decision 1. |
+| `a — the shared matcher` | One implementation of the phase-row matcher, used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the two ever disagree. No behaviour change. Lives in `tools/lib/`, which carries installer and ownership-map work with it. |
 | `b — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
 | `c — the upgrade` | How an existing repository crosses into a clause that did not exist yesterday. Blocked by open decision 2. |
 
@@ -133,6 +133,16 @@ Resolved 2026-09-16 during drafting.
 - **One matcher, shared.** Two implementations would reproduce #0013's second defect on
   purpose.
 - **`open-briefs.sh` does not become a gate.** It reports. The gate is the gate.
+- **The shared matcher lives in `tools/lib/`.** Resolved 2026-09-16 on initiation, closing open
+  decision 1. Duplication was excluded by this brief already: the claim, evidence 5, phase `a`,
+  and the success criteria each require one implementation, and the agreement test the
+  duplication option offered is required in either arrangement, since sharing source does not
+  prove both tools call it alike. Reaching the matcher by subprocess was considered and
+  rejected — `validate-briefs.sh` runs without git by design and `install.sh` says so, while
+  `open-briefs.sh` reads git history; that arrangement would make the gate need git. The price
+  is a new ownership-map row, the `chmod +x` and summary lines in `install.sh`, and an
+  exemption in `tests/test_source_tree.sh`, where `tools/lib/` is exempt **by path** — a
+  directory whose name means "sourced, not invoked".
 - **v1.2 is published once.** `_drafts/someone-elses-docs-tree.md` also targets v1.2, where it
   re-scopes the existing clauses to `docs/blc/`. Whichever brief finishes second carries the
   publication and cites both changes. This one adds a clause; that one moves what the clauses
@@ -140,10 +150,9 @@ Resolved 2026-09-16 during drafting.
 
 ## Open decisions
 
-1. **Where the shared matcher lives.** Either duplicated in both tools with a test asserting
-   they agree, or sourced from a new `tools/lib/`. This repository has no shell library today,
-   and a new path has to be recorded in #0012's ownership map before the installer can be
-   trusted around it. Blocks phase `a`.
+1. ~~**Where the shared matcher lives.**~~ **Resolved 2026-09-16** — see "The shared matcher
+   lives in `tools/lib/`" above. Struck rather than removed, and the numbering below is held,
+   so the reference from phase `c` still resolves.
 2. **Whether `BRIEFS-9` gates immediately or reports for one version.** A clause that lands
    already failing is the honest signal; a clause that reports first is the kinder upgrade.
    #0003 faced this exact question and demoted a gate to a report. Blocks phase `c`.
