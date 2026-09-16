@@ -279,6 +279,79 @@ test_open_briefs_reports_drift_when_a_numeric_id_is_not_in_the_first_cell() {
   assert_out "phase 1"
 }
 
+# ── The row scan finds rows, not prose ───────────────────────────────────────
+#
+# A phase row writes its id one of three ways, and the scan has to know all three:
+# the id alone in the first cell, the id and label em-dashed into one cell, or the id
+# in prose somewhere in the row. Matching only some of them meant the tool reported a
+# defect in the record when it had simply failed to find the row — and reported nothing
+# at all when it found no row to disagree with. Both failures are silent, so each has
+# a fixture.
+
+# A ledger may carry more than one table. A cost or timing table whose cells mention
+# `phase N` matched the numeric row scan, while the real phase row — the id alone in its
+# own first cell — matched nothing at all. The tool then called the record self-
+# contradictory on the strength of a row that was never a phase row.
+test_open_briefs_does_not_read_a_second_tables_row_as_a_phase_row() {
+  make_repo
+  add_ledger 0001-twotables '`blc/1 #0001 done 2:done(PR#7)`' \
+    '| 2 | `the rename` | done (PR#7) |' \
+    '' \
+    '| span | what | cost |' \
+    '|---|---|---|' \
+    '| 14:02-14:18 | drafting phase 2 notes | 0.40 |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "[drift]" "$OUT"
+  assert_out "0 drift"
+}
+
+# `head -1` made the first match the verdict, so a decoy could shadow the real row even
+# when the real row was present and agreed. Ordering decided the outcome, which is luck
+# rather than design: this fixture puts the decoy first, the arrangement that got it wrong.
+test_open_briefs_does_not_let_a_decoy_row_shadow_the_real_one() {
+  make_repo
+  add_ledger 0001-shadowed '`blc/2 #0001 done a:done(PR#3)`' \
+    '| `a — renamed from` | `b — renamed to` |' \
+    '| `a — the thing` | done (PR#3) | did it |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "[drift]" "$OUT"
+  assert_out "0 drift"
+}
+
+# `blc-start-brief` writes the id in a column of its own — `| a | the runner | done |`.
+# The letter scan required an em dash after the id, so it matched nothing in a table of
+# that shape, and the guard on an empty row reported clean. Drift was unreportable on the
+# ledger shape this toolkit itself produces, which is how it went unnoticed.
+test_open_briefs_reports_drift_on_a_two_column_letter_row() {
+  make_repo
+  add_ledger 0001-twocol '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
+    '| a | the thing | pending |'
+  commit_all
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "[drift]"
+  assert_out "phase a"
+}
+
+# The other half of the same widening: a scan loose enough to find that row must still
+# stay quiet when the row agrees. Without this, a matcher that fired on everything would
+# pass the test above.
+test_open_briefs_accepts_a_two_column_letter_row_that_agrees() {
+  make_repo
+  add_ledger 0001-twocol '`blc/2 #0001 done a:done(PR#8)`' \
+    '| a | the thing | done(PR#8) |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "[drift]" "$OUT"
+  assert_out "0 drift"
+}
+
 # ── It reports; it does not gate ─────────────────────────────────────────────
 
 test_open_briefs_exits_zero_even_when_everything_is_wrong() {
