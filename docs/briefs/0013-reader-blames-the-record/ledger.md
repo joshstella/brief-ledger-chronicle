@@ -1,15 +1,15 @@
 # Ledger — #0013 A reader that cannot find it reports it missing
-`blc/2 #0013 pending a:pending b:pending`
+`blc/2 #0013 in-progress a:in-progress(brief/0013-a-the-row-scan) b:pending`
 
 **Brief:** `docs/briefs/0013-reader-blames-the-record/brief.md`
 **Started:** 2026-09-16
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the row scan | pending | — |
+| a | the row scan | in-progress | `brief/0013-a-the-row-scan` |
 | b | the line's home | pending | — |
 
 **a — the row scan.** One matcher in `tools/open-briefs.sh`, serving both index alphabets:
