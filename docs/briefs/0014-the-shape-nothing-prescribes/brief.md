@@ -81,12 +81,21 @@ That is the difference between a gap someone has to remember and one the gate fi
 
 | Phase | Work |
 |---|---|
-| `a — the shared matcher` | One implementation of the phase-row matcher, used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the two ever disagree. No behaviour change. Lives in `tools/lib/`, which carries installer and ownership-map work with it. |
-| `b — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
+| `a — the shared matcher` | One implementation of the phase-row matcher in `tools/lib/`, read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour change. Carries the installer and ownership-map work a new `tools/` path brings with it. |
+| `b — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. `validate-briefs.sh` becomes the matcher's second reader, with a test that fails if the two ever disagree. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
 | `c — the upgrade` | How an existing repository crosses into a clause that did not exist yesterday. Blocked by open decision 2. |
 
 Strict chain. `b` needs the matcher; `c` needs the clause to exist before it can decide how to
 introduce it.
+
+**Amended 2026-09-16, after phase `a` was reviewed.** The `a` row originally required the
+matcher "used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the
+two ever disagree". That cannot be met in `a`: an agreement test needs two call sites, and
+`validate-briefs.sh` has no reason to read a phase table until `BRIEFS-9` exists. Both
+requirements moved to `b`, where they can be. The settled decisions already implied it —
+"sharing source does not prove both tools call it alike" is an argument about call sites, not
+about files. Recorded here rather than quietly rewritten, since this brief descends from one
+about a record that moved without saying so.
 
 ## Tension
 

@@ -17,9 +17,8 @@
 read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour
 change. Carries the installer and ownership-map work in complications 1 and 2 below.
 
-The brief's row for `a` says "read by both `open-briefs.sh` and `validate-briefs.sh`, with
-a test that fails if the two ever disagree". That is not what `a` delivers, and it cannot
-be — see the scope call below and complication 5.
+The brief's row for `a` asked for more than `a` can deliver and was amended after review to
+match. See the scope call below and complication 5.
 
 ### Phase a — what it does
 
@@ -110,9 +109,10 @@ the draft was written. Phase `a` carries 1, 2, and 4.
    test needs two call sites, and `validate-briefs.sh` has no reason to read a phase table
    until `BRIEFS-9` exists in phase `b`. The brief concedes the point in its own settled
    decisions — "sharing source does not prove both tools call it alike" is an argument
-   about call sites, not about files. So the requirement belongs in `b`. **The brief still
-   says otherwise, and a ledger that argues with its brief is the failure this toolkit
-   exists to prevent.** Amending `brief.md` is the author's call, not this ledger's.
+   about call sites, not about files. So the requirement belongs in `b`. **Resolved
+   2026-09-16:** the author amended `brief.md`, moving "used by both" and the agreement
+   test into `b`'s row, with the amendment recorded in the brief rather than applied
+   silently. Ledger and brief now agree.
 
 6. **The compensating control shipped broken.** The guard offered in place of the
    agreement test could not fail: its fingerprint was an ERE missing a backslash, so it
