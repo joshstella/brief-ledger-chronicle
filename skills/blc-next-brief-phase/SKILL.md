@@ -41,4 +41,6 @@ If no argument is given, use the most recently updated `in-progress` brief ledge
    - Status stays `in-progress`, or becomes `done` if this was the last phase.
    - Update the `blc/2` status line under the title in the same edit. The vocabulary is defined once in `docs/briefs/README.md`, "Ledger status". A ledger still on `blc/1` stays on it unless converting is a phase's stated job: merged PRs cite the phase ids as they were, so a silent re-lettering strands them. Convert deliberately, and record the mapping.
    - Write the updated ledger to `docs/briefs/<name>/ledger.md` in the repo (the primary source of truth) and commit it to the current branch.
+   - Writing to the branch is not an inconsistency with `blc-start-brief`: initiation is the only ledger write that goes straight to `main`, and every later change returns to `main` by merge.
+   - That is also why the *previous* phase is marked `done` here rather than on `main`. That phase is already merged, and its branch — whether or not it still exists — is no longer a path to `main`, so the next phase's branch carries its closing marker. The last phase has no successor, so `brief/<serial>-closeout` carries the brief's close.
    - Update the memory file and MEMORY.md in place (secondary, for fast in-session lookup).
