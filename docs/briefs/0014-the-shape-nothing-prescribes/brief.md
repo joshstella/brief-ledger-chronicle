@@ -112,7 +112,16 @@ is #0013's second defect rebuilt inside the brief written to prevent it.
 matcher "used by both `open-briefs.sh` and `validate-briefs.sh`, with a test that fails if the
 two ever disagree". That cannot be met in `a`: an agreement test needs two call sites, and
 `validate-briefs.sh` has no reason to read a phase table until `BRIEFS-9` exists. Both
-requirements moved to `b`, where they can be. The settled decisions already implied it —
+requirements moved to the clause phase, which the re-lettering above then renamed `b` → `c`.
+This paragraph said `b` until 2026-09-16, when it was written; that token is now corrected in
+place rather than left to be read through the table.
+
+Two agreement tests come out of this, and they are not the same one moving. Phase `b` created
+a second call site for the *locator* — `open-briefs.sh` and `list-briefs.sh` — so `b` owed and
+delivered agreement between those two reporters. Phase `c` adds `validate-briefs.sh` as a
+reader of *both* shared pieces, and the phase-row matcher still has one caller until it does;
+the agreement `c` owes is between the gate and the reporters, and cannot be written earlier.
+The settled decisions already implied the split —
 "sharing source does not prove both tools call it alike" is an argument about call sites, not
 about files. Recorded here rather than quietly rewritten, since this brief descends from one
 about a record that moved without saying so.
