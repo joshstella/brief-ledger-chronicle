@@ -411,9 +411,23 @@ test_open_briefs_still_reports_no_line_under_frontmatter() {
   assert_out "[no-line]"
 }
 
-# An unterminated block has no title and no line under it. Reporting `[no-line]` is correct;
-# reading into the body looking for something that parses would not be.
-test_open_briefs_reports_no_line_on_unterminated_frontmatter() {
+# Reversed by #0014 phase b. This asserted `[no-line]`, on the reasoning that an
+# unterminated block has no title and no line under it, so reading into the body would be
+# guessing. Two things were wrong with that.
+#
+# The skip is unbounded when the block never closes, so it swallowed the entire file — one
+# stray `---` at the top hid a ledger's whole status from this tool, silently, which is the
+# failure mode this brief exists to end.
+#
+# And the toolkit already disagreed with itself here: `list-briefs.sh` searched the whole
+# file and reported this ledger's status as `done` while `open-briefs.sh` reported it as
+# having no line at all. That is #0013's second defect — two readers, two answers — pinned
+# by a test on one side only.
+#
+# The shared locator anchors its match, so it is not looking for "something that parses":
+# the line has to begin with the token. A malformed frontmatter block is a real problem and
+# deserves its own complaint; being quiet about a different thing is not that complaint.
+test_open_briefs_reads_the_line_under_unterminated_frontmatter() {
   make_repo
   mkdir -p "$BRIEFS/0001-broken"
   printf -- '---\ntitle: broken\n\n# Ledger — broken\n`blc/2 #0001 done a:done`\n' \
@@ -422,7 +436,10 @@ test_open_briefs_reports_no_line_on_unterminated_frontmatter() {
   commit_all
   run_query docs/briefs
   assert_status 0
-  assert_out "[no-line]"
+  # `done` with every phase done is not an open brief, so the tool has nothing to report.
+  # The proof it read the line is that it no longer calls it `[no-line]`.
+  grep -q '\[no-line\]' "$OUT" && fail "still blind to a status line under an unclosed block"
+  return 0
 }
 
 # ── It reports; it does not gate ─────────────────────────────────────────────

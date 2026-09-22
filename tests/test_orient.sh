@@ -26,8 +26,7 @@ orient_repo() {
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email t@example.com
   git -C "$REPO" config user.name Test
-  cp "$REPO_ROOT/tools/list-briefs.sh" "$REPO/tools/"
-  chmod +x "$REPO/tools/list-briefs.sh"
+  fixture_install_tool "$REPO" list-briefs.sh
   echo x > "$REPO/f"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm root >/dev/null 2>&1

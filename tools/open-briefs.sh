@@ -64,12 +64,14 @@ while [ -L "$BLC_SELF" ]; do
     *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
   esac
 done
-BLC_LIB="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib/phase-row.sh"
-if [ ! -r "$BLC_LIB" ]; then
-  printf 'error: cannot read %s\n' "$BLC_LIB" >&2
-  exit 2
-fi
-. "$BLC_LIB"
+BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
+for BLC_LIB in phase-row status-line; do
+  if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
+    printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
+    exit 2
+  fi
+  . "$BLC_LIB_DIR/$BLC_LIB.sh"
+done
 
 OPEN=0
 DRIFT=0
@@ -108,27 +110,9 @@ entry_state()   { printf '%s' "${1#*:}" | sed 's/(.*//'; }
 entry_pointer() { printf '%s' "$1" | sed -n 's/.*(\(.*\))$/\1/p'; }
 entry_index()   { printf '%s' "${1%%:*}"; }
 
-# The status line sits directly under the title. A ledger whose first line is `---` opens
-# with YAML frontmatter, so its title cannot start until that block closes, and the line
-# lands further down through no fault of its author. That placement is legal: a docs
-# pipeline pins the frontmatter, and `list-briefs` and `orient` already read the line there,
-# so refusing it made this the one reader that could not see a line the others could.
-#
-# The read stays positional because that is what the line is for: a scan costs a line instead
-# of a table. Skip a leading block, skip the blank lines after it, take the title, and the
-# status line is the next line down. This is a cost rule and not a boundary — `list-briefs`
-# searches the whole file on purpose, which is why it read this placement correctly for as
-# long as this reader could not.
-status_line() {
-  awk '
-    NR == 1 && $0 == "---" { in_fm = 1; next }
-    in_fm && $0 == "---"   { in_fm = 0; next }
-    in_fm                  { next }
-    !titled && $0 ~ /^[[:space:]]*$/ { next }
-    !titled                { titled = 1; next }
-    { print; exit }
-  ' "$1" | tr -d '`'
-}
+# Where the status line lives is `blc_status_line`'s business, shared with `list-briefs.sh`
+# so the two cannot drift apart. The positional read that used to sit here reported
+# `[no-line]` for placements the other reader handled; #0014 phase `b` has the history.
 
 # Pull the branch out of a pointer, which may hold a branch, a PR, a commit, or
 # a comma-separated pair. Anything that is not a PR or a bare commit is a branch.
@@ -205,7 +189,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
   tracked=1
   git ls-files --error-unmatch "$ledger" >/dev/null 2>&1 || tracked=0
 
-  line="$(status_line "$ledger")"
+  line="$(blc_status_line "$ledger")"
   case "$line" in
     blc/*) ;;
     *) line="" ;;
@@ -213,7 +197,7 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
 
   if [ -z "$line" ]; then
     printf '%s\n' "$name"
-    finding "[no-line]" "no blc/N status line on the line below the title, after any leading --- block"
+    finding "[no-line]" "no line in the file begins with a blc/N status token, outside code fences"
     [ "$tracked" -eq 0 ] && finding "[untracked]" "not in git; invisible to every branch measure"
     DRIFT=$((DRIFT + 1))
     continue

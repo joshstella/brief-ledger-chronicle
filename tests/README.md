@@ -33,6 +33,8 @@ tests/
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
   test_source_tree.sh     file modes in this repo's own tree, which no install test can see
   test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
+  test_status_line.sh     the shared status-line locator, and the shapes that separated its
+                          two predecessors (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -125,6 +127,115 @@ running the binary through a symlink on purpose.
 it — restoring the plain `dirname` — fails that one test and no other. **A property that
 costs nothing to hold is the kind that disappears silently, because its test was never
 written.**
+
+## Two tools can disagree for a year with every test green
+
+`open-briefs.sh` and `list-briefs.sh` both had to find a ledger's status line, and they did
+it differently. One read positionally — title, then the next line. The other searched the
+whole file. The divergence was deliberate and documented, and on all thirteen ledgers in
+this repository the two returned identical results. No test written against real data could
+have separated them.
+
+They were not equivalent. Three shapes tell them apart, and each one is now a fixture in
+`test_status_line.sh`: a blank line after the title, a status line further down the file,
+and prose quoting an example status line above the real one. The positional reader reported
+the first two as having no status line at all. The whole-file reader answered the third with
+**the prose sentence**.
+
+The last one was found by building a baseline before writing any code, and it reversed the
+design: the phase had been planned around adopting the whole-file search, on the reasoning
+that a permissive form can only widen what is found. A gate reading that sentence would
+parse garbage phase ids and fail a correct ledger. Finding the wrong line is worse than
+finding none. The shared locator searches the whole file **and** anchors the match.
+
+A fourth shape survived even that, and review found it: an example at column 0 **inside a
+code fence**. Anchoring defeats an example with prose in front of it; it does nothing about
+one that is already at the start of its line. That is how `docs/briefs/README.md` prints
+the status line, so the first ledger to document its own format would have handed every
+reader the example. The locator now tracks fences.
+
+## A test can be named for the property it does not check
+
+The agreement test this phase shipped ran both tools against every ledger and threw one
+result away — `: "$in_open"` — leaving a single assertion that spoke only about
+`list-briefs.sh`. Blinding `open-briefs.sh` completely failed eighteen other tests and left
+the agreement test green.
+
+Two things make this worth a heading rather than a bug fix. The first is that it is the same
+defect as the section below, one phase later: a guard that names a property and does not
+hold it. The second is the name. A later phase owing an agreement test would have found one
+already written, with the right words on it, and had no reason to look inside. **A wrong
+test is worse than a missing one**, because a missing one still reads as missing.
+
+It was also written against the wrong corpus. Running over this repository's real ledgers
+feels thorough and proves nothing here: those ledgers agreed under *both* old locators, which
+is why the disagreement lasted. The rewrite uses the shapes that actually divide the two
+readers, each planted in a real repo and read by both tools.
+
+**That rewrite was also un-failable, and review proved it twice.** It checked each tool
+against a private expectation rather than against the other one: `open-briefs.sh` must not
+print `[no-line]`, `list-briefs.sh` must print `in-progress`. Giving `open-briefs.sh` a
+rebuilt divergent locator left the whole suite green while the two tools reported *different
+serials for the same ledger*. Making it exit 2 with no output passed as well, because
+"does not contain `[no-line]`" is satisfied by printing nothing at all.
+
+Two rules came out of it, and they are the reusable part:
+
+- **Assert positively.** An absence check passes on silence, on a crash, and on an empty
+  file. Every one of those is a tool that is not working.
+- **Give the wrong answer somewhere to go.** Each fixture now holds a decoy status line —
+  `#9999 done` — that a divergent reader takes. A reader that takes it reports a *finished*
+  brief, so both sides say something specific and wrong, and the assertions fire. Without a
+  decoy, a test can only distinguish "worked" from "produced nothing", which is the weaker
+  half of what can go wrong.
+
+## A lesson recorded under one tool's name does not reach the second
+
+Phase `a` found that `open-briefs.sh` broke when reached through a symlink, fixed it, and
+pinned it with `test_phase_row_open_briefs_runs_through_a_symlink`. Phase `b` copied that
+walk into `list-briefs.sh` — with the comment explaining why it matters — and copied no
+test. Replacing the whole walk with a plain `dirname` left all 303 tests green.
+
+The write-up sat two headings up this file the whole time. It did not help, because the
+protection was filed under the name of the first tool to need it. When a property moves to a
+second implementation, the test has to move with it; the prose does not travel on its own.
+
+## A guard that matches a comment guards nothing
+
+`no_tool_rebuilds_the_locator` and `both_tools_read_the_library` both searched a tool's
+source for a string. Both strings also appear in *comments* in the very files being checked
+— comments explaining the library the guard exists to enforce. Removing the library from
+`open-briefs.sh`'s load list entirely left both guards green, because the explanation of the
+rule satisfied the test for the rule.
+
+The guards now parse the bootstrap's load list and test membership in it, rather than asking
+whether a name occurs anywhere in the file. A guard should read the mechanism, not the
+documentation of the mechanism.
+
+The fingerprint scan had the opposite failure at the same time. It had been narrowed to one
+spelling of the locator — the `awk` form, with the slash escaped — when the library changed
+shape. A rebuild written with `grep`, which is the likely rebuild, spells it without the
+backslash and walked straight past. It now carries both spellings. **A guard for one
+spelling of an idea is a guard for none.**
+
+## The interpreter you do not have is the one that breaks
+
+The fence tracker was written with `{3,}` to mean three-or-more. `mawk` 1.3.4 has no interval
+expressions and reads that literally, so under `mawk` the locator returned the fenced example
+it was written to skip — a wrong answer, not a missing one. Every machine this toolkit had
+run on has `gawk`, so nothing on any developer box could have shown it.
+
+Portable shell here means portable to the *implementations*, not just to POSIX on paper. When
+a tool grows an `awk` program, check it under more than the `awk` that happens to be first on
+your `PATH`.
+
+The suite already contained the contradiction, pinned on one side.
+`open-briefs_reports_no_line_on_unterminated_frontmatter` asserted that an unclosed `---`
+block means no status line, while `list-briefs.sh` read the same fixture and reported its
+status as `done`. One stray `---` hid a ledger's entire status from one tool and not the
+other, and a passing test said that was correct.
+
+**A test that pins one side of a disagreement makes the disagreement look like a decision.**
 
 ## A guard whose pattern stops matching its own target
 
