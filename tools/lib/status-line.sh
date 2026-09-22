@@ -39,11 +39,38 @@
 #
 # Leading and trailing whitespace go too, so callers can match on `blc/*` without each one
 # re-deciding what to trim.
-blc_status_line() {
+#
+# ── One scan, two answers ────────────────────────────────────────────────────
+#
+# `blc_ledger_scan` is the only thing here that reads a file. Both public questions are
+# wrappers over it, because the second caller arrived in phase `c` wanting the *other* half
+# of what this awk already computes.
+#
+# `BRIEFS-10` asks whether a ledger's frontmatter and fences are closed. The locator has
+# always known: it tracks fence state to skip them, and it falls back precisely when the file
+# ends inside one. Writing that tracking a second time in `validate-briefs.sh` would put two
+# fence implementations in this toolkit — which is #0013's second defect, two readers
+# disagreeing about a file's structure, rebuilt inside the brief written to prevent it.
+#
+# This is also why the recovery behaviour needs a clause at all. The locator deliberately
+# succeeds on a malformed ledger: it reads through unterminated frontmatter and falls back
+# past an unclosed fence. That is right for a reporter and it makes the malformation
+# invisible, so the complaint cannot be derived from the locator's *result* — only from the
+# state it passed through on the way.
+#
+# The file is still named for the locator. Renaming it would move a path the ownership map,
+# `install.sh`, and three test files all key on, and phase `c` is large enough already —
+# recorded as a complication rather than done quietly.
+blc_ledger_scan() {
   awk '
     function is_status(l) { return l ~ /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ }
 
     { line = $0; sub(/\r$/, "", line) }
+
+    # Frontmatter is only frontmatter on line 1, and `fm` records the three states the
+    # clause distinguishes: absent, opened-and-closed, opened-and-never-closed.
+    NR == 1 && line == "---" { fm = 1; next }
+    fm == 1 && line == "---" { fm = 2; next }
 
     # Remember the first candidate anywhere, fences included. Only ever used for the
     # unterminated-fence fallback in END.
@@ -66,18 +93,37 @@ blc_status_line() {
     }
 
     fence { next }
-    is_status(line) { outside = line; exit }
+    # No `exit` here. The first version stopped at the first status line, which was correct
+    # for the only question it answered and wrong the moment a second caller wanted to know
+    # how the file ends — exiting early reports a fence closed because the scan stopped
+    # before reaching the line that never closes it.
+    outside == "" && is_status(line) { outside = line }
 
     END {
-      if (outside != "") print outside
       # The file ended inside a fence that never closed. Treating the remainder as code
       # would hide a live brief’s status from every reader — the same unbounded skip this
-      # phase just reversed for unterminated frontmatter, and refused there for the same
-      # reason. A malformed fence is a defect in the ledger, not a reason to report that it
-      # has no status at all.
-      else if (fence && anywhere != "") print anywhere
+      # phase reversed for unterminated frontmatter, and refused there for the same reason.
+      # A malformed fence is a defect in the ledger, not a reason to report that it has no
+      # status at all.
+      if (outside != "")           printf "status\t%s\n", outside
+      else if (fence && anywhere != "") printf "status\t%s\n", anywhere
+
+      printf "frontmatter\t%s\n", (fm == 1 ? "open" : (fm == 2 ? "closed" : "none"))
+      printf "fence\t%s\n", (fence ? "open" : "closed")
     }
-  ' "$1" 2>/dev/null \
+  ' "$1" 2>/dev/null
+}
+
+blc_status_line() {
+  blc_ledger_scan "$1" \
+    | sed -n 's/^status'"$(printf '\t')"'//p' \
     | tr -d '`' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# Emit `open`, `closed`, or `none` for one structural fact: `frontmatter` or `fence`.
+# `BRIEFS-10` complains when either is `open`.
+blc_ledger_structure() {
+  blc_ledger_scan "$1" \
+    | sed -n 's/^'"$2$(printf '\t')"'//p'
 }

@@ -54,7 +54,7 @@ test_briefs_a_compliant_tree_passes() {
   add_brief 0002-second "#0001"
   run_validator "$BRIEFS"
   assert_status 0
-  assert_out "2 brief(s), 8 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "2 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
 }
 
 # Zero defects and exit 0 is also what an empty directory produces. Any test that
