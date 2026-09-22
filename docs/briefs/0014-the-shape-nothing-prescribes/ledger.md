@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:in-progress(brief/0014-b-the-shared-locator) c:pending d:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:in-progress(brief/0014-c-the-clauses) d:pending`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -10,9 +10,9 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the shared matcher | done | PR#61 |
-| b | the shared locator | in-progress | `brief/0014-b-the-shared-locator` |
-| c | the clause | pending | — |
-| d | the upgrade | pending | — |
+| b | the shared locator | done | PR#62 |
+| c | the clauses | in-progress | `brief/0014-c-the-clauses` |
+| d | the promotion | pending | — |
 
 Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
 `d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
@@ -163,12 +163,46 @@ its status as `done`. The skip is unbounded when the block never closes, so one 
 hid a ledger's whole status from one tool and not the other. Resolved toward finding the
 line, which is what the anchored locator does; the test is inverted and carries the history.
 
-**c — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
-table. Validator check citing the clause, Contract text, and tests — including the three
-shapes #0013 left unmatched, which become failures instead of silences.
+**c — the clauses.** Two `[judgment]` clauses, neither of which blocks. `BRIEFS-9`: every
+phase id in a status line is findable in the phase table. `BRIEFS-10`: a ledger's frontmatter
+and code fences are closed. `validate-briefs.sh` becomes the third reader of both shared
+pieces. Contract v1.2, validator checks citing each clause, and tests — including the three
+shapes #0013 left unmatched, which become complaints instead of silences.
 
-**d — the upgrade.** How an existing repository crosses into a clause that did not exist
-yesterday. Blocked by open decision 2.
+### Phase c — the re-plan that opened it
+
+Run 2026-09-22, after `b` merged. The remaining sequence holds. Two things changed inside it.
+
+**`c` grew and stays whole anyway.** It now carries two clauses rather than one, and a
+Contract version. The v1.1 precedent (PR for #0005) touched fifteen files: the new version
+doc, the superseded one amended to point at it, the contracts README, `install.sh` and its
+ownership map, the pre-install summary line that names the version, `test_contract_ship.sh`,
+and the skills that cite a version. That is a large phase.
+
+The obvious split — wire the validator to the shared libraries first with no behaviour
+change, mirroring `a`, then add the clauses — was considered and rejected. It cannot work,
+and the brief already records why in the 2026-09-16 amendment: an agreement test needs two
+call sites, and `validate-briefs.sh` has no reason to read a phase table until `BRIEFS-9`
+exists. The clause *is* the reason to read. Splitting them would rebuild the exact defect
+that forced the `a` amendment. Splitting `BRIEFS-10` out instead is possible — it needs
+neither shared library — but both clauses land in v1.2, so it would buy a smaller phase at
+the cost of a second Contract version for one change to one file.
+
+**The third-reader agreement test is the highest-risk artifact in this brief, and phase `b`
+is why.** Three attempts at an agreement test across `a` and `b`, three guards that could not
+fail: an ERE that matched nothing, a comparison that discarded one side, and a pair of
+private expectations that never compared the tools at all. `c` writes its version with the
+pattern that finally worked, rather than rediscovering it — a decoy status line in every
+fixture, positive assertions on all three readers, and exit statuses checked on each.
+
+Two smaller carries. `c` adds the third copy of the `lib/` bootstrap; the copies are to stay
+character-identical apart from the exit status each tool documents, and `assert_loads_library`
+in `tests/lib.sh` now guards the load list. And any new `awk` must avoid interval expressions,
+because `mawk` has none and reads `{3,}` literally — see the phase `b` record.
+
+**d — the promotion.** The version at which the two `[judgment]` clauses become `[defect]`,
+and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it:
+a clause that never fails a build has no day-one crossing to manage.
 
 ## Dependency structure
 
