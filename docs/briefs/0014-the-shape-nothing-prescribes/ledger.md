@@ -288,4 +288,40 @@ and 9.
     that ledger as drift while `list-briefs.sh` reported it `done`, so the old behaviour was
     a false finding rather than a missing one. But the block is still malformed, and phase
     `b` converted a stated problem into an unstated one. No clause complains about it.
-    Unowned; not scheduled.
+    ~~Unowned; not scheduled.~~ **Owned 2026-09-22** — it becomes `BRIEFS-10`, a `[judgment]`
+    clause in phase `c`. See Big decisions.
+
+## Big decisions
+
+**The new clauses complain and never block.** Decided 2026-09-22, resolving open decision 2.
+
+`BRIEFS-9` lands as `[judgment]`, not `[defect]`. The reasoning that was not already in the
+brief: the argument for gating immediately is that a clause which lands already failing is
+the honest signal, and the argument against is that this toolkit installs into repositories
+whose ledgers it did not write. #0003 met the same question and demoted a gate to a report.
+The deciding point is that the failure mode is asymmetric — a `[judgment]` that should have
+gated costs a warning nobody acted on, while a `[defect]` that should have reported breaks
+someone else's build on the day they upgrade, for a ledger that was legal when they wrote it.
+
+This is not a new mechanism and deliberately so. `docs/contracts/v1.1.md` already defines
+`[judgment]` as "scope `both` · checked: `tools/validate-briefs.sh` (never blocks)", and
+`BRIEFS-8` has shipped that way since v1. Phase `c` adds clauses, not a reporting tier.
+
+**Malformed ledger structure gets its own clause rather than folding into `BRIEFS-9`.**
+`BRIEFS-10` says a ledger's frontmatter and code fences are closed. Two reasons it is
+separate. They are different properties — one is about a phase id being findable, the other
+about the file being well-formed — and a single clause covering both would cite one id for
+two unrelated repairs. And `BRIEFS-10` is the clause that stops phase `b`'s recovery
+behaviour from being silent: the locator now deliberately reads through unterminated
+frontmatter and falls back past an unclosed fence, so the malformation has no other way to
+surface. The complaint therefore needs its own detector; it cannot be derived from the
+locator's result, because the locator's whole job is to succeed anyway.
+
+**Both clauses land in one Contract version.** v1.2 carries `BRIEFS-9` and `BRIEFS-10`
+together, and the same version corrects the two sentences complication 8 records as going
+false. Splitting them would mean two Contract versions for one change to one file.
+
+**What this leaves phase `d`.** The upgrade problem was always the repositories the clause
+would fail on day one. A clause that cannot fail a build has no crossing to manage, so `d`
+narrows from "the upgrade" to "the promotion": the version at which these two become
+`[defect]`, and what has to be true first.

@@ -83,8 +83,8 @@ That is the difference between a gap someone has to remember and one the gate fi
 |---|---|
 | `a — the shared matcher` | One implementation of the phase-row matcher in `tools/lib/`, read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour change. Carries the installer and ownership-map work a new `tools/` path brings with it. |
 | `b — the shared locator` | One implementation of the status-line locator in `tools/lib/`, read by `open-briefs.sh` and `list-briefs.sh`. The two disagree today by design — one walks structurally past frontmatter, the other searches the whole file — and `c` adds a third reader that gates. Resolves to a whole-file search with an anchored match: the line must begin with the token. That form finds the placements the structural reader misses and refuses the prose the unanchored search swallows, and returns identical results on every ledger here. |
-| `c — the clause` | `BRIEFS-9`: every phase id in a status line is findable in the phase table. `validate-briefs.sh` becomes the second reader of both shared pieces, with a test that fails if the readers ever disagree. Validator check citing the clause, Contract text, and tests — including the three shapes #0013 left unmatched, which become failures instead of silences. |
-| `d — the upgrade` | How an existing repository crosses into a clause that did not exist yesterday. Blocked by open decision 2. |
+| `c — the clauses` | Two `[judgment]` clauses, neither of which blocks. `BRIEFS-9`: every phase id in a status line is findable in the phase table. `BRIEFS-10`: a ledger's frontmatter and code fences are closed. `validate-briefs.sh` becomes the second reader of both shared pieces, with a test that fails if the readers ever disagree. Validator checks citing each clause, Contract v1.2 text, and tests — including the three shapes #0013 left unmatched, which become complaints instead of silences. |
+| `d — the promotion` | The version at which the two `[judgment]` clauses become `[defect]`, and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it: a clause that never fails a build has no day-one crossing to manage, so what remains is the promotion rather than the introduction. |
 
 Strict chain. `b` reconciles the locator; `c` needs both shared pieces; `d` needs the clause to
 exist before it can decide how to introduce it.
@@ -194,11 +194,21 @@ Resolved 2026-09-16 during drafting.
    the 2026-09-16 re-lettering moved from `c` to `d`. This sentence said `c` until re-review
    caught it, which is pointed: its only job is to keep a cross-reference resolving, and it
    was the last stale one in the file.
-2. **Whether `BRIEFS-9` gates immediately or reports for one version.** A clause that lands
-   already failing is the honest signal; a clause that reports first is the kinder upgrade.
-   #0003 faced this exact question and demoted a gate to a report. Blocks phase `d` — the
-   phase this decision blocks is the upgrade, which the 2026-09-16 re-lettering moved from
-   `c` to `d`.
+2. ~~**Whether `BRIEFS-9` gates immediately or reports for one version.**~~ **Resolved
+   2026-09-22 — it complains and never blocks.** A clause that lands already failing is the
+   honest signal; a clause that reports first is the kinder upgrade. #0003 faced this exact
+   question and demoted a gate to a report, and this follows it.
+
+   `BRIEFS-9` lands as `[judgment]`, which is not a new mechanism: `docs/contracts/v1.1.md`
+   already defines the tag as "scope `both` · checked: `tools/validate-briefs.sh` (never
+   blocks)", and `BRIEFS-8` has shipped that way since v1. The validator prints the finding,
+   counts it in the summary, and exits zero.
+
+   This unblocks phase `d`. It also shrinks it: the hard part of "how an existing repository
+   crosses into a clause that did not exist yesterday" was always the repositories the clause
+   would fail on day one, and a clause that cannot fail a build has no crossing to manage.
+   What `d` still owes is the promotion — the version at which `[judgment]` becomes
+   `[defect]`, and what has to be true first.
 
 ## Non-goals
 
