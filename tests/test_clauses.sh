@@ -118,6 +118,25 @@ $CL_OUT" ;;
   esac
 }
 
+# A timestamp is digits followed by colons, which is the shape of a phase token. The first
+# version of the parser accepted any token with a colon somewhere after a digit and turned
+# `2026-01-01T00:00:00Z` into the phase id `2026-01-01T00`. Unreachable with today's status
+# line, and pinned anyway: the clause is published, and a published clause is expensive to
+# correct.
+test_clauses_briefs9_rejects_a_timestamp_shaped_token() {
+  cl_repo stamped
+  cl_brief 0001 stamped -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 done 2026-01-01T00:00:00Z a:done`' \
+    '' '| a | thing | done |'
+  cl_run
+  case "$CL_OUT" in
+    *"2026"*) fail "a timestamp was parsed as a phase id:
+$CL_OUT" ;;
+  esac
+  cl_assert_clean_gate "timestamp token"
+}
+
 # The gap #0013 left open, and the reason this clause exists. These three row shapes match
 # no pattern, so before BRIEFS-9 a ledger using them reported clean while its phases were
 # invisible to every reader.

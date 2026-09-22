@@ -253,11 +253,23 @@ fi
 # the line on whitespace alone yields `done(commit` and `92a7168)` as tokens. Both
 # index alphabets are accepted — blc/1 numbered its phases, blc/2 letters them, and
 # six ledgers here still use the older form.
+# The id is checked for shape, not merely for a colon somewhere after a digit. The looser
+# form matched `2026-01-01T00:00:00Z` and yielded the phase id `2026-01-01T00`, because a
+# timestamp is digits followed by colons. No status line carries a timestamp today, so this
+# was unreachable — and it is fixed anyway, because BRIEFS-9 is about to be written into a
+# Contract clause and a parser is easier to correct than a published version of one.
 status_line_phase_ids() {
-  local token ids=""
+  local token id ids=""
   for token in $1; do
     case "$token" in
-      [0-9]*:*|[a-z]:*) ids="$ids ${token%%:*}" ;;
+      *:*) id="${token%%:*}" ;;
+      *) continue ;;
+    esac
+    # A phase index is one lowercase letter (blc/2) or digits (blc/1). Nothing else is one.
+    case "$id" in
+      [a-z]) ids="$ids $id" ;;
+      *[!0-9]*) ;;
+      [0-9]*) ids="$ids $id" ;;
     esac
   done
   printf '%s' "${ids# }"
