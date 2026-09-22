@@ -99,6 +99,21 @@ run_install_with_path() {
 # and the tool exits non-zero before doing anything the test meant to measure. Kept here
 # rather than inline so the next tool that gains a library dependency does not silently
 # break every fixture that hand-copies it.
+# Assert that a tool loads a library by name in its bootstrap loop.
+#
+# Membership in the parsed list, not a substring of the file. Both guards that used this
+# idea were written as `assert_contains '<libname>'` and both went green while the library
+# was absent from the load list, because the name also occurs in a comment in the same file.
+assert_loads_library() {
+  local tool="$1" lib="$2" list
+  list="$(sed -n 's/^for BLC_LIB in \(.*\); do$/\1/p' "$REPO_ROOT/tools/$tool")"
+  [ -n "$list" ] || fail "$tool has no bootstrap library load list"
+  case " $list " in
+    *" $lib "*) ;;
+    *) fail "$tool does not load '$lib' in its bootstrap load list (list: $list)" ;;
+  esac
+}
+
 fixture_install_tool() {
   local repo="$1" tool="$2"
   mkdir -p "$repo/tools/lib"

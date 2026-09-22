@@ -82,21 +82,25 @@ read by `open-briefs.sh` and `list-briefs.sh`. Inserted after phase `a` on a fin
   1683 bytes — and five runs take 2.021s against 2.018s. The positional read was a cost
   rule about file I/O, never about tokens, and `grep -m1` stops at the first match, so a
   normal ledger still costs two lines.
-- 312 tests pass, up from 290. Seven mutations, each failing only its intended tests.
+- 315 tests pass, up from 290. Every mutation listed below fails only its intended tests.
 
-### Phase b — what review found, and it was the same defect twice
+### Phase b — what review found, and it was the same defect three times
 
-Three findings, all of them the shape this brief exists to address: a record that says a
-property is held, and no mechanism holding it.
+Phase `b` was reviewed twice and shipped an un-failable guard **both** times. That is the
+finding, more than any individual defect: this brief exists because a record can claim a
+property nothing holds, and the phase written to fix that kept doing it.
+
+Four findings in the first review, all the same shape — a record saying a property is held,
+and no mechanism holding it.
 
 1. **The agreement test could not detect disagreement.** It ran both tools per ledger, then
    discarded one result with `: "$in_open"`, so the only live assertion concerned
    `list-briefs.sh`. Blinding `open-briefs.sh` entirely failed eighteen other tests and left
    this one green. It is phase `a`'s defect one phase later, under a name claiming the
    opposite — and worse than phase `a`'s, because a later phase owing an agreement test
-   would have found one already written. Rewritten against the five shapes that used to
-   divide the two readers; this repository's own ledgers agreed under *both* old locators
-   and could therefore never have proved anything.
+   would have found one already written. Rewritten against the shapes that actually divide
+   the two readers; this repository's own ledgers agreed under *both* old locators and could
+   therefore never have proved anything. The rewrite was itself defective — see below.
 2. **`list-briefs.sh`'s symlink walk had no test.** Phase `a` added that walk to
    `open-briefs.sh` after review found the missing property, and pinned it. Phase `b` copied
    the walk into the second tool and copied no test: replacing it with a plain `dirname`
@@ -108,12 +112,49 @@ property is held, and no mechanism holding it.
    `docs/briefs/README.md` prints the status line. A ledger documenting its own format would
    have handed both readers `#9999`. Nothing here does it yet, which is the only reason it
    was invisible. The locator now tracks fences.
+4. **The `[no-line]` message described the locator that had been removed.** It still told
+   the reader the line must sit below the title after any leading `---` block.
 
 **The control worked.** Moving the locator from `grep` to `awk` required escaping the slash,
 which left `SL_FINGERPRINT` no longer matching the library it fingerprints — the identical
 stale-pattern defect phase `a` shipped. This time the two positive controls added after that
 review failed on the next run and named it. That is the mechanism doing its job unprompted,
 and the reason the controls stay.
+
+### Phase b — what the re-review found in the fixes
+
+The re-review reproduced all four disproofs and confirmed the four defects closed. It then
+found three more, two of them created by the fixes themselves.
+
+5. **The rewritten agreement test still could not detect disagreement.** It checked each
+   tool against a private expectation — `open-briefs.sh` must not print `[no-line]`,
+   `list-briefs.sh` must print `in-progress` — which is not comparing them. Two disproofs:
+   giving `open-briefs.sh` its own rebuilt divergent locator left all 312 tests green *while
+   the two tools reported different serials for the same ledger*, and making `open-briefs.sh`
+   exit 2 with no output at all passed every agreement test, because absence of a substring
+   is satisfied by silence. Every fixture now carries a `#9999 done` decoy, both sides assert
+   positively on the same fact, and both exit statuses are checked.
+6. **The fence tracker toggled on any delimiter.** A ```` ```` ```` block containing ``` ``` ````,
+   or a ``` ``` ``` block containing `~~~`, read as closed and the decoy inside won — the
+   "finding the wrong line is worse than finding none" case, rebuilt by the fix for it. A
+   fence now closes only on the same character, at least as long.
+7. **An unterminated fence swallowed the rest of the file.** A live brief reported no status
+   line and counted as drift. This is the unbounded skip this phase reversed for frontmatter,
+   reintroduced three headings later in the same file. Resolved the same way and for the same
+   reason: a malformed fence is a defect in the ledger, not grounds for reporting that it has
+   no status at all. If no candidate is found outside fences and the file ends inside one,
+   the first candidate anywhere is used.
+
+**And one the re-review did not have to find.** Verifying the fence fix across `awk`
+implementations showed `mawk` returning the decoy: it has no interval expressions and read
+`{3,}` literally. Invisible on any machine with `gawk`, which is every machine this has run
+on. Written as ```` ```` `* ```` now, and checked under `gawk` and `mawk` on six shapes.
+
+**Why the guards kept passing.** Both `no_tool_rebuilds_the_locator` and
+`both_tools_read_the_library` were matching text that occurs in a *comment* in the tool they
+guard. The fingerprint had also been narrowed to the `awk` spelling when the locator moved,
+so a rebuild written with `grep` — the likely rebuild — walked past it. The scan now carries
+both spellings, and the load-list guards parse the list instead of searching the file.
 
 **Reversal — the unterminated-frontmatter test.** `open-briefs.sh` reported `[no-line]` for
 a ledger whose frontmatter never closes, and a test asserted that was correct. It was not a

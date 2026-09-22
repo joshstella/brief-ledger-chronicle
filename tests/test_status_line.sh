@@ -11,12 +11,16 @@ SL_LIB="tools/lib/status-line.sh"
 
 # Distinctive enough that finding it outside the library means someone rebuilt the locator.
 #
-# A literal, searched with grep -F. The phase `a` version of this idea was an ERE that
-# matched nothing, because the source held a backslash the pattern did not. That is not a
-# historical note: this value was `\`?blc/` until the locator moved from grep to awk, where
-# the slash needs escaping, and the two controls below failed on the next run and said so.
-# Keep the controls; the fingerprint will go stale again.
-SL_FINGERPRINT='`?blc\/'
+# Literals, searched with grep -F. The phase `a` version of this idea was an ERE that matched
+# nothing, because the source held a backslash the pattern did not.
+#
+# There are two because narrowing to one was the next mistake. When the locator moved to awk
+# the slash needed escaping, this became `\`?blc\/` alone — and a locator rebuilt the natural
+# way, with grep or sed, writes `\`?blc/` and walked straight past the scan. Re-review proved
+# it by planting exactly that rebuild: 312 tests green while the two tools read different
+# lines. A guard for one spelling of an idea is a guard for none.
+SL_FINGERPRINTS='`?blc\/
+`?blc/'
 
 sl_source_lib() {
   # shellcheck source=/dev/null
@@ -91,12 +95,24 @@ test_status_line_strips_leading_whitespace_and_backticks() {
 # ── One locator, and both tools on it ────────────────────────────────────────
 
 sl_locators_under() {
-  grep -rlF "$SL_FINGERPRINT" "$1" 2>/dev/null
+  printf '%s\n' "$SL_FINGERPRINTS" | while IFS= read -r fp; do
+    [ -n "$fp" ] || continue
+    grep -rlF "$fp" "$1" 2>/dev/null
+  done | sort -u
 }
 
+# Positive control: at least one spelling must still be in the library. Without this the
+# scan above can quietly stop matching anything and report a clean tree forever.
 test_status_line_the_fingerprint_still_matches_the_library() {
-  grep -qF "$SL_FINGERPRINT" "$REPO_ROOT/$SL_LIB" \
-    || fail "the fingerprint no longer appears in $SL_LIB, so the guard cannot fail"
+  local fp found=0
+  while IFS= read -r fp; do
+    [ -n "$fp" ] || continue
+    grep -qF "$fp" "$REPO_ROOT/$SL_LIB" && found=1
+  done <<EOF
+$SL_FINGERPRINTS
+EOF
+  [ "$found" -eq 1 ] \
+    || fail "no fingerprint appears in $SL_LIB, so the guard cannot fail"
 }
 
 test_status_line_the_guard_catches_a_planted_copy() {
@@ -107,13 +123,30 @@ test_status_line_the_guard_catches_a_planted_copy() {
     || fail "the scan did not find a second locator planted in front of it"
 }
 
+# The other spelling must be caught too. A rebuild written with grep rather than awk is the
+# likely one, and it is the one that escaped the narrowed fingerprint in re-review.
+test_status_line_the_guard_catches_a_grep_shaped_rebuild() {
+  local planted="$TMP/lt2"
+  mkdir -p "$planted"
+  printf '%s\n' 'other_status_line() {' \
+    "  grep -m1 -E '^[[:space:]]*\`?blc/[0-9]+[[:space:]]' \"\$1\"" '}' \
+    > "$planted/rebuilt.sh"
+  sl_locators_under "$planted" | grep -q rebuilt.sh \
+    || fail "a grep-shaped rebuild of the locator was not caught by the scan"
+}
+
 test_status_line_no_tool_rebuilds_the_locator() {
   local hits
   hits="$(sl_locators_under "$REPO_ROOT/tools" | grep -v "$SL_LIB" || true)"
   [ -z "$hits" ] || fail "a second status-line locator exists outside $SL_LIB: $hits"
 }
 
+# Anchored on the library load list, not on any occurrence of the name. `blc_status_line`
+# also appears in a comment in open-briefs.sh, so the looser form of this test stayed green
+# through a mutation that removed the library from the load list entirely.
 test_status_line_both_tools_read_the_library() {
+  assert_loads_library open-briefs.sh status-line
+  assert_loads_library list-briefs.sh status-line
   assert_contains 'blc_status_line' "$REPO_ROOT/tools/open-briefs.sh"
   assert_contains 'blc_status_line' "$REPO_ROOT/tools/list-briefs.sh"
 }
@@ -208,55 +241,90 @@ sl_agreement_repo() {
 }
 
 # usage: sl_assert_tools_agree <label> <ledger-lines...>
-# The ledger says in-progress with an open phase, so a reader that finds the line has
-# something to report and a reader that misses it says [no-line]. Divergence is visible.
+#
+# The second version of this was still un-failable, and review proved it twice: giving
+# open-briefs.sh its own rebuilt divergent locator left all 312 tests green while the two
+# tools reported *different serials for the same ledger*, and making open-briefs.sh exit 2
+# with no output at all passed every agreement test, because the only check on that side was
+# the absence of a substring. Silence satisfied it.
+#
+# The lesson the first two attempts both missed: checking each tool against a private
+# expectation is not comparing them. Every fixture therefore carries a decoy — a `#9999 done`
+# line a wrong reader would take — and this asserts the *same* fact from both sides. A reader
+# that takes the decoy thinks the brief is finished, so open-briefs.sh drops it from the open
+# set and list-briefs.sh prints `done`. Either way the two sides disagree and one assert
+# fires. Exit status is checked on both, because a tool that dies prints no bad substring.
 sl_assert_tools_agree() {
   local label="$1"; shift
   sl_agreement_repo "$@"
 
-  local open_out list_out
-  open_out="$(cd "$SL_REPO" && bash tools/open-briefs.sh docs/briefs 2>&1)"
-  list_out="$(cd "$SL_REPO" && bash tools/list-briefs.sh docs/briefs 2>&1)"
+  local open_out list_out open_rc list_rc
+  open_out="$(cd "$SL_REPO" && bash tools/open-briefs.sh docs/briefs 2>&1)"; open_rc=$?
+  list_out="$(cd "$SL_REPO" && bash tools/list-briefs.sh docs/briefs 2>&1)"; list_rc=$?
 
+  [ "$open_rc" -eq 0 ] || fail "$label: open-briefs exited $open_rc"
+  [ "$list_rc" -eq 0 ] || fail "$label: list-briefs exited $list_rc"
+
+  # Positive on both sides. open-briefs must name the brief as open; "Nothing open" is what
+  # it prints when it has taken the decoy, and the old absence-check accepted that.
   case "$open_out" in
-    *"[no-line]"*) fail "$label: open-briefs found no status line; list-briefs did" ;;
+    *"[no-line]"*)     fail "$label: open-briefs found no status line" ;;
+    *"Nothing open"*)  fail "$label: open-briefs read the decoy — it thinks #0001 is done" ;;
+    *0001-shape*)      ;;
+    *)                 fail "$label: open-briefs did not report #0001 at all" ;;
   esac
+
   case "$list_out" in
-    *"no-line"*) fail "$label: list-briefs found no status line; open-briefs did" ;;
-    *"in-progress"*) ;;
-    *) fail "$label: list-briefs did not read the status as in-progress" ;;
+    *"no-line"*)                    fail "$label: list-briefs found no status line" ;;
+    *"| #0001 "*"in-progress"*)     ;;
+    *"| #0001 "*"done"*)            fail "$label: list-briefs read the decoy — it says done" ;;
+    *)                              fail "$label: list-briefs did not read #0001 as in-progress" ;;
+  esac
+
+  # Neither tool may see the decoy's serial anywhere.
+  case "$open_out$list_out" in
+    *9999*) fail "$label: a tool surfaced the decoy serial #9999" ;;
   esac
 }
+
+# Each fixture below pairs one divergence shape with a decoy the wrong reader takes. The
+# decoy is `#9999 done`, so a tool that reads it reports a finished brief and the assertions
+# on both sides fire. The ordinary shape carries a prose-quoted decoy, which is what catches
+# a reader rebuilt without the anchor.
+SL_DECOY_PROSE='This explains the format `blc/2 #9999 done z:done` before stating its own.'
+SL_REAL='`blc/2 #0001 in-progress a:in-progress(feature/x)`'
+SL_TABLE='| a | the thing | in-progress |'
 
 test_status_line_tools_agree_on_the_ordinary_shape() {
   sl_assert_tools_agree "plain" \
     '# Ledger — #0001 A title' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
-    '' '| a | the thing | in-progress |'
+    "$SL_DECOY_PROSE" \
+    "$SL_REAL" \
+    '' "$SL_TABLE"
 }
 
 test_status_line_tools_agree_on_a_blank_line_after_the_title() {
   sl_assert_tools_agree "blank after title" \
     '# Ledger — #0001 A title' \
     '' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
-    '' '| a | the thing | in-progress |'
+    "$SL_REAL" \
+    '' "$SL_TABLE"
 }
 
 test_status_line_tools_agree_on_a_line_further_down() {
   sl_assert_tools_agree "further down" \
     '# Ledger — #0001 A title' \
     '' 'Preamble a docs pipeline inserted.' '' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
-    '' '| a | the thing | in-progress |'
+    "$SL_REAL" \
+    '' "$SL_TABLE"
 }
 
 test_status_line_tools_agree_under_unterminated_frontmatter() {
   sl_assert_tools_agree "unterminated frontmatter" \
     '---' 'title: broken' '' \
     '# Ledger — #0001 A title' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
-    '' '| a | the thing | in-progress |'
+    "$SL_REAL" \
+    '' "$SL_TABLE"
 }
 
 # The shape review found: an example at column 0 inside a fence, above the real line. This
@@ -266,8 +334,37 @@ test_status_line_tools_agree_when_a_fence_holds_an_example() {
   sl_assert_tools_agree "fenced example" \
     '# Ledger — #0001 A title' \
     '' '```' '`blc/2 #9999 done z:done`' '```' '' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
-    '' '| a | the thing | in-progress |'
+    "$SL_REAL" \
+    '' "$SL_TABLE"
+}
+
+# A fence opened with four backticks holding a three-backtick line, and a backtick fence
+# holding a tilde line. The first fence tracker toggled on any delimiter, so both of these
+# read as closed and the decoy inside won. Found in re-review.
+test_status_line_tools_agree_when_fences_nest() {
+  sl_assert_tools_agree "nested fence" \
+    '# Ledger — #0001 A title' \
+    '' '````' '```' '`blc/2 #9999 done z:done`' '```' '````' '' \
+    "$SL_REAL" \
+    '' "$SL_TABLE"
+
+  sl_assert_tools_agree "mismatched fence" \
+    '# Ledger — #0001 A title' \
+    '' '```' '~~~' '`blc/2 #9999 done z:done`' '~~~' '```' '' \
+    "$SL_REAL" \
+    '' "$SL_TABLE"
+}
+
+# An unclosed fence used to swallow the rest of the file, so a live brief reported no status
+# line at all and counted as drift — the same unbounded skip this phase reversed for
+# frontmatter. Both tools agreed on the wrong answer, which is why only a positive assertion
+# catches it.
+test_status_line_tools_agree_under_an_unterminated_fence() {
+  sl_assert_tools_agree "unterminated fence" \
+    '# Ledger — #0001 A title' \
+    '' '```' 'an example block nobody closed' '' \
+    "$SL_REAL" \
+    '' "$SL_TABLE"
 }
 
 test_status_line_a_fenced_example_is_not_read_as_the_status() {

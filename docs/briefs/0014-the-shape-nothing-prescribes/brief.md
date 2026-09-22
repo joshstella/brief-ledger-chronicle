@@ -190,7 +190,10 @@ Resolved 2026-09-16 during drafting.
 
 1. ~~**Where the shared matcher lives.**~~ **Resolved 2026-09-16** — see "The shared matcher
    lives in `tools/lib/`" above. Struck rather than removed, and the numbering below is held,
-   so the reference from phase `c` still resolves.
+   so the reference from phase `d` still resolves — the phase that cites decision 2, which
+   the 2026-09-16 re-lettering moved from `c` to `d`. This sentence said `c` until re-review
+   caught it, which is pointed: its only job is to keep a cross-reference resolving, and it
+   was the last stale one in the file.
 2. **Whether `BRIEFS-9` gates immediately or reports for one version.** A clause that lands
    already failing is the honest signal; a clause that reports first is the kinder upgrade.
    #0003 faced this exact question and demoted a gate to a report. Blocks phase `d` — the

@@ -41,11 +41,42 @@
 # re-deciding what to trim.
 blc_status_line() {
   awk '
-    # ``` and ~~~ both open a fence. A status line starts with a single backtick, so it
-    # can never be mistaken for one.
-    /^[[:space:]]*(```|~~~)/ { fence = 1 - fence; next }
-    fence                    { next }
-    /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ { print; exit }
+    function is_status(l) { return l ~ /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ }
+
+    { line = $0; sub(/\r$/, "", line) }
+
+    # Remember the first candidate anywhere, fences included. Only ever used for the
+    # unterminated-fence fallback in END.
+    anywhere == "" && is_status(line) { anywhere = line }
+
+    # A fence opens on three or more backticks or tildes. It closes only on the same
+    # character, at least as long. Toggling on any delimiter — the first version of this —
+    # let a ```` block containing ``` , or a ``` block containing ~~~ , read as closed, and
+    # the locator then returned the example it was meant to skip. A delimiter that does not
+    # match the open one is content, not a fence.
+    # Three-or-more written as ```` ```` `* ```` rather than ``{3,}``: mawk 1.3.4 does not
+    # support interval expressions, and read `{3,}` literally. Under it the locator returned
+    # the fenced example — a portability defect that is invisible on any machine with gawk,
+    # which is every machine this has been run on.
+    match(line, /^[[:space:]]*(````*|~~~~*)[[:space:]]*/) {
+      d = substr(line, RSTART, RLENGTH); gsub(/[[:space:]]/, "", d)
+      if (!fence)                                      { fence = 1; fch = substr(d,1,1); flen = length(d) }
+      else if (substr(d,1,1) == fch && length(d) >= flen) { fence = 0 }
+      next
+    }
+
+    fence { next }
+    is_status(line) { outside = line; exit }
+
+    END {
+      if (outside != "") print outside
+      # The file ended inside a fence that never closed. Treating the remainder as code
+      # would hide a live brief’s status from every reader — the same unbounded skip this
+      # phase just reversed for unterminated frontmatter, and refused there for the same
+      # reason. A malformed fence is a defect in the ledger, not a reason to report that it
+      # has no status at all.
+      else if (fence && anywhere != "") print anywhere
+    }
   ' "$1" 2>/dev/null \
     | tr -d '`' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'

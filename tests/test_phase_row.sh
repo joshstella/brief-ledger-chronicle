@@ -61,9 +61,11 @@ test_phase_row_no_tool_defines_its_own_matcher() {
 }
 
 test_phase_row_open_briefs_sources_the_library() {
-  # Named in the bootstrap's library list rather than as a full path: open-briefs.sh
-  # loads several libraries in one loop since #0014 phase b.
-  assert_contains 'phase-row' "$REPO_ROOT/tools/open-briefs.sh"
+  # Anchored on the bootstrap's load list. This was a bare `assert_contains 'phase-row'`
+  # when open-briefs.sh moved to a multi-library loop in #0014 phase b, and `phase-row` also
+  # appears in a comment in that file — so removing the library from the load list left the
+  # guard green. Re-review proved it.
+  assert_loads_library open-briefs.sh phase-row
   assert_contains 'BLC_LIB_DIR' "$REPO_ROOT/tools/open-briefs.sh"
 }
 
