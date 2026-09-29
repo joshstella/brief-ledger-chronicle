@@ -8,6 +8,12 @@
 # is surfaced for a human, so making it fail the build would silently promote it
 # to a defect. BRIEFS-8, BRIEFS-9 and BRIEFS-10 are all [judgment].
 #
+# Exit 2 means the question could not be asked: a briefs directory that is not a
+# directory, or a shared library under tools/lib/ that cannot be read. It is kept
+# distinct from 1 because "the tree is bad" and "the checker is broken" call for
+# different responses, and a checker that could not load its clauses must never be
+# read as a clean tree.
+#
 # The clause text lives in docs/contracts/v1.2.md. This script cites clause ids and
 # does not restate them: a paraphrase here would be a fourth copy of the rules,
 # which is the drift this Contract was extracted to end.
@@ -246,34 +252,11 @@ fi
 # Re-deriving either here is what tests/test_phase_row.sh and
 # tests/test_status_line.sh scan tools/ to forbid.
 
-# The phase ids a status line declares, whitespace-separated.
-#
-# A phase token is one containing a colon, which is a filter and not a formality:
-# #0001's brief status is `done(commit 92a7168)` and contains a space, so splitting
-# the line on whitespace alone yields `done(commit` and `92a7168)` as tokens. Both
-# index alphabets are accepted — blc/1 numbered its phases, blc/2 letters them, and
-# six ledgers here still use the older form.
-# The id is checked for shape, not merely for a colon somewhere after a digit. The looser
-# form matched `2026-01-01T00:00:00Z` and yielded the phase id `2026-01-01T00`, because a
-# timestamp is digits followed by colons. No status line carries a timestamp today, so this
-# was unreachable — and it is fixed anyway, because BRIEFS-9 is about to be written into a
-# Contract clause and a parser is easier to correct than a published version of one.
-status_line_phase_ids() {
-  local token id ids=""
-  for token in $1; do
-    case "$token" in
-      *:*) id="${token%%:*}" ;;
-      *) continue ;;
-    esac
-    # A phase index is one lowercase letter (blc/2) or digits (blc/1). Nothing else is one.
-    case "$id" in
-      [a-z]) ids="$ids $id" ;;
-      *[!0-9]*) ;;
-      [0-9]*) ids="$ids $id" ;;
-    esac
-  done
-  printf '%s' "${ids# }"
-}
+# What a phase entry is, and which ids are indices, is blc_status_phase_entries'
+# business — shared with open-briefs.sh in tools/lib/phase-row.sh. This function
+# was forked here first, and review caught the two disagreeing on `bc:`: the
+# reporter saw a live phase, the gate saw nothing. Sharing the matcher was never
+# enough on its own, because the tokenizer is a second reader of the same line.
 
 for entry in $WELL_FORMED; do
   ledger="$BRIEFS_DIR/$entry/ledger.md"
@@ -282,10 +265,12 @@ for entry in $WELL_FORMED; do
   # the first clauses to read ledger.md at all, so the absent case is theirs to skip.
   [ -f "$ledger" ] || continue
 
-  case "$(blc_ledger_structure "$ledger" frontmatter)" in
+  # One scan, both facts.
+  eval "$(blc_ledger_facts "$ledger")"
+  case "$frontmatter" in
     open) judgment "BRIEFS-10" "$entry: ledger.md opens a --- frontmatter block that never closes" ;;
   esac
-  case "$(blc_ledger_structure "$ledger" fence)" in
+  case "$fence" in
     open) judgment "BRIEFS-10" "$entry: ledger.md ends inside an unclosed code fence" ;;
   esac
 
@@ -294,10 +279,25 @@ for entry in $WELL_FORMED; do
   # nothing to say about a line that does not exist.
   [ -n "$status_line" ] || continue
 
-  for phase_id in $(status_line_phase_ids "$status_line"); do
+  # A token shaped like a phase entry whose id is not an index. Reported rather than
+  # dropped: a phase declared in the record and looked for by nobody is the silence
+  # this clause exists to break, and dropping it quietly is how the gate and the
+  # reporter came to disagree in the first place.
+  while IFS= read -r bad_entry; do
+    [ -n "$bad_entry" ] || continue
+    judgment "BRIEFS-9" "$entry: status line declares '$bad_entry', whose phase id is not an index (one lowercase letter, or digits)"
+  done <<EOF
+$(blc_status_unparsed_entries "$status_line")
+EOF
+
+  while IFS= read -r phase_entry; do
+    [ -n "$phase_entry" ] || continue
+    phase_id="${phase_entry%%:*}"
     blc_phase_row_find "$phase_id" "$ledger" >/dev/null 2>&1 \
       || judgment "BRIEFS-9" "$entry: status line declares phase '$phase_id', which matches no row in the phase table"
-  done
+  done <<EOF
+$(blc_status_phase_entries "$status_line")
+EOF
 done
 
 # ── Project checks (brief-checks/) ───────────────────────────────────────────

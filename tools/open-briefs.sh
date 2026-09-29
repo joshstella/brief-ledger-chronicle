@@ -222,11 +222,13 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     UNTRACKED=$((UNTRACKED + 1))
   fi
 
-  for entry in "$@"; do
-    case "$entry" in
-      *:*) ;;
-      *) continue ;;
-    esac
+  # What counts as a phase entry is blc_status_phase_entries' business, shared with
+  # validate-briefs.sh. This loop used to filter on `*:*` alone while the gate applied a
+  # shape rule of its own, and the two disagreed about `bc:in-progress(feature/x)` — the
+  # reporter followed a phase the gate could not see. One tokenizer, for the same reason
+  # there is one matcher.
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
 
     idx="$(entry_index "$entry")"
     state="$(entry_state "$entry")"
@@ -291,7 +293,12 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     fi
 
     finding "[$state]" "$detail"
-  done
+    # A here-doc rather than a pipe: the loop body increments OPEN, DRIFT and the other
+    # counters, and a pipe would run it in a subshell where every one of those increments
+    # is discarded at the closing `done`.
+  done <<EOF
+$(blc_status_phase_entries "$line")
+EOF
 done
 
 printf '\nopen-briefs: %s — %d brief(s), %d open phase(s), %d not started, %d drift, %d untracked\n' \

@@ -218,6 +218,20 @@ shape. A rebuild written with `grep`, which is the likely rebuild, spells it wit
 backslash and walked straight past. It now carries both spellings. **A guard for one
 spelling of an idea is a guard for none.**
 
+## A test can ask a real question in the wrong place
+
+Globbing, relative paths, and `$PWD` are properties of the process's working directory. A
+test that builds its decoys in one directory and runs the tool from another asks a genuine
+question somewhere the answer cannot differ, and passes whatever the code does.
+
+`a_status_line_does_not_glob_the_working_directory` created files named `q:done` and
+`z:pending`, then ran `validate-briefs.sh` from the repository root. Deleting the `set -f`
+that closes the hole left every test green. Run the tool from the directory that holds the
+decoys, and assert the decoys exist before trusting the result.
+
+The general form: when a test depends on ambient state — cwd, environment, locale, umask —
+name where that state is set, and make the test set it.
+
 ## The interpreter you do not have is the one that breaks
 
 The fence tracker was written with `{3,}` to mean three-or-more. `mawk` 1.3.4 has no interval

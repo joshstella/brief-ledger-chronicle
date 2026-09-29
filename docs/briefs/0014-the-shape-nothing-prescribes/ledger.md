@@ -325,6 +325,22 @@ and 9.
     ~~Unowned; not scheduled.~~ **Owned 2026-09-22** — it becomes `BRIEFS-10`, a `[judgment]`
     clause in phase `c`. See Big decisions.
 
+12. **The fix for an un-failable guard was itself un-failable.** Round 3 of review found the
+    agreement test could not fail and found the glob hole in `blc_status_phase_entries`. Both
+    were fixed, and a test named `a_status_line_does_not_glob_the_working_directory` was
+    written with the fix. Removing `set -f` afterwards left all 333 tests green. The test
+    created its decoy filenames in the harness's directory and ran the validator from the
+    repository root, so the pattern expanded somewhere the decoys were not — it asked a real
+    question in the wrong place. It now runs the tool from the directory holding the decoys,
+    asserts the decoys exist, and asserts the run completed. Removing `set -f` now fails it.
+
+    This is the fifth un-failable guard in this brief: once in `a`, twice in `b`, once found
+    by review in `c`, and this one, which was written *as the remedy* for that finding. The
+    pattern is not carelessness about any one test. It is that a guard is written while
+    looking at the code it guards, where the failing case is vivid and therefore assumed
+    reachable. Nothing in "write the test, watch it pass" distinguishes a test that cannot
+    fail. Only the mutation does, which is why this repository's answer is to run one.
+
 ## Big decisions
 
 **The new clauses complain and never block.** Decided 2026-09-22, resolving open decision 2.

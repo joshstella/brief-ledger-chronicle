@@ -32,6 +32,14 @@ cl_run() {
   CL_RC=$?
 }
 
+# Glob expansion happens in the *validator's* working directory, not the harness's. A test
+# about globbing that runs from the repository root asks the question somewhere the decoys
+# do not exist, and passes whatever the code does.
+cl_run_from() {
+  CL_OUT="$(cd "$1" && bash "$REPO_ROOT/tools/validate-briefs.sh" "$CL_DIR" 2>&1)"
+  CL_RC=$?
+}
+
 cl_assert_clean_gate() {
   [ "$CL_RC" -eq 0 ] \
     || fail "$1: a [judgment] blocked the build (exit $CL_RC) — it must only complain
@@ -194,10 +202,13 @@ test_clauses_all_three_readers_agree_on_one_ledger() {
   rm -rf "$root"
   CL_DIR="$root/docs/briefs"
   mkdir -p "$CL_DIR"
+  # Two phases: `a` has a row, `q` deliberately does not. `q` is what makes the gate's
+  # assertion positive — a validator that reads this line MUST complain about `q`, so a
+  # validator that reads nothing at all fails here instead of passing quietly.
   cl_brief 0001 shape -- \
     '# Ledger — #0001 A title' \
     '' '```' '`blc/2 #9999 done z:done`' '```' '' \
-    '`blc/2 #0001 in-progress a:in-progress(feature/x)`' \
+    '`blc/2 #0001 in-progress a:in-progress(feature/x) q:pending`' \
     '' '| a | the thing | in-progress |'
 
   git -C "$root" init -q -b main
@@ -216,7 +227,8 @@ test_clauses_all_three_readers_agree_on_one_ledger() {
 
   [ "$open_rc" -eq 0 ] || fail "open-briefs exited $open_rc"
   [ "$list_rc" -eq 0 ] || fail "list-briefs exited $list_rc"
-  [ "$val_rc" -eq 0 ] || fail "validate-briefs exited $val_rc on a ledger with no defect"
+  # 0, not merely "not 1": BRIEFS-9 fires on `q` here, and a [judgment] must never block.
+  [ "$val_rc" -eq 0 ] || fail "validate-briefs exited $val_rc — a judgment blocked the run"
 
   # The reporter: names the brief as open, on phase a.
   case "$open_out" in
@@ -233,10 +245,25 @@ test_clauses_all_three_readers_agree_on_one_ledger() {
     *) fail "list-briefs did not read #0001 as in-progress" ;;
   esac
 
-  # The gate: silent, because phase `a` is findable. Had it taken the decoy it would be
-  # looking for phase `z`, find no row, and complain.
+  # The gate, asserted positively and in both directions.
+  #
+  # The first version of this checked only that `BRIEFS-9` was absent, which is the absence
+  # check the comment above this test forbids — and review proved the cost: giving the
+  # validator a rebuilt positional locator that returns nothing left all 327 tests green
+  # while BRIEFS-9 was dead on every ledger in existence. The fourth un-failable guard in
+  # this brief, in the test written to prevent the third.
+  #
+  # So the gate must name `q`, which exists only in the real line. A validator reading the
+  # decoy looks for `z`; a validator reading nothing looks for nothing. Both fail here.
   case "$val_out" in
-    *"BRIEFS-9"*) fail "validate-briefs took the decoy — it is looking for the wrong phase:
+    *"declares phase 'q'"*) ;;
+    *) fail "validate-briefs did not report the unfindable phase q — it is not reading the real status line:
+$val_out" ;;
+  esac
+  case "$val_out" in
+    *"declares phase 'a'"*) fail "validate-briefs cannot find the row for phase a, which exists:
+$val_out" ;;
+    *"'z'"*) fail "validate-briefs took the decoy — it is looking for phase z:
 $val_out" ;;
   esac
 
@@ -246,7 +273,185 @@ $val_out" ;;
   esac
 }
 
+# ── The tokenizer is shared, and these are the shapes that prove it ──────────
+#
+# Single-letter ids cannot prove it. The gate's private filter and the reporter's `*:*`
+# test give the same answer on `a`, `b`, `z` — which is the phase `b` lesson verbatim: a
+# corpus both readers already agree on can never show they differ. `bc` is the shape that
+# separated them, and `2026-…` is the one that separated them in the other direction.
+cl_three_tool_repo() {
+  CL_ROOT="$TMP/clauses/$1"
+  rm -rf "$CL_ROOT"
+  CL_DIR="$CL_ROOT/docs/briefs"
+  mkdir -p "$CL_DIR"
+  shift
+  cl_brief 0001 tok -- "$@"
+  git -C "$CL_ROOT" init -q -b main
+  git -C "$CL_ROOT" config user.email t@example.com
+  git -C "$CL_ROOT" config user.name Test
+  fixture_install_tool "$CL_ROOT" open-briefs.sh
+  fixture_install_tool "$CL_ROOT" validate-briefs.sh
+  git -C "$CL_ROOT" add -A
+  git -C "$CL_ROOT" commit -qm fixture >/dev/null 2>&1
+}
+
+# A multi-letter id is not a phase index — `docs/briefs/README.md` says a phase has one id
+# and the index is a letter. Before the tokenizer was shared, open-briefs.sh followed `bc`
+# as a live phase while the gate did not see it at all.
+test_clauses_the_gate_and_the_reporter_agree_on_a_multi_letter_id() {
+  cl_three_tool_repo multiletter \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 in-progress bc:in-progress(feature/x)`' \
+    '' '| a | thing | done |'
+
+  local open_out val_out
+  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/briefs 2>&1)"
+  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+
+  # Neither may treat `bc` as a phase to follow.
+  case "$open_out" in
+    *"phase bc"*) fail "open-briefs followed 'bc' as a phase; the gate does not:
+$open_out" ;;
+  esac
+  # And it must not vanish from the record entirely — the gate says so out loud.
+  case "$val_out" in
+    *"bc:in-progress(feature/x)"*) ;;
+    *) fail "nothing reported 'bc' at all — a phase in the record that no reader looks for:
+$val_out" ;;
+  esac
+  cl_assert_gate_clean_rc "$CL_ROOT"
+}
+
+test_clauses_the_gate_and_the_reporter_agree_on_a_timestamp() {
+  cl_three_tool_repo stamp \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 in-progress 2026-01-01T00:00:00Z a:in-progress(feature/x)`' \
+    '' '| a | thing | in-progress |'
+
+  local open_out val_out
+  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/briefs 2>&1)"
+  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+  case "$open_out" in
+    *"phase 2026"*) fail "open-briefs parsed a timestamp as a phase:
+$open_out" ;;
+  esac
+  case "$val_out" in
+    *"declares phase '2026"*) fail "the gate parsed a timestamp as a phase:
+$val_out" ;;
+  esac
+}
+
+cl_assert_gate_clean_rc() {
+  local rc
+  ( cd "$1" && bash tools/validate-briefs.sh docs/briefs >/dev/null 2>&1 ); rc=$?
+  [ "$rc" -eq 0 ] || fail "a [judgment] blocked the run (exit $rc)"
+}
+
+# A status line is data from a file this toolkit did not write, and `for token in $1` globs.
+# With files named `q:done` and `z:pending` in the working directory, a bare `*` in a status
+# line made the gate report two phases the ledger never mentions.
+test_clauses_a_status_line_does_not_glob_the_working_directory() {
+  cl_repo globby
+  cl_brief 0001 globby -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 in-progress a:done *`' \
+    '' '| a | thing | done |'
+  local yard="$TMP/clauses/globby-cwd"
+  rm -rf "$yard"; mkdir -p "$yard"
+  ( cd "$yard" && : > 'q:done' && : > 'z:pending' ) 2>/dev/null \
+    || { skip "cannot create colon-named files"; return; }
+  # The decoys must be findable by the pattern, or the test proves nothing.
+  [ -e "$yard/q:done" ] || fail "the decoy file was not created — the test cannot detect globbing"
+
+  cl_run_from "$yard"
+  case "$CL_OUT" in
+    *"phase 'q'"*|*"phase 'z'"*) fail "a filename in the working directory became a phase id:
+$CL_OUT" ;;
+  esac
+  # Positive control: the run must have reached the clause at all.
+  case "$CL_OUT" in
+    *"10 clauses decided"*) ;;
+    *) fail "validate-briefs did not complete — the glob check never ran:
+$CL_OUT" ;;
+  esac
+}
+
+# ── BRIEFS-10 and the two structures that read each other ────────────────────
+
+# Review raised the converse of the test below — a `---` inside a fence closing the
+# frontmatter — as a defect. It is not one, and this test pins the decision rather than the
+# behaviour drifting back.
+#
+# Frontmatter runs from the opening `---` to the next `---`, which is what every markdown
+# tool does. Its interior is YAML, so the fence in this fixture never opened, and the `---`
+# that follows is simply the closing delimiter. Reporting this file as having unterminated
+# frontmatter would mean inventing a document shape no parser agrees with us about — and
+# `BRIEFS-10` is a clause other repositories will be measured by.
+#
+# The genuinely unterminated case, `---` on line 1 and no other, is covered above and does
+# complain.
+test_clauses_briefs10_frontmatter_ends_at_the_first_closing_marker() {
+  cl_repo fmfence
+  # Frontmatter closes on line 3. The `---` further down is inside a closed fence and must
+  # not re-enter or re-open anything; the fence itself is balanced. Nothing to complain of.
+  cl_brief 0001 fmfence -- \
+    '---' 'title: x' '---' '' '# Ledger' '`blc/2 #0001 done a:done`' '' \
+    '```' '---' '```' '' '| a | t | done |'
+  cl_run
+  case "$CL_OUT" in
+    *"BRIEFS-10"*) fail "a well-formed ledger drew a BRIEFS-10 complaint:
+$CL_OUT" ;;
+  esac
+}
+
+# The mirror: a fence delimiter inside a YAML block scalar is not a fence. Treating it as
+# one drew a false complaint about a legal ledger, and made the locator fall back.
+test_clauses_briefs10_a_fence_inside_frontmatter_is_not_a_fence() {
+  cl_repo fencefm
+  cl_brief 0001 fencefm -- \
+    '---' 'example: |' '  ```' '  code' '---' '' '# Ledger' \
+    '`blc/2 #0001 done a:done`' '' '| a | t | done |'
+  cl_run
+  case "$CL_OUT" in
+    *"BRIEFS-10"*) fail "a fence delimiter inside frontmatter was read as an open fence:
+$CL_OUT" ;;
+  esac
+}
+
 # ── The validator is a reader, not a re-deriver ──────────────────────────────
+
+# The three copies of the symlink walk must stay identical.
+#
+# The duplication is deliberate — it is the code that finds the shared code, so it cannot be
+# shared — but complication 10 records that the copies drifted in the very commit that
+# created the second one, and that nobody noticed. The third arrived in this phase with the
+# same exposure and nothing holding it: `assert_loads_library` checks the load list below
+# the walk, and says nothing about the walk itself.
+#
+# Only the walk is compared. The exit status differs per tool by documented intent, and the
+# library list differs because the tools need different libraries.
+cl_extract_walk() {
+  sed -n '/^BLC_SELF=/,/^BLC_LIB_DIR=/p' "$REPO_ROOT/tools/$1" | grep -v '^ *exit '
+}
+
+test_clauses_the_three_bootstrap_walks_are_identical() {
+  local ob lb vb
+  ob="$(cl_extract_walk open-briefs.sh)"
+  lb="$(cl_extract_walk list-briefs.sh)"
+  vb="$(cl_extract_walk validate-briefs.sh)"
+
+  [ -n "$ob" ] || fail "could not extract the symlink walk from open-briefs.sh"
+  # A comparison of two empty strings succeeds. Prove the extraction found something.
+  case "$ob" in
+    *readlink*) ;;
+    *) fail "the extracted walk does not contain readlink — the extractor is broken" ;;
+  esac
+
+  [ "$ob" = "$lb" ] || fail "open-briefs.sh and list-briefs.sh symlink walks have drifted:
+$(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$lb") || true)"
+  [ "$ob" = "$vb" ] || fail "open-briefs.sh and validate-briefs.sh symlink walks have drifted:
+$(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$vb") || true)"
+}
 
 test_clauses_validate_briefs_loads_both_libraries() {
   assert_loads_library validate-briefs.sh phase-row
