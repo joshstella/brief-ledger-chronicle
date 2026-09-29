@@ -14,7 +14,8 @@ legend cannot drift against itself.
 | version | covers | status |
 |---|---|---|
 | [v1](v1.md) | the structure of `docs/briefs/` | superseded by v1.1 |
-| [v1.1](v1.1.md) | the structure of `docs/briefs/` | current |
+| [v1.1](v1.1.md) | the structure of `docs/briefs/` | superseded by v1.2 |
+| [v1.2](v1.2.md) | the structure of `docs/briefs/`, and `ledger.md` consistency | current |
 
 A version states what holds for that version. A later version supersedes it without making
 it retroactively false.

@@ -302,6 +302,15 @@ and 9.
    POSIX shell and grep." Both stop being true in `c`. v1.2 is already scheduled by the
    settled decisions, so the text lands there; the header comment is `c`'s to fix.
 
+   **Closed 2026-09-29.** The header now names all four dependencies. The Contract sentence
+   is not edited in v1.1 — a superseded version states what held for that version, and
+   rewriting it would erase the record of the change. v1.1 instead carries a note pointing
+   at the successor, and [v1.2](../../contracts/v1.2.md) states the new dependency and why
+   the check is now a script plus two libraries. That is the opposite of what #0009 and
+   #0010 chose, both of which reworded v1.1 in place; the difference is that those corrected
+   an over-specific phrase that was always meant to say something broader, and this one
+   records a claim that was true when published and stopped being true.
+
 9. **`BRIEFS-9` is the first clause that reads `ledger.md`.** All eight existing clauses
    govern the briefs directory and `brief.md`. This widens what the Contract governs from
    "the record is well-formed" to "the ledger is internally consistent". Worth taking

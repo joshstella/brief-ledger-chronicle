@@ -11,8 +11,10 @@ test_ship_places_the_contract() {
   assert_status 0
   assert_file "$TARGET/docs/contracts/v1.md"
   assert_file "$TARGET/docs/contracts/v1.1.md"
+  assert_file "$TARGET/docs/contracts/v1.2.md"
   assert_file "$TARGET/docs/contracts/README.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.2.md"
 }
 
 test_ship_places_the_contract_for_cursor_too() {
@@ -20,6 +22,7 @@ test_ship_places_the_contract_for_cursor_too() {
   assert_status 0
   assert_file "$TARGET/docs/contracts/v1.md"
   assert_file "$TARGET/docs/contracts/v1.1.md"
+  assert_file "$TARGET/docs/contracts/v1.2.md"
   assert_file "$TARGET/docs/contracts/README.md"
 }
 
@@ -38,7 +41,7 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
   # let a tool named in the omitted document go unchecked.
   for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/briefs/_drafts/README.md" \
              "$TARGET/docs/contracts/README.md" "$TARGET/docs/contracts/v1.md" \
-             "$TARGET/docs/contracts/v1.1.md"; do
+             "$TARGET/docs/contracts/v1.1.md" "$TARGET/docs/contracts/v1.2.md"; do
     [ -f "$doc" ] || continue
     # Underscores and digits included so a tool named off the lowercase-hyphen
     # convention is caught rather than skipped. A pattern that silently ignores the
@@ -119,7 +122,8 @@ test_ship_the_installed_contract_names_a_check_that_exists() {
   run_install y --target "$TARGET"
   assert_status 0
   local contract path found=0
-  for contract in "$TARGET/docs/contracts/v1.md" "$TARGET/docs/contracts/v1.1.md"; do
+  for contract in "$TARGET/docs/contracts/v1.md" "$TARGET/docs/contracts/v1.1.md" \
+                  "$TARGET/docs/contracts/v1.2.md"; do
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$TARGET/$path" ] \
@@ -140,6 +144,8 @@ test_ship_the_briefs_readme_is_this_repos_own_file() {
     || fail "installed Contract v1 differs from this repository's own copy"
   cmp -s "$REPO_ROOT/docs/contracts/v1.1.md" "$TARGET/docs/contracts/v1.1.md" \
     || fail "installed Contract v1.1 differs from this repository's own copy"
+  cmp -s "$REPO_ROOT/docs/contracts/v1.2.md" "$TARGET/docs/contracts/v1.2.md" \
+    || fail "installed Contract v1.2 differs from this repository's own copy"
 }
 
 # A structural guard rather than a behavioural one: the drift can only come back by
@@ -152,11 +158,14 @@ test_ship_no_second_copy_of_the_briefs_docs_exists() {
 test_ship_default_replaces_a_stale_contract() {
   mkdir -p "$TARGET/docs/contracts"
   echo "OLD CONTRACT" > "$TARGET/docs/contracts/v1.md"
-  echo "OLD CURRENT" > "$TARGET/docs/contracts/v1.1.md"
+  echo "OLD SUPERSEDED" > "$TARGET/docs/contracts/v1.1.md"
+  echo "OLD CURRENT" > "$TARGET/docs/contracts/v1.2.md"
   run_install y --target "$TARGET"
   assert_status 0
   assert_not_contains "OLD CONTRACT" "$TARGET/docs/contracts/v1.md"
-  assert_not_contains "OLD CURRENT" "$TARGET/docs/contracts/v1.1.md"
+  assert_not_contains "OLD SUPERSEDED" "$TARGET/docs/contracts/v1.1.md"
+  assert_not_contains "OLD CURRENT" "$TARGET/docs/contracts/v1.2.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.2.md"
 }
