@@ -493,6 +493,43 @@ $CL_OUT" ;;
   done
 }
 
+# docs/contracts/README.md, promotion criterion 3, states that criterion 3 is unmet for every
+# [judgment] in this repository. That is a claim about the present, and the present moves. If
+# a ledger here ever produces a judgment, the claim goes false and the sentence needs
+# rewriting — which is the failure mode this whole brief exists to stop.
+#
+# A judgment appearing is legitimate and must not fail the build. This test does not fail the
+# build either; it fails the *suite*, which is the right place to say "a written sentence no
+# longer matches the tree".
+#
+# It holds one half of the sentence. A standing judgment is detected. The other half is not
+# mechanical: if a judgment fires on a real ledger, someone examines it, judges it correct and
+# repairs the ledger, criterion 3 is met and the count returns to zero with this test green.
+# Recording which half, because this brief has six guards named for properties they did not
+# check, and an unstated half is how the seventh got written.
+test_clauses_the_promotion_criteria_still_describe_this_repository() {
+  local out
+  out="$(cd "$REPO_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+
+  # Positive control: the run must have reached the clauses at all.
+  case "$out" in
+    *"clauses decided"*) ;;
+    *) fail "validate-briefs did not complete, or the summary changed shape — this test proves nothing:
+$out" ;;
+  esac
+
+  # The comma matters. `0 judgment(s)` is a substring of `10 judgment(s)`, and of 20, 30, 100
+  # — without the separator this guard passes with ten standing judgments in the tree. The
+  # summary prints `, %d judgment(s)`, so the comma-space is the anchor.
+  case "$out" in
+    *", 0 judgment(s)"*) ;;
+    *) fail "a ledger in this repository now produces a judgment, so promotion criterion 3 in
+docs/contracts/README.md ('unmet for every [judgment] in this repository') is stale.
+Update the sentence, then update this test:
+$out" ;;
+  esac
+}
+
 test_clauses_an_unknown_scan_field_is_refused() {
   local rc=0
   ( . "$REPO_ROOT/tools/lib/status-line.sh" && blc_scan_field bogus </dev/null ) >/dev/null 2>&1 || rc=$?

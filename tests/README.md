@@ -36,7 +36,8 @@ tests/
   test_status_line.sh     the shared status-line locator, and the shapes that separated its
                           two predecessors (#0014)
   test_clauses.sh         BRIEFS-9 and BRIEFS-10: that they report, that they never block,
-                          and that the three readers of a ledger agree (#0014)
+                          and that the three readers of a ledger agree. Also holds the one
+                          claim in the promotion criteria that can go stale (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh

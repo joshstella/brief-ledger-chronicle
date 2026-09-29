@@ -56,6 +56,72 @@ citation.
 `blc-review-pr` skill already reads `[judgment]` out of design documents, and renaming the read
 tag would have failed silently there.
 
+### Promotion — when a `[judgment]` becomes a `[defect]`
+
+**Promotion is a change to one field of a published clause: its tag.** The clause text does not
+change and what it examines does not change. Three things do change: the finding prints as
+`[defect]` rather than `[judgment]`, it is counted in the defect column of the summary rather
+than the judgment column, and a violation sets a non-zero exit status.
+
+**Promotion also suppresses a project's own checks on a failing run.** `tools/validate-briefs.sh`
+runs `brief-checks/` only when the defect count is zero. A promoted clause that fires therefore
+stops an adopter's project checks from running at all, and their output does not appear in the
+report. Promoting a clause makes it a precondition for every check a consumer has added
+downstream of it — which is the largest consequence of promotion and the least visible, because
+what a reader sees is a shorter report rather than a missing one.
+
+Three more things follow, each stated because it is otherwise assumable.
+
+**Promotion is per clause.** Two clauses added in the same version can promote in different
+versions. Their preconditions are about the check each one runs, not about when they were
+written.
+
+**Promotion bumps the Contract version.** The tag is part of the published clause, so a tag
+edited in place would make every citation of the old version silently wrong. The old version
+stays published and keeps its tag, which is the same rule superseded versions already follow.
+
+**Promotion is expensive to reverse, and has never been reversed here.** No published clause
+has changed its tag in either direction. A planned gate was demoted to a report once, but that
+happened before it shipped, so it shows the preference and not the cost of a reversal.
+Demotion after people have built continuous integration on a gate costs more than never
+promoting, and that asymmetry is the reason the criteria below are strict rather than a
+formality.
+
+#### Criteria
+
+A `[judgment]` may be promoted when all three hold. Meeting them makes promotion permissible,
+not automatic — a person still decides, and files the work. There is no version number or date
+that advances this on its own, because a schedule this project cannot honour is worse than no
+schedule.
+
+1. **The check runs under every interpreter this toolkit claims to support, and the claim is
+   stated.** A shell or `awk` that behaves differently costs a `[judgment]` one wrong printed
+   line. It costs a `[defect]` someone's build.
+
+   The claim is not free to narrow at promotion time. Stating a smaller supported set in order
+   to satisfy this criterion is the same move as not testing, and the run must name the
+   interpreters it used rather than printing one summary line for any set.
+
+2. **Every guard on the check has been mutation-proved, at one mutation per code path the
+   guard claims.** Not one mutation per guard. A guard can cover half of what its name says
+   when two functions read the same input and each discards what the other reports, and the
+   suite stays green either way.
+
+3. **The check has produced findings on records written without it in mind, and someone
+   examined those findings and judged them correct.** A check that has only ever fired against
+   fixtures built to make it fire has been shown to fire, not to be right. Nothing yet
+   measures its false-positive rate on a record nobody wrote for it.
+
+   A clause nobody violates cannot satisfy this, and that is accepted rather than worked
+   around. A rule that has never met a real record does not become a gate because time passed.
+
+Criterion 3 is the one that cannot be hurried, and at the time of writing it is unmet for
+every `[judgment]` in this repository — not unverifiable, unmet. Installs write their log into
+the target rather than back here, so this project learns about a consumer's run only when
+someone reports it. Until there is someone to report it, the only records available are this
+repository's own, and a clause that reports nothing across all of them has produced no evidence
+either way.
+
 ### Scope — who the clause binds
 
 | scope | meaning |
