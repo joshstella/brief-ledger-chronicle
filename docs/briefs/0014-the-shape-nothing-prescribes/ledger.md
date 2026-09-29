@@ -1,9 +1,10 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:done(PR#63) d:in-progress(brief/0014-d-the-promotion)`
+`blc/2 #0014 done a:done(PR#61) b:done(PR#62) c:done(PR#63) d:done(PR#64)`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-09-29
 
 ## Phases
 
@@ -12,7 +13,7 @@
 | a | the shared matcher | done | PR#61 |
 | b | the shared locator | done | PR#62 |
 | c | the clauses | done | PR#63 |
-| d | the promotion | in-progress | `brief/0014-d-the-promotion` |
+| d | the promotion | done | PR#64 |
 
 Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
 `d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
@@ -564,3 +565,42 @@ false. Splitting them would mean two Contract versions for one change to one fil
 would fail on day one. A clause that cannot fail a build has no crossing to manage, so `d`
 narrows from "the upgrade" to "the promotion": the version at which these two become
 `[defect]`, and what has to be true first.
+
+## Close — 2026-09-29
+
+**The claim shipped in its rule and not in its consequence.** The brief said: "A ledger whose
+status line names a phase that its own table cannot be matched to is **a defect**, and
+`validate-briefs.sh` **says so**", and listed as a deliverable that the validator "fails on an
+unfindable id, citing a clause id like every other defect".
+
+What shipped is `BRIEFS-9`, a `[judgment]`. It cites a clause id. It does not fail. The rule of
+findability is real and enforced by one matcher shared with the reporter, which was the
+substance. The word *defect* was not delivered, and open decision 2 records the reasoning:
+report first, gate later, following #0003. Phase `d` then wrote down what "later" requires, and
+by those criteria neither clause is promotable today.
+
+Recording this as a gap rather than a success with a footnote. A brief that predicts a gate and
+ships a warning has been half right, and this repository's position is that the record is not
+rewritten afterwards to look right. Anyone reading the claim and then the Contract would
+otherwise find a mismatch with no explanation in between.
+
+**What the brief did not predict at all: how many of its own guards could not fail.** Seven, in
+four phases — one in `a`, two in `b`, three in `c`, one in `d` — each a test named for a
+property it did not hold, each found by mutation rather than by the suite, and the last three
+written *after* the lesson was already in `tests/README.md`. Complications 12, 13 and the close
+of `d` record the progression. The short version is that the rule which would have caught all
+seven is not "run a mutation" but "run one mutation per code path the guard claims", and that
+rule is now published as a promotion criterion — where it applies to the clauses this brief
+added, which by that criterion are `unproved`.
+
+This is the brief's own subject arriving from the other side. #0014 was filed because an
+instruction and a mechanism drifted apart while the suite stayed green. It then drifted the
+same way seven times, and once in the Contract text itself, where v1.2 described behaviour the
+code deliberately did not have.
+
+**What it leaves behind, unowned.** The promotion is blocked on `the-interpreter-nothing-pins`,
+which is a draft nobody has scheduled. `BRIEFS-9`'s blind spot has a verified fix — lowercase
+letters followed by digits — recorded in both the Contract and here, and no owner. The missing
+memory layer, found while following `blc-next-brief-phase` literally, is still a draft. None of
+these are defects in what shipped. They are the things this brief learned about and declined to
+do, named so that declining stays visible.
