@@ -26,7 +26,7 @@ tests/
   test_ownership_map.sh   one ownership map, five readers
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
-  test_briefs.sh          Contract clauses BRIEFS-1..8 (currently v1.1), plus this repo's own compliance
+  test_briefs.sh          Contract clauses BRIEFS-1..8 (currently v1.2), plus this repo's own compliance
   test_brief_checks.sh    project checks in brief-checks/ (#0011)
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_contract_ship.sh   what a target receives of the Contract and its validator
@@ -35,6 +35,8 @@ tests/
   test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
   test_status_line.sh     the shared status-line locator, and the shapes that separated its
                           two predecessors (#0014)
+  test_clauses.sh         BRIEFS-9 and BRIEFS-10: that they report, that they never block,
+                          and that the three readers of a ledger agree (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
@@ -217,6 +219,20 @@ spelling of the locator — the `awk` form, with the slash escaped — when the 
 shape. A rebuild written with `grep`, which is the likely rebuild, spells it without the
 backslash and walked straight past. It now carries both spellings. **A guard for one
 spelling of an idea is a guard for none.**
+
+## A test can ask a real question in the wrong place
+
+Globbing, relative paths, and `$PWD` are properties of the process's working directory. A
+test that builds its decoys in one directory and runs the tool from another asks a genuine
+question somewhere the answer cannot differ, and passes whatever the code does.
+
+`a_status_line_does_not_glob_the_working_directory` created files named `q:done` and
+`z:pending`, then ran `validate-briefs.sh` from the repository root. Deleting the `set -f`
+that closes the hole left every test green. Run the tool from the directory that holds the
+decoys, and assert the decoys exist before trusting the result.
+
+The general form: when a test depends on ambient state — cwd, environment, locale, umask —
+name where that state is set, and make the test set it.
 
 ## The interpreter you do not have is the one that breaks
 

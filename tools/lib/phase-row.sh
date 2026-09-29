@@ -54,3 +54,76 @@ blc_phase_row_pattern() {
 blc_phase_row_find() {
   grep -nE "$(blc_phase_row_pattern "$1")" "$2"
 }
+
+# ── What counts as a phase entry in a status line ────────────────────────────
+#
+# Shared for the same reason the matcher above is shared, and it was forked before it was
+# shared. #0014 phase `c` gave the gate a shape filter that `open-briefs.sh` did not have,
+# and review found the two disagreeing on `bc:in-progress(feature/x)`: the reporter saw a
+# live phase `bc` and the gate did not see it at all. That is the exact defect this brief
+# exists to close, committed inside the phase that closes it — because the *matcher* was
+# shared and nobody noticed the *tokenizer* was a second reader of the same line.
+#
+# `docs/briefs/README.md`, "Phase ids", is the rule: a phase has one id, and the index is a
+# letter. `blc/1` numbered them instead, and six ledgers here still do.
+# Spelled out rather than `[a-z]` / `[0-9]`. A bracket *range* in a shell `case` follows the
+# locale's collation order, and under many UTF-8 locales `[a-z]` also accepts `B` through
+# `Z`. This function decides which ids a published Contract clause examines, so its alphabet
+# must not depend on the environment variable of whoever runs CI.
+BLC_LOWER='abcdefghijklmnopqrstuvwxyz'
+BLC_DIGIT='0123456789'
+
+blc_is_phase_index() {
+  case "$1" in
+    '') return 1 ;;
+    ["$BLC_LOWER"]) return 0 ;;
+    *[!"$BLC_DIGIT"]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+# Emit the phase entries of a status line, one per line, each whole: `id:state(pointer)`.
+#
+# `set -f` matters and is not defensive habit. A status line is data read out of a file this
+# toolkit did not write, and `for token in $1` globs: with files named `q:done` and
+# `z:pending` in the working directory, a status line containing a bare `*` made the gate
+# report two phases the ledger never mentioned, naming a directory the reader cannot see.
+blc_status_phase_entries() {
+  local token id had_f=0
+  case "$-" in *f*) had_f=1 ;; esac
+  set -f
+  for token in $1; do
+    case "$token" in *:*) id="${token%%:*}" ;; *) continue ;; esac
+    blc_is_phase_index "$id" && printf '%s\n' "$token"
+  done
+  [ "$had_f" -eq 1 ] || set +f
+}
+
+# Emit the tokens that are shaped like a phase entry but whose id is not a phase index.
+#
+# Split out rather than folded into the function above, because the two callers want
+# opposite things from the same tokens: the reporter skips what it cannot parse, and the
+# gate complains about it. A malformed id that both tools silently dropped would be a phase
+# declared in the record and looked for by nobody, which is the silence `BRIEFS-9` exists to
+# break.
+#
+# "Shaped like a phase entry" is narrower than "contains a colon", and the difference is the
+# whole judgement here. `bc:in-progress(feature/x)` is someone writing a phase id wrong, and
+# staying quiet about it is the failure. `2026-01-01T00:00:00Z` is a timestamp — digits and
+# colons, matching no intent to declare a phase — and complaining about it would be noise in
+# a clause whose credibility depends on being worth reading. So the id must be all lowercase
+# letters to qualify as a wrong phase id; anything else is not a phase entry at all.
+blc_status_unparsed_entries() {
+  local token id had_f=0
+  case "$-" in *f*) had_f=1 ;; esac
+  set -f
+  for token in $1; do
+    case "$token" in *:*) id="${token%%:*}" ;; *) continue ;; esac
+    blc_is_phase_index "$id" && continue
+    case "$id" in
+      '' | *[!"$BLC_LOWER"]*) ;;
+      *) printf '%s\n' "$token" ;;
+    esac
+  done
+  [ "$had_f" -eq 1 ] || set +f
+}

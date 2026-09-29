@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:in-progress(brief/0014-b-the-shared-locator) c:pending d:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:in-progress(brief/0014-c-the-clauses) d:pending`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -10,9 +10,9 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the shared matcher | done | PR#61 |
-| b | the shared locator | in-progress | `brief/0014-b-the-shared-locator` |
-| c | the clause | pending | — |
-| d | the upgrade | pending | — |
+| b | the shared locator | done | PR#62 |
+| c | the clauses | in-progress | `brief/0014-c-the-clauses` |
+| d | the promotion | pending | — |
 
 Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
 `d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
@@ -163,12 +163,46 @@ its status as `done`. The skip is unbounded when the block never closes, so one 
 hid a ledger's whole status from one tool and not the other. Resolved toward finding the
 line, which is what the anchored locator does; the test is inverted and carries the history.
 
-**c — the clause.** `BRIEFS-9`: every phase id in a status line is findable in the phase
-table. Validator check citing the clause, Contract text, and tests — including the three
-shapes #0013 left unmatched, which become failures instead of silences.
+**c — the clauses.** Two `[judgment]` clauses, neither of which blocks. `BRIEFS-9`: every
+phase id in a status line is findable in the phase table. `BRIEFS-10`: a ledger's frontmatter
+and code fences are closed. `validate-briefs.sh` becomes the third reader of both shared
+pieces. Contract v1.2, validator checks citing each clause, and tests — including the three
+shapes #0013 left unmatched, which become complaints instead of silences.
 
-**d — the upgrade.** How an existing repository crosses into a clause that did not exist
-yesterday. Blocked by open decision 2.
+### Phase c — the re-plan that opened it
+
+Run 2026-09-22, after `b` merged. The remaining sequence holds. Two things changed inside it.
+
+**`c` grew and stays whole anyway.** It now carries two clauses rather than one, and a
+Contract version. The v1.1 precedent (PR for #0005) touched fifteen files: the new version
+doc, the superseded one amended to point at it, the contracts README, `install.sh` and its
+ownership map, the pre-install summary line that names the version, `test_contract_ship.sh`,
+and the skills that cite a version. That is a large phase.
+
+The obvious split — wire the validator to the shared libraries first with no behaviour
+change, mirroring `a`, then add the clauses — was considered and rejected. It cannot work,
+and the brief already records why in the 2026-09-16 amendment: an agreement test needs two
+call sites, and `validate-briefs.sh` has no reason to read a phase table until `BRIEFS-9`
+exists. The clause *is* the reason to read. Splitting them would rebuild the exact defect
+that forced the `a` amendment. Splitting `BRIEFS-10` out instead is possible — it needs
+neither shared library — but both clauses land in v1.2, so it would buy a smaller phase at
+the cost of a second Contract version for one change to one file.
+
+**The third-reader agreement test is the highest-risk artifact in this brief, and phase `b`
+is why.** Three attempts at an agreement test across `a` and `b`, three guards that could not
+fail: an ERE that matched nothing, a comparison that discarded one side, and a pair of
+private expectations that never compared the tools at all. `c` writes its version with the
+pattern that finally worked, rather than rediscovering it — a decoy status line in every
+fixture, positive assertions on all three readers, and exit statuses checked on each.
+
+Two smaller carries. `c` adds the third copy of the `lib/` bootstrap; the copies are to stay
+character-identical apart from the exit status each tool documents, and `assert_loads_library`
+in `tests/lib.sh` now guards the load list. And any new `awk` must avoid interval expressions,
+because `mawk` has none and reads `{3,}` literally — see the phase `b` record.
+
+**d — the promotion.** The version at which the two `[judgment]` clauses become `[defect]`,
+and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it:
+a clause that never fails a build has no day-one crossing to manage.
 
 ## Dependency structure
 
@@ -268,6 +302,15 @@ and 9.
    POSIX shell and grep." Both stop being true in `c`. v1.2 is already scheduled by the
    settled decisions, so the text lands there; the header comment is `c`'s to fix.
 
+   **Closed 2026-09-29.** The header now names all four dependencies. The Contract sentence
+   is not edited in v1.1 — a superseded version states what held for that version, and
+   rewriting it would erase the record of the change. v1.1 instead carries a note pointing
+   at the successor, and [v1.2](../../contracts/v1.2.md) states the new dependency and why
+   the check is now a script plus two libraries. That is the opposite of what #0009 and
+   #0010 chose, both of which reworded v1.1 in place; the difference is that those corrected
+   an over-specific phrase that was always meant to say something broader, and this one
+   records a claim that was true when published and stopped being true.
+
 9. **`BRIEFS-9` is the first clause that reads `ledger.md`.** All eight existing clauses
    govern the briefs directory and `brief.md`. This widens what the Contract governs from
    "the record is well-formed" to "the ledger is internally consistent". Worth taking
@@ -290,6 +333,48 @@ and 9.
     `b` converted a stated problem into an unstated one. No clause complains about it.
     ~~Unowned; not scheduled.~~ **Owned 2026-09-22** — it becomes `BRIEFS-10`, a `[judgment]`
     clause in phase `c`. See Big decisions.
+
+12. **The fix for an un-failable guard was itself un-failable.** Round 3 of review found the
+    agreement test could not fail and found the glob hole in `blc_status_phase_entries`. Both
+    were fixed, and a test named `a_status_line_does_not_glob_the_working_directory` was
+    written with the fix. Removing `set -f` afterwards left all 333 tests green. The test
+    created its decoy filenames in the harness's directory and ran the validator from the
+    repository root, so the pattern expanded somewhere the decoys were not — it asked a real
+    question in the wrong place. It now runs the tool from the directory holding the decoys,
+    asserts the decoys exist, and asserts the run completed. Removing `set -f` now fails it.
+
+    This is the fifth un-failable guard in this brief: once in `a`, twice in `b`, once found
+    by review in `c`, and this one, which was written *as the remedy* for that finding. The
+    pattern is not carelessness about any one test. It is that a guard is written while
+    looking at the code it guards, where the failing case is vivid and therefore assumed
+    reachable. Nothing in "write the test, watch it pass" distinguishes a test that cannot
+    fail. Only the mutation does, which is why this repository's answer is to run one.
+
+13. **The fix in complication 12 covered one of the two functions it was written for.** The
+    repaired glob test planted decoys named `q:done` and `z:pending`. Both are valid phase
+    indices, so only `blc_status_phase_entries` could ever name them;
+    `blc_status_unparsed_entries` discards an index before it prints. Its `set -f` could be
+    deleted with the suite green, and the hole was reachable — with a file named `bc:done`
+    in the working directory, `BRIEFS-9` invented a complaint about a token no ledger
+    contained. Found by review, not by me. The yard now holds a multi-letter decoy as well,
+    and each function is asserted on the shape only it can report.
+
+    Sixth instance, and the one that says the most: the previous five were guards written
+    beside the code they guard. This one was written *as the remedy for that*, with the
+    lesson fresh, and it still covered half the property because two functions read the same
+    expanded tokens and each throws away what the other reports. The rule that would have
+    caught it is not "run a mutation" — I did run one — but "run one mutation per code path
+    the test claims", which is what was missed.
+
+14. **A published clause described behaviour the code deliberately did not have.** v1.2's
+    first draft said a token "shaped like neither an index nor a phase — a timestamp, a URL
+    — is reported". The timestamp is the one case the code rejects on purpose, decided
+    earlier in this same phase and pinned by its own test. The text was narrowed to state
+    the two reported outcomes and the three silent ones, and to name the cost out loud:
+    `a1:done` written for `a:done` is a typo this clause does not catch. A new test pins the
+    boundary in the shape the clause states it, so the sentence cannot drift from the code
+    again — which is the whole subject of this brief, arriving in the artifact written to
+    settle it.
 
 ## Big decisions
 

@@ -1,19 +1,57 @@
 #!/usr/bin/env bash
-# Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-8.
+# Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-10.
 #
 # Usage: validate-briefs.sh [briefs-dir]     (default: docs/briefs)
 #
 # Exit 0 if no [defect] clause is violated, 1 otherwise. [judgment] findings are
 # printed and never affect the exit status — the Contract says a judgment clause
 # is surfaced for a human, so making it fail the build would silently promote it
-# to a defect.
+# to a defect. BRIEFS-8, BRIEFS-9 and BRIEFS-10 are all [judgment].
 #
-# The clause text lives in docs/contracts/v1.1.md (unchanged from v1). This script
-# cites clause ids and does not restate them: a paraphrase here would be a fourth
-# copy of the rules, which is the drift this Contract was extracted to end.
+# Exit 2 means the question could not be asked: a briefs directory that is not a
+# directory, or a shared library under tools/lib/ that cannot be read. It is kept
+# distinct from 1 because "the tree is bad" and "the checker is broken" call for
+# different responses, and a checker that could not load its clauses must never be
+# read as a clean tree.
 #
-# No dependency beyond a POSIX shell and grep. CI is a thin trigger, so the check
-# travels to environments that are not GitHub.
+# The clause text lives in docs/contracts/v1.2.md. This script cites clause ids and
+# does not restate them: a paraphrase here would be a fourth copy of the rules,
+# which is the drift this Contract was extracted to end.
+#
+# Depends on a POSIX shell, grep, awk, and the shared readers in tools/lib/. The
+# first two were the whole list until #0014 phase c; v1.1 said so, and v1.2 corrects
+# it. The dependency is deliberate and is the point of the phase: BRIEFS-9 asks
+# where a phase row is and BRIEFS-10 asks how a ledger is formed, and two other
+# tools already answer both. A validator with its own private copies would be a
+# third reader free to disagree, which is the defect #0014 exists to close.
+#
+# CI is a thin trigger, so the check still travels to environments that are not
+# GitHub — it now travels with tools/lib/ beside it rather than alone.
+
+BLC_SELF="${BASH_SOURCE[0]}"
+BLC_HOPS=0
+while [ -L "$BLC_SELF" ]; do
+  BLC_HOPS=$((BLC_HOPS + 1))
+  if [ "$BLC_HOPS" -gt 40 ]; then
+    printf 'error: too many symbolic links resolving %s\n' "${BASH_SOURCE[0]}" >&2
+    exit 2
+  fi
+  BLC_SELF_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)"
+  BLC_SELF="$(readlink "$BLC_SELF")"
+  # A relative link target is relative to the directory holding the link, not to $PWD.
+  case "$BLC_SELF" in
+    /*) ;;
+    *) BLC_SELF="$BLC_SELF_DIR/$BLC_SELF" ;;
+  esac
+done
+BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
+for BLC_LIB in phase-row status-line; do
+  if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
+    printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
+    exit 2
+  fi
+  . "$BLC_LIB_DIR/$BLC_LIB.sh"
+done
 
 BRIEFS_DIR="${1:-docs/briefs}"
 
@@ -194,6 +232,81 @@ $UNIQUE_SERIALS
 EOF
 fi
 
+# ── BRIEFS-9 — every phase id in a status line is findable in the phase table ─
+#
+# [judgment], not [defect]. See #0014 open decision 2: the failure mode is
+# asymmetric. A judgment that should have gated costs a warning nobody acted on; a
+# defect that should have reported breaks someone else's build on the day they
+# upgrade, for a ledger that was legal when they wrote it. This toolkit installs
+# into repositories whose ledgers it did not write.
+#
+# ── BRIEFS-10 — a ledger's frontmatter and fences are closed ─────────────────
+#
+# Also [judgment], and the clause that keeps phase b's recovery behaviour honest.
+# blc_status_line deliberately succeeds on a malformed ledger — it reads through
+# unterminated frontmatter and falls back past an unclosed fence — so nothing else
+# would ever mention the malformation. The complaint comes from the structure the
+# scan passed through, never from its result.
+#
+# Both read the same shared functions open-briefs.sh and list-briefs.sh read.
+# Re-deriving either here is what tests/test_phase_row.sh and
+# tests/test_status_line.sh scan tools/ to forbid.
+
+# What a phase entry is, and which ids are indices, is blc_status_phase_entries'
+# business — shared with open-briefs.sh in tools/lib/phase-row.sh. This function
+# was forked here first, and review caught the two disagreeing on `bc:`: the
+# reporter saw a live phase, the gate saw nothing. Sharing the matcher was never
+# enough on its own, because the tokenizer is a second reader of the same line.
+
+for entry in $WELL_FORMED; do
+  ledger="$BRIEFS_DIR/$entry/ledger.md"
+  # A brief that has not been started has no ledger, and that is not a defect —
+  # #0007 is filed and waiting. BRIEFS-1 to BRIEFS-7 govern brief.md; these two are
+  # the first clauses to read ledger.md at all, so the absent case is theirs to skip.
+  #
+  # Deleting this line leaves the suite green, and that is not a reason to delete it. The
+  # loop only survives without it because blc_ledger_facts' outer awk prints empty fields
+  # from its own END whether or not the inner scan read anything, so both facts come back
+  # empty and the status line is blank one statement later. That is an accident of how two
+  # awk programs compose, not a decision either of them records. The guard states the
+  # intent where a reader meets it, and costs one stat call per brief.
+  [ -f "$ledger" ] || continue
+
+  # One scan, both facts.
+  eval "$(blc_ledger_facts "$ledger")"
+  case "$frontmatter" in
+    open) judgment "BRIEFS-10" "$entry: ledger.md opens a --- frontmatter block that never closes" ;;
+  esac
+  case "$fence" in
+    open) judgment "BRIEFS-10" "$entry: ledger.md ends inside an unclosed code fence" ;;
+  esac
+
+  status_line="$(blc_status_line "$ledger")"
+  # No status line is already reported by open-briefs.sh as drift, and BRIEFS-9 has
+  # nothing to say about a line that does not exist.
+  [ -n "$status_line" ] || continue
+
+  # A token shaped like a phase entry whose id is not an index. Reported rather than
+  # dropped: a phase declared in the record and looked for by nobody is the silence
+  # this clause exists to break, and dropping it quietly is how the gate and the
+  # reporter came to disagree in the first place.
+  while IFS= read -r bad_entry; do
+    [ -n "$bad_entry" ] || continue
+    judgment "BRIEFS-9" "$entry: status line declares '$bad_entry', whose phase id is not an index (one lowercase letter, or digits)"
+  done <<EOF
+$(blc_status_unparsed_entries "$status_line")
+EOF
+
+  while IFS= read -r phase_entry; do
+    [ -n "$phase_entry" ] || continue
+    phase_id="${phase_entry%%:*}"
+    blc_phase_row_find "$phase_id" "$ledger" >/dev/null 2>&1 \
+      || judgment "BRIEFS-9" "$entry: status line declares phase '$phase_id', which matches no row in the phase table"
+  done <<EOF
+$(blc_status_phase_entries "$status_line")
+EOF
+done
+
 # ── Project checks (brief-checks/) ───────────────────────────────────────────
 #
 # After toolkit clauses pass, run each script in brief-checks/*.sh in sorted
@@ -236,10 +349,10 @@ fi
 BRIEF_COUNT=$(printf '%s' "$WELL_FORMED" | grep -c '[^[:space:]]')
 
 if [ "$PROJECT_CHECK_FAILURES" -gt 0 ]; then
-  printf '\nvalidate-briefs: %s — %d brief(s), 8 clauses decided, %d defect(s), %d judgment(s), %d project check failure(s)\n' \
+  printf '\nvalidate-briefs: %s — %d brief(s), 10 clauses decided, %d defect(s), %d judgment(s), %d project check failure(s)\n' \
     "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS" "$PROJECT_CHECK_FAILURES"
 else
-  printf '\nvalidate-briefs: %s — %d brief(s), 8 clauses decided, %d defect(s), %d judgment(s)\n' \
+  printf '\nvalidate-briefs: %s — %d brief(s), 10 clauses decided, %d defect(s), %d judgment(s)\n' \
     "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS"
 fi
 

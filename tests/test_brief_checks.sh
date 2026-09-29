@@ -26,7 +26,7 @@ test_brief_checks_absent_directory_behaves_as_today() {
   make_brief_checks_repo
   run_brief_checks_validator
   assert_status 0
-  assert_out "1 brief(s), 8 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "1 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
   assert_not_contains "project check failure" "$OUT"
 }
 
@@ -35,7 +35,7 @@ test_brief_checks_empty_directory_behaves_as_today() {
   mkdir -p "$BC_CHECKS"
   run_brief_checks_validator
   assert_status 0
-  assert_out "1 brief(s), 8 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "1 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
 }
 
 test_brief_checks_passing_script() {
@@ -44,7 +44,7 @@ test_brief_checks_passing_script() {
   printf '%s\n' '#!/usr/bin/env bash' 'exit 0' > "$BC_CHECKS/ok.sh"
   run_brief_checks_validator
   assert_status 0
-  assert_out "1 brief(s), 8 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "1 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
 }
 
 test_brief_checks_failing_script_echoes_its_output() {

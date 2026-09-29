@@ -39,15 +39,57 @@
 #
 # Leading and trailing whitespace go too, so callers can match on `blc/*` without each one
 # re-deciding what to trim.
-blc_status_line() {
+#
+# ── One scan, two answers ────────────────────────────────────────────────────
+#
+# `blc_ledger_scan` is the only thing here that reads a file. Both public questions are
+# wrappers over it, because the second caller arrived in phase `c` wanting the *other* half
+# of what this awk already computes.
+#
+# `BRIEFS-10` asks whether a ledger's frontmatter and fences are closed. The locator has
+# always known: it tracks fence state to skip them, and it falls back precisely when the file
+# ends inside one. Writing that tracking a second time in `validate-briefs.sh` would put two
+# fence implementations in this toolkit — which is #0013's second defect, two readers
+# disagreeing about a file's structure, rebuilt inside the brief written to prevent it.
+#
+# This is also why the recovery behaviour needs a clause at all. The locator deliberately
+# succeeds on a malformed ledger: it reads through unterminated frontmatter and falls back
+# past an unclosed fence. That is right for a reporter and it makes the malformation
+# invisible, so the complaint cannot be derived from the locator's *result* — only from the
+# state it passed through on the way.
+#
+# The file is still named for the locator. Renaming it would move a path the ownership map,
+# `install.sh`, and three test files all key on, and phase `c` is large enough already —
+# recorded as a complication rather than done quietly.
+blc_ledger_scan() {
   awk '
     function is_status(l) { return l ~ /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ }
 
     { line = $0; sub(/\r$/, "", line) }
 
-    # Remember the first candidate anywhere, fences included. Only ever used for the
-    # unterminated-fence fallback in END.
+    # Remember the first candidate anywhere — inside fences, inside frontmatter, anywhere.
+    # Used only by the fallbacks in END, and it has to run before every skip below: when it
+    # sat after the frontmatter rule it never ran inside an unterminated block, so the
+    # fallback for that block had nothing to fall back to.
     anywhere == "" && is_status(line) { anywhere = line }
+
+    # Frontmatter is only frontmatter on line 1, and `fm` records the three states the
+    # clause distinguishes: absent, opened-and-closed, opened-and-never-closed.
+    #
+    # It runs from the opening `---` to the next one, and everything between is YAML — so a
+    # fence delimiter in there is a string, not a fence. Skipping the interior is what makes
+    # that true. Review found the older version opening a fence on a ``` inside a YAML block
+    # scalar, which drew a false BRIEFS-10 complaint about a legal ledger and made the
+    # locator fall back past the rest of the file.
+    #
+    # The converse — a `---` inside a fence closing the frontmatter — is *not* guarded, on
+    # purpose. See tests/test_clauses.sh: frontmatter ends at the first `---` after line 1,
+    # which is what every markdown tool does, and a fence cannot have opened before it
+    # because the interior is skipped. Guarding it would invent a second rule for a document
+    # shape no parser agrees with us about.
+    NR == 1 && line == "---" { fm = 1; next }
+    fm == 1 && line == "---" { fm = 2; next }
+    fm == 1                  { next }
 
     # A fence opens on three or more backticks or tildes. It closes only on the same
     # character, at least as long. Toggling on any delimiter — the first version of this —
@@ -66,18 +108,68 @@ blc_status_line() {
     }
 
     fence { next }
-    is_status(line) { outside = line; exit }
+    # No `exit` here. The first version stopped at the first status line, which was correct
+    # for the only question it answered and wrong the moment a second caller wanted to know
+    # how the file ends — exiting early reports a fence closed because the scan stopped
+    # before reaching the line that never closes it.
+    outside == "" && is_status(line) { outside = line }
 
     END {
-      if (outside != "") print outside
       # The file ended inside a fence that never closed. Treating the remainder as code
       # would hide a live brief’s status from every reader — the same unbounded skip this
-      # phase just reversed for unterminated frontmatter, and refused there for the same
-      # reason. A malformed fence is a defect in the ledger, not a reason to report that it
-      # has no status at all.
-      else if (fence && anywhere != "") print anywhere
+      # phase reversed for unterminated frontmatter, and refused there for the same reason.
+      # A malformed fence is a defect in the ledger, not a reason to report that it has no
+      # status at all.
+      # The fallback covers both unbounded skips, not just the fence. An unterminated
+      # frontmatter block skips to end of file exactly as an unterminated fence does, and
+      # phase `b` reversed the old behaviour there for this reason: one stray `---` used to
+      # hide the whole status of a ledger from one tool and not the other.
+      # (No ASCII apostrophe anywhere in this program: it is single-quoted shell, and a
+      # stray one silently ends the string. That is why the line above spells it `brief’s`.)
+      if (outside != "")                         printf "status\t%s\n", outside
+      else if ((fence || fm == 1) && anywhere != "") printf "status\t%s\n", anywhere
+
+      printf "frontmatter\t%s\n", (fm == 1 ? "open" : (fm == 2 ? "closed" : "none"))
+      printf "fence\t%s\n", (fence ? "open" : "closed")
     }
-  ' "$1" 2>/dev/null \
-    | tr -d '`' \
+  ' "$1" 2>/dev/null
+}
+
+blc_status_line() {
+  blc_ledger_scan "$1" | blc_scan_field status | tr -d '`' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# Pull one field out of a scan already performed. Reads stdin, so a caller wanting more
+# than one answer pays for one scan — see `blc_ledger_facts`.
+#
+# The field name is matched as a literal against a known set rather than interpolated into
+# a `sed` expression, which is what this did first. That form was not injectable, but an
+# unknown field returned empty output and exit 0, and both `BRIEFS-10` call sites read
+# empty as "nothing to complain about". A typo in a field name would have disabled half a
+# clause in silence — the failure this brief is about, in the code enforcing it.
+blc_scan_field() {
+  case "$1" in
+    status|frontmatter|fence) ;;
+    *) printf 'blc_scan_field: unknown field: %s\n' "$1" >&2; return 2 ;;
+  esac
+  awk -F'\t' -v want="$1" '$1 == want { sub(/^[^\t]*\t/, ""); print }'
+}
+
+# The structural facts, as `frontmatter=<state> fence=<state>`, from a single scan.
+#
+# The caller asked three separate questions before this existed, forking awk three times
+# over one file while the comment above said the scan "is the only thing here that reads a
+# file". The comment was right about the design and wrong about the call site.
+blc_ledger_facts() {
+  blc_ledger_scan "$1" | awk -F'\t' '
+    $1 == "frontmatter" { fm = $2 }
+    $1 == "fence"       { fe = $2 }
+    END { printf "frontmatter=%s fence=%s\n", fm, fe }
+  '
+}
+
+# One structural fact by name. Kept for callers that genuinely want only one.
+blc_ledger_structure() {
+  blc_ledger_scan "$1" | blc_scan_field "$2"
 }

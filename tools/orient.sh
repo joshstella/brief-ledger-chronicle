@@ -130,9 +130,9 @@ if [ -f "$INSTALL_LOG" ]; then
 else
   echo "No \`$INSTALL_LOG\` — this repo was not set up by the installer."
 fi
-if [ -f "docs/contracts/v1.1.md" ]; then
+if [ -f "docs/contracts/v1.2.md" ]; then
   echo
-  echo "Contract v1.1 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
+  echo "Contract v1.2 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
 fi
 echo
 
