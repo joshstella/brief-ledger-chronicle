@@ -87,7 +87,7 @@ places, which is what makes a single source possible.
 
 | | Purpose |
 |---|---|
-| `tools/validate-briefs.sh` | Checks Contract clauses BRIEFS-1 through BRIEFS-8 |
+| `tools/validate-briefs.sh` | Checks Contract clauses BRIEFS-1 through BRIEFS-10 |
 | `tools/open-briefs.sh` | Reports which briefs are open, and how far `main` has moved |
 
 Copied verbatim rather than templated, so a target reads and checks the same convention

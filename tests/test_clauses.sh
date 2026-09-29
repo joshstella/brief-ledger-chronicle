@@ -358,14 +358,23 @@ test_clauses_a_status_line_does_not_glob_the_working_directory() {
     '' '| a | thing | done |'
   local yard="$TMP/clauses/globby-cwd"
   rm -rf "$yard"; mkdir -p "$yard"
-  ( cd "$yard" && : > 'q:done' && : > 'z:pending' ) 2>/dev/null \
+  # Two shapes of decoy, because two functions read the same expanded tokens and each
+  # discards what the other reports. `q:`/`z:` are valid indices, so only the phase-entry
+  # path can name them; `bc:` is a multi-letter id, so only the unparsed-entry path can.
+  # A yard holding indices alone leaves the second function's `set -f` untestable.
+  ( cd "$yard" && : > 'q:done' && : > 'z:pending' && : > 'bc:done' ) 2>/dev/null \
     || { skip "cannot create colon-named files"; return; }
   # The decoys must be findable by the pattern, or the test proves nothing.
   [ -e "$yard/q:done" ] || fail "the decoy file was not created — the test cannot detect globbing"
+  [ -e "$yard/bc:done" ] || fail "the multi-letter decoy was not created — the test covers one function only"
 
   cl_run_from "$yard"
   case "$CL_OUT" in
     *"phase 'q'"*|*"phase 'z'"*) fail "a filename in the working directory became a phase id:
+$CL_OUT" ;;
+  esac
+  case "$CL_OUT" in
+    *"'bc:done'"*) fail "a filename in the working directory became an unparsed phase entry:
 $CL_OUT" ;;
   esac
   # Positive control: the run must have reached the clause at all.
@@ -451,6 +460,48 @@ test_clauses_the_three_bootstrap_walks_are_identical() {
 $(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$lb") || true)"
   [ "$ob" = "$vb" ] || fail "open-briefs.sh and validate-briefs.sh symlink walks have drifted:
 $(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$vb") || true)"
+}
+
+# The unknown-field guard exists so a typo cannot silently answer "no", which would read as
+# a clean ledger. Without a test the guard is itself the untested thing.
+# v1.2 states the boundary of BRIEFS-9 positively: an id mixing letters and digits, an
+# uppercase id, and a timestamp are silent, and `bc:`-shaped ids are reported. A Contract
+# that claims a silence nobody tests is the drift #0014 exists to close, so the claim is
+# pinned here in the same shape the clause states it.
+test_clauses_briefs9_reports_exactly_the_shapes_the_contract_names() {
+  cl_repo boundary
+  cl_brief 0001 boundary -- \
+    '# Ledger — #0001 boundary' \
+    '`blc/2 #0001 in-progress a:done 2026-01-01T00:00:00Z A1:done a1:done bc:done`' \
+    '' '| a | thing | done |'
+  cl_run
+
+  # Reported: the one shape the clause names as unparsable.
+  case "$CL_OUT" in
+    *"'bc:done'"*) ;;
+    *) fail "BRIEFS-9 did not report 'bc:done', which v1.2 names as reported:
+$CL_OUT" ;;
+  esac
+
+  # Silent: the three shapes v1.2 names as not phase entries at all.
+  local shape
+  for shape in '2026-01-01T00' 'A1' 'a1'; do
+    case "$CL_OUT" in
+      *"'$shape"*) fail "BRIEFS-9 reported '$shape', which v1.2 states is silent:
+$CL_OUT" ;;
+    esac
+  done
+}
+
+test_clauses_an_unknown_scan_field_is_refused() {
+  local rc=0
+  ( . "$REPO_ROOT/tools/lib/status-line.sh" && blc_scan_field bogus </dev/null ) >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 2 ] || fail "blc_scan_field accepted an unknown field name (exit $rc, wanted 2)"
+
+  # Positive control: a real field must still be accepted, or the guard is refusing everything.
+  rc=0
+  ( . "$REPO_ROOT/tools/lib/status-line.sh" && blc_scan_field status </dev/null ) >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || fail "blc_scan_field refused a known field name (exit $rc)"
 }
 
 test_clauses_validate_briefs_loads_both_libraries() {

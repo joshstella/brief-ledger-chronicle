@@ -350,6 +350,32 @@ and 9.
     reachable. Nothing in "write the test, watch it pass" distinguishes a test that cannot
     fail. Only the mutation does, which is why this repository's answer is to run one.
 
+13. **The fix in complication 12 covered one of the two functions it was written for.** The
+    repaired glob test planted decoys named `q:done` and `z:pending`. Both are valid phase
+    indices, so only `blc_status_phase_entries` could ever name them;
+    `blc_status_unparsed_entries` discards an index before it prints. Its `set -f` could be
+    deleted with the suite green, and the hole was reachable — with a file named `bc:done`
+    in the working directory, `BRIEFS-9` invented a complaint about a token no ledger
+    contained. Found by review, not by me. The yard now holds a multi-letter decoy as well,
+    and each function is asserted on the shape only it can report.
+
+    Sixth instance, and the one that says the most: the previous five were guards written
+    beside the code they guard. This one was written *as the remedy for that*, with the
+    lesson fresh, and it still covered half the property because two functions read the same
+    expanded tokens and each throws away what the other reports. The rule that would have
+    caught it is not "run a mutation" — I did run one — but "run one mutation per code path
+    the test claims", which is what was missed.
+
+14. **A published clause described behaviour the code deliberately did not have.** v1.2's
+    first draft said a token "shaped like neither an index nor a phase — a timestamp, a URL
+    — is reported". The timestamp is the one case the code rejects on purpose, decided
+    earlier in this same phase and pinned by its own test. The text was narrowed to state
+    the two reported outcomes and the three silent ones, and to name the cost out loud:
+    `a1:done` written for `a:done` is a typo this clause does not catch. A new test pins the
+    boundary in the shape the clause states it, so the sentence cannot drift from the code
+    again — which is the whole subject of this brief, arriving in the artifact written to
+    settle it.
+
 ## Big decisions
 
 **The new clauses complain and never block.** Decided 2026-09-22, resolving open decision 2.

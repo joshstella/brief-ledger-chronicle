@@ -263,6 +263,13 @@ for entry in $WELL_FORMED; do
   # A brief that has not been started has no ledger, and that is not a defect —
   # #0007 is filed and waiting. BRIEFS-1 to BRIEFS-7 govern brief.md; these two are
   # the first clauses to read ledger.md at all, so the absent case is theirs to skip.
+  #
+  # Deleting this line leaves the suite green, and that is not a reason to delete it. The
+  # loop only survives without it because blc_ledger_facts' outer awk prints empty fields
+  # from its own END whether or not the inner scan read anything, so both facts come back
+  # empty and the status line is blank one statement later. That is an accident of how two
+  # awk programs compose, not a decision either of them records. The guard states the
+  # intent where a reader meets it, and costs one stat call per brief.
   [ -f "$ledger" ] || continue
 
   # One scan, both facts.
