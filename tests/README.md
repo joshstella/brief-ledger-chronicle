@@ -35,6 +35,8 @@ tests/
   test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
   test_status_line.sh     the shared status-line locator, and the shapes that separated its
                           two predecessors (#0014)
+  test_clauses.sh         BRIEFS-9 and BRIEFS-10: that they report, that they never block,
+                          and that the three readers of a ledger agree (#0014)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
