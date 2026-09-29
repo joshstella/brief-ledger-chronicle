@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:in-progress(brief/0014-c-the-clauses) d:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:done(PR#63) d:in-progress(brief/0014-d-the-promotion)`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -11,8 +11,8 @@
 |---|---|---|---|
 | a | the shared matcher | done | PR#61 |
 | b | the shared locator | done | PR#62 |
-| c | the clauses | in-progress | `brief/0014-c-the-clauses` |
-| d | the promotion | pending | — |
+| c | the clauses | done | PR#63 |
+| d | the promotion | in-progress | `brief/0014-d-the-promotion` |
 
 Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
 `d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
@@ -200,9 +200,48 @@ character-identical apart from the exit status each tool documents, and `assert_
 in `tests/lib.sh` now guards the load list. And any new `awk` must avoid interval expressions,
 because `mawk` has none and reads `{3,}` literally — see the phase `b` record.
 
+**c closed 2026-09-29, PR#63.** Both clauses ship, `validate-briefs.sh` reads a ledger through
+the shared libraries rather than a fourth private copy, and Contract v1.2 is current with every
+live citation moved to it. 335 tests, 0 failures. Four review rounds.
+
+What `c` cost that the plan did not predict: four of this brief's six un-failable guards were
+found here, and the sixth was inside the remedy written for the fifth — see complications 12
+and 13. The one-sentence version is that a mutation per *guard* is not enough when two
+functions read the same tokens and each discards what the other reports; it takes a mutation
+per code path the guard claims. `c` also shipped a Contract whose text described behaviour the
+code deliberately did not have, inside the brief written to stop instructions drifting from
+mechanisms, which is complication 14.
+
 **d — the promotion.** The version at which the two `[judgment]` clauses become `[defect]`,
 and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it:
 a clause that never fails a build has no day-one crossing to manage.
+
+**Re-planned 2026-09-29, after `c` merged.** `d` stays decision-only and writes no check. The
+re-plan did not change the sequence — the chain still ends here — but it changed what `d` has
+to answer, because `c` produced two preconditions for promotion that did not exist when the
+brief was filed.
+
+The first is a published blind spot. v1.2 states that `BRIEFS-9` does not catch `a1:done`
+written where `a:done` was meant, and states it because complication 14 forced the text to
+match the code. As a `[judgment]` that is an honest limit printed beside an honest warning. As
+a `[defect]` it is a gate that breaks builds while letting through the most likely typo it
+exists to catch. Whether that is acceptable is a criterion `d` owes an answer to; it is not a
+defect to fix, because widening the clause means accepting timestamps and URLs as candidate
+phases, which was already judged the worse trade.
+
+The second is that `BRIEFS-10` rests on an awk program no test pins to an implementation. Phase
+`b` found `mawk` returning a decoy on `{3,}` and fixed it with `` ````* ``; the fix is held by a
+comment, and `c`'s review showed that reverting it leaves the suite green on a machine whose
+`mawk` supports interval expressions. A misfiring interpreter costs a `[judgment]` one wrong
+line and costs a `[defect]` someone else's build.
+
+That second one is code, and it is not `d`'s. It is filed as the draft
+`docs/briefs/_drafts/the-interpreter-nothing-pins.md` and named in `d`'s criteria as a
+precondition. Folding it in was considered and rejected: a matrix over awk and shell
+implementations is portability infrastructure that serves the whole suite, and #0014's subject
+is one reader per format. A brief that absorbs every precondition it discovers stops being
+reviewable, and this repository's own precedent is the other way — complication 11 became its
+own clause, and the missing memory layer became its own draft rather than a phase here.
 
 ## Dependency structure
 
