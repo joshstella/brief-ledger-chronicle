@@ -1,5 +1,5 @@
 # Ledger — #0014 The shape nothing prescribes
-`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:in-progress(brief/0014-c-the-clauses) d:pending`
+`blc/2 #0014 in-progress a:done(PR#61) b:done(PR#62) c:done(PR#63) d:in-progress(brief/0014-d-the-promotion)`
 
 **Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
@@ -11,8 +11,8 @@
 |---|---|---|---|
 | a | the shared matcher | done | PR#61 |
 | b | the shared locator | done | PR#62 |
-| c | the clauses | in-progress | `brief/0014-c-the-clauses` |
-| d | the promotion | pending | — |
+| c | the clauses | done | PR#63 |
+| d | the promotion | in-progress | `brief/0014-d-the-promotion` |
 
 Re-lettered 2026-09-16 when `b` was inserted. The former `b` is now `c`, the former `c` is now
 `d`; `a` keeps its letter and its merged PR. The mapping is in the brief's Change section.
@@ -200,9 +200,163 @@ character-identical apart from the exit status each tool documents, and `assert_
 in `tests/lib.sh` now guards the load list. And any new `awk` must avoid interval expressions,
 because `mawk` has none and reads `{3,}` literally — see the phase `b` record.
 
+**c closed 2026-09-29, PR#63.** Both clauses ship, `validate-briefs.sh` reads a ledger through
+the shared libraries rather than a fourth private copy, and Contract v1.2 is current with every
+live citation moved to it. 335 tests, 0 failures. Four review rounds.
+
+What `c` cost that the plan did not predict: four of this brief's six un-failable guards were
+found here, and the sixth was inside the remedy written for the fifth — see complications 12
+and 13. The one-sentence version is that a mutation per *guard* is not enough when two
+functions read the same tokens and each discards what the other reports; it takes a mutation
+per code path the guard claims. `c` also shipped a Contract whose text described behaviour the
+code deliberately did not have, inside the brief written to stop instructions drifting from
+mechanisms, which is complication 14.
+
 **d — the promotion.** The version at which the two `[judgment]` clauses become `[defect]`,
 and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it:
 a clause that never fails a build has no day-one crossing to manage.
+
+**Re-planned 2026-09-29, after `c` merged.** `d` stays decision-only and writes no check. The
+re-plan did not change the sequence — the chain still ends here — but it changed what `d` has
+to answer, because `c` produced two preconditions for promotion that did not exist when the
+brief was filed.
+
+The first is a published blind spot. v1.2 states that `BRIEFS-9` does not catch `a1:done`
+written where `a:done` was meant, and states it because complication 14 forced the text to
+match the code. As a `[judgment]` that is an honest limit printed beside an honest warning. As
+a `[defect]` it is a gate that breaks builds while letting through the most likely typo it
+exists to catch. Whether that is acceptable is a criterion `d` owes an answer to; it is not a
+defect to fix, because widening the clause means accepting timestamps and URLs as candidate
+phases, which was already judged the worse trade.
+
+The second is that `BRIEFS-10` rests on an awk program no test pins to an implementation. Phase
+`b` found `mawk` returning a decoy on `{3,}` and fixed it with `` ````* ``; the fix is held by a
+comment, and `c`'s review showed that reverting it leaves the suite green on a machine whose
+`mawk` supports interval expressions. A misfiring interpreter costs a `[judgment]` one wrong
+line and costs a `[defect]` someone else's build.
+
+That second one is code, and it is not `d`'s. It is filed as the draft
+`docs/briefs/_drafts/the-interpreter-nothing-pins.md` and named in `d`'s criteria as a
+precondition. Folding it in was considered and rejected: a matrix over awk and shell
+implementations is portability infrastructure that serves the whole suite, and #0014's subject
+is one reader per format. A brief that absorbs every precondition it discovers stops being
+reviewable, and this repository's own precedent is the other way — complication 11 became its
+own clause, and the missing memory layer became its own draft rather than a phase here.
+
+**What `d` shipped.** A "Promotion" section in `docs/contracts/README.md`, and nothing else.
+No clause changed, no version bumped, no check written.
+
+It went in that file rather than in a Contract version because promotion is clause *lifecycle*,
+which does not belong to any one version. `README.md` is already the layer holding what does
+not change between versions — the tag and scope legends — so the rule is stated once and
+covers every future `[judgment]`, not only these two.
+
+**The first draft of the definition was wrong, and review proved it by running it.** It said
+promotion changes "exactly one thing mechanically", the exit status. Flipping `BRIEFS-9` to
+`defect` against a fixture changes four: the exit status, the tag in the printed line, which
+column of the summary counts the finding, and — the one that matters —
+`tools/validate-briefs.sh:335` runs `brief-checks/` only when the defect count is zero, so a
+promoted clause that fires stops an adopter's own project checks from running at all.
+
+That last consequence lands on consumers and is invisible in the way this repository cares
+about most: the reader sees a shorter report, not a missing one, which is "a check that did not
+run reads as a check that passed" rebuilt by the promotion mechanism itself. #0011 shipped
+`brief-checks/` so a project could add its own gate. Promotion makes every clause a
+precondition for every check downstream of it. A decision-only phase whose sole deliverable is
+the definition cannot get the definition wrong, and this one did until review ran it.
+
+The rest of the definition stands. Promotion is per clause, because the preconditions are about
+the check and not about when the clause was written. It bumps the version, because a tag edited
+in place makes every citation of the old version silently wrong.
+
+**The reversibility claim was also wrong.** The first draft said a gate has been demoted to a
+report here before, citing #0003. What #0003 demoted was a *planned* gate, during planning,
+before it shipped — `docs/briefs/0003-contract-artifact/ledger.md:14`, a phase marked skipped.
+No published clause in this repository has ever changed its tag in either direction. The
+citation is sound for the claim it carries elsewhere in this brief, that this project has
+chosen report over gate at design time; it says nothing about the cost of reversing a shipped
+gate, which is the proposition the strict criteria rest on. Corrected to say what is known.
+
+**Per-clause preconditions, as they stand today.** Neither clause is promotable.
+
+| clause | criterion 1 (interpreters) | criterion 2 (mutation-proved) | criterion 3 (real findings) |
+|---|---|---|---|
+| `BRIEFS-9` | unmet — shell matrix untested beyond bash and dash | unproved — no per-code-path mutation pass has been recorded | unmet |
+| `BRIEFS-10` | unmet — the fence tracker's awk is pinned by a comment, not a test | unproved — and reverting `` ````* `` to `{3,}` still leaves the suite green | unmet |
+
+Criterion 2 read `met` in the first draft and review was right to reject it. Mutations were run
+on every guard, but no inventory exists of which mutation covered which code path, and the
+criterion as published asks for exactly that. Worse, the criterion was *authored from* a
+failure to meet it — complication 13 says the missing rule was "one mutation per code path the
+test claims" — and then marked met in the same document. The seventh un-failable guard is in
+this phase's own test, which is the strongest available argument that `unproved` is the honest
+cell. It costs nothing to say so: both clauses are unpromotable on two other criteria anyway.
+
+`BRIEFS-9` carries a fourth item that is not a criterion but belongs beside them: the published
+blind spot from complication 14. It may be narrower than it needs to be. The clause ignores any
+id mixing letters and digits, which was the cheapest way to exclude timestamps, but a rule of
+*lowercase letters followed by digits* would catch `a1:done` while still excluding a timestamp
+(which begins with a digit) and an uppercase id. If that holds, the blind spot closes without
+accepting timestamps as candidate phases, and the question of whether a gate may carry a
+documented hole never has to be answered. Not attempted here: it amends a clause published
+today, and it belongs with the promotion rather than as a patch behind it.
+
+**Review tested the candidate rule and it holds.** One or more lowercase letters followed by
+one or more digits, whole token: catches `a1` and `bc2`, excludes `2026-01-01T00` (begins with
+a digit), `https` (no digits), and `A1` (uppercase). So the widening is available and admits
+neither a timestamp nor a URL.
+
+That makes a sentence in the current Contract false. `docs/contracts/v1.2.md` justifies the
+boundary by saying "widening to catch it means accepting timestamps and URLs as candidate
+phases, which was judged the worse trade". The trade it describes is not the trade available.
+The clause's *behaviour* is defensible and unchanged; its stated *reason* was wrong, and it was
+published.
+
+**Corrected in `d`, text only.** The sentence now says the boundary is wider than it needs to
+be, names the narrower rule, and says that rule is not in this version. No clause rule changed,
+no behaviour changed, no version bumped — a justification is not a rule, and correcting one
+does not make a citation of v1.2 wrong. Deferring it to the brief that closes the blind spot
+was the alternative and was rejected: that brief is unscheduled, and leaving a knowingly false
+sentence in the *current* Contract for an unbounded period is the defect this brief exists to
+prevent, committed in the artifact written to end it.
+
+**The blind spot stopped being theoretical during this phase.** Proving the repaired test could
+fail needed ten standing judgments in the tree. The first attempt injected `q0:pending` through
+`q9:pending` and produced zero — every one of the ten was a letter followed by a digit, and
+`BRIEFS-9` discarded all ten in silence. The shape the clause declines to examine is the shape
+a person reaches for when inventing a phase id, which is the same reason `a1:done` is the
+likely typo. Recorded because an argument about a hypothetical typo and a demonstration are
+different kinds of evidence, and this phase produced the second by accident.
+
+**Criterion 3 changed shape during the re-plan, and the correction is the useful part.** It was
+first written as unverifiable — installs write their log into the target, not back here, so
+this project cannot observe a consumer's run. That was the wrong diagnosis. There are no
+consumers yet, so the criterion is **unmet**, not unverifiable, and it becomes verifiable the
+moment there is someone to report a run.
+
+The sharper form of the same point is independent of how many consumers exist. `BRIEFS-9` and
+`BRIEFS-10` report zero findings across all thirteen ledgers here. Every time either has fired,
+it was against a fixture built to make it fire. That demonstrates the clause *fires*; it
+demonstrates nothing about whether it is *right* on a record written without it in mind. A
+false-positive rate of zero over zero real findings is not a measurement.
+
+That sentence in `README.md` is a claim about the present, and the present moves.
+`the_promotion_criteria_still_describe_this_repository` holds it: if any ledger here ever
+produces a judgment, the suite fails and names the sentence to rewrite. It does not fail the
+build — a judgment appearing is legitimate — which is the distinction the clause tags already
+draw, applied to a written claim instead of a record.
+
+It holds one half of the sentence, and the test now says which half. A standing judgment is
+detected. A judgment that fires, is examined, is judged correct, and is then repaired satisfies
+criterion 3 and returns the count to zero with the test green. That half needs a person to
+record that a finding occurred, and no assertion can substitute.
+
+**The test was the seventh un-failable guard in this brief.** It matched `0 judgment(s)`, which
+is a substring of `10 judgment(s)`, and of 20, 30 and 100. Review made it pass with ten standing
+judgments in the tree. The fix is the comma the summary already prints. This is complication 6
+again — a guard for one spelling of an idea is a guard for none — arriving in the phase that
+publishes `one mutation per code path the guard claims` as a promotion criterion, which is why
+that criterion now reads `unproved` rather than `met` for both clauses.
 
 ## Dependency structure
 
