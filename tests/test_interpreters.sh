@@ -31,6 +31,23 @@ in_yard() {
 # about this laptop instead of about the directory the test built.
 IN_BASH="$(command -v bash)"
 
+# The second field of the discovery line for exactly $2 — `not-found`, or a path.
+#
+# Written because the assertions here used to glob the whole report: `*"mawk"*"not-found"*`
+# matches a line saying mawk was found followed by a *different* candidate's not-found line,
+# and `*"awk"*` matches `gawk`. Review found that the test guarding the candidate list stayed
+# green when `awk` was deleted from it, for exactly that reason. A name is anchored on the
+# newline before it and the tab after it, so no other candidate can satisfy it.
+in_field() {
+  local out="$1" name="$2" rest
+  rest="$(printf '\n%s' "$out")"
+  case "$rest" in
+    *$'\n'"$name"$'\t'*) rest="${rest#*$'\n'"$name"$'\t'}" ;;
+    *) return 1 ;;
+  esac
+  printf '%s' "${rest%%$'\t'*}"
+}
+
 in_discover() { PATH="$1" "$IN_BASH" "$REPO_ROOT/tests/run.sh" --interpreters 2>&1; }
 in_plan()     { PATH="$1" "$IN_BASH" "$REPO_ROOT/tests/run.sh" --matrix-plan 2>&1; }
 
@@ -42,11 +59,10 @@ test_interpreters_every_candidate_is_reported_either_way() {
   # Silence is the failure this whole phase is about. Every candidate gets a line.
   local name
   for name in $IN_CANDIDATES; do
-    case "$out" in
-      *"$name"*) ;;
-      *) fail "discovery said nothing at all about '$name':
-$out" ;;
-    esac
+    in_field "$out" "$name" >/dev/null \
+      || fail "discovery has no line for '$name' — every candidate is reported either way, and
+silence is the failure this whole phase is about:
+$out"
   done
 
   # Derived, not a literal: a sixth candidate should need one edit, not two with a red suite
@@ -62,11 +78,9 @@ test_interpreters_an_absent_awk_is_named_not_a_silence() {
   local yard out
   yard="$(in_yard empty)"
   out="$(in_discover "$yard")"
-  case "$out" in
-    *"mawk"*"not-found"*) ;;
-    *) fail "an empty PATH did not report mawk as not-found:
-$out" ;;
-  esac
+  [ "$(in_field "$out" mawk)" = "not-found" ] \
+    || fail "an empty PATH did not report mawk as not-found:
+$out"
 }
 
 test_interpreters_a_present_awk_is_found_with_its_version() {
@@ -80,11 +94,9 @@ test_interpreters_a_present_awk_is_found_with_its_version() {
 $out" ;;
   esac
   # The rest must still be absent, or the test is passing on a machine fact.
-  case "$out" in
-    *"gawk"*"not-found"*) ;;
-    *) fail "gawk was not reported not-found on a PATH that has only mawk:
-$out" ;;
-  esac
+  [ "$(in_field "$out" gawk)" = "not-found" ] \
+    || fail "gawk was not reported not-found on a PATH that has only mawk:
+$out"
 }
 
 # The candidate list is the scope of the claim. Promotion criterion 1 in
@@ -95,12 +107,10 @@ test_interpreters_the_candidate_list_has_not_been_narrowed() {
   local out name
   out="$(in_discover "$(in_yard empty)")"
   for name in awk gawk mawk original-awk busybox; do
-    case "$out" in
-      *"$name"*) ;;
-      *) fail "'$name' has been dropped from the candidate list — the matrix now claims less
+    in_field "$out" "$name" >/dev/null \
+      || fail "'$name' has been dropped from the candidate list — the matrix now claims less
 than it did, with nothing else to show for it:
-$out" ;;
-    esac
+$out"
   done
 }
 
@@ -201,15 +211,29 @@ in_stub() {
   chmod +x "$file"
 }
 
-# A driver test is about what the driver does with a plan, so it needs the plan to be the one it
-# built. PATH can shadow a name but cannot hide one, so a machine carrying original-awk or
-# busybox would produce extra runs and the arithmetic below would be about that machine.
+# A driver test is about what the driver does with a plan, so the plan has to be the one the
+# test built. PATH can shadow a name but cannot hide one, so *every* candidate gets a stub —
+# including busybox, which gets one that fails the awk-applet probe and is therefore reported
+# not-found. Leaving a name unstubbed would let a machine that has it add a run.
+#
+# An earlier version skipped both driver tests when the machine had original-awk or busybox.
+# That trade pointed the wrong way: phase `b` installs exactly those interpreters on CI, so the
+# two tests written to guard the driver would have gone silent on the one machine with the
+# widest matrix.
+#
+# $2 is the version each of awk, gawk, mawk and original-awk reports. Names sharing a version
+# are one implementation, and the driver must collapse them.
 in_driver_yard() {
   local yard="$TMP/interp/driver-$1"
-  if command -v original-awk >/dev/null 2>&1 || command -v busybox >/dev/null 2>&1; then
-    return 1
-  fi
+  local real="$2" v_awk="$3" v_gawk="$4" v_mawk="$5" v_oawk="$6"
   rm -rf "$yard"; mkdir -p "$yard"
+  in_stub "$yard/awk"          "$v_awk"  "$real"
+  in_stub "$yard/gawk"         "$v_gawk" "$real"
+  in_stub "$yard/mawk"         "$v_mawk" "$real"
+  in_stub "$yard/original-awk" "$v_oawk" "$real"
+  # busybox is probed by running its awk applet, not by --version. A busybox that cannot is
+  # not an awk this found, so this stub takes the name out of the plan.
+  printf '#!/bin/sh\nexit 1\n' > "$yard/busybox"; chmod +x "$yard/busybox"
   printf '%s' "$yard"
 }
 
@@ -227,35 +251,76 @@ in_driver_run() {
     PATH="$yard:$PATH" exec "$IN_BASH" "$REPO_ROOT/tests/run.sh" "$filter" ) 2>&1
 }
 
+# gawk is made an alias of awk on purpose, rather than of something later. It puts an alias
+# *before* a run entry, so the display list and the run list stop agreeing index for index:
+# display is [awk, gawk (alias), mawk, original-awk] while the runs are [awk, mawk,
+# original-awk]. Indexing the announcement off the wrong list then prints `run 2/3: gawk
+# (alias)`, which is the #0014 desync. With the alias last, both lists agree at every index a
+# run uses and the mutation is invisible.
+in_driver_three() {
+  in_driver_yard "$1" "$2" "STUB alpha 1.0" "STUB alpha 1.0" "STUB beta 2.0" "STUB gamma 3.0"
+}
+
 test_interpreters_the_driver_runs_the_interpreter_it_names() {
   local yard out real
   real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
-  yard="$(in_driver_yard names)" || { skip "this machine has a candidate PATH cannot hide"; return; }
-  in_stub "$yard/awk"  "STUB alpha 1.0" "$real"
-  in_stub "$yard/gawk" "STUB beta 2.0"  "$real"
-  in_stub "$yard/mawk" "STUB beta 2.0"  "$real"
+  yard="$(in_driver_three names "$real")"
 
   out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")"
 
-  # gawk and mawk report the same version, so they are one implementation and one is an alias.
-  # Two runs. Each inner run checks for itself that the shim gave it the announced awk.
   case "$out" in
     *"the shim gave the inner run"*) fail "an inner run got an awk the driver did not name:
 $out" ;;
   esac
   case "$out" in
-    *"2 interpreter(s) passed"*) ;;
-    *) fail "expected two implementations behind three names:
+    *"3 interpreter(s) passed"*) ;;
+    *) fail "expected three implementations behind four names and a busybox without an applet:
 $out" ;;
   esac
+}
+
+# The announcement itself. The shim check above compares *versions*, and the desync this guards
+# leaves the version correct while the name lies — `run 2/3: gawk (alias) — mawk 1.3.4`. Review
+# reproduced that with a one-word change to the driver and got 11 passed, 0 failed.
+test_interpreters_each_announcement_names_a_run_and_never_an_alias() {
+  local yard out real line n=0
+  real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
+  yard="$(in_driver_three announce "$real")"
+
+  out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")"
+
+  # The run entries, in order, for the plan in_driver_three builds.
+  local want_1="run 1/3: awk" want_2="run 2/3: mawk" want_3="run 3/3: original-awk"
+  while IFS= read -r line; do
+    case "$line" in
+      *"run "[0-9]*"/"*) ;;
+      *) continue ;;
+    esac
+    n=$((n + 1))
+    case "$line" in
+      *"(alias)"*) fail "an announcement names an alias, so the label is being read off the
+display list rather than the run list — this is the #0014 desync:
+$line" ;;
+    esac
+    local want; eval "want=\$want_$n"
+    case "$line" in
+      *"$want"*) ;;
+      *) fail "announcement $n does not say '$want':
+$line" ;;
+    esac
+  done <<EOF
+$out
+EOF
+
+  [ "$n" -eq 3 ] || fail "expected three announcements, saw $n:
+$out"
 }
 
 test_interpreters_a_failing_interpreter_fails_the_matrix() {
   local yard out rc=0 real
   real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
-  yard="$(in_driver_yard failing)" || { skip "this machine has a candidate PATH cannot hide"; return; }
-  in_stub "$yard/awk"  "STUB good 1.0" "$real"
-  in_stub "$yard/gawk" "STUB good 1.0" "$real"
+  yard="$(in_driver_yard failing "$real" "STUB good 1.0" "STUB good 1.0" \
+                        "STUB bad 2.0" "STUB good 1.0")"
   in_stub "$yard/mawk" "STUB bad 2.0"            # no real binary behind it: every call fails
 
   out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")" || rc=$?
@@ -296,10 +361,88 @@ test_interpreters_the_shim_gave_the_inner_run_the_announced_awk() {
     || fail "BLC_AWK_INNER is set but BLC_AWK_VERSION is not — the driver stopped saying which
 interpreter it handed over, and this check cannot run"
 
+  # The same fallback discovery applies. Without it an awk that prints nothing for --version is
+  # announced as `(version unknown)`, compared against an empty string, and fails the whole
+  # matrix with a message blaming the shim — which was correct. Reproduced by review.
   local actual
-  actual="$(awk --version 2>&1 | head -1)"
+  actual="$(awk --version </dev/null 2>&1 | head -1)"
+  [ -n "$actual" ] || actual="(version unknown)"
   [ "$actual" = "$BLC_AWK_VERSION" ] \
     || fail "the shim gave the inner run a different awk than the driver announced.
 announced: $BLC_AWK_VERSION
 actual:    $actual"
+}
+
+# ── busybox ──────────────────────────────────────────────────────────────────
+#
+# busybox is the one candidate discovered by a different question. The others answer
+# `--version`; busybox is one binary holding many applets, so the question is whether it has an
+# awk applet at all, and the answer comes from running it. An earlier review round recorded this
+# branch as covered. It was not: `busybox` appeared in the test file only inside candidate lists.
+
+# A busybox stub. $2 decides whether the awk applet exists.
+in_busybox() {
+  local file="$1" with_awk="$2"
+  if [ "$with_awk" = yes ]; then
+    printf '#!/bin/sh\ncase "$1" in awk) shift;; *) exit 1;; esac\ncase "$1" in --version) echo "BusyBox v1.36.1 (stub) multi-call binary"; exit 0;; esac\nexit 0\n' > "$file"
+  else
+    printf '#!/bin/sh\nexit 1\n' > "$file"
+  fi
+  chmod +x "$file"
+}
+
+test_interpreters_a_busybox_with_an_awk_applet_is_an_awk() {
+  local yard out
+  yard="$(in_yard busybox-yes)"
+  in_busybox "$yard/busybox" yes
+  out="$(in_discover "$yard")"
+
+  [ "$(in_field "$out" busybox)" = "$yard/busybox" ] \
+    || fail "a busybox carrying an awk applet was not discovered:
+$out"
+  case "$out" in
+    *"BusyBox v1.36.1 (stub)"*) ;;
+    *) fail "busybox was found but not with the version its applet reports:
+$out" ;;
+  esac
+}
+
+# The refusal half. A busybox built without awk is a binary that exists and is not an awk, and
+# reporting it would put a run in the matrix that cannot execute a single test.
+test_interpreters_a_busybox_without_an_awk_applet_is_not_an_awk() {
+  local yard out
+  yard="$(in_yard busybox-no)"
+  in_busybox "$yard/busybox" no
+  out="$(in_discover "$yard")"
+
+  [ "$(in_field "$out" busybox)" = "not-found" ] \
+    || fail "a busybox with no awk applet was reported as an awk:
+$out"
+}
+
+# An awk that does not know --version reads a program from stdin instead, and discovery waits
+# for it. The suite then hangs with no output and no failure — the worst shape a defect can
+# take here, because a hung run is not a red run and CI reports a timeout rather than a cause.
+#
+# stdin is a FIFO opened read-write, so it never reaches EOF and no writer process has to be
+# cleaned up afterwards. Without the redirect in blc_awk_version, this times out.
+test_interpreters_an_awk_that_reads_stdin_cannot_hang_discovery() {
+  command -v timeout >/dev/null 2>&1 || { skip "no timeout(1)"; return; }
+  command -v mkfifo  >/dev/null 2>&1 || { skip "no mkfifo(1)"; return; }
+
+  local yard fifo out rc=0
+  yard="$(in_yard reads-stdin)"
+  # `read` and not `cat`: PATH here is the yard and nothing else, so an external command would
+  # exit 127 at once and the test could never hang, whatever the code under it did.
+  printf '#!/bin/sh\nread line\nexit 0\n' > "$yard/mawk"; chmod +x "$yard/mawk"
+  fifo="$yard/.stdin"; mkfifo "$fifo"
+
+  exec 9<>"$fifo"
+  out="$(timeout 10 env PATH="$yard" "$IN_BASH" "$REPO_ROOT/tests/run.sh" --interpreters 0<&9 2>&1)" || rc=$?
+  exec 9>&-
+
+  [ "$rc" -ne 124 ] || fail "discovery blocked on stdin and had to be killed. An awk that does
+not recognise --version reads a program instead, so the probe must close stdin."
+  [ "$rc" -eq 0 ] || fail "discovery exited $rc against an awk that reads stdin:
+$out"
 }

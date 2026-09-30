@@ -31,7 +31,7 @@ than letting silence imply coverage.
 one version into one run with the alias reported, runs the whole suite once per remaining
 implementation with `PATH` shimmed so the tools resolve `awk` to that binary, and prints which
 ran and which were not found. On this machine that is gawk (as `awk`, with `gawk` an alias)
-and mawk: **343 passed, 0 failed under both.**
+and mawk: **351 passed, 0 failed under both.**
 
 Shimming `PATH` rather than passing a variable is the deliberate part. The tools call `awk`
 unqualified, so a variable would test a code path they take only under test.
@@ -77,10 +77,44 @@ lost its `FILTER` assignment, which made the selection pattern `**`: every inner
 full run, and the new driver tests spawned matrices of matrices until the machine ran out of
 processes. Nothing failed. The suite was green all the way down.
 
-Ten mutations, ten dead tests: dropping a candidate, skipping an absent interpreter silently,
-passing over an empty matrix (both entry points), dropping the dedupe, indexing the label off
-the display list, dropping the version from discovery, ignoring a failing interpreter, running
-the wrong binary behind the shim, and withholding the announced version from the inner run.
+**A second review round found two more tests that could not fail, and one of them let the bug
+above back in.** Indexing the driver's announcement off the display list — the #0014 desync,
+restored by one word — printed `run 2/3: gawk (alias)` with the suite fully green. The inner
+shim check could not see it: that check compares versions, and on a desynced line the version
+is still right. The name is the part that lies. The other was the guard on the candidate list
+itself, which matched each name as a substring of the whole report; `gawk`, `mawk` and
+`original-awk` all contain `awk`, so deleting `awk` from the list left the guard green. A test
+written to catch a silent narrowing was narrowable in silence.
+
+Both are fixed by anchoring on structure rather than on text. Discovery lines are matched on the
+newline before the name and the tab after it, and the announcement is checked against the run
+list it must equal, position by position. The driver fixture now stubs every candidate —
+including a busybox with no awk applet — so the plan is the one the test built rather than
+partly a fact about the machine, and the alias sits *before* a run entry, which is the only
+arrangement where the two lists disagree at an index a run uses.
+
+That round also found two real bugs, neither of which a passing suite would ever have shown.
+An awk that prints nothing for `--version` was announced as `(version unknown)` and then
+compared against an empty string, so it failed the entire matrix with a message blaming the
+shim — which had done its job. And `blc_awk_version` ran `--version` with inherited stdin: an
+awk that does not know the option reads a program instead, and the suite hangs with no output
+and no failure. The busybox probe three lines below already carried `</dev/null` and a comment
+explaining why. One of two adjacent calls was guarded, which is the ordinary way a hazard gets
+recognised and then not applied.
+
+Fourteen mutations, fourteen dead tests: dropping a candidate (now genuinely, not by substring),
+skipping an absent interpreter silently, passing over an empty matrix (both entry points),
+dropping the dedupe, indexing the plan label off the display list, indexing the *driver's*
+announcement off it, dropping the version from discovery, ignoring a failing interpreter,
+running the wrong binary behind the shim, withholding the announced version from the inner run,
+removing the busybox applet probe, and removing the stdin guard.
+
+One line in this phase is still held by a comment rather than by a test: the `FILTER`
+assignment in `tests/run.sh`. Losing it does not turn the suite red — it makes every inner run
+a full run and the driver tests fork until the machine runs out of processes. A test for it
+would have to be a test that deliberately forks a bomb and survives, and that is a worse thing
+to own than the comment. It is recorded here so the next person does not mistake the comment
+for an oversight.
 
 **`tests/README.md`'s cause was wrong and is corrected.** It said `mawk` has no interval
 expressions and reads `{3,}` literally. `mawk` 1.3.4 has them and matches them minimally where

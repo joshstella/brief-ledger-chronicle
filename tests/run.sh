@@ -34,8 +34,12 @@ BLC_AWK_CANDIDATES="awk gawk mawk original-awk busybox"
 # Discovery uses shell builtins and the candidate binaries only — no sed, grep, awk, mktemp, or
 # dirname. That is what lets a test set PATH to a directory it controls and get an answer about
 # the directory rather than about the machine.
+# `</dev/null` for the same reason the busybox probe below carries it: an awk that does not
+# know --version falls through to reading a program from stdin, and the suite hangs with no
+# output and no failure. Reproduced with a stub. The hazard was written down beside the busybox
+# probe and not here, which is how one of two adjacent calls ends up guarded.
 blc_awk_version() {
-  { "$@" --version 2>&1 || true; } | { IFS= read -r line || true; printf '%s' "$line"; }
+  { "$@" --version </dev/null 2>&1 || true; } | { IFS= read -r line || true; printf '%s' "$line"; }
 }
 
 # One line per candidate: "<name>\t<path>\t<applet>\t<version>", or "<name>\tnot-found\t\t".

@@ -6,11 +6,30 @@ Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validato
 Run them:
 
 ```bash
-bash tests/run.sh              # everything
+bash tests/run.sh              # everything, once per awk on PATH
 bash tests/run.sh machine_     # only tests whose name contains "machine_"
+bash tests/run.sh --matrix-plan  # which interpreters would run, without running them
 ```
 
-Exit code is 0 when everything passes, 1 otherwise, so CI needs no extra wiring.
+`bash tests/run.sh` is a **matrix**: it runs the whole suite once per `awk` implementation it
+finds, and prints which ones it used and which candidates it did not find. Two names for one
+implementation count once. A run with no `awk` at all exits 2 rather than reporting a pass over
+an empty matrix.
+
+For one fast pass under whatever `awk` comes first on `PATH`, set the re-entry flag the driver
+uses and the matrix is skipped:
+
+```bash
+BLC_AWK_INNER=dev BLC_AWK_VERSION="$(awk --version | head -1)" bash tests/run.sh
+```
+
+That is a development convenience and not a matrix run — nothing prints a matrix summary, so
+the output cannot be mistaken for one. `BLC_AWK_VERSION` must be the real version of that `awk`:
+the suite checks itself against it, which is what stops a matrix run from naming an interpreter
+it did not use.
+
+Exit code is 0 when everything passes, 1 otherwise, and 2 when the suite could not run. CI needs
+no extra wiring.
 
 ## Layout
 
@@ -243,7 +262,8 @@ The fence tracker was written with `{3,}` to mean three-or-more. Under `mawk` th
 returned the fenced example it was written to skip — a wrong answer, not a missing one. The
 fix was to spell it `` ````* ``, which both implementations read alike.
 
-**The cause recorded here was wrong for a year, and the truth is worse.** This section used to
+**The cause recorded here was wrong from the day it was written, and the truth is worse.** This
+section used to
 say `mawk` 1.3.4 "has no interval expressions and reads that literally". It has them. It
 matches them **minimally**, where `gawk` matches maximally:
 
