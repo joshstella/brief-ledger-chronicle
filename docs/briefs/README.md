@@ -73,17 +73,13 @@ They go between `Author` and `Depends on`:
 **Serial:** #0010 · **Created:** … · **Author:** name@org.tld · **Owner:** exec@org.tld · **Jira:** PROJ-1234 · **Depends on:** #0004
 ```
 
-**`Depends on` goes last.** The dependency check reads everything after it. Any `#NNNN` there
-becomes a dependency, whatever field it was written in. So a tracker reference written the
-ordinary way — `ticket #9999` — is read as a dependency on brief 9999.
-
-That has a loud half and a quiet one. If brief 9999 does not exist, `BRIEFS-6` reports a
-defect and blocks. If it does exist, nothing is reported: the record now holds an edge nobody
-declared, and `list-briefs.sh` will not show it, because that tool stops reading at the next
-`·` and the validator does not.
-
-An Epic key like `PROJ-1234` carries no `#`, which is why this holds until someone writes a
-reference the ordinary way. Put new fields before `Depends on`.
+**`Depends on` goes last.** Every field ends at the next `·`, and both tools that read the
+identity line read it through one reader, `tools/lib/identity-line.sh`. So a `#NNNN` in a
+field after `Depends on` is not a dependency. The order is still worth keeping, for two
+readers this repository does not control. A copy of the validator installed before #0016 read
+everything after `Depends on`, so on that copy a reference like `ticket #9999` becomes a
+dependency on brief 9999. A script written elsewhere may read the same way. Put new fields
+before `Depends on`.
 
 **Correlation IDs.** External identifiers each get their own named field and encode one
 thing — never overloaded into the serial or slug. The serial stays the internal sequence;

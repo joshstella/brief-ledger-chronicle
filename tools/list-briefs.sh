@@ -54,7 +54,7 @@ while [ -L "$BLC_SELF" ]; do
   esac
 done
 BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
-for BLC_LIB in status-line; do
+for BLC_LIB in status-line identity-line; do
   if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
     printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
     exit 1
@@ -95,9 +95,12 @@ brief_status() {
   printf '%s' "$raw" | sed -E 's/^blc\/[0-9]+[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9a-z]+:.*$//'
 }
 
+# The `Depends on` value from the identity line, or `—`. Read through the shared reader so
+# this column shows exactly what BRIEFS-6 checks, never prose that mentions the field.
 brief_depends() {
-  local dep
-  dep=$(sed -n 's/.*\*\*Depends on:\*\* *//p' "$1" 2>/dev/null | head -1 | sed 's/ *·.*//')
+  local identity dep=""
+  identity=$(blc_identity_line "$1" || true)
+  [ -n "$identity" ] && dep=$(blc_identity_field "$identity" "Depends on" || true)
   printf '%s' "${dep:-—}"
 }
 
