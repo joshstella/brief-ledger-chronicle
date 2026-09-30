@@ -236,9 +236,13 @@ as `Jira:`. Its assignee is `Owner`, or `Author` where `Owner` is omitted.
 
 **No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
 the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
-is therefore computable from the ledger. Storing the key would put a value in the record that
-only the tracker can produce and that this side cannot rebuild if it is lost — and it would
-need a field per phase, on a status line whose grammar two Contract clauses now read.
+is therefore computable from the ledger.
+
+Storing the key instead would put a value in the record that only the tracker can produce.
+This side could not rebuild it if it were lost. It would also need a place, and the only
+per-phase place is the status line, where nothing reads the parenthetical: `BRIEFS-9` compares
+phase ids and states, and stops there. A key stored there would need a new reader before it
+meant anything.
 
 Finding by summary has a consequence worth stating plainly: **rename a ticket by hand and the
 next publish will not recognise it.** That is the same rule as every other hand edit. A status

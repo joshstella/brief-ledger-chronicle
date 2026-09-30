@@ -124,12 +124,18 @@ added.
 ### Decision 2 is settled: nowhere. A phase ticket is found, not recorded.
 
 The brief offered one answer — a field per phase — and flinched at it in the same sentence.
-The flinch was correct. A phase has one per-phase slot in the status line, the parenthetical
-in `a:done(PR#66)`, and the branch pointer holds it. A second parenthetical is a new grammar
-for the line that `blc_status_phase_entries` tokenizes and that `BRIEFS-9` and `BRIEFS-10`
-gate on. The phase table is the softer place, but `phase-row.sh` already carries three table
-schemas and says in its own comment that it does not parse columns; a key column needs a
-reader, and that reader is a fourth schema.
+The flinch was correct, though not for the reason I first wrote down. I argued that a second
+parenthetical would break a line two Contract clauses gate on. Review showed that claim is
+false twice: `BRIEFS-10` reads frontmatter and fences, not the status line, and both clauses
+are `[judgment]` and never block. `docs/briefs/README.md` says so eleven lines below the
+section I was writing.
+
+The true objection is the opposite shape and is stronger. `blc_status_phase_entries` splits a
+phase entry at the first colon and never reads the parenthetical at all, so a key stored there
+would pass every check by being invisible. It would need a new reader before it meant
+anything. The phase table has the same cost in a different place: `phase-row.sh` already
+carries three table schemas and says in its own comment that it does not parse columns. A key
+column needs a reader, and that reader is a fourth schema.
 
 Neither is necessary, because #0009 already made the identity derivable. `docs/briefs/README.md`
 pins the Jira summary as `#<serial>/<letter> — <label>`, and its worked example is this brief's
