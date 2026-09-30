@@ -1,16 +1,16 @@
 # Ledger — #0016 The readers that guess
 
-`blc/2 #0016 pending a:pending b:pending c:pending d:pending`
+`blc/2 #0016 in-progress a:in-progress(brief/0016-a-the-identity-reader) b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the identity reader | pending | — |
+| a | the identity reader | in-progress | `brief/0016-a-the-identity-reader` |
 | b | the pointer vocabulary | pending | — |
 | c | the forge probe | pending | — |
 | d | the forge in prose | pending | — |
@@ -55,8 +55,9 @@ it.
 `b → c → d` is a strict chain. `c` needs `b`'s token before there is an MR to look up, and `d`
 needs `c`'s detector before a skill can be told which CLI to use.
 
-So there are two tracks: `a` alone, and `b → c → d`. See the complications for what running them
-at the same time costs in this process.
+So there are two tracks: `a` alone, and `b → c → d`. **They run one after the other: `a` first,
+then the chain.** Decided 2026-09-30. The two tracks do not depend on each other, but running
+them at once would conflict on the status line every time; see the complications.
 
 ## Open decisions
 
@@ -65,11 +66,12 @@ named.
 
 | # | decision | blocks |
 |---|---|---|
-| 10 | Does `BRIEFS-5` check the shared reader's field values, or keep matching the whole line? | `a` |
+| 10 | **Settled 2026-09-30: it moves.** `BRIEFS-5` checks the shared reader's field values. | `a` |
 | 11 | Does detection ship as a program a skill can run, or only as a sourced library? | `c` |
 | 12 | Is PR/MR state normalised to one vocabulary, or printed as each CLI reports it? | `c` |
 
-**10.** "One reader" argues for moving the checks. `BRIEFS-5` is a `[defect]` clause, and moving
+**10 — settled: move.** One reader means one reader, including for the `[defect]` clause.
+"One reader" argues for moving the checks. `BRIEFS-5` is a `[defect]` clause, and moving
 it changes a gate. The existing negative fixtures in `tests/test_briefs.sh` pin every current
 `BRIEFS-5` failure, so a move that changes behaviour will fail them. That makes the move safe to
 attempt, not free.
