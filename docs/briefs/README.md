@@ -267,12 +267,16 @@ This side could not rebuild it if it were lost.
 It would also need a place, and there are two per-phase places. Neither understands a key, and
 one of them would guess.
 
-In the phase table, `phase-row.sh` finds a row by its id and does not parse columns, so a key
-column sits there unread. In the status line it is worse. `BRIEFS-9` checks that each phase id
-has a row in the phase table and stops there, but `open-briefs.sh` does read the parenthetical,
-and its rule is that anything which is not a PR or a commit is a branch. A key in that slot is
-reported as a branch that does not exist — a false finding, in the tool whose worth is that
-its findings are believed.
+In the phase table, `phase-row.sh` finds a row by its id, and no reader parses a key out of it.
+
+In the status line it is worse, because something reads the parenthetical and guesses.
+`BRIEFS-9` checks that each phase id has a row in the phase table and stops there, but
+`open-briefs.sh` treats anything in the pointer that is not a PR or a commit as a branch, and
+takes the first such field. What a key costs then depends on where it sits. Written after the
+branch it is dropped with no trace. Written before it, or alone, it is reported as a branch
+that does not exist, and the tool stops on that phase — so the real branch's distance from the
+trunk goes unmeasured, which is the measurement the tool exists to produce. On a phase that is
+not open the pointer is never parsed. No shape is a reader of a key.
 
 Finding by summary has two consequences worth stating plainly.
 

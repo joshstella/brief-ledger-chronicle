@@ -131,8 +131,10 @@ which is why the trap holds until someone writes a reference the ordinary way.
 It has a loud half and a quiet one. A serial that does not exist is a `[defect]` that blocks.
 A serial that does exist is reported by nothing: the record gains an edge nobody declared,
 and `list-briefs.sh` does not show it, because that tool stops reading at the next `·` and the
-validator does not. Two readers of one field, disagreeing. That is #0014's finding about
-these two tools exactly, and `open-briefs.sh` still carries a comment pointing at it.
+validator does not. Two readers of one field, disagreeing. That is the class #0014 named in
+its finding 7, where `open-briefs.sh` and `list-briefs.sh` disagreed about where the status
+line lives. Here the pair is `list-briefs.sh` and the validator, and the field is
+`Depends on`.
 
 The quiet half is the one worth a test, and it is proved by contrast rather than by a clean
 run: removing the brief it names turns the same fixture into a dangling dependency. A clean
@@ -182,10 +184,19 @@ section I was writing.
 
 The true objection is the opposite shape and is stronger. `blc_status_phase_entries` splits a
 phase entry at the first colon and never reads the parenthetical, so a key stored there passes
-every clause. It does not pass unnoticed, though, and this took three review rounds to get
-right. `open-briefs.sh` does read the parenthetical, and its rule is that anything which is
-not a PR or a commit is a branch. A key in that slot is reported as a branch that does not
-exist, in the tool whose worth is that its findings are believed. Verified by running it.
+every clause. It does not pass unnoticed, though, and this took four review rounds to state
+correctly. `open-briefs.sh` reads the parenthetical and treats the first field that is not a
+PR or a commit as a branch, so position decides the damage. All three shapes were run:
+
+| pointer | what `open-briefs.sh` does |
+|---|---|
+| `a:in-progress(PROJ-12,brief/…)` | reports a branch that does not exist, and measures nothing |
+| `a:in-progress(brief/…,PROJ-12)` | drops the key with no trace |
+| `a:done(PROJ-56)` | never parses the pointer |
+
+The first is the loud failure and the second is the normal one, because an `in-progress` phase
+always carries its branch. Neither is a reader of a key, and the first is worse than silence:
+the false finding replaces the branch-distance measurement the tool exists to produce.
 
 The phase table has the same cost in a quieter form: `phase-row.sh` already carries three
 table schemas and says in its own comment that it does not parse columns. A key column needs
