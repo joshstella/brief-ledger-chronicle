@@ -182,6 +182,12 @@ What is controllable:
 - **Treat everything external as optional.** If a team already has an issue tracker,
   carry a correlation ID. No integration is load-bearing. None requires the other tool
   to exist.
+- **Writing out is allowed. Reading in is not.** A correlation ID lets a tool write a
+  report into the tracker a team already reads. That stays optional: no configuration,
+  no report, and the work is unchanged. What is not allowed is the return trip. Nothing
+  in the tracker files a brief, edits a ledger, or decides a status, because a record
+  two systems can write is a record that has to be reconciled, and the reconciling
+  becomes the process. The record is in git.
 
 ## Held to the same standard
 

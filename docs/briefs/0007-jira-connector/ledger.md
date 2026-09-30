@@ -17,12 +17,14 @@
 
 **a — the mapping.** `docs/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
 brief maps to Epic, phase maps to ticket, `Owner:` is an optional identity-line field distinct
-from `Author`. Keys live on the brief and the ledger, never inside the serial. Drops "added
-when wired". Documentation only — no field is carried, validated, or published by this phase.
+from `Author`. The Epic key lives on the brief; no phase key is stored at all, per decision 2.
+Drops "added when wired". Documentation only — no field is carried, validated, or published by
+this phase.
 
-**b — the fields.** `blc-create-brief` carries `Owner:` and an Epic key; `blc-start-brief` and
-`blc-next-brief-phase` grow a place for per-phase ticket keys. Present values are shape-checked;
-absence is ordinary. No Jira call.
+**b — the fields.** `blc-create-brief` carries `Owner:` and an Epic key. Decisions 2 and 6
+removed the rest of this phase: no per-phase key needs a home, and nothing validates. What
+remains is two optional fields carried from a draft onto the identity line. Absence is
+ordinary. No Jira call.
 
 **c — my assignments.** A program that lists open briefs for an email — `Owner`, or `Author`
 when `Owner` is absent. It does not fetch. A skill fetches, then runs it. Tests land with it.
@@ -75,6 +77,33 @@ mean coordinated edits in four places. And `Owner:` on the identity line lands w
 when written: #0015 established that a new check ships `[judgment]` and that promotion to
 `[defect]` has three stated criteria, one of which nothing in this repository currently meets.
 
+## Phase a — what it does
+
+Documentation only. No program, no field is read or written by anything, and the suite is
+unchanged at 358 passing. Tests land with the program they pin, and this phase pins none.
+
+**The Manifesto gains the rule, not the feature.** "Treat everything external as optional"
+already covered carrying an ID; it did not say which direction data may move. The new bullet
+says writing out is allowed and reading in is not, and gives the reason: a record two systems
+can write has to be reconciled, and the reconciling becomes the process. Stated as a rule
+about trackers in general, so it holds for whatever a later brief integrates.
+
+**The identity line gains two optional fields**, `Owner` and `Jira`, described where the other
+four are. `Owner` points at "One person owns a serial", which already existed as a rule with
+no field; the field records that rule rather than changing it.
+
+**"Added when wired" is gone.** It was a promise in a document that describes what is, and it
+had been there long enough to read as permanent.
+
+**A new section, "Reporting to a tracker"**, states the mapping, both settled decisions, and
+the cost of finding by summary — a hand-renamed ticket is not recognised on the next publish.
+That cost is stated in the same place as the behaviour, because a reader who meets it will
+otherwise file it as a bug.
+
+Review of my own draft caught the summary format written twice in one file: once in the
+"Phase ids" table and once in the new section's prose. That is the shape of #0013's defect,
+two readers of one rule drifting apart, so the prose points at the table instead.
+
 ## Open decisions
 
 The brief carries eight. Their phase references are renumbered to the ids above, and one is
@@ -83,18 +112,65 @@ added.
 | # | decision | blocks |
 |---|---|---|
 | 1 | When is the Epic created? Default: Epic at filing, tickets at `blc-start-brief`, transitions whenever the status line changes. | `d` |
-| 2 | Where do phase ticket keys live? The identity line holds Epic and Owner; phase keys need a field per phase, and the status line is already dense. | `b` |
+| 2 | **Settled 2026-09-30, see below.** Where do phase ticket keys live? | `b` |
 | 3 | Jira is down. Confirm: warn, do not block. | `d` |
 | 4 | Status map. Default: a small config map, not a hardcoded "In Progress". | `d` |
 | 5 | Where auth lives. Env, a gitignored project file, or a CLI. No tokens in git. | `d` |
-| 6 | Contract clause? Default: no new version; validate shape when `Jira:` or `Owner:` is present. | `b` |
+| 6 | **Settled 2026-09-30, see below.** Contract clause? | `b` |
 | 7 | Extend `open-briefs.sh` or add a sibling? | `c` |
 | 8 | Which states count as "assigned"? Default: `pending`, `in-progress`, `deferred`. | `c` |
 | 9 | **Added by this re-plan.** How does the publisher reach Jira such that a test can substitute for it? Without an answer `d` cannot be written, let alone merged. | `d` |
 
-Nothing blocks `a`. Decision 2 must be settled before `b` is planned in detail, because a field
-per phase is a change to the phase table and possibly to the status line, which is the artifact
-#0014 and #0015 spent two briefs making machine-readable.
+### Decision 2 is settled: nowhere. A phase ticket is found, not recorded.
+
+The brief offered one answer — a field per phase — and flinched at it in the same sentence.
+The flinch was correct. A phase has one per-phase slot in the status line, the parenthetical
+in `a:done(PR#66)`, and the branch pointer holds it. A second parenthetical is a new grammar
+for the line that `blc_status_phase_entries` tokenizes and that `BRIEFS-9` and `BRIEFS-10`
+gate on. The phase table is the softer place, but `phase-row.sh` already carries three table
+schemas and says in its own comment that it does not parse columns; a key column needs a
+reader, and that reader is a fourth schema.
+
+Neither is necessary, because #0009 already made the identity derivable. `docs/briefs/README.md`
+pins the Jira summary as `#<serial>/<letter> — <label>`, and its worked example is this brief's
+own publisher phase. That string is computable from the ledger with no call to Jira. So the
+publisher lists the children of the Epic on the identity line and matches the summary it can
+regenerate.
+
+The reason to prefer this is the brief's own claim, not the saved work. "The record stays in
+git" sits badly beside a ledger field that only Jira can produce and that BLC cannot rebuild if
+it is lost. A derived identity cannot go stale, because there is nothing to keep in sync.
+
+Two costs, both real, and both already inside decision 9. JQL `summary ~` is a text search, so
+the lookup must scope to `parent = <Epic>` and then compare the string exactly on the client.
+And a PM who renames the summary orphans the ticket — which the brief already answers, because
+a hand edit in Jira is stale until the next BLC write. Renaming it back is the stated behaviour.
+
+This changes `a` before `a` is written. The phase row says keys live on the brief *and the
+ledger*. They live on the brief only.
+
+### Decision 6 is settled: no Contract clause, and the reason narrows the brief
+
+This is an export, not part of how BLC works. A project that never configures Jira loses
+nothing, so nothing here belongs in the document that tells adopters what their record must
+look like. A clause is published per version, so there is no way to add one quietly: the
+choice is a new Contract version or silence, and silence is right. `validate-briefs.sh` says
+nothing about `Jira:` or `Owner:`.
+
+**`Owner:` is not an export field, and saying "export to Jira" hides that.** Phase `c` reads
+it off disk and never calls Jira; the brief says so — "`Owner` still works with no Jira." Only
+`Jira:` and the publisher are export. `Owner:` is the identity field #0005 named and deferred,
+landing here because this is the brief that needed it.
+
+That leaves one silence. A typo in `Owner:` makes phase `c` return an empty list, and the
+executor cannot tell "nothing is mine" from "my address is misspelled in that brief". This is
+the shape #0014 and #0015 each found: a result that looks like an answer and is not.
+
+**The assignments program reports a malformed `Owner:` on stderr.** It is already reading the
+field from every open brief, so the check costs a comparison. It prints and does not gate,
+which is what a report owes a reader who may not own the brief that is wrong. Not a Contract
+clause, not a new version, and the finding lands in front of the one person looking for it.
+This is a `c` obligation; it is written here because it is the reason `b` ships no validator.
 
 ## Complications
 

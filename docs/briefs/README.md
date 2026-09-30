@@ -57,9 +57,16 @@ Each `brief.md` carries one line directly under its H1:
 - **Depends on** — `#NNNN` or `—`. The only field the author declares; the rest the
   pipeline stamps.
 
+Two more fields are optional and absent from most briefs:
+
+- **Owner** — a real, routable email: who executes the brief. `Author` is who filed it.
+  Those can be different people, and omitting `Owner` means they are the same person.
+  See "One person owns a serial" below, which this field records rather than changes.
+- **Jira** — the Epic key for this brief, e.g. `· **Jira:** PROJ-1234`. Present only in a
+  project that publishes to a tracker.
+
 **Correlation IDs.** External identifiers each get their own named field and encode one
-thing — never overloaded into the serial or slug. A tracker key is a separate field,
-e.g. `· **Jira:** PROJ-1234`, added when wired. The serial stays the internal sequence;
+thing — never overloaded into the serial or slug. The serial stays the internal sequence;
 external keys stay external; they reference each other, they don't merge.
 
 ## Commands
@@ -215,6 +222,36 @@ ledger does not go straight to `main` after initiation and the final phase has n
 branch to ride.
 
 **Ceiling: 26 phases.** A 27th is a new brief, not `aa`.
+
+## Reporting to a tracker
+
+**A tracker is a place this record is published to. It is never a place it is read from.**
+Managers report from a board they already know. The people doing the work change it here.
+
+A project that configures nothing loses nothing: no tracker, no publish, and every command
+in this document behaves the same. Absence is the ordinary case, not an error.
+
+**A brief is an Epic. A phase is a ticket under it.** The Epic key goes on the identity line
+as `Jira:`. Its assignee is `Owner`, or `Author` where `Owner` is omitted.
+
+**No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
+the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
+is therefore computable from the ledger. Storing the key would put a value in the record that
+only the tracker can produce and that this side cannot rebuild if it is lost — and it would
+need a field per phase, on a status line whose grammar two Contract clauses now read.
+
+Finding by summary has a consequence worth stating plainly: **rename a ticket by hand and the
+next publish will not recognise it.** That is the same rule as every other hand edit. A status
+changed on the board is stale reporting until the next write from here, and the next write
+puts it back. Anyone treating the board as the record will experience this as a bug.
+
+**None of this is in the Contract, and none of it is checked.** An export is not part of how a
+record must be shaped, so `validate-briefs.sh` says nothing about `Jira:` or `Owner:`. A
+malformed value costs you a report, not a brief.
+
+**`Owner` is not a tracker field.** It is read from disk to answer "what is mine", by projects
+with no tracker at all. It is described here because this is where the identity line is
+described, not because it is part of publishing.
 
 ## Structural invariants
 
