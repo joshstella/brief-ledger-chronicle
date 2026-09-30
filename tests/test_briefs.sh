@@ -177,6 +177,92 @@ test_briefs_5_rejects_a_serial_that_disagrees_with_its_folder() {
   assert_out "BRIEFS-5 [defect] 0001-first: identity line says #0009, folder says 0001"
 }
 
+# The digits agree with the folder; the `#` is missing. Comparing the bare field value would
+# let this pass, and no other fixture here would notice.
+test_briefs_5_rejects_a_serial_without_its_hash() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** 0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: identity line says"
+}
+
+# The shared reader trims spaces only. Trimming tabs too would let both of these pass.
+test_briefs_5_rejects_a_tab_after_the_serial_label() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "$(printf '**Serial:**\t#0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** —')"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: identity line says"
+}
+
+test_briefs_5_rejects_a_tab_after_the_created_label() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "$(printf '**Serial:** #0001 · **Created:**\t2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** —')"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Created is missing or not ISO-8601 UTC"
+}
+
+test_briefs_5_rejects_an_author_that_does_not_start_with_the_address() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** Name <a@b.com> · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Author is missing or not email-shaped"
+}
+
+test_briefs_5_compares_the_serial_on_its_leading_digits() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001x · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 0
+  assert_out "0 defect(s)"
+}
+
+# The first occurrence of a label wins, and a field ends at the next `·`. A check that matched
+# its label anywhere on the line would pass each of these.
+test_briefs_5_reads_the_first_created_field() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001 · **Created:** bad · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Created is missing or not ISO-8601 UTC"
+}
+
+test_briefs_5_reads_the_first_author_field() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** bad · **Author:** a@b.com · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Author is missing or not email-shaped"
+}
+
+test_briefs_5_an_author_ends_at_the_separator() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b·x.y · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Author is missing or not email-shaped"
+}
+
+test_briefs_5_an_author_with_a_separator_before_the_at_sign_fails() {
+  make_briefs
+  add_brief_with_identity 0001-first \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a·b@c.d · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-5 [defect] 0001-first: Author is missing or not email-shaped"
+}
+
 test_briefs_5_rejects_a_created_date_that_is_not_iso_utc() {
   make_briefs
   add_brief_with_identity 0001-first \
@@ -323,21 +409,28 @@ test_briefs_the_optional_tracker_fields_decide_nothing() {
     || fail "fixture lost its Jira value — the assertion above proves nothing"
 }
 
-# The dependency parse takes everything after `Depends on:` and scans it for `#NNNN`
-# (tools/validate-briefs.sh, in the BRIEFS-4/BRIEFS-5 block; BRIEFS-6 consumes the list it
-# builds). A field written after it is inside that scan. A realistic key like `PROJ-1234`
-# carries no `#` and is safe, which is why this is a trap rather than a visible break: it
-# holds until someone writes a tracker reference the ordinary way.
+# `Depends on` ends at the next `·`. A parse that read to the end of the line would make a
+# `#NNNN` in any later field a dependency: a blocking defect if the serial did not exist, and an
+# undeclared edge reported by nothing if it did.
 #
-# The README states the order because of this. These three tests state what it is worth.
-test_briefs_a_hash_after_depends_on_becomes_a_dependency() {
+# The two that assert an absence carry a control. A validator that had stopped reading
+# dependencies at all would pass every "is not a dependency" assertion here, so each also
+# proves a serial written *inside* the field is still read.
+test_briefs_a_hash_after_depends_on_is_not_a_dependency() {
   make_briefs
-  add_brief_with_identity 0001-trapped \
-    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** — · **Jira:** ticket #9999"
+  add_brief 0002-real
+  add_brief 0003-real
+  add_brief_with_identity 0001-trailing \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** #0003, #0002 · **Jira:** ticket #9999"
+  run_validator "$BRIEFS"
+  assert_status 0
+  assert_not_contains "#9999" "$OUT"
+  # Control: every serial before the `·` is still a dependency, not only the first.
+  rm -rf "$BRIEFS/0002-real"
   run_validator "$BRIEFS"
   assert_status 1
-  assert_out "BRIEFS-6"
-  assert_out "depends on #9999"
+  assert_out "depends on #0002"
+  assert_not_contains "#9999" "$OUT"
 }
 
 test_briefs_the_same_value_before_depends_on_is_inert() {
@@ -349,26 +442,27 @@ test_briefs_the_same_value_before_depends_on_is_inert() {
   assert_out "0 defect(s), 0 judgment(s)"
 }
 
-# The quiet half, and the one that matters. When the swallowed serial names a brief that
-# exists, nothing is reported at all: the dependency graph gains an edge nobody declared and
-# the run is clean. A blocking defect is the good outcome of this trap; this is the bad one.
-#
-# tools/list-briefs.sh reads the same field and truncates at the next `·`, so it shows no
-# dependency while the validator counts one. That disagreement is the reason this is pinned
-# as behaviour rather than left to the defect case above.
-test_briefs_an_existing_serial_after_depends_on_is_swallowed_in_silence() {
+# An existing serial after `Depends on` would be an edge nobody declared, reported by nothing.
+# A clean run cannot show it is not read, because a clean run is also what the swallowed edge
+# produces. Removing the brief it names does: if the field were read past the `·`, this would
+# now dangle.
+test_briefs_an_existing_serial_after_depends_on_is_not_swallowed() {
   make_briefs
   add_brief 0001-real
-  add_brief_with_identity 0002-trapped \
-    "**Serial:** #0002 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** — · **Jira:** ticket #0001"
+  add_brief 0003-real
+  add_brief_with_identity 0002-trailing \
+    "**Serial:** #0002 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** #0003 · **Jira:** ticket #0001"
   run_validator "$BRIEFS"
   assert_status 0
-  assert_out "0 defect(s), 0 judgment(s)"
-  # A clean run is also what a brief with no trailing field gives, so the assertion above
-  # cannot tell "swallowed" from "ignored" on its own. Removing the brief it names does:
-  # if the parse is reading the field, the same fixture now has a dangling dependency.
+  # Removing 0001 draws a BRIEFS-8 judgment (serials start at 0002). No defect may follow.
   rm -rf "$BRIEFS/0001-real"
   run_validator "$BRIEFS"
+  assert_status 0
+  assert_out "0 defect(s)"
+  assert_not_contains "depends on #0001" "$OUT"
+  # Control: the serial inside the field is still a dependency.
+  rm -rf "$BRIEFS/0003-real"
+  run_validator "$BRIEFS"
   assert_status 1
-  assert_out "depends on #0001"
+  assert_out "depends on #0003"
 }

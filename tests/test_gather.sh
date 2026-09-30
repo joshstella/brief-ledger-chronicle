@@ -44,7 +44,7 @@ gather_brief() {
   mkdir -p "$BRIEFS/$folder"
   {
     echo "# ${folder#*-}"
-    [ -n "$dep" ] && echo "**Depends on:** $dep"
+    [ -n "$dep" ] && echo "**Serial:** #${folder%%-*} · **Depends on:** $dep"
     echo ""
     echo "Body."
   } > "$BRIEFS/$folder/brief.md"

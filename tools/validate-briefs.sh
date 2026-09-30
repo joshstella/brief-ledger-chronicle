@@ -45,7 +45,7 @@ while [ -L "$BLC_SELF" ]; do
   esac
 done
 BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
-for BLC_LIB in phase-row status-line; do
+for BLC_LIB in phase-row status-line identity-line; do
   if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
     printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
     exit 2
@@ -156,24 +156,33 @@ while IFS= read -r entry; do
 
   DECLARED_SERIALS="$DECLARED_SERIALS$serial"$'\n'
 
-  identity=$(grep -m1 '^\*\*Serial:\*\*' "$brief")
+  # Every field below is read through blc_identity_field, so this tool and list-briefs.sh
+  # cannot disagree about where a field ends. See tools/lib/identity-line.sh.
+  identity=$(blc_identity_line "$brief" || true)
   if [ -z "$identity" ]; then
     defect "BRIEFS-5" "$entry: no identity line"
     continue
   fi
 
-  found_serial=$(printf '%s' "$identity" | sed 's/^\*\*Serial:\*\* *#\([0-9]*\).*/\1/')
+  # A Serial without its `#` must fail even when the digits agree, so it is compared as the
+  # whole line, which never equals a folder serial. After a `#`, the digits are compared up to
+  # the first non-digit.
+  serial_value=$(blc_identity_field "$identity" Serial || true)
+  case "$serial_value" in
+    '#'*) found_serial="${serial_value#'#'}"; found_serial="${found_serial%%[!0-9]*}" ;;
+    *) found_serial="$identity" ;;
+  esac
   [ "$found_serial" = "$serial" ] \
     || defect "BRIEFS-5" "$entry: identity line says #$found_serial, folder says $serial"
 
-  printf '%s' "$identity" | grep -qE '\*\*Created:\*\* *[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' \
+  blc_identity_field "$identity" Created \
+    | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' \
     || defect "BRIEFS-5" "$entry: Created is missing or not ISO-8601 UTC"
 
-  printf '%s' "$identity" | grep -qE '\*\*Author:\*\* *[^ @]+@[^ @]+\.[^ @]+' \
+  blc_identity_field "$identity" Author | grep -qE '^[^ @]+@[^ @]+\.[^ @]+' \
     || defect "BRIEFS-5" "$entry: Author is missing or not email-shaped"
 
-  if printf '%s' "$identity" | grep -q '\*\*Depends on:\*\*'; then
-    deps=$(printf '%s' "$identity" | sed 's/.*\*\*Depends on:\*\*//')
+  if deps=$(blc_identity_field "$identity" "Depends on"); then
     for dep in $(printf '%s' "$deps" | grep -oE '#[0-9]{4}' | tr -d '#'); do
       DEPENDENCIES="$DEPENDENCIES$entry $dep"$'\n'
     done
