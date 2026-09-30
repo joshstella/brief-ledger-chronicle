@@ -196,12 +196,12 @@ is unparseable; `#0006/c` is not.
 
 | | form | example |
 |---|---|---|
-| id | `<letter> — <label>` | `c — the publisher` |
-| written reference | `#<serial>/<letter>` | `#0007/c` |
-| spoken | serial, then letter | "seven c" |
-| git branch | `brief/<serial>-<letter>-<kebab>` | `brief/0007-c-the-publisher` |
+| id | `<letter> — <label>` | `d — the publisher` |
+| written reference | `#<serial>/<letter>` | `#0007/d` |
+| spoken | serial, then letter | "seven d" |
+| git branch | `brief/<serial>-<letter>-<kebab>` | `brief/0007-d-the-publisher` |
 | PR title | `[#<serial>] <summary>` | `[#0007] Publish phase tickets` |
-| Jira summary | `#<serial>/<letter> — <label>` | `#0007/c — the publisher` |
+| Jira summary | `#<serial>/<letter> — <label>` | `#0007/d — the publisher` |
 
 The label is a short noun phrase, lowercase, two to five words.
 

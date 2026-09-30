@@ -138,10 +138,21 @@ carries three table schemas and says in its own comment that it does not parse c
 column needs a reader, and that reader is a fourth schema.
 
 Neither is necessary, because #0009 already made the identity derivable. `docs/briefs/README.md`
-pins the Jira summary as `#<serial>/<letter> — <label>`, and its worked example is this brief's
-own publisher phase. That string is computable from the ledger with no call to Jira. So the
-publisher lists the children of the Epic on the identity line and matches the summary it can
-regenerate.
+pins the Jira summary as `#<serial>/<letter> — <label>`. That string is computable from the
+ledger with no call to Jira. So the publisher lists the children of the Epic on the identity
+line and matches the summary it can regenerate.
+
+**This closes #0009's one surviving open decision.** #0009 chose the summary format and left
+it carried rather than resolved, recording that it "binds #0007". Settling decision 2 by
+depending on that format is what binds it. The dependency also made #0009's worked examples
+wrong: they were written when #0007 had five numbered phases and the publisher was `c`, and
+the re-plan above moved the publisher to `d`. Three example cells in "Phase ids" named a phase
+that is now "my assignments". They are corrected here, because decision 2 makes that table the
+one place the format is written and an example that contradicts the ledger is the drift the
+citation was meant to avoid.
+
+#0009's own brief and ledger still say `#0007/b`. They are not corrected: they record what was
+true when they were written, which is what a ledger is for.
 
 The reason to prefer this is the brief's own claim, not the saved work. "The record stays in
 git" sits badly beside a ledger field that only Jira can produce and that BLC cannot rebuild if
