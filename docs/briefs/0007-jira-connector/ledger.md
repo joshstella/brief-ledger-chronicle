@@ -194,9 +194,13 @@ PR or a commit as a branch, so position decides the damage. All three shapes wer
 | `a:in-progress(brief/…,PROJ-12)` | drops the key with no trace |
 | `a:done(PROJ-56)` | never parses the pointer |
 
-The first is the loud failure and the second is the normal one, because an `in-progress` phase
-always carries its branch. Neither is a reader of a key, and the first is worse than silence:
-the false finding replaces the branch-distance measurement the tool exists to produce.
+The table covers the shapes where a branch exists. The first is the loud failure and the
+second is the normal one, because an `in-progress` phase normally carries its branch — a
+convention, not a check. `open-briefs.sh` has its own message for a phase that carries none,
+and a key alone in the pointer is that fourth shape.
+
+Neither of the first two is a reader of a key, and the first is worse than silence: the false
+finding replaces the branch-distance measurement the tool exists to produce.
 
 The phase table has the same cost in a quieter form: `phase-row.sh` already carries three
 table schemas and says in its own comment that it does not parse columns. A key column needs

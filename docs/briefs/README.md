@@ -274,9 +274,10 @@ In the status line it is worse, because something reads the parenthetical and gu
 `open-briefs.sh` treats anything in the pointer that is not a PR or a commit as a branch, and
 takes the first such field. What a key costs then depends on where it sits. Written after the
 branch it is dropped with no trace. Written before it, or alone, it is reported as a branch
-that does not exist, and the tool stops on that phase — so the real branch's distance from the
-trunk goes unmeasured, which is the measurement the tool exists to produce. On a phase that is
-not open the pointer is never parsed. No shape is a reader of a key.
+that does not exist. Written before a real branch it also costs that branch's distance from
+the trunk, because the tool stops on the phase, and that distance is the measurement it exists
+to produce. On a phase that is not open the pointer is never parsed. No shape is a reader of
+a key.
 
 Finding by summary has two consequences worth stating plainly.
 
