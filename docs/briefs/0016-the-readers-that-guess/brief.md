@@ -1,7 +1,6 @@
 # The readers that guess
 
-**Created:** 2026-09-30T20:15:00Z · **Author:** josh.stella@gmail.com
-**Depends on:** —
+**Serial:** #0016 · **Created:** 2026-09-30T20:15:00Z · **Author:** josh.stella@gmail.com · **Depends on:** —
 
 ## The finding
 
@@ -28,6 +27,18 @@ tool they ask.
 
 That phase closed the hole with a convention — `Depends on` goes last — and a test. The
 convention is not checked, and the disagreement it routes around is still there.
+
+**The same two readers disagree a second way, about which line to read.** `list-briefs.sh`
+scans the whole file and takes the first `**Depends on:**` it finds. `validate-briefs.sh`
+locates the identity line and reads that. Put a prose mention of the field above the identity
+line and the two part company: measured on a fixture, `list-briefs.sh` printed `#9999 is
+parsed.` in its dependency column while the validator reported no defect at all.
+
+This brief is a fixture for its own subject. Its body names `**Depends on:**` three times, and
+`list-briefs.sh` gets the right answer only because the identity line happens to come first.
+That ordering is a convention of where the line is written, not a rule either reader enforces —
+the fixture above proves the validator accepts an identity line that is not directly under the
+H1, which is exactly the case where the other reader starts printing prose.
 
 ## The same defect wearing a forge costume
 
@@ -78,11 +89,11 @@ stop naming one forge. They meet at the pointer vocabulary and nowhere else. Any
 probably split along that seam, which is what phases are for — but whoever plans it should know
 the seam is there before they start.
 
-**Changing the pointer vocabulary is expensive.** `PR#` appears in the published record format
-in `docs/briefs/README.md`, in thirteen of the fifteen ledgers here, and across `tests/`. The
-status line is read by `BRIEFS-9`, a published Contract clause, and two briefs were spent
-making it machine-readable.
-Adding a token shape is a change to a tested, published artifact, not a parser tweak.
+**Changing the pointer vocabulary costs less than it looks, but not nothing.** `PR#` appears
+in the record format in `docs/briefs/README.md`, in thirteen of the fifteen ledgers here, and
+across `tests/`. The Contract is not among them: no clause reads the pointer. `BRIEFS-9` reads
+phase ids and states and stops at the parenthetical. So a second token is a change to the
+documented format and to `open-briefs.sh`, with tests, and no Contract version.
 
 **A shared reader is not automatically the right answer.** `phase-row.sh` says in its own
 comment that it deliberately does not parse columns, because three table schemas are in use and
@@ -105,20 +116,35 @@ that changes what `open-briefs.sh` prints, which people read.
 - **Not changing what a brief or ledger looks like to a human**, beyond whatever a second PR
   token costs.
 
-## Open decisions
+## Settled decisions
 
-1. **One brief or two?** The seam above is real. Splitting gives two smaller briefs with a
-   dependency; keeping them together keeps the pointer argument in one place.
-2. **Does the identity line get a strict shared reader, or a tolerant one?** See the
-   `phase-row.sh` precedent.
-3. **What does GitLab write in the pointer?** `MR!123` mirrors GitLab's own `!` convention and
-   is unambiguous against `PR#`. `!123` is shorter and collides with nothing today. This is a
-   record-format decision, so it is the one that touches the Contract.
-4. **Does the parser learn to say "I do not recognise this"?** That is a new finding class in
-   `open-briefs.sh` and changes its output for everyone, not only GitLab users.
-5. **Is the `Depends on` convention retired once the readers agree?** The "goes last" rule
-   exists to route around the disagreement. If the disagreement goes, the rule may be
-   redundant — or it may be worth keeping for the phantom-dependency case, which is about the
-   greedy read and not about the two readers.
-6. **Detection or configuration for the forge?** Probe for `glab` and `gh` and pick, read the
-   remote URL, or make it explicit. Probing is invisible until it picks wrong.
+Settled 2026-09-30.
+
+1. **One brief.** This is a tidy-up, and a tidy-up is allowed to be a grab bag. The seam in
+   Tension still guides how it is phased; it does not split the brief.
+2. **A tolerant shared reader for the identity line**, in `tools/lib/`, following the
+   `phase-row.sh` precedent: find the field by its label and read its value, and do not
+   reject a line for carrying fields the reader does not know.
+3. **GitLab writes `!123` in the pointer.** It is GitLab's own notation and collides with no
+   token in use today. It is a record-format change, not a Contract change: no clause reads
+   the pointer.
+4. **The pointer parser says when it does not recognise something**, rather than guessing a
+   branch in silence. This changes `open-briefs.sh` output for every user, not only GitLab
+   users, and that is accepted.
+5. **"`Depends on` goes last" stays, as a backstop.** It costs nothing to keep and it protects
+   any reader outside this toolkit that still reads greedily.
+6. **The forge is detected, not configured.** No setting to write or keep in sync.
+7. **Both readers locate the identity line.** No new placement rule; the fix is in the
+   readers, not in the record.
+8. **`Depends on` ends at the next `·`.** This is what `list-briefs.sh` does today. It removes
+   the phantom-dependency trap, which is what makes decision 5 a backstop rather than the only
+   protection. It also narrows what `BRIEFS-6` examines in practice: a brief that blocks today
+   on `ticket #9999` written after `Depends on` will stop blocking. The clause text says only
+   "every `Depends on: #NNNN`" and does not say where the field ends, so there is no version
+   bump. The change must be stated in the PR that makes it, because a Contract-checked tool
+   will behave differently.
+9. **The forge is detected by matching the remote's host against the hosts `gh` and `glab`
+   report as authenticated.** The remote URL alone cannot recognise a self-hosted GitLab, and
+   which CLI is installed is ambiguous when both are. The cost is a slower probe that depends
+   on auth state. When nothing matches, the tool degrades as `open-briefs.sh` already does
+   with no `gh`: it says it did not check, and does not guess.
