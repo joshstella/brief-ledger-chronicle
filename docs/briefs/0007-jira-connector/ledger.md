@@ -101,8 +101,16 @@ That cost is stated in the same place as the behaviour, because a reader who mee
 otherwise file it as a bug.
 
 Review of my own draft caught the summary format written twice in one file: once in the
-"Phase ids" table and once in the new section's prose. That is the shape of #0013's defect,
-two readers of one rule drifting apart, so the prose points at the table instead.
+"Phase ids" table and once in the new section's prose. One rule written in two places is the
+writer-side seam #0013 found inside `blc-start-brief`, so the prose points at the table
+instead.
+
+**The settled decisions were nearly invisible to `blc-chronicle`.** Its `gather.sh` reads
+`###` headings only inside a `## Big decisions` section, and both of mine sat under
+`## Open decisions`. The chronicle would have reported no forks for the phase whose whole
+payload is two decisions. They are moved. This is not a new habit: nine of fifteen ledgers
+here have no `## Big decisions` section, so the same silence covers most of this repository's
+record. Closing that is not this brief's work, and it is named here so it is not lost.
 
 ## Open decisions
 
@@ -120,6 +128,10 @@ added.
 | 7 | Extend `open-briefs.sh` or add a sibling? | `c` |
 | 8 | Which states count as "assigned"? Default: `pending`, `in-progress`, `deferred`. | `c` |
 | 9 | **Added by this re-plan.** How does the publisher reach Jira such that a test can substitute for it? Without an answer `d` cannot be written, let alone merged. | `d` |
+
+## Big decisions
+
+Settled here, and each one changed a later phase. The table above keeps what is still open.
 
 ### Decision 2 is settled: nowhere. A phase ticket is found, not recorded.
 
