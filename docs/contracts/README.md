@@ -109,18 +109,18 @@ schedule.
    bash tests/run.sh --matrix-plan
    ```
 
+   **The paths above are not in an installed copy.** They exist in the toolkit repository.
+   `install.sh` ships `docs/`, `tools/` and `templates/`; it does not ship `tests/`.
+   That is not an oversight in the installer: these criteria govern promotion of clauses *in
+   this Contract*, which happens where the Contract is written. A reader holding an installed
+   copy is reading the reasoning behind a published tag, not a procedure to run.
+
    That prints every `awk` the suite claims, which of them the machine has, which names are
    aliases of an implementation already in the list, and which are absent. A prose copy of the
    list in this file would be a second answer to a question that already has one, and the prose
    copy is the one that goes stale — the defect #0014 spent four phases removing. Deleting a
    name from the list fails a test, so the narrowing this criterion forbids is refused by the
    suite rather than by a reader remembering to check.
-
-   **The paths above are not in an installed copy.** They exist in the toolkit repository.
-   `install.sh` ships `docs/`, `tools/` and `templates/`; it does not ship `tests/`.
-   That is not an oversight in the installer: these criteria govern promotion of clauses *in
-   this Contract*, which happens where the Contract is written. A reader holding an installed
-   copy is reading the reasoning behind a published tag, not a procedure to run.
 
    The claim covers `awk` implementations. It does not cover `bash` versions: everything the
    toolkit ships declares `#!/usr/bin/env bash`, and the oldest bash it is likely to meet is

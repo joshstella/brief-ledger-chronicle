@@ -543,18 +543,28 @@ docs/contracts/README.md|1. **The check runs under every interpreter|2. **Every 
 # The command both documents send a reader to.
 IN_CLAIM_CMD="bash tests/run.sh --matrix-plan"
 
-# Prints the claim region of $1, bounded by $2 and $3. Fails if the opening line is gone, which
-# is what makes deleting the section a failure rather than a silence.
+# Prints the claim region of $1, bounded by $2 and $3. Returns non-zero if either boundary is
+# missing, and the caller turns that into a failure.
+#
+# `return 1` rather than `fail`: this function runs inside a command substitution, where a
+# `fail` would mark a test in a subshell the harness never hears about. That is precisely the
+# bug that made the first version of these guards report three surviving mutations as passes.
+# The rule is local — do not reach for `fail` here.
+#
+# Both boundaries are checked. Only the opener was, and review renamed the closing line in the
+# Contract README: the region silently ran to end of file, a citation anywhere in the enlarged
+# span satisfied the pointer test, and both guards stayed green over a scope nobody chose.
 in_claim_region() {
-  local file="$1" open="$2" close="$3" line inside=0 seen=0
+  local file="$1" open="$2" close="$3" line inside=0 seen=0 closed=0
   while IFS= read -r line; do
     case "$line" in
       "$open"*) inside=1; seen=1 ;;
-      "$close"*) [ "$inside" -eq 1 ] && inside=0 ;;
+      "$close"*) [ "$inside" -eq 1 ] && { inside=0; closed=1; } ;;
     esac
     [ "$inside" -eq 1 ] && printf '%s\n' "$line"
   done < "$REPO_ROOT/$file"
   [ "$seen" -eq 1 ] || return 1
+  [ "$closed" -eq 1 ] || return 2
 }
 
 # Walks the regions, calling $1 with the document path and the region body.
@@ -570,9 +580,15 @@ in_each_claim_region() {
     [ -n "$record" ] || continue
     file="${record%%|*}"; record="${record#*|}"
     open="${record%%|*}"; close="${record#*|}"
-    body="$(in_claim_region "$file" "$open" "$close")" \
-      || fail "$file no longer contains the claim region that opens with '$open'. The claim is
-not written in prose anywhere, so deleting this passage leaves it unstated."
+    body="$(in_claim_region "$file" "$open" "$close")"
+    case "$?" in
+      0) ;;
+      1) fail "$file no longer contains the claim region that opens with '$open'. The claim is
+not written in prose anywhere, so deleting this passage leaves it unstated." ; continue ;;
+      *) fail "$file's claim region opens at '$open' and never closes: '$close' is gone, so the
+region now runs to the end of the file. The guards below would be checking a span nobody chose
+— most likely a heading was renamed, and this boundary was not renamed with it." ; continue ;;
+    esac
     "$fn" "$file" "$body"
   done <<EOF
 $IN_CLAIM_REGIONS
@@ -598,7 +614,10 @@ test_interpreters_the_claim_regions_point_at_the_runner() {
 # that greps for a string cannot tell a live pointer from a dead one.
 test_interpreters_the_cited_command_runs() {
   local rc=0 out
-  out="$( unset BLC_AWK_INNER BLC_AWK_VERSION; $IN_CLAIM_CMD 2>&1 )" || rc=$?
+  # `cd` because the citation is a relative path, as it must be to be a citation a reader can
+  # paste. Every other test resolves through $REPO_ROOT; this one would otherwise be the only
+  # test in the suite that fails when the suite is run from a subdirectory.
+  out="$( cd "$REPO_ROOT" && unset BLC_AWK_INNER BLC_AWK_VERSION; $IN_CLAIM_CMD 2>&1 )" || rc=$?
   [ "$rc" -eq 0 ] || fail "'$IN_CLAIM_CMD' — the command both claim regions cite — exited $rc:
 $out"
   case "$out" in

@@ -58,6 +58,19 @@ written twice: the first version claimed the step fails when a candidate is miss
 `--matrix-plan` does not do. A comment describing a gate that does not exist is the same defect
 class as a test named for a property it cannot detect, in the file that configures the gate.
 
+**What that choice leaves behind, stated rather than implied.** Criterion 1 has two halves: the
+claim must be stated, and the check must run under every interpreter the claim names. The first
+half is now held by tests. The second is held by the GitHub runner image. If a future image
+drops busybox, CI prints `not found: busybox`, passes, and covers less than the claim says —
+and the sentence this phase used to justify installing `original-awk`, that a narrower run "was
+honest and was not coverage", applies word for word to that outcome.
+
+The decision was to accept it. A gate on candidate presence turns a runner-image change into a
+red build on work unrelated to it, and the run already names what it missed, which is the
+property the brief's Tension section says must never be lost. But the gap is real, it is the
+half of criterion 1 that nothing checks, and a promoter leaning on this phase should know that
+the coverage half rests on an environment rather than on a test.
+
 **bash 3.2 is recorded as unverified, in the section that says what the suite does not claim.**
 No bash 4 construct appears anywhere — no `declare -A`, no `mapfile`, no `${var,,}` — which
 makes 3.2 likely fine. Likely fine is not a claim, so it is not made.
@@ -92,6 +105,22 @@ string: it works on a *region* of each document now, bounded by its opening and 
 and a missing region is a failure rather than a silence. And the enumeration guard counted
 names per line, which a bullet list, a table, or two sentences all walk past; it counts across
 the region.
+
+**The region boundaries were half guarded, and review found the half that was not.** A claim
+region is bounded by its opening and closing lines. A missing opener failed; a missing closer
+did not, so rewording an unrelated heading ran the region to end of file and both guards stayed
+green over a scope nobody chose. Both ends are checked now, and the two failures say different
+things — a region that never opens is a deleted section, and a region that never closes is a
+renamed heading somewhere below it.
+
+Three smaller ones from the same round. The ship test's marker rule was stated as local and
+enforced file-wide, so one marker anywhere licensed every unshipped path in the document; it
+now reads the paragraph naming the path and the ones on either side, which is why the marker
+sentence sits against the code fence it excuses. `the_cited_command_runs` used the relative
+path it cites — correctly, since a citation a reader pastes must be relative — and was the only
+test in the suite that would fail when run from a subdirectory. And `in_claim_region` carries a
+note saying why it returns a status instead of calling `fail`: it runs inside a command
+substitution, which is the subshell that hid three mutations one function over.
 
 **The cited command is now run, not grepped.** Renaming `--matrix-plan` in the runner left
 three citations of a flag that no longer existed and a green suite. `the_cited_command_runs`

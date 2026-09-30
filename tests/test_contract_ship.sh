@@ -190,14 +190,35 @@ test_ship_the_contract_readme_marks_paths_it_does_not_ship() {
   local readme="$TARGET/docs/contracts/README.md" path absent=0
   assert_file "$readme"
 
-  for path in $(grep -oE '(tests|tools|docs|templates|skills)/[A-Za-z0-9_./-]+' "$readme" \
-                | sed 's/[.,)]*$//' | sort -u); do
-    [ -e "$TARGET/$path" ] && continue
-    absent=$((absent + 1))
-    grep -q "$IN_SOURCE_ONLY_MARKER" "$readme" \
-      || fail "the installed Contract README names '$path', which the target does not have,
-and nothing in the file tells the reader that. A consumer follows the reference and finds
-nothing. Either stop naming it or mark it '$IN_SOURCE_ONLY_MARKER'."
+  # Blank-line-separated blocks, so the marker has to sit beside the path it excuses. A
+  # file-wide `grep` would let one marker anywhere license every unshipped path in the
+  # document, including one added later in an unrelated paragraph — which is not the rule
+  # stated above, and the rule is the part a reader relies on.
+  local block="" blocks="$TMP/contract-blocks"
+  rm -rf "$blocks"; mkdir -p "$blocks"
+  awk -v out="$blocks" '
+    BEGIN { n = 1 }
+    /^[[:space:]]*$/ { n++; next }
+    { print >> (out "/" n) }
+  ' "$readme"
+
+  local file
+  for file in "$blocks"/*; do
+    [ -f "$file" ] || continue
+    for path in $(grep -oE '(tests|tools|docs|templates|skills)/[A-Za-z0-9_./-]+' "$file" \
+                  | sed 's/[.,)]*$//' | sort -u); do
+      [ -e "$TARGET/$path" ] && continue
+      absent=$((absent + 1))
+      # The paragraph naming the path, or the one on either side of it. A path is often cited
+      # in a fenced block whose sentence sits above or below it, and a rule that could only be
+      # satisfied inside the fence would be satisfied by putting prose in a code block.
+      local n="${file##*/}"
+      grep -hq "$IN_SOURCE_ONLY_MARKER" \
+        "$file" "$blocks/$((n - 1))" "$blocks/$((n + 1))" 2>/dev/null \
+        || fail "the installed Contract README names '$path', which the target does not have,
+and neither the paragraph naming it nor the ones beside it say so. A consumer follows the
+reference and finds nothing. Either stop naming it, or mark it '$IN_SOURCE_ONLY_MARKER'."
+    done
   done
 
   # Positive control. If the README ever stops naming an unshipped path, this test is passing
