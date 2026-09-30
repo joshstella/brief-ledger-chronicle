@@ -54,8 +54,8 @@ Each `brief.md` carries one line directly under its H1:
   re-ground the brief against current code before executing.
 - **Author** — a real, routable email, the stable identity key the rest of the stack
   (SSO, git, the tracker) joins on.
-- **Depends on** — `#NNNN` or `—`. The only field the author declares; the rest the
-  pipeline stamps.
+- **Depends on** — `#NNNN` or `—`. `Serial` and `Created` are stamped by the pipeline.
+  Every other field comes from the author or the draft.
 
 Two more fields are optional and absent from most briefs:
 
@@ -231,6 +231,9 @@ Managers report from a board they already know. The people doing the work change
 A project that configures nothing loses nothing: no tracker, no publish, and every command
 in this document behaves the same. Absence is the ordinary case, not an error.
 
+**No command here publishes to a tracker today.** This section states the mapping a publisher
+must follow. It does not describe something you can run.
+
 **A brief is an Epic. A phase is a ticket under it.** The Epic key goes on the identity line
 as `Jira:`. Its assignee is `Owner`, or `Author` where `Owner` is omitted.
 
@@ -244,10 +247,17 @@ per-phase place is the status line, where nothing reads the parenthetical: `BRIE
 phase ids and states, and stops there. A key stored there would need a new reader before it
 meant anything.
 
-Finding by summary has a consequence worth stating plainly: **rename a ticket by hand and the
-next publish will not recognise it.** That is the same rule as every other hand edit. A status
-changed on the board is stale reporting until the next write from here, and the next write
-puts it back. Anyone treating the board as the record will experience this as a bug.
+Finding by summary has two consequences worth stating plainly.
+
+**Rename a ticket by hand and the next publish will not recognise it.** That is the same rule
+as every other hand edit. A status changed on the board is stale reporting until the next
+write from here, and the next write puts it back. Anyone treating the board as the record will
+experience this as a bug.
+
+**Rename a phase label here and its ticket orphans too.** The label is part of the summary, so
+the ledger is the thing the tracker is matched against. This one needs no hand edit on the
+board at all: an ordinary edit here is enough. Treat a phase label as fixed once a brief is
+started, or expect to repair the tracker by hand.
 
 **None of this is in the Contract, and none of it is checked.** An export is not part of how a
 record must be shaped, so `validate-briefs.sh` says nothing about `Jira:` or `Owner:`. A

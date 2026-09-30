@@ -156,12 +156,24 @@ true when they were written, which is what a ledger is for.
 
 The reason to prefer this is the brief's own claim, not the saved work. "The record stays in
 git" sits badly beside a ledger field that only Jira can produce and that BLC cannot rebuild if
-it is lost. A derived identity cannot go stale, because there is nothing to keep in sync.
+it is lost. A derived identity is recomputed from the record instead of stored beside it.
 
-Two costs, both real, and both already inside decision 9. JQL `summary ~` is a text search, so
-the lookup must scope to `parent = <Epic>` and then compare the string exactly on the client.
-And a PM who renames the summary orphans the ticket — which the brief already answers, because
-a hand edit in Jira is stale until the next BLC write. Renaming it back is the stated behaviour.
+Three costs, all real. JQL `summary ~` is a text search, so the lookup must scope to
+`parent = <Epic>` and then compare the string exactly on the client. That one sits inside
+decision 9. A PM who renames the summary orphans the ticket, which the brief already answers:
+a hand edit in Jira is stale until the next write, and renaming it back is the stated
+behaviour.
+
+The third was missed on the first pass and is the one that bites. **The label is part of the
+summary, so it is a sync surface.** Rename a phase label in the ledger and every ticket for
+that phase orphans, with no hand edit on the board at all. I had written that a derived
+identity "cannot go stale, because there is nothing to keep in sync". That is false: the
+ledger is what the tracker is matched against, and the ledger is editable. The claim is
+removed and the cost is stated in the README beside the hand-rename cost.
+
+This does not overturn the decision. A stored key has the same failure and a worse one — it
+also goes stale when the record is copied, rebased, or hand-repaired, and it cannot be
+recomputed. A derived identity at least regenerates from the record that is authoritative.
 
 This changes `a` before `a` is written. The phase row says keys live on the brief *and the
 ledger*. They live on the brief only.
