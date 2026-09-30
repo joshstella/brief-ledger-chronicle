@@ -169,3 +169,63 @@ test_ship_default_replaces_a_stale_contract() {
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.2.md"
 }
+
+# The Contract README ships into every target, and #0015b gave it a command to run and a path
+# under `tests/`. `install.sh` ships `docs/`, `tools/` and `templates/` — never `tests/`. So a
+# consumer reading criterion 1 was told to run something their repository does not contain.
+#
+# This is the same failure `ship_every_relative_link_in_the_briefs_readme_resolves` was written
+# for, one file over: a path that resolves here because this is where it was written. The two
+# existing path tests scan `v1.md`, `v1.1.md` and `v1.2.md` for the `` checked: `...` `` form,
+# and the new pointer is in neither a version file nor that form.
+#
+# The rule is not "every path must resolve". Some reasoning genuinely refers to the toolkit's
+# own repository, and stripping it would cost a consumer the reason behind a published tag.
+# The rule is that a path the target does not carry must say so where it is named.
+IN_SOURCE_ONLY_MARKER="not in an installed copy"
+
+test_ship_the_contract_readme_marks_paths_it_does_not_ship() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  local readme="$TARGET/docs/contracts/README.md" path absent=0
+  assert_file "$readme"
+
+  # Blank-line-separated blocks, so the marker has to sit beside the path it excuses. A
+  # file-wide `grep` would let one marker anywhere license every unshipped path in the
+  # document, including one added later in an unrelated paragraph — which is not the rule
+  # stated above, and the rule is the part a reader relies on.
+  local block="" blocks="$TMP/contract-blocks"
+  rm -rf "$blocks"; mkdir -p "$blocks"
+  awk -v out="$blocks" '
+    BEGIN { n = 1 }
+    /^[[:space:]]*$/ { n++; next }
+    { print >> (out "/" n) }
+  ' "$readme"
+
+  local file
+  for file in "$blocks"/*; do
+    [ -f "$file" ] || continue
+    for path in $(grep -oE '(tests|tools|docs|templates|skills)/[A-Za-z0-9_./-]+' "$file" \
+                  | sed 's/[.,)]*$//' | sort -u); do
+      [ -e "$TARGET/$path" ] && continue
+      absent=$((absent + 1))
+      # The paragraph naming the path, or the one on either side of it. A path is often cited
+      # in a fenced block whose sentence sits above or below it, and a rule that could only be
+      # satisfied inside the fence would be satisfied by putting prose in a code block.
+      local n="${file##*/}"
+      grep -hq "$IN_SOURCE_ONLY_MARKER" \
+        "$file" "$blocks/$((n - 1))" "$blocks/$((n + 1))" 2>/dev/null \
+        || fail "the installed Contract README names '$path', which the target does not have,
+and neither the paragraph naming it nor the ones beside it say so. A consumer follows the
+reference and finds nothing. Either stop naming it, or mark it '$IN_SOURCE_ONLY_MARKER'."
+    done
+  done
+
+  # Positive control. If the README ever stops naming an unshipped path, this test is passing
+  # over a question that is no longer being asked, and it should be deleted rather than kept
+  # as a green line. That is the state the marker exists for.
+  [ "$absent" -gt 0 ] \
+    || fail "the installed Contract README no longer names any path absent from a target.
+This test has nothing left to check and is now decoration — remove it, or the marker rule it
+guards, deliberately rather than by attrition."
+}

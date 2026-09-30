@@ -37,6 +37,42 @@ it did not use.
 Exit code is 0 when everything passes, 1 otherwise, and 2 when the suite could not run. CI needs
 no extra wiring.
 
+## What this suite claims about interpreters
+
+**The suite runs under every `awk` it claims, names the ones it did not find, and states which
+ones it used.** That is the whole claim, and it is what `docs/contracts/README.md` criterion 1
+requires before a `[judgment]` clause can be promoted to a `[defect]`.
+
+The supported set is not written down in prose — not here, and not in the Contract README. It
+is the candidate list `tests/run.sh` walks, and you read it by running:
+
+```bash
+bash tests/run.sh --matrix-plan
+```
+
+A sentence here listing the interpreters would be a second answer to a question that already
+has one. Two answers drift, the prose becomes the stale one, and a reader trusts it — which is
+the defect #0014 existed to remove and the reason this file does not restate the list.
+
+Two properties hold the claim up, and both are tested rather than asserted:
+
+- **Deleting a name from the candidate list fails a test.** The claim cannot be quietly
+  narrowed to whatever already passes, which criterion 1 forbids in as many words.
+- **An absent interpreter is named, never skipped in silence.** A local run with one `awk`
+  and CI with four print different summaries, and that difference is the point. The moment
+  both print the same line, this guard is gone.
+
+A run with no `awk` at all exits 2. "No check exists" must not read as "the check passed".
+
+### What it does not claim
+
+**`bash` versions.** Every script here declares `#!/usr/bin/env bash`, so there is no `sh`
+surface and no shell-family matrix to run — `dash`, `ksh` and `zsh` are not configurations this
+toolkit can be in. The untested axis is bash *version*: macOS ships 3.2, this toolkit installs
+into repositories on macOS, and nothing has ever run against a 3.2 binary. No bash 4 construct
+appears anywhere — no `declare -A`, no `mapfile`, no `${var,,}` — which makes 3.2 likely fine
+and unverified. Likely fine is not a claim, so it is not made.
+
 ## Layout
 
 ```

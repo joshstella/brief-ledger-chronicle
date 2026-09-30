@@ -1,6 +1,6 @@
 # Ledger — #0015 The interpreter nothing pins
 
-`blc/2 #0015 in-progress a:done(PR#66) b:pending`
+`blc/2 #0015 in-progress a:done(PR#66) b:in-progress(brief/0015-b-the-stated-claim)`
 
 **Brief:** `docs/briefs/0015-the-interpreter-nothing-pins/brief.md`
 **Started:** 2026-09-29
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the awk matrix | done | PR#66 |
-| b | the stated claim | pending | — |
+| b | the stated claim | in-progress | `brief/0015-b-the-stated-claim` |
 
 **a — the awk matrix.** `tests/run.sh` discovers every `awk` on `PATH`, runs the suite under
 each, and prints which ones it used with their versions. An absent interpreter is named as not
@@ -23,6 +23,108 @@ cause.
 promoter meet it, and makes CI install the matrix so criterion 1 is satisfied by testing rather
 than by a claim narrowed to what already passes. Records bash 3.2 as known-unverified rather
 than letting silence imply coverage.
+
+## Phase b — what it does
+
+**Open decision 1 is settled: the claim is not written in prose anywhere.** The brief offered
+three places to write the list — `tests/README.md`, `docs/contracts/README.md`, or both with
+one citing the other. All three were rejected for the same reason. The supported set already
+exists as `BLC_AWK_CANDIDATES` in `tests/run.sh`, where a test fails if a name is removed. A
+prose copy would be a second answer to a question that already has one, and the second answer
+is the one that goes stale while the first keeps working. That is the defect #0014 spent four
+phases removing, and criterion 1 does not ask for a sentence — it asks that the claim be
+stated and not narrowed.
+
+So both documents state the *rule* and point at the runner: `bash tests/run.sh --matrix-plan`
+prints every candidate, which are present, which two names are one implementation, and which
+are absent. A reader gets the list by asking the thing that owns it.
+
+**That moves the risk rather than removing it, so both halves of the new risk are tested.** A
+pointer is better than a copy only while there is no copy and while the pointer still points.
+`the_claim_documents_point_at_the_runner` fails if either document stops citing the command.
+`no_claim_document_enumerates_the_set` fails if either document names four or more
+interpreters on one line — a list, as opposed to the two-name comparisons these files
+legitimately make. Both were proved by mutating the documents: removing the citation, and
+adding a prose list to the Contract README.
+
+**CI installs `original-awk` and prints the plan before running.** ubuntu-latest already
+carries gawk, mawk and busybox; the one true awk is the only candidate that needed installing.
+Phase a's CI run reported three interpreters and `not found: original-awk`, which was honest
+and was not coverage.
+
+The plan step does not gate. A missing candidate is already named by the run, and a runner
+image that drops an awk is a fact to see rather than a build to stop. The comment saying so was
+written twice: the first version claimed the step fails when a candidate is missing, which
+`--matrix-plan` does not do. A comment describing a gate that does not exist is the same defect
+class as a test named for a property it cannot detect, in the file that configures the gate.
+
+**What that choice leaves behind, stated rather than implied.** Criterion 1 has two halves: the
+claim must be stated, and the check must run under every interpreter the claim names. The first
+half is now held by tests. The second is held by the GitHub runner image. If a future image
+drops busybox, CI prints `not found: busybox`, passes, and covers less than the claim says —
+and the sentence this phase used to justify installing `original-awk`, that a narrower run "was
+honest and was not coverage", applies word for word to that outcome.
+
+The decision was to accept it. A gate on candidate presence turns a runner-image change into a
+red build on work unrelated to it, and the run already names what it missed, which is the
+property the brief's Tension section says must never be lost. But the gap is real, it is the
+half of criterion 1 that nothing checks, and a promoter leaning on this phase should know that
+the coverage half rests on an environment rather than on a test.
+
+**bash 3.2 is recorded as unverified, in the section that says what the suite does not claim.**
+No bash 4 construct appears anywhere — no `declare -A`, no `mapfile`, no `${var,,}` — which
+makes 3.2 likely fine. Likely fine is not a claim, so it is not made.
+
+**Review found the pointer dangling in the one place it mattered most.** `install.sh` copies
+`docs/contracts/README.md` into every target, and ships `docs/`, `tools/` and `templates/` —
+never `tests/`. A consumer reading criterion 1 was told to run a command in a directory their
+repository does not have. This project had already met that failure once and written a test
+for it: the shipped briefs README points at the Contract with a relative link that resolves
+here because here is where it was written. The two existing path tests scan the version files
+for one citation form, and the new pointer was in neither a version file nor that form.
+
+The fix is not to strip the reference. These criteria govern promotion of clauses in this
+Contract, which happens where the Contract is written, so the reasoning is worth shipping and
+the procedure is not. The paragraph now says the paths are not in an installed copy, and
+`ship_the_contract_readme_marks_paths_it_does_not_ship` installs into a target, finds every
+path the README names that the target lacks, and fails unless the file says so. It carries a
+positive control: if the README ever stops naming an unshipped path, the test fails asking to
+be deleted rather than passing over a question nobody is asking.
+
+**The first version of the claim guards could not fail, and the reason is worth keeping.** The
+helper walked the documents with `printf ... | while read`, which puts the loop body in a
+subshell. `fail` marked a test the harness in the parent never heard about. Three mutations —
+deleting the entire claim section from `tests/README.md`, removing the citation from the
+Contract, and adding a five-name bullet list — all reported green. The loop reads from a
+heredoc now. A guard that cannot report its own failure is worse than no guard, because it
+also reports success.
+
+Two more from the same round. The pointer test was satisfied by a usage line that shipped in
+phase a, so the whole phase-b passage could be deleted while the test passed on an unrelated
+string: it works on a *region* of each document now, bounded by its opening and closing lines,
+and a missing region is a failure rather than a silence. And the enumeration guard counted
+names per line, which a bullet list, a table, or two sentences all walk past; it counts across
+the region.
+
+**The region boundaries were half guarded, and review found the half that was not.** A claim
+region is bounded by its opening and closing lines. A missing opener failed; a missing closer
+did not, so rewording an unrelated heading ran the region to end of file and both guards stayed
+green over a scope nobody chose. Both ends are checked now, and the two failures say different
+things — a region that never opens is a deleted section, and a region that never closes is a
+renamed heading somewhere below it.
+
+Three smaller ones from the same round. The ship test's marker rule was stated as local and
+enforced file-wide, so one marker anywhere licensed every unshipped path in the document; it
+now reads the paragraph naming the path and the ones on either side, which is why the marker
+sentence sits against the code fence it excuses. `the_cited_command_runs` used the relative
+path it cites — correctly, since a citation a reader pastes must be relative — and was the only
+test in the suite that would fail when run from a subdirectory. And `in_claim_region` carries a
+note saying why it returns a status instead of calling `fail`: it runs inside a command
+substitution, which is the subshell that hid three mutations one function over.
+
+**The cited command is now run, not grepped.** Renaming `--matrix-plan` in the runner left
+three citations of a flag that no longer existed and a green suite. `the_cited_command_runs`
+executes it and checks it prints a matrix, so a dead pointer is a red test.
 
 ## Phase a — what it does
 

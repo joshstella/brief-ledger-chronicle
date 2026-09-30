@@ -95,9 +95,10 @@ has rebuilt the defect it was written to prevent.
 
 ## Open decisions
 
-1. **Where the supported-interpreter claim is written.** Candidates: `tests/README.md` (where a
-   contributor meets it), `docs/contracts/README.md` beside criterion 1 (where a promoter meets
-   it), or both with one citing the other. Blocks `b`, not `a`.
+1. ~~**Where the supported-interpreter claim is written.**~~ **Settled in `b`: nowhere.** All
+   three candidates were rejected. The set is `BLC_AWK_CANDIDATES` in `tests/run.sh`, guarded
+   by a test; both documents state the rule and point at `bash tests/run.sh --matrix-plan`
+   rather than copying the list. Reasoning in the ledger.
 
 ## Non-goals
 
