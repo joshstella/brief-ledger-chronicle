@@ -1,17 +1,18 @@
 # Ledger — #0015 The interpreter nothing pins
 
-`blc/2 #0015 in-progress a:done(PR#66) b:in-progress(brief/0015-b-the-stated-claim)`
+`blc/2 #0015 done a:done(PR#66) b:done(PR#67)`
 
 **Brief:** `docs/briefs/0015-the-interpreter-nothing-pins/brief.md`
 **Started:** 2026-09-29
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-09-30
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the awk matrix | done | PR#66 |
-| b | the stated claim | in-progress | `brief/0015-b-the-stated-claim` |
+| b | the stated claim | done | PR#67 |
 
 **a — the awk matrix.** `tests/run.sh` discovers every `awk` on `PATH`, runs the suite under
 each, and prints which ones it used with their versions. An absent interpreter is named as not
@@ -283,3 +284,46 @@ inherits.
 promotion criterion 1 is met, and criterion 1 is what phase `b` writes down and phase `a` makes
 true. Criteria 2 and 3 stay unmet after this brief: no per-code-path mutation inventory exists,
 and neither clause has produced a finding on a record written without it in mind.
+
+## Close — 2026-09-30
+
+**The brief was wrong about why it existed, and right that it should.** It was filed claiming a
+live defect under mawk, a second interpreter axis over `sh`, and a cause for the original fence
+bug. Measuring took four minutes and falsified all three: the suite was already green under
+mawk, there is no `sh` surface because every script declares bash, and mawk does support
+interval expressions — it matches them minimally, which is a quieter failure than the "reads
+them literally" the record claimed. The brief was amended before execution rather than
+rewritten afterwards, and the original claims are kept in it.
+
+What survived the amendment was the real work: there was no guard, and no stated claim. Both
+now exist.
+
+**The suite has run under the one true awk for the first time.** CI reports four interpreters
+and nothing not found — gawk 5.2.1, mawk 1.3.4, original-awk 20231127, and busybox — at 358
+tests each. Before this brief, one implementation had ever run the suite, and which one was
+unexamined.
+
+**Twenty-six mutations across two phases, all killed.** Eighteen in `a`, eight in `b`. The
+count matters less than what produced it: on four separate occasions a guard written in this
+brief could not fail for the property it was named for, and every time it was the mutation that
+found it rather than the reading. The driver had tests only for its planner. The claim guards
+ran their loop body in a subshell, where `fail` marks a test the harness never hears about. The
+candidate-list guard matched names as substrings, so `gawk` satisfied a lookup for `awk`. The
+region guards checked the opening boundary and not the closing one.
+
+**The recurring shape is a test satisfied by the wrong evidence.** #0014 found seven; this
+brief found four more, written by someone who had just finished writing #0014's lessons down. A
+lesson does not transfer by having been recorded. What catches these is mutation, every time,
+and the cost of skipping it is not a missing test — it is a green report for a run that did not
+happen.
+
+**Two lines ship held by a comment rather than a test**, both named above with the reason: the
+inner check's `</dev/null`, and the `FILTER` assignment whose test would have to be a fork bomb
+that survives itself. **One half of criterion 1 ships held by an environment** — CI covers the
+claimed set because the runner image happens to carry it, and a gate on that was considered and
+declined.
+
+**`BRIEFS-9` and `BRIEFS-10` can now meet criterion 1.** They cannot be promoted: criterion 2
+wants a per-code-path mutation inventory neither has, and criterion 3 wants findings on records
+written without them in mind, which nothing has produced. That is the state this brief set out
+to reach — the blocker is no longer the absence of a claim.
