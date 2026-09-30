@@ -522,3 +522,52 @@ $out" ;;
 $out" ;;
   esac
 }
+
+# ── The stated claim (#0015 phase b) ─────────────────────────────────────────
+#
+# Contract promotion criterion 1 needs the supported-interpreter set stated. Phase b states it
+# by pointing at the runner rather than by copying the list into prose, so these two tests
+# guard the pointer instead of the copy: one fails if a document stops citing the runner, the
+# other fails if a document starts answering the question itself.
+
+# The documents that carry the claim. A contributor meets the first, a promoter the second.
+IN_CLAIM_DOCS="tests/README.md docs/contracts/README.md"
+
+# The command both documents send a reader to. Written once here, so renaming the mode breaks
+# this test rather than leaving two documents pointing at a flag that no longer exists.
+IN_CLAIM_CMD="bash tests/run.sh --matrix-plan"
+
+test_interpreters_the_claim_documents_point_at_the_runner() {
+  local doc body
+  for doc in $IN_CLAIM_DOCS; do
+    body="$(cat "$REPO_ROOT/$doc")"
+    case "$body" in
+      *"$IN_CLAIM_CMD"*) ;;
+      *) fail "$doc no longer tells a reader how to read the supported-interpreter set.
+The set is not written in prose anywhere, so a document that drops '$IN_CLAIM_CMD' leaves the
+claim unstated, and Contract criterion 1 asks for it to be stated." ;;
+    esac
+  done
+}
+
+# The counterpart. A pointer is only better than a copy while there is no copy: the moment a
+# document enumerates the set as well, there are two answers, and the prose one is the one that
+# goes stale. Four names on one line is a list; two is a comparison, which these files do make.
+test_interpreters_no_claim_document_enumerates_the_set() {
+  local doc line words tok name hits
+  for doc in $IN_CLAIM_DOCS; do
+    while IFS= read -r line; do
+      words="${line//[^[:alnum:]-]/ }"
+      hits=0
+      for name in $IN_CANDIDATES; do
+        for tok in $words; do
+          [ "$tok" = "$name" ] && { hits=$((hits + 1)); break; }
+        done
+      done
+      [ "$hits" -lt 4 ] || fail "$doc names $hits interpreters on one line, which is a second
+copy of a list that already has one authority — the candidate list in tests/run.sh. Delete the
+enumeration and point at '$IN_CLAIM_CMD':
+$line"
+    done < "$REPO_ROOT/$doc"
+  done
+}

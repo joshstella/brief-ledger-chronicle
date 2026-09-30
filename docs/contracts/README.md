@@ -102,6 +102,25 @@ schedule.
    to satisfy this criterion is the same move as not testing, and the run must name the
    interpreters it used rather than printing one summary line for any set.
 
+   **The claim is not written here.** It is the candidate list the test runner walks, and it is
+   read by running the runner:
+
+   ```bash
+   bash tests/run.sh --matrix-plan
+   ```
+
+   That prints every `awk` the suite claims, which of them this machine has, which two names
+   are one implementation, and which are absent. A prose copy of the list in this file would be
+   a second answer to a question that already has one, and a second answer drifts — which is
+   the defect #0014 spent four phases removing. Deleting a name from the list fails a test, so
+   the narrowing this criterion forbids is refused by the suite rather than by a reader
+   remembering to check.
+
+   The claim covers `awk` implementations. It does not cover `bash` versions: everything here
+   declares `#!/usr/bin/env bash`, and the oldest bash this toolkit is likely to meet is the
+   3.2 that ships with macOS, which nothing has verified. That axis is named in
+   `tests/README.md` as unverified rather than left to look covered.
+
 2. **Every guard on the check has been mutation-proved, at one mutation per code path the
    guard claims.** Not one mutation per guard. A guard can cover half of what its name says
    when two functions read the same input and each discards what the other reports, and the

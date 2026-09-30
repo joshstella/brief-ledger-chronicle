@@ -1,6 +1,6 @@
 # Ledger — #0015 The interpreter nothing pins
 
-`blc/2 #0015 in-progress a:done(PR#66) b:pending`
+`blc/2 #0015 in-progress a:done(PR#66) b:in-progress(brief/0015-b-the-stated-claim)`
 
 **Brief:** `docs/briefs/0015-the-interpreter-nothing-pins/brief.md`
 **Started:** 2026-09-29
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the awk matrix | done | PR#66 |
-| b | the stated claim | pending | — |
+| b | the stated claim | in-progress | `brief/0015-b-the-stated-claim` |
 
 **a — the awk matrix.** `tests/run.sh` discovers every `awk` on `PATH`, runs the suite under
 each, and prints which ones it used with their versions. An absent interpreter is named as not
@@ -23,6 +23,44 @@ cause.
 promoter meet it, and makes CI install the matrix so criterion 1 is satisfied by testing rather
 than by a claim narrowed to what already passes. Records bash 3.2 as known-unverified rather
 than letting silence imply coverage.
+
+## Phase b — what it does
+
+**Open decision 1 is settled: the claim is not written in prose anywhere.** The brief offered
+three places to write the list — `tests/README.md`, `docs/contracts/README.md`, or both with
+one citing the other. All three were rejected for the same reason. The supported set already
+exists as `BLC_AWK_CANDIDATES` in `tests/run.sh`, where a test fails if a name is removed. A
+prose copy would be a second answer to a question that already has one, and the second answer
+is the one that goes stale while the first keeps working. That is the defect #0014 spent four
+phases removing, and criterion 1 does not ask for a sentence — it asks that the claim be
+stated and not narrowed.
+
+So both documents state the *rule* and point at the runner: `bash tests/run.sh --matrix-plan`
+prints every candidate, which are present, which two names are one implementation, and which
+are absent. A reader gets the list by asking the thing that owns it.
+
+**That moves the risk rather than removing it, so both halves of the new risk are tested.** A
+pointer is better than a copy only while there is no copy and while the pointer still points.
+`the_claim_documents_point_at_the_runner` fails if either document stops citing the command.
+`no_claim_document_enumerates_the_set` fails if either document names four or more
+interpreters on one line — a list, as opposed to the two-name comparisons these files
+legitimately make. Both were proved by mutating the documents: removing the citation, and
+adding a prose list to the Contract README.
+
+**CI installs `original-awk` and prints the plan before running.** ubuntu-latest already
+carries gawk, mawk and busybox; the one true awk is the only candidate that needed installing.
+Phase a's CI run reported three interpreters and `not found: original-awk`, which was honest
+and was not coverage.
+
+The plan step does not gate. A missing candidate is already named by the run, and a runner
+image that drops an awk is a fact to see rather than a build to stop. The comment saying so was
+written twice: the first version claimed the step fails when a candidate is missing, which
+`--matrix-plan` does not do. A comment describing a gate that does not exist is the same defect
+class as a test named for a property it cannot detect, in the file that configures the gate.
+
+**bash 3.2 is recorded as unverified, in the section that says what the suite does not claim.**
+No bash 4 construct appears anywhere — no `declare -A`, no `mapfile`, no `${var,,}` — which
+makes 3.2 likely fine. Likely fine is not a claim, so it is not made.
 
 ## Phase a — what it does
 

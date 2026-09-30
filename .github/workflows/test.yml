@@ -20,6 +20,22 @@ jobs:
       - name: Syntax check
         run: bash -n install.sh
 
+      # The suite is a matrix: it runs once per awk implementation it finds and names the ones
+      # it does not. ubuntu-latest already carries gawk, mawk and busybox; original-awk is the
+      # one true awk and is the only candidate that needs installing. Without this step CI
+      # reports "not found: original-awk" and passes, which is honest and is not coverage —
+      # and Contract criterion 1 says the claimed set may not shrink to what already runs.
+      - name: Install the declared awk matrix
+        run: sudo apt-get update && sudo apt-get install -y original-awk
+
+      # Records the plan in the log before the suite runs, so a build that covered less than
+      # the claim says which interpreter it lost and does not have to be re-read from the
+      # summary at the end. This step does not gate: a missing candidate is reported by the
+      # run itself, and a runner image dropping an awk is a fact to see rather than a build
+      # to stop.
+      - name: Show the matrix
+        run: bash tests/run.sh --matrix-plan
+
       - name: Run tests
         run: bash tests/run.sh
 
