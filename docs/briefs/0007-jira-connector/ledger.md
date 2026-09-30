@@ -21,10 +21,17 @@ from `Author`. The Epic key lives on the brief; no phase key is stored at all, p
 Drops "added when wired". Documentation only — no field is carried, validated, or published by
 this phase.
 
-**b — the fields.** `blc-create-brief` carries `Owner:` and an Epic key. Decisions 2 and 6
-removed the rest of this phase: no per-phase key needs a home, and nothing validates. What
-remains is two optional fields carried from a draft onto the identity line. Absence is
-ordinary. No Jira call.
+**b — the fields.** Decisions 2 and 6 removed most of this phase: no per-phase key needs a
+home, and nothing validates. The `Jira:` carry also already exists, at `blc-create-brief`
+step 53. What is left is three small edits to that one skill:
+
+- Carry `Owner:` from the draft, with the same `git config user.email` fallback `Author` has.
+- Move the `Jira:` append to *before* `Depends on`, which today it follows. Phase `a` found
+  why: anything after `Depends on` is inside the dependency scan.
+- Drop "(and, later, `**Jira:** …`)" at step 20. "Later" is the same future tense as "added
+  when wired", which phase `a` removed from the README one file away.
+
+No Jira call. Absence of either field stays ordinary.
 
 **c — my assignments.** A program that lists open briefs for an email — `Owner`, or `Author`
 when `Owner` is absent. It does not fetch. A skill fetches, then runs it. Tests land with it.
@@ -80,7 +87,7 @@ when written: #0015 established that a new check ships `[judgment]` and that pro
 ## Phase a — what it does
 
 Documentation, and three tests. No program ships, and no field is read or written by anything.
-The suite goes from 358 to 361 passing. Why a documentation phase carries tests at all is
+The suite goes from 358 to 362 passing. Why a documentation phase carries tests at all is
 below.
 
 **The Manifesto gains the rule, not the feature.** "Treat everything external as optional"
@@ -113,20 +120,28 @@ could falsify it in silence. A fixture carrying `Owner: not-an-email` and `Jira:
 asserting zero defects and zero judgments converts it into a pinned fact. The fixture carries
 a positive control, because a fixture that quietly lost its fields would assert nothing.
 
-**Writing that test found a trap.** `BRIEFS-6` reads everything after `Depends on:` and treats
-any `#NNNN` as a dependency, so a field placed after it is inside that scan. `PROJ-1234` has
-no `#` and is safe; `ticket #9999` is a `[defect]` that blocks. Two more tests pin both sides,
-and the README now states that `Depends on` goes last. Phase `b` must move the `Jira:` append
-in `blc-create-brief`, which today writes it after `Depends on`.
+**Writing that test found a trap.** The dependency parse reads everything after `Depends on:`
+and treats any `#NNNN` as a dependency, whatever field it sits in. `PROJ-1234` carries no `#`,
+which is why the trap holds until someone writes a reference the ordinary way.
 
-Four mutations, each killing its own test and nothing else: teaching the validator to check
-`Owner` shape, stopping the dependency scan at the next separator, dropping the `Owner` value
-from the fixture, and letting the dependency scan read the whole identity line.
+It has a loud half and a quiet one. A serial that does not exist is a `[defect]` that blocks.
+A serial that does exist is reported by nothing: the record gains an edge nobody declared,
+and `list-briefs.sh` does not show it, because that tool stops reading at the next `·` and the
+validator does not. Two readers of one field, disagreeing, which is what #0013 was about.
+
+The quiet half is the one worth a test, and it is proved by contrast rather than by a clean
+run: removing the brief it names turns the same fixture into a dangling dependency. A clean
+run alone cannot tell a swallowed reference from an ignored one.
+
+Six mutations: teaching the validator to check `Owner` shape, stopping the dependency scan at
+the next separator, letting it read the whole identity line, and dropping first the `Owner`
+and then the `Jira` value from the fixture. Each killed its intended test. Narrowing the scan
+kills two, which is correct — both trap tests depend on it.
 
 **The settled decisions were nearly invisible to `blc-chronicle`.** Its `gather.sh` reads
 `###` headings only inside a `## Big decisions` section, and both of mine sat under
 `## Open decisions`. The chronicle would have reported no forks for the phase whose whole
-payload is two decisions. They are moved. This is not a new habit: nine of fifteen ledgers
+payload is two decisions. They are moved. This is not a new habit: eight of the fifteen ledgers
 here have no `## Big decisions` section, so the same silence covers most of this repository's
 record. Closing that is not this brief's work, and it is named here so it is not lost.
 
@@ -176,10 +191,10 @@ line and matches the summary it can regenerate.
 it carried rather than resolved, recording that it "binds #0007". Settling decision 2 by
 depending on that format is what binds it. The dependency also made #0009's worked examples
 wrong: they were written when #0007 had five numbered phases and the publisher was `c`, and
-the re-plan above moved the publisher to `d`. Three example cells in "Phase ids" named a phase
-that is now "my assignments". They are corrected here, because decision 2 makes that table the
-one place the format is written and an example that contradicts the ledger is the drift the
-citation was meant to avoid.
+the re-plan above moved the publisher to `d`. Five example cells in "Phase ids" named a phase
+that is now "my assignments". They are corrected in `docs/briefs/README.md`, because decision
+2 makes that table the one place the format is written, and an example there that contradicts
+the ledger is the drift the citation was meant to avoid.
 
 #0009's own brief and ledger still say `#0007/b`. They are not corrected: they record what was
 true when they were written, which is what a ledger is for.
@@ -218,8 +233,10 @@ nothing about `Jira:` or `Owner:`.
 
 **`Owner:` is not an export field, and saying "export to Jira" hides that.** Phase `c` reads
 it off disk and never calls Jira; the brief says so — "`Owner` still works with no Jira." Only
-`Jira:` and the publisher are export. `Owner:` is the identity field #0005 named and deferred,
-landing here because this is the brief that needed it.
+`Jira:` and the publisher are export. `Owner:` is the field #0005 refused. #0005 named the
+owner role and deliberately left the field out, to keep this toolkit from becoming a pickup
+queue. This brief takes it as correlation rather than as a queue, which its own Tension
+section states.
 
 That leaves one silence. A typo in `Owner:` makes phase `c` return an empty list, and the
 executor cannot tell "nothing is mine" from "my address is misspelled in that brief". This is

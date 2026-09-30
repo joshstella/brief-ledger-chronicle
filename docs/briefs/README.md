@@ -54,8 +54,10 @@ Each `brief.md` carries one line directly under its H1:
   re-ground the brief against current code before executing.
 - **Author** — a real, routable email, the stable identity key the rest of the stack
   (SSO, git, the tracker) joins on.
-- **Depends on** — `#NNNN` or `—`. `Serial` and `Created` are stamped by the pipeline.
-  Every other field comes from the author or the draft.
+- **Depends on** — `#NNNN` or `—`.
+
+`Serial` is assigned at filing. Every other field comes from the draft; `blc-create-brief`
+stamps `Created` and `Author` only when the draft carries neither.
 
 Two more fields are optional and absent from most briefs:
 
@@ -65,11 +67,17 @@ Two more fields are optional and absent from most briefs:
 - **Jira** — the Epic key for this brief, e.g. `· **Jira:** PROJ-1234`. Present only in a
   project that publishes to a tracker.
 
-**`Depends on` goes last.** The dependency check reads everything after it and treats any
-`#NNNN` it finds as a dependency, so a later field holding a tracker reference written the
-ordinary way — `ticket #9999` — is read as a dependency on brief 9999 and reported as a
-defect. An Epic key like `PROJ-1234` carries no `#` and is safe, which is what makes this a
-trap rather than an obvious break. Put new fields before `Depends on`.
+**`Depends on` goes last.** The dependency check reads everything after it. Any `#NNNN` there
+becomes a dependency, whatever field it was written in. So a tracker reference written the
+ordinary way — `ticket #9999` — is read as a dependency on brief 9999.
+
+That has a loud half and a quiet one. If brief 9999 does not exist, `BRIEFS-6` reports a
+defect and blocks. If it does exist, nothing is reported: the record now holds an edge nobody
+declared, and `list-briefs.sh` will not show it, because that tool stops reading at the next
+`·` and the validator does not.
+
+An Epic key like `PROJ-1234` carries no `#`, which is why this holds until someone writes a
+reference the ordinary way. Put new fields before `Depends on`.
 
 **Correlation IDs.** External identifiers each get their own named field and encode one
 thing — never overloaded into the serial or slug. The serial stays the internal sequence;
@@ -248,10 +256,13 @@ the children of the Epic and match the summary, whose form "Phase ids" above fix
 is therefore computable from the ledger.
 
 Storing the key instead would put a value in the record that only the tracker can produce.
-This side could not rebuild it if it were lost. It would also need a place, and the only
-per-phase place is the status line, where nothing reads the parenthetical: `BRIEFS-9` compares
-phase ids and states, and stops there. A key stored there would need a new reader before it
-meant anything.
+This side could not rebuild it if it were lost.
+
+It would also need a place. There are two per-phase places and neither has a reader for a
+key. In the status line, nothing looks inside the parenthetical at all: `BRIEFS-9` checks that
+each phase id has a row in the phase table, and stops there. In the phase table, `phase-row.sh`
+finds a row by its id and does not parse columns. A key put in either one would be invisible
+until someone wrote a reader for it.
 
 Finding by summary has two consequences worth stating plainly.
 

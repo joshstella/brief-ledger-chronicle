@@ -319,15 +319,17 @@ test_briefs_the_optional_tracker_fields_decide_nothing() {
   # validator that had learned to check them, which is the change this test exists to catch.
   grep -q 'not-an-email' "$BRIEFS/0001-owned/brief.md" \
     || fail "fixture lost its Owner value — the assertion above proves nothing"
+  grep -q 'Jira:\*\* !!!' "$BRIEFS/0001-owned/brief.md" \
+    || fail "fixture lost its Jira value — the assertion above proves nothing"
 }
 
-# The dependency parser takes everything after `Depends on:` and scans it for `#NNNN`
-# (tools/validate-briefs.sh, BRIEFS-6). A field written after it is inside that scan. A
-# realistic key like `PROJ-1234` carries no `#` and is safe, which is why this is a trap
-# rather than a visible break: it holds until someone writes a tracker reference the
-# ordinary way, and then it is a [defect] that blocks, not a judgment that reports.
+# The dependency parse takes everything after `Depends on:` and scans it for `#NNNN`
+# (tools/validate-briefs.sh, in the BRIEFS-4/BRIEFS-5 block; BRIEFS-6 consumes the list it
+# builds). A field written after it is inside that scan. A realistic key like `PROJ-1234`
+# carries no `#` and is safe, which is why this is a trap rather than a visible break: it
+# holds until someone writes a tracker reference the ordinary way.
 #
-# The README states the order because of this. The test states what the order is worth.
+# The README states the order because of this. These three tests state what it is worth.
 test_briefs_a_hash_after_depends_on_becomes_a_dependency() {
   make_briefs
   add_brief_with_identity 0001-trapped \
@@ -345,4 +347,28 @@ test_briefs_the_same_value_before_depends_on_is_inert() {
   run_validator "$BRIEFS"
   assert_status 0
   assert_out "0 defect(s), 0 judgment(s)"
+}
+
+# The quiet half, and the one that matters. When the swallowed serial names a brief that
+# exists, nothing is reported at all: the dependency graph gains an edge nobody declared and
+# the run is clean. A blocking defect is the good outcome of this trap; this is the bad one.
+#
+# tools/list-briefs.sh reads the same field and truncates at the next `·`, so it shows no
+# dependency while the validator counts one. That disagreement is the reason this is pinned
+# as behaviour rather than left to the defect case above.
+test_briefs_an_existing_serial_after_depends_on_is_swallowed_in_silence() {
+  make_briefs
+  add_brief 0001-real
+  add_brief_with_identity 0002-trapped \
+    "**Serial:** #0002 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** — · **Jira:** ticket #0001"
+  run_validator "$BRIEFS"
+  assert_status 0
+  assert_out "0 defect(s), 0 judgment(s)"
+  # A clean run is also what a brief with no trailing field gives, so the assertion above
+  # cannot tell "swallowed" from "ignored" on its own. Removing the brief it names does:
+  # if the parse is reading the field, the same fixture now has a dangling dependency.
+  rm -rf "$BRIEFS/0001-real"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "depends on #0001"
 }
