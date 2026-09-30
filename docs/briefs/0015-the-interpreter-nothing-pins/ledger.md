@@ -1,6 +1,6 @@
 # Ledger — #0015 The interpreter nothing pins
 
-`blc/2 #0015 in-progress a:in-progress(brief/0015-a-the-awk-matrix) b:pending`
+`blc/2 #0015 in-progress a:done(PR#66) b:pending`
 
 **Brief:** `docs/briefs/0015-the-interpreter-nothing-pins/brief.md`
 **Started:** 2026-09-29
@@ -10,7 +10,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the awk matrix | in-progress | `brief/0015-a-the-awk-matrix` |
+| a | the awk matrix | done | PR#66 |
 | b | the stated claim | pending | — |
 
 **a — the awk matrix.** `tests/run.sh` discovers every `awk` on `PATH`, runs the suite under
