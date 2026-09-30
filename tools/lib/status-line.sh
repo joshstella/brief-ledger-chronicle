@@ -96,10 +96,12 @@ blc_ledger_scan() {
     # let a ```` block containing ``` , or a ``` block containing ~~~ , read as closed, and
     # the locator then returned the example it was meant to skip. A delimiter that does not
     # match the open one is content, not a fence.
-    # Three-or-more written as ```` ```` `* ```` rather than ``{3,}``: mawk 1.3.4 does not
-    # support interval expressions, and read `{3,}` literally. Under it the locator returned
-    # the fenced example — a portability defect that is invisible on any machine with gawk,
-    # which is every machine this has been run on.
+    # Three-or-more written as ```` ```` `* ```` rather than ``{3,}``. mawk 1.3.4 does support
+    # interval expressions; what it does differently is match them minimally where gawk matches
+    # maximally, so `` ```{3,} `` against a four-backtick fence sets RLENGTH to 3 and the closing
+    # rule compares the wrong length. The `` `* `` spelling is greedy under both and measures 4.
+    # Nothing here is currently wrong under mawk — the suite runs green under it — and this
+    # comment is the reason not to "simplify" the spelling back.
     match(line, /^[[:space:]]*(````*|~~~~*)[[:space:]]*/) {
       d = substr(line, RSTART, RLENGTH); gsub(/[[:space:]]/, "", d)
       if (!fence)                                      { fence = 1; fch = substr(d,1,1); flen = length(d) }

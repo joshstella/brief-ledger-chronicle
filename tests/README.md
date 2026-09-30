@@ -6,11 +6,36 @@ Coverage for `install.sh`, for `tools/validate-briefs.sh` (the Contract validato
 Run them:
 
 ```bash
-bash tests/run.sh              # everything
+bash tests/run.sh              # everything, once per awk on PATH
 bash tests/run.sh machine_     # only tests whose name contains "machine_"
+bash tests/run.sh --matrix-plan  # which interpreters would run, without running them
 ```
 
-Exit code is 0 when everything passes, 1 otherwise, so CI needs no extra wiring.
+`bash tests/run.sh` is a **matrix**: it runs the whole suite once per `awk` implementation it
+finds, and prints which ones it used and which candidates it did not find. Two names for one
+implementation count once. A run with no `awk` at all exits 2 rather than reporting a pass over
+an empty matrix.
+
+For one fast pass under whatever `awk` comes first on `PATH`, set the re-entry flag the driver
+uses and the matrix is skipped:
+
+```bash
+BLC_AWK_INNER=dev BLC_AWK_VERSION="$(awk --version </dev/null 2>&1 | head -1)" bash tests/run.sh
+```
+
+The redirects are not decoration. `2>&1` catches an `awk` that writes its version to stderr,
+which would otherwise set the variable to an empty string and fail the run with a message about
+the driver. `</dev/null` matters for an `awk` that does not know `--version` at all: it reads a
+program from stdin instead, and the command hangs. The runner computes the version exactly this
+way, and a value computed differently is a value the suite will reject.
+
+That is a development convenience and not a matrix run — nothing prints a matrix summary, so
+the output cannot be mistaken for one. `BLC_AWK_VERSION` must be the real version of that `awk`:
+the suite checks itself against it, which is what stops a matrix run from naming an interpreter
+it did not use.
+
+Exit code is 0 when everything passes, 1 otherwise, and 2 when the suite could not run. CI needs
+no extra wiring.
 
 ## Layout
 
@@ -35,6 +60,8 @@ tests/
   test_phase_row.sh       the shared phase-row matcher, and that only one of it exists (#0014)
   test_status_line.sh     the shared status-line locator, and the shapes that separated its
                           two predecessors (#0014)
+  test_interpreters.sh    the awk matrix: discovery, alias collapsing, run labelling, and the
+                          refusal to pass over an empty matrix (#0015)
   test_clauses.sh         BRIEFS-9 and BRIEFS-10: that they report, that they never block,
                           and that the three readers of a ledger agree. Also holds the one
                           claim in the promotion criteria that can go stale (#0014)
@@ -237,14 +264,34 @@ name where that state is set, and make the test set it.
 
 ## The interpreter you do not have is the one that breaks
 
-The fence tracker was written with `{3,}` to mean three-or-more. `mawk` 1.3.4 has no interval
-expressions and reads that literally, so under `mawk` the locator returned the fenced example
-it was written to skip — a wrong answer, not a missing one. Every machine this toolkit had
-run on has `gawk`, so nothing on any developer box could have shown it.
+The fence tracker was written with `{3,}` to mean three-or-more. Under `mawk` the locator
+returned the fenced example it was written to skip — a wrong answer, not a missing one. The
+fix was to spell it `` ````* ``, which both implementations read alike.
 
-Portable shell here means portable to the *implementations*, not just to POSIX on paper. When
-a tool grows an `awk` program, check it under more than the `awk` that happens to be first on
-your `PATH`.
+**The cause recorded here was wrong from the day it was written, and the truth is worse.** This
+section used to
+say `mawk` 1.3.4 "has no interval expressions and reads that literally". It has them. It
+matches them **minimally**, where `gawk` matches maximally:
+
+| pattern | input | `gawk` `RLENGTH` | `mawk` `RLENGTH` |
+|---|---|---|---|
+| `a{2,3}` | `aaaa` | 3 | 2 |
+| `` `{3,} `` | six backticks | 6 | 3 |
+| `` ```` `* `` | six backticks | 6 | 6 |
+
+Read literally, `{3,}` would match nothing and the failure would be loud. Matching minimally
+returns a *shorter* answer, so a fence tracker measuring its delimiter reads a six-backtick
+fence as three and then closes it on the next run of three — with no error anywhere. The
+misdiagnosis made the failure sound louder than it is, which is the direction that gets a
+class of bug under-weighted.
+
+Portable shell here means portable to the *implementations*, not just to POSIX on paper, and
+"supports the feature" is not the same question as "agrees about the feature".
+
+`tests/run.sh` now runs the whole suite once per `awk` on `PATH` and prints which ones it
+used and which it did not find, so this is a guard rather than an instruction. An interpreter
+that is not installed is named. A run with no `awk` at all exits 2 instead of reporting a pass
+over an empty matrix.
 
 The suite already contained the contradiction, pinned on one side.
 `open-briefs_reports_no_line_on_unterminated_frontmatter` asserted that an unclosed `---`
@@ -253,6 +300,34 @@ status as `done`. One stray `---` hid a ledger's entire status from one tool and
 other, and a passing test said that was correct.
 
 **A test that pins one side of a disagreement makes the disagreement look like a decision.**
+
+## A green run can be evidence of a run that did not happen
+
+The matrix was built in two halves: a planner that decides which interpreters run, and a driver
+that runs them. The planner got tests, because a planner is easy to test — it prints, and a test
+reads what it printed. The driver got none, because testing it needs a `PATH` the test controls
+rather than the machine's.
+
+Three separate one-line mutations to the driver then left the matrix fully green: ignoring a
+failing interpreter, deleting the refusal on an empty matrix, and pointing every shim at the
+first entry. That last one ran `gawk` twice and printed `run 2/2: mawk`.
+
+**No assertion outside a run can see which binary the run used.** The driver installs a shim
+named `awk` at the front of the inner run's `PATH`; from outside, a correct shim and a wrong one
+produce the same output. So the driver hands the inner run the version it announced, and the
+inner run checks the `awk` it actually got against it. The check lives where the evidence is.
+
+Two more things had to change to make those tests mean anything:
+
+- **The plan-report-refuse sequence was written twice**, once per entry point. A guard reachable
+  by two code paths, with the suite proving neither, survives a mutation that deletes it from
+  one — the other still prints the same refusal. It is one function now.
+- **`tests/run.sh` had lost its `FILTER` assignment.** Unset, the selection pattern `*"$FILTER"*`
+  becomes `**`, so every inner run ran the whole suite and the new driver tests spawned matrices
+  of matrices until the machine ran out of processes. Nothing failed. The suite was green the
+  whole way down.
+
+A test harness is code, and the parts of it that are awkward to test are where its defects are.
 
 ## A guard whose pattern stops matching its own target
 
