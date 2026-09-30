@@ -263,7 +263,7 @@ in_driver_three() {
 
 test_interpreters_the_driver_runs_the_interpreter_it_names() {
   local yard out real
-  real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
   yard="$(in_driver_three names "$real")"
 
   out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")"
@@ -284,7 +284,7 @@ $out" ;;
 # reproduced that with a one-word change to the driver and got 11 passed, 0 failed.
 test_interpreters_each_announcement_names_a_run_and_never_an_alias() {
   local yard out real line n=0
-  real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
   yard="$(in_driver_three announce "$real")"
 
   out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")"
@@ -302,7 +302,10 @@ test_interpreters_each_announcement_names_a_run_and_never_an_alias() {
 display list rather than the run list — this is the #0014 desync:
 $line" ;;
     esac
-    local want; eval "want=\$want_$n"
+    local want; eval "want=\${want_$n:-}"
+    [ -n "$want" ] || fail "announcement $n has no expected value — the fixture grew a run and
+this list did not, so a position stopped being checked without anything failing:
+$line"
     case "$line" in
       *"$want"*) ;;
       *) fail "announcement $n does not say '$want':
@@ -318,7 +321,7 @@ $out"
 
 test_interpreters_a_failing_interpreter_fails_the_matrix() {
   local yard out rc=0 real
-  real="$(command -v gawk)" || { skip "no gawk to point a stub at"; return; }
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
   yard="$(in_driver_yard failing "$real" "STUB good 1.0" "STUB good 1.0" \
                         "STUB bad 2.0" "STUB good 1.0")"
   in_stub "$yard/mawk" "STUB bad 2.0"            # no real binary behind it: every call fails
@@ -382,9 +385,13 @@ actual:    $actual"
 
 # A busybox stub. $2 decides whether the awk applet exists.
 in_busybox() {
-  local file="$1" with_awk="$2"
+  local file="$1" with_awk="$2" real="${3:-}"
   if [ "$with_awk" = yes ]; then
-    printf '#!/bin/sh\ncase "$1" in awk) shift;; *) exit 1;; esac\ncase "$1" in --version) echo "BusyBox v1.36.1 (stub) multi-call binary"; exit 0;; esac\nexit 0\n' > "$file"
+    # Refuses every applet but awk, which is what makes it a fixture for the applet field: a
+    # shim that forgets the word `awk` invokes this binary with a program as its first argument
+    # and gets nothing.
+    printf '#!/bin/sh\ncase "$1" in awk) shift;; *) exit 1;; esac\ncase "$1" in --version) echo "BusyBox v1.36.1 (stub) multi-call binary"; exit 0;; esac\n%s\n' \
+      "${real:+exec $real \"\$@\"}" > "$file"
   else
     printf '#!/bin/sh\nexit 1\n' > "$file"
   fi
@@ -445,4 +452,49 @@ test_interpreters_an_awk_that_reads_stdin_cannot_hang_discovery() {
 not recognise --version reads a program instead, so the probe must close stdin."
   [ "$rc" -eq 0 ] || fail "discovery exited $rc against an awk that reads stdin:
 $out"
+}
+
+# The fallback for an awk that prints nothing for --version. Discovery announces `(version
+# unknown)`; without the matching fallback in the inner check, the announcement is compared
+# against an empty string, can never match, and the matrix fails with a message blaming a shim
+# that did its job. The fix shipped in the previous commit with no test that could fail for it.
+test_interpreters_an_awk_with_no_version_still_runs() {
+  local yard out rc=0 real
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
+  # mawk's stub answers --version with a blank line, which is how a real awk that does not know
+  # the option and writes nothing behaves.
+  yard="$(in_driver_yard silent "$real" "STUB alpha 1.0" "STUB alpha 1.0" "" "STUB gamma 3.0")"
+
+  out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")" || rc=$?
+
+  [ "$rc" -eq 0 ] || fail "an awk that reports no version failed the matrix, exit $rc:
+$out"
+  case "$out" in
+    *"(version unknown)"*) ;;
+    *) fail "an awk with no version was not announced as unknown:
+$out" ;;
+  esac
+}
+
+# The applet field. busybox is invoked as two words, and the field exists so the path can be
+# quoted separately from the applet. A shim that drops the applet runs the multi-call binary
+# with a program where an applet name belongs. Nothing else in the suite executes that path.
+test_interpreters_a_busybox_run_is_shimmed_with_its_applet() {
+  local yard out rc=0 real
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
+  # One version for all four named awks, so they collapse to a single run and busybox is the
+  # second. Two runs, and the busybox one only works if the shim carries the applet.
+  yard="$(in_driver_yard applet "$real" "STUB one 1.0" "STUB one 1.0" "STUB one 1.0" "STUB one 1.0")"
+  in_busybox "$yard/busybox" yes "$real"
+
+  out="$(in_driver_run "$yard" "$IN_SHIM_CHECK")" || rc=$?
+
+  [ "$rc" -eq 0 ] || fail "the busybox run failed, exit $rc — a shim that drops the applet
+invokes the multi-call binary with a program in the applet's place:
+$out"
+  case "$out" in
+    *"2 interpreter(s) passed"*) ;;
+    *) fail "expected one run for the four named awks and one for busybox:
+$out" ;;
+  esac
 }

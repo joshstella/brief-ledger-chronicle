@@ -31,7 +31,7 @@ than letting silence imply coverage.
 one version into one run with the alias reported, runs the whole suite once per remaining
 implementation with `PATH` shimmed so the tools resolve `awk` to that binary, and prints which
 ran and which were not found. On this machine that is gawk (as `awk`, with `gawk` an alias)
-and mawk: **351 passed, 0 failed under both.**
+and mawk: **353 passed, 0 failed under both.**
 
 Shimming `PATH` rather than passing a variable is the deliberate part. The tools call `awk`
 unqualified, so a variable would test a code path they take only under test.
@@ -102,15 +102,22 @@ and no failure. The busybox probe three lines below already carried `</dev/null`
 explaining why. One of two adjacent calls was guarded, which is the ordinary way a hazard gets
 recognised and then not applied.
 
-Fourteen mutations, fourteen dead tests: dropping a candidate (now genuinely, not by substring),
-skipping an absent interpreter silently, passing over an empty matrix (both entry points),
-dropping the dedupe, indexing the plan label off the display list, indexing the *driver's*
-announcement off it, dropping the version from discovery, ignoring a failing interpreter,
-running the wrong binary behind the shim, withholding the announced version from the inner run,
-removing the busybox applet probe, and removing the stdin guard.
+Seventeen mutations, seventeen dead tests: dropping a candidate (now genuinely, not by
+substring), skipping an absent interpreter silently, passing over an empty matrix (both entry
+points), dropping the dedupe, indexing the plan label off the display list, indexing the
+*driver's* announcement off it, dropping an expected announcement from the fixture, dropping the
+version from discovery, ignoring a failing interpreter, running the wrong binary behind the
+shim, withholding the announced version from the inner run, removing the unknown-version
+fallback, removing the busybox applet probe, dropping the applet at discovery, dropping it from
+the shim, and removing the stdin guard.
 
-One line in this phase is still held by a comment rather than by a test: the `FILTER`
-assignment in `tests/run.sh`. Losing it does not turn the suite red — it makes every inner run
+Two lines in this phase are held by a comment rather than by a test, and naming them is the
+point of this paragraph. The first is the `</dev/null` on the inner check's own `awk --version`.
+It guards the same hazard as the one in `blc_awk_version`, which *is* tested, but reaching it
+needs a driver fixture whose stub reads stdin, and that fixture would hang the suite when it
+worked.
+
+The second is the `FILTER` assignment in `tests/run.sh`. Losing it does not turn the suite red — it makes every inner run
 a full run and the driver tests fork until the machine runs out of processes. A test for it
 would have to be a test that deliberately forks a bomb and survives, and that is a worse thing
 to own than the comment. It is recorded here so the next person does not mistake the comment

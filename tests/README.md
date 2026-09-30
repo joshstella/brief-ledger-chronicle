@@ -20,8 +20,14 @@ For one fast pass under whatever `awk` comes first on `PATH`, set the re-entry f
 uses and the matrix is skipped:
 
 ```bash
-BLC_AWK_INNER=dev BLC_AWK_VERSION="$(awk --version | head -1)" bash tests/run.sh
+BLC_AWK_INNER=dev BLC_AWK_VERSION="$(awk --version </dev/null 2>&1 | head -1)" bash tests/run.sh
 ```
+
+The redirects are not decoration. `2>&1` catches an `awk` that writes its version to stderr,
+which would otherwise set the variable to an empty string and fail the run with a message about
+the driver. `</dev/null` matters for an `awk` that does not know `--version` at all: it reads a
+program from stdin instead, and the command hangs. The runner computes the version exactly this
+way, and a value computed differently is a value the suite will reject.
 
 That is a development convenience and not a matrix run — nothing prints a matrix summary, so
 the output cannot be mistaken for one. `BLC_AWK_VERSION` must be the real version of that `awk`:
