@@ -102,24 +102,30 @@ schedule.
    to satisfy this criterion is the same move as not testing, and the run must name the
    interpreters it used rather than printing one summary line for any set.
 
-   **The claim is not written here.** It is the candidate list the test runner walks, and it is
-   read by running the runner:
+   **The claim is not written here.** It is the candidate list the toolkit's test runner walks,
+   and it is read by running the runner **in the toolkit repository**:
 
    ```bash
    bash tests/run.sh --matrix-plan
    ```
 
-   That prints every `awk` the suite claims, which of them this machine has, which two names
-   are one implementation, and which are absent. A prose copy of the list in this file would be
-   a second answer to a question that already has one, and a second answer drifts — which is
-   the defect #0014 spent four phases removing. Deleting a name from the list fails a test, so
-   the narrowing this criterion forbids is refused by the suite rather than by a reader
-   remembering to check.
+   That prints every `awk` the suite claims, which of them the machine has, which names are
+   aliases of an implementation already in the list, and which are absent. A prose copy of the
+   list in this file would be a second answer to a question that already has one, and the prose
+   copy is the one that goes stale — the defect #0014 spent four phases removing. Deleting a
+   name from the list fails a test, so the narrowing this criterion forbids is refused by the
+   suite rather than by a reader remembering to check.
 
-   The claim covers `awk` implementations. It does not cover `bash` versions: everything here
-   declares `#!/usr/bin/env bash`, and the oldest bash this toolkit is likely to meet is the
-   3.2 that ships with macOS, which nothing has verified. That axis is named in
-   `tests/README.md` as unverified rather than left to look covered.
+   **The paths above are not in an installed copy.** They exist in the toolkit repository.
+   `install.sh` ships `docs/`, `tools/` and `templates/`; it does not ship `tests/`.
+   That is not an oversight in the installer: these criteria govern promotion of clauses *in
+   this Contract*, which happens where the Contract is written. A reader holding an installed
+   copy is reading the reasoning behind a published tag, not a procedure to run.
+
+   The claim covers `awk` implementations. It does not cover `bash` versions: everything the
+   toolkit ships declares `#!/usr/bin/env bash`, and the oldest bash it is likely to meet is
+   the 3.2 that ships with macOS, which nothing has verified. That axis is recorded as
+   unverified in the toolkit's own test documentation rather than left to look covered.
 
 2. **Every guard on the check has been mutation-proved, at one mutation per code path the
    guard claims.** Not one mutation per guard. A guard can cover half of what its name says

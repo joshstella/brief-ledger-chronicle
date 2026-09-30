@@ -526,48 +526,105 @@ $out" ;;
 # ── The stated claim (#0015 phase b) ─────────────────────────────────────────
 #
 # Contract promotion criterion 1 needs the supported-interpreter set stated. Phase b states it
-# by pointing at the runner rather than by copying the list into prose, so these two tests
-# guard the pointer instead of the copy: one fails if a document stops citing the runner, the
-# other fails if a document starts answering the question itself.
+# by pointing at the runner rather than by copying the list into prose, so these tests guard
+# the pointer instead of the copy.
+#
+# They work on a *region* of each document, not on the whole file. Review found the first
+# version satisfied by a usage line that shipped in phase a: the entire claim section could be
+# deleted from tests/README.md — the claim, both tested properties, the bash 3.2 non-claim —
+# and the test stayed green because the string it grepped for appeared elsewhere. A guard on a
+# file is not a guard on the passage that file was edited to add.
 
-# The documents that carry the claim. A contributor meets the first, a promoter the second.
-IN_CLAIM_DOCS="tests/README.md docs/contracts/README.md"
+# One record per document: path, the line that opens the claim region, the line that ends it.
+# Tab-separated and split by hand, for the reason blc_awk_plan splits by hand.
+IN_CLAIM_REGIONS="tests/README.md|## What this suite claims about interpreters|## Layout
+docs/contracts/README.md|1. **The check runs under every interpreter|2. **Every guard on the check"
 
-# The command both documents send a reader to. Written once here, so renaming the mode breaks
-# this test rather than leaving two documents pointing at a flag that no longer exists.
+# The command both documents send a reader to.
 IN_CLAIM_CMD="bash tests/run.sh --matrix-plan"
 
-test_interpreters_the_claim_documents_point_at_the_runner() {
-  local doc body
-  for doc in $IN_CLAIM_DOCS; do
-    body="$(cat "$REPO_ROOT/$doc")"
-    case "$body" in
-      *"$IN_CLAIM_CMD"*) ;;
-      *) fail "$doc no longer tells a reader how to read the supported-interpreter set.
-The set is not written in prose anywhere, so a document that drops '$IN_CLAIM_CMD' leaves the
-claim unstated, and Contract criterion 1 asks for it to be stated." ;;
+# Prints the claim region of $1, bounded by $2 and $3. Fails if the opening line is gone, which
+# is what makes deleting the section a failure rather than a silence.
+in_claim_region() {
+  local file="$1" open="$2" close="$3" line inside=0 seen=0
+  while IFS= read -r line; do
+    case "$line" in
+      "$open"*) inside=1; seen=1 ;;
+      "$close"*) [ "$inside" -eq 1 ] && inside=0 ;;
     esac
-  done
+    [ "$inside" -eq 1 ] && printf '%s\n' "$line"
+  done < "$REPO_ROOT/$file"
+  [ "$seen" -eq 1 ] || return 1
 }
 
-# The counterpart. A pointer is only better than a copy while there is no copy: the moment a
-# document enumerates the set as well, there are two answers, and the prose one is the one that
-# goes stale. Four names on one line is a list; two is a comparison, which these files do make.
-test_interpreters_no_claim_document_enumerates_the_set() {
-  local doc line words tok name hits
-  for doc in $IN_CLAIM_DOCS; do
-    while IFS= read -r line; do
-      words="${line//[^[:alnum:]-]/ }"
-      hits=0
-      for name in $IN_CANDIDATES; do
-        for tok in $words; do
-          [ "$tok" = "$name" ] && { hits=$((hits + 1)); break; }
-        done
-      done
-      [ "$hits" -lt 4 ] || fail "$doc names $hits interpreters on one line, which is a second
-copy of a list that already has one authority — the candidate list in tests/run.sh. Delete the
-enumeration and point at '$IN_CLAIM_CMD':
-$line"
-    done < "$REPO_ROOT/$doc"
+# Walks the regions, calling $1 with the document path and the region body.
+#
+# The loop reads from a heredoc and not from a pipe. `printf ... | while` puts the body in a
+# subshell, where `fail` marks a test that the harness in the parent never hears about: the
+# first version of this helper reported three surviving mutations as passes, including a
+# mutation that deleted the entire claim section. A guard that cannot report its own failure
+# is worse than no guard, because it also reports success.
+in_each_claim_region() {
+  local fn="$1" record file open close body
+  while IFS= read -r record; do
+    [ -n "$record" ] || continue
+    file="${record%%|*}"; record="${record#*|}"
+    open="${record%%|*}"; close="${record#*|}"
+    body="$(in_claim_region "$file" "$open" "$close")" \
+      || fail "$file no longer contains the claim region that opens with '$open'. The claim is
+not written in prose anywhere, so deleting this passage leaves it unstated."
+    "$fn" "$file" "$body"
+  done <<EOF
+$IN_CLAIM_REGIONS
+EOF
+}
+
+in_assert_points() {
+  local file="$1" body="$2"
+  case "$body" in
+    *"$IN_CLAIM_CMD"*) ;;
+    *) fail "$file's claim region no longer tells a reader how to read the supported set.
+The set is not written in prose anywhere, so a region that drops '$IN_CLAIM_CMD' leaves the
+claim unstated, and Contract criterion 1 asks for it to be stated." ;;
+  esac
+}
+
+test_interpreters_the_claim_regions_point_at_the_runner() {
+  in_each_claim_region in_assert_points
+}
+
+# The cited command must exist. Review renamed --matrix-plan to --plan in the runner, left the
+# documents alone, and got a green suite over three citations of a flag that was gone: a test
+# that greps for a string cannot tell a live pointer from a dead one.
+test_interpreters_the_cited_command_runs() {
+  local rc=0 out
+  out="$( unset BLC_AWK_INNER BLC_AWK_VERSION; $IN_CLAIM_CMD 2>&1 )" || rc=$?
+  [ "$rc" -eq 0 ] || fail "'$IN_CLAIM_CMD' — the command both claim regions cite — exited $rc:
+$out"
+  case "$out" in
+    *"awk matrix"*) ;;
+    *) fail "'$IN_CLAIM_CMD' ran but printed no matrix, so a reader following the citation
+learns nothing about the supported set:
+$out" ;;
+  esac
+}
+
+in_assert_no_enumeration() {
+  local file="$1" body="$2" words tok name hits=0
+  # Counted over the whole region, not per line. Review wrote three prose copies of the full
+  # set past a per-line threshold — a bullet list one name per line, a table one name per row,
+  # and two sentences splitting the set three and two. A list is a list however it is wrapped.
+  words="${body//[^[:alnum:]-]/ }"
+  for name in $IN_CANDIDATES; do
+    for tok in $words; do
+      [ "$tok" = "$name" ] && { hits=$((hits + 1)); break; }
+    done
   done
+  [ "$hits" -lt 3 ] || fail "$file's claim region names $hits interpreters, which is a second
+copy of a list that already has one authority — the candidate list in tests/run.sh. The region
+is meant to state the rule and cite '$IN_CLAIM_CMD', not to answer the question itself."
+}
+
+test_interpreters_no_claim_region_enumerates_the_set() {
+  in_each_claim_region in_assert_no_enumeration
 }

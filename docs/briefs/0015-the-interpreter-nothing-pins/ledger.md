@@ -62,6 +62,41 @@ class as a test named for a property it cannot detect, in the file that configur
 No bash 4 construct appears anywhere — no `declare -A`, no `mapfile`, no `${var,,}` — which
 makes 3.2 likely fine. Likely fine is not a claim, so it is not made.
 
+**Review found the pointer dangling in the one place it mattered most.** `install.sh` copies
+`docs/contracts/README.md` into every target, and ships `docs/`, `tools/` and `templates/` —
+never `tests/`. A consumer reading criterion 1 was told to run a command in a directory their
+repository does not have. This project had already met that failure once and written a test
+for it: the shipped briefs README points at the Contract with a relative link that resolves
+here because here is where it was written. The two existing path tests scan the version files
+for one citation form, and the new pointer was in neither a version file nor that form.
+
+The fix is not to strip the reference. These criteria govern promotion of clauses in this
+Contract, which happens where the Contract is written, so the reasoning is worth shipping and
+the procedure is not. The paragraph now says the paths are not in an installed copy, and
+`ship_the_contract_readme_marks_paths_it_does_not_ship` installs into a target, finds every
+path the README names that the target lacks, and fails unless the file says so. It carries a
+positive control: if the README ever stops naming an unshipped path, the test fails asking to
+be deleted rather than passing over a question nobody is asking.
+
+**The first version of the claim guards could not fail, and the reason is worth keeping.** The
+helper walked the documents with `printf ... | while read`, which puts the loop body in a
+subshell. `fail` marked a test the harness in the parent never heard about. Three mutations —
+deleting the entire claim section from `tests/README.md`, removing the citation from the
+Contract, and adding a five-name bullet list — all reported green. The loop reads from a
+heredoc now. A guard that cannot report its own failure is worse than no guard, because it
+also reports success.
+
+Two more from the same round. The pointer test was satisfied by a usage line that shipped in
+phase a, so the whole phase-b passage could be deleted while the test passed on an unrelated
+string: it works on a *region* of each document now, bounded by its opening and closing lines,
+and a missing region is a failure rather than a silence. And the enumeration guard counted
+names per line, which a bullet list, a table, or two sentences all walk past; it counts across
+the region.
+
+**The cited command is now run, not grepped.** Renaming `--matrix-plan` in the runner left
+three citations of a flag that no longer existed and a green suite. `the_cited_command_runs`
+executes it and checks it prints a matrix, so a dead pointer is a red test.
+
 ## Phase a — what it does
 
 `tests/run.sh` gained a discovery step, a plan step, and an outer driver. It discovers each of
