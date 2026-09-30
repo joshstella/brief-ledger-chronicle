@@ -22,14 +22,18 @@ Drops "added when wired". Documentation only — no field is carried, validated,
 this phase.
 
 **b — the fields.** Decisions 2 and 6 removed most of this phase: no per-phase key needs a
-home, and nothing validates. The `Jira:` carry also already exists, at `blc-create-brief`
-step 53. What is left is three small edits to that one skill:
+home, and nothing validates. The `Jira:` carry also already exists, in `blc-create-brief`
+step 4. What is left is three small edits to that one skill:
 
-- Carry `Owner:` from the draft, with the same `git config user.email` fallback `Author` has.
+- Carry `Owner:` from the draft when the draft has one, and write nothing when it does not.
+  No fallback. `Author` gets one because `Author` is required; `Owner` is not, and the brief
+  settled that an omitted `Owner` means `Author` at read time. A fallback would make the
+  field always present and quietly delete that decision.
 - Move the `Jira:` append to *before* `Depends on`, which today it follows. Phase `a` found
-  why: anything after `Depends on` is inside the dependency scan.
-- Drop "(and, later, `**Jira:** …`)" at step 20. "Later" is the same future tense as "added
-  when wired", which phase `a` removed from the README one file away.
+  why: anything after `Depends on` is inside the dependency scan. It is in step 4, line 53.
+- Drop "(and, later, `**Jira:** …`)" from the `## Input` bullet at line 20. "Later" is the
+  same future tense as "added when wired", which phase `a` removed from the README one file
+  away.
 
 No Jira call. Absence of either field stays ordinary.
 
@@ -127,16 +131,17 @@ which is why the trap holds until someone writes a reference the ordinary way.
 It has a loud half and a quiet one. A serial that does not exist is a `[defect]` that blocks.
 A serial that does exist is reported by nothing: the record gains an edge nobody declared,
 and `list-briefs.sh` does not show it, because that tool stops reading at the next `·` and the
-validator does not. Two readers of one field, disagreeing, which is what #0013 was about.
+validator does not. Two readers of one field, disagreeing. That is #0014's finding about
+these two tools exactly, and `open-briefs.sh` still carries a comment pointing at it.
 
 The quiet half is the one worth a test, and it is proved by contrast rather than by a clean
 run: removing the brief it names turns the same fixture into a dangling dependency. A clean
 run alone cannot tell a swallowed reference from an ignored one.
 
-Six mutations: teaching the validator to check `Owner` shape, stopping the dependency scan at
-the next separator, letting it read the whole identity line, and dropping first the `Owner`
-and then the `Jira` value from the fixture. Each killed its intended test. Narrowing the scan
-kills two, which is correct — both trap tests depend on it.
+Five mutations, six kills: teaching the validator to check `Owner` shape, stopping the
+dependency scan at the next separator, letting it read the whole identity line, and dropping
+first the `Owner` and then the `Jira` value from the fixture. Narrowing the scan kills two of
+the three trap tests, which is correct — both describe what the wide scan does.
 
 **The settled decisions were nearly invisible to `blc-chronicle`.** Its `gather.sh` reads
 `###` headings only inside a `## Big decisions` section, and both of mine sat under
@@ -176,11 +181,15 @@ are `[judgment]` and never block. `docs/briefs/README.md` says so eleven lines b
 section I was writing.
 
 The true objection is the opposite shape and is stronger. `blc_status_phase_entries` splits a
-phase entry at the first colon and never reads the parenthetical at all, so a key stored there
-would pass every check by being invisible. It would need a new reader before it meant
-anything. The phase table has the same cost in a different place: `phase-row.sh` already
-carries three table schemas and says in its own comment that it does not parse columns. A key
-column needs a reader, and that reader is a fourth schema.
+phase entry at the first colon and never reads the parenthetical, so a key stored there passes
+every clause. It does not pass unnoticed, though, and this took three review rounds to get
+right. `open-briefs.sh` does read the parenthetical, and its rule is that anything which is
+not a PR or a commit is a branch. A key in that slot is reported as a branch that does not
+exist, in the tool whose worth is that its findings are believed. Verified by running it.
+
+The phase table has the same cost in a quieter form: `phase-row.sh` already carries three
+table schemas and says in its own comment that it does not parse columns. A key column needs
+a reader, and that reader is a fourth schema.
 
 Neither is necessary, because #0009 already made the identity derivable. `docs/briefs/README.md`
 pins the Jira summary as `#<serial>/<letter> — <label>`. That string is computable from the

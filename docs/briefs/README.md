@@ -57,15 +57,21 @@ Each `brief.md` carries one line directly under its H1:
 - **Depends on** — `#NNNN` or `—`.
 
 `Serial` is assigned at filing. Every other field comes from the draft; `blc-create-brief`
-stamps `Created` and `Author` only when the draft carries neither.
+stamps `Created` and `Author` only when the draft lacks them.
 
 Two more fields are optional and absent from most briefs:
 
 - **Owner** — a real, routable email: who executes the brief. `Author` is who filed it.
   Those can be different people, and omitting `Owner` means they are the same person.
   See "One person owns a serial" below, which this field records rather than changes.
-- **Jira** — the Epic key for this brief, e.g. `· **Jira:** PROJ-1234`. Present only in a
-  project that publishes to a tracker.
+- **Jira** — the Epic key for this brief. Present only in a project that publishes to a
+  tracker.
+
+They go between `Author` and `Depends on`:
+
+```
+**Serial:** #0010 · **Created:** … · **Author:** name@org.tld · **Owner:** exec@org.tld · **Jira:** PROJ-1234 · **Depends on:** #0004
+```
 
 **`Depends on` goes last.** The dependency check reads everything after it. Any `#NNNN` there
 becomes a dependency, whatever field it was written in. So a tracker reference written the
@@ -258,11 +264,15 @@ is therefore computable from the ledger.
 Storing the key instead would put a value in the record that only the tracker can produce.
 This side could not rebuild it if it were lost.
 
-It would also need a place. There are two per-phase places and neither has a reader for a
-key. In the status line, nothing looks inside the parenthetical at all: `BRIEFS-9` checks that
-each phase id has a row in the phase table, and stops there. In the phase table, `phase-row.sh`
-finds a row by its id and does not parse columns. A key put in either one would be invisible
-until someone wrote a reader for it.
+It would also need a place, and there are two per-phase places. Neither understands a key, and
+one of them would guess.
+
+In the phase table, `phase-row.sh` finds a row by its id and does not parse columns, so a key
+column sits there unread. In the status line it is worse. `BRIEFS-9` checks that each phase id
+has a row in the phase table and stops there, but `open-briefs.sh` does read the parenthetical,
+and its rule is that anything which is not a PR or a commit is a branch. A key in that slot is
+reported as a branch that does not exist — a false finding, in the tool whose worth is that
+its findings are believed.
 
 Finding by summary has two consequences worth stating plainly.
 
