@@ -108,9 +108,14 @@ blc_awk_plan() {
     # `%` then collided with an unrelated one and collapsed two real implementations into one
     # run. `m_ver` comes from a single `read -r` and so cannot contain a newline, which makes
     # this delimiter impossible to forge rather than merely unlikely.
+    # An awk that says nothing about its version tells us nothing about whether it is the same
+    # binary as another that also says nothing. Two silent awks are two awks, so the key falls
+    # back to the path. Only `(version unknown)` is matched: discovery substitutes that for an
+    # empty reading, so the key is never the empty string and an arm for it would be an arm for
+    # a case that cannot arise.
     m_key="$m_ver"
     case "$m_key" in
-      ''|'(version unknown)') m_key="path:$m_path $m_applet" ;;
+      '(version unknown)') m_key="path:$m_path $m_applet" ;;
     esac
     case "$seen" in
       *$'\n'"$m_key"$'\n'*) MATRIX_DISPLAY+=("$m_name (alias)"); continue ;;

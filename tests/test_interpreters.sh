@@ -498,3 +498,27 @@ $out"
 $out" ;;
   esac
 }
+
+# Two awks that both say nothing about their version are two awks. The dedupe keys on the
+# version string, so without the exemption at tests/run.sh:112 they share the empty key and
+# collapse — one run, and a matrix reporting two interpreters it did not both use. That is the
+# failure this brief exists to prevent, reached through the one input that makes the key
+# meaningless rather than wrong.
+test_interpreters_two_silent_awks_are_not_one_awk() {
+  local yard out real
+  real="$(command -v awk)" || { skip "no awk to point a stub at"; return; }
+  yard="$(in_driver_yard silent-pair "$real" "STUB alpha 1.0" "" "" "STUB gamma 3.0")"
+
+  out="$(in_plan "$yard:$PATH")"
+
+  case "$out" in
+    *"(alias)"*) fail "two awks that report no version were collapsed into one run — an unknown
+version is not evidence that two binaries are the same binary:
+$out" ;;
+  esac
+  case "$out" in
+    *"run 4/4:"*) ;;
+    *) fail "expected four runs from four named awks, two of them silent:
+$out" ;;
+  esac
+}
