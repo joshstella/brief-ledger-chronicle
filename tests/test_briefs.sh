@@ -299,3 +299,50 @@ test_briefs_every_named_check_path_resolves() {
   done
   [ "$found" -gt 0 ] || fail "Contract names no checks at all — expected at least one"
 }
+
+# ── The optional identity fields, and what the validator does not say ────────
+#
+# #0007 phase `a`. `docs/briefs/README.md` states that `validate-briefs.sh` says nothing
+# about `Jira:` or `Owner:`, and that a malformed value costs you a report and not a brief.
+# That is a claim about a program that ships today, so the phase's documentation-only
+# exemption does not reach it. Without a fixture the sentence is true by accident, and a
+# later clause could make it false in silence.
+
+test_briefs_the_optional_tracker_fields_decide_nothing() {
+  make_briefs
+  add_brief_with_identity 0001-owned \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Owner:** not-an-email · **Jira:** !!! · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 0
+  assert_out "1 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
+  # Both values are deliberately malformed. A well-formed fixture would pass under a
+  # validator that had learned to check them, which is the change this test exists to catch.
+  grep -q 'not-an-email' "$BRIEFS/0001-owned/brief.md" \
+    || fail "fixture lost its Owner value — the assertion above proves nothing"
+}
+
+# The dependency parser takes everything after `Depends on:` and scans it for `#NNNN`
+# (tools/validate-briefs.sh, BRIEFS-6). A field written after it is inside that scan. A
+# realistic key like `PROJ-1234` carries no `#` and is safe, which is why this is a trap
+# rather than a visible break: it holds until someone writes a tracker reference the
+# ordinary way, and then it is a [defect] that blocks, not a judgment that reports.
+#
+# The README states the order because of this. The test states what the order is worth.
+test_briefs_a_hash_after_depends_on_becomes_a_dependency() {
+  make_briefs
+  add_brief_with_identity 0001-trapped \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Depends on:** — · **Jira:** ticket #9999"
+  run_validator "$BRIEFS"
+  assert_status 1
+  assert_out "BRIEFS-6"
+  assert_out "depends on #9999"
+}
+
+test_briefs_the_same_value_before_depends_on_is_inert() {
+  make_briefs
+  add_brief_with_identity 0001-ordered \
+    "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Jira:** ticket #9999 · **Depends on:** —"
+  run_validator "$BRIEFS"
+  assert_status 0
+  assert_out "0 defect(s), 0 judgment(s)"
+}

@@ -65,6 +65,12 @@ Two more fields are optional and absent from most briefs:
 - **Jira** — the Epic key for this brief, e.g. `· **Jira:** PROJ-1234`. Present only in a
   project that publishes to a tracker.
 
+**`Depends on` goes last.** The dependency check reads everything after it and treats any
+`#NNNN` it finds as a dependency, so a later field holding a tracker reference written the
+ordinary way — `ticket #9999` — is read as a dependency on brief 9999 and reported as a
+defect. An Epic key like `PROJ-1234` carries no `#` and is safe, which is what makes this a
+trap rather than an obvious break. Put new fields before `Depends on`.
+
 **Correlation IDs.** External identifiers each get their own named field and encode one
 thing — never overloaded into the serial or slug. The serial stays the internal sequence;
 external keys stay external; they reference each other, they don't merge.

@@ -79,8 +79,9 @@ when written: #0015 established that a new check ships `[judgment]` and that pro
 
 ## Phase a — what it does
 
-Documentation only. No program, no field is read or written by anything, and the suite is
-unchanged at 358 passing. Tests land with the program they pin, and this phase pins none.
+Documentation, and three tests. No program ships, and no field is read or written by anything.
+The suite goes from 358 to 361 passing. Why a documentation phase carries tests at all is
+below.
 
 **The Manifesto gains the rule, not the feature.** "Treat everything external as optional"
 already covered carrying an ID; it did not say which direction data may move. The new bullet
@@ -104,6 +105,23 @@ Review of my own draft caught the summary format written twice in one file: once
 "Phase ids" table and once in the new section's prose. One rule written in two places is the
 writer-side seam #0013 found inside `blc-start-brief`, so the prose points at the table
 instead.
+
+**Three tests ship with this phase, which is not a contradiction.** The phase pins no program,
+but it makes one claim about a program that already ships: that `validate-briefs.sh` says
+nothing about `Jira:` or `Owner:`. That sentence is true today by accident, and a later clause
+could falsify it in silence. A fixture carrying `Owner: not-an-email` and `Jira: !!!` and
+asserting zero defects and zero judgments converts it into a pinned fact. The fixture carries
+a positive control, because a fixture that quietly lost its fields would assert nothing.
+
+**Writing that test found a trap.** `BRIEFS-6` reads everything after `Depends on:` and treats
+any `#NNNN` as a dependency, so a field placed after it is inside that scan. `PROJ-1234` has
+no `#` and is safe; `ticket #9999` is a `[defect]` that blocks. Two more tests pin both sides,
+and the README now states that `Depends on` goes last. Phase `b` must move the `Jira:` append
+in `blc-create-brief`, which today writes it after `Depends on`.
+
+Four mutations, each killing its own test and nothing else: teaching the validator to check
+`Owner` shape, stopping the dependency scan at the next separator, dropping the `Owner` value
+from the fixture, and letting the dependency scan read the whole identity line.
 
 **The settled decisions were nearly invisible to `blc-chronicle`.** Its `gather.sh` reads
 `###` headings only inside a `## Big decisions` section, and both of mine sat under
