@@ -40,7 +40,7 @@ no extra wiring.
 ## What this suite claims about interpreters
 
 **The suite runs under every `awk` it claims, names the ones it did not find, and states which
-ones it used.** That is the whole claim, and it is what `docs/contracts/README.md` criterion 1
+ones it used.** That is the whole claim, and it is what `docs/blc/contracts/README.md` criterion 1
 requires before a `[judgment]` clause can be promoted to a `[defect]`.
 
 The supported set is not written down in prose — not here, and not in the Contract README. It
@@ -218,7 +218,7 @@ finding none. The shared locator searches the whole file **and** anchors the mat
 
 A fourth shape survived even that, and review found it: an example at column 0 **inside a
 code fence**. Anchoring defeats an example with prose in front of it; it does nothing about
-one that is already at the start of its line. That is how `docs/briefs/README.md` prints
+one that is already at the start of its line. That is how `docs/blc/briefs/README.md` prints
 the status line, so the first ledger to document its own format would have handed every
 reader the example. The locator now tracks fences.
 

@@ -16,7 +16,7 @@ If no argument is given, use the most recently updated `in-progress` brief ledge
 ## Steps
 
 1. **Find the ledger.**
-   - Primary: if `$ARGUMENTS` names a brief (or no argument given), find the brief's directory under `docs/briefs/` and read `ledger.md` from that directory. This is the source of truth.
+   - Primary: if `$ARGUMENTS` names a brief (or no argument given), find the brief's directory under `docs/blc/briefs/` and read `ledger.md` from that directory. This is the source of truth.
    - Fallback: if no repo ledger found, read MEMORY.md and locate the `brief-<kebab>` entry — either by `$ARGUMENTS` or the most recently updated one with status `in-progress`.
    - If none is in progress, say so and point to `blc-start-brief`.
 
@@ -32,15 +32,15 @@ If no argument is given, use the most recently updated `in-progress` brief ledge
 
 6. **Present the next phase:** its stable id, the files it creates/modifies, what it accomplishes, and any open decision that must resolve before it can start (block it if unresolved).
 
-7. **Branch the next phase.** `brief/<serial>-<letter>-<kebab>`, derived from the phase's stable id — see `docs/briefs/README.md`, "Phase ids". For parallel tracks, note which can branch independently right now. Wait for confirmation before creating the branch or writing code.
+7. **Branch the next phase.** `brief/<serial>-<letter>-<kebab>`, derived from the phase's stable id — see `docs/blc/briefs/README.md`, "Phase ids". For parallel tracks, note which can branch independently right now. Wait for confirmation before creating the branch or writing code.
 
 8. **Update the ledger — both places.**
    - Mark the just-finished phase `done` with the PR that carried it; record what it taught and any sequence change it caused.
    - Set the next phase `in-progress` and **record its branch in the status field**, not in prose — a branch nothing can resolve is the same as no branch. Backfill the PR number when the PR opens.
    - If a phase is being parked rather than continued, mark it `deferred` with its branch and a reason. Parking it does not stop it going stale.
    - Status stays `in-progress`, or becomes `done` if this was the last phase.
-   - Update the `blc/2` status line under the title in the same edit. The vocabulary is defined once in `docs/briefs/README.md`, "Ledger status". A ledger still on `blc/1` stays on it unless converting is a phase's stated job: merged PRs cite the phase ids as they were, so a silent re-lettering strands them. Convert deliberately, and record the mapping.
-   - Write the updated ledger to `docs/briefs/<name>/ledger.md` in the repo (the primary source of truth) and commit it to the current branch.
+   - Update the `blc/2` status line under the title in the same edit. The vocabulary is defined once in `docs/blc/briefs/README.md`, "Ledger status". A ledger still on `blc/1` stays on it unless converting is a phase's stated job: merged PRs cite the phase ids as they were, so a silent re-lettering strands them. Convert deliberately, and record the mapping.
+   - Write the updated ledger to `docs/blc/briefs/<name>/ledger.md` in the repo (the primary source of truth) and commit it to the current branch.
    - Writing to the branch is not an inconsistency with `blc-start-brief`: initiation is the only ledger write that goes straight to `main`, and every later change returns to `main` by merge.
    - That is also why the *previous* phase is marked `done` here rather than on `main`. That phase is already merged, and its branch — whether or not it still exists — is no longer a path to `main`, so the next phase's branch carries its closing marker. The last phase has no successor, so `brief/<serial>-closeout` carries the brief's close.
    - Update the memory file and MEMORY.md in place (secondary, for fast in-session lookup).

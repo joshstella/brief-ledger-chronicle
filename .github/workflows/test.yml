@@ -43,4 +43,4 @@ jobs:
       # prove this repository obeys the Contract it publishes — a distinct claim, and the
       # one a consumer is entitled to assume. Exits 1 on any [defect].
       - name: Check this repo against the briefs Contract
-        run: bash tools/validate-briefs.sh docs/briefs
+        run: bash tools/validate-briefs.sh docs/blc/briefs

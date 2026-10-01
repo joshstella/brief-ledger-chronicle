@@ -18,7 +18,7 @@ whole lifecycle.
 ## Layout
 
 ```
-docs/briefs/
+docs/blc/briefs/
   _drafts/            committed holding area for unnumbered drafts
   NNNN-slug/          one filed brief
     brief.md          the spec (carries the identity line)
@@ -30,14 +30,14 @@ docs/briefs/
 
 A serial is a zero-padded four-digit identity handle (`0001`, `0002`, …) on the
 **folder**. It is **assigned at filing time by `/blc-create-brief`** — next serial = max in
-`docs/briefs/` + 1 — never chosen by the author and never assigned during authoring.
+`docs/blc/briefs/` + 1 — never chosen by the author and never assigned during authoring.
 That single point of assignment is what keeps numbers from colliding. The serial encodes
 **identity only** — never status or phase.
 
 Single assignment is not the same as no race. Two checkouts can fetch the same
 `origin/main`, compute the same next serial, and both be right until one pushes. Contract
 v1.2 records this as open. The narrow answer is to say out loud that you are taking a
-number, before you take it: see `docs/state/README.md`. It closes the window by making the
+number, before you take it: see `docs/blc/state/README.md`. It closes the window by making the
 claim visible, not by locking anything.
 
 ## The identity line
@@ -341,7 +341,7 @@ writes to, or scans that directory — it is project-owned.
 After `tools/validate-briefs.sh` finishes the eight Contract clauses, it runs
 `brief-checks/*.sh` in sorted filename order. Each script receives the briefs directory as
 its first argument (the same path you passed to `validate-briefs.sh`, default
-`docs/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
+`docs/blc/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
 script printed is echoed under its filename.
 
 Toolkit defects are evaluated first. A project check cannot suppress, downgrade, or clear a
@@ -380,7 +380,7 @@ If you automate anything that files briefs, route it through `/blc-create-brief`
 ## Known limitation — the ledger is an archive, and a bad inbox
 
 A ledger records what a brief is doing. Nothing reads it back. Every command here writes
-into `docs/briefs/`; none of them asks what is already sitting there unfinished. So a brief
+into `docs/blc/briefs/`; none of them asks what is already sitting there unfinished. So a brief
 that stalls stays stalled silently, and the cost of the stall grows in a place the record
 never looks.
 
@@ -404,7 +404,7 @@ there is no equivalent for one already in flight. `BRIEFS-8` flags a gap in the 
 sequence; nothing flags a gap in time.
 
 The structural half is sharper than the record-keeping half. A deferred phase parks code on
-a branch, and `docs/briefs/` has no concept of branches. The ledger names one in prose,
+a branch, and `docs/blc/briefs/` has no concept of branches. The ledger names one in prose,
 nothing resolves it, nothing notices it decaying, and deleting the branch leaves the ledger
 reading "code on branch" while pointing at nothing.
 

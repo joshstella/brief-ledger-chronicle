@@ -1,12 +1,12 @@
 ---
 name: blc-create-brief
 description: >-
-  File an unnumbered draft into docs/briefs/ with the next serial. Use when the user asks to blc-create-brief or file a draft brief.
+  File an unnumbered draft into docs/blc/briefs/ with the next serial. Use when the user asks to blc-create-brief or file a draft brief.
 ---
 
 # blc-create-brief
 
-File an authored, **unnumbered** brief into `docs/briefs/` under the next serial. This
+File an authored, **unnumbered** brief into `docs/blc/briefs/` under the next serial. This
 command is the **single point of serial assignment** — briefs are authored number-free
 and get their identity here, at filing time, not while being written.
 
@@ -14,7 +14,7 @@ and get their identity here, at filing time, not while being written.
 
 `blc-create-brief <path-to-draft.md> [slug]`
 
-- `<path-to-draft.md>` — an unnumbered draft brief (usually from `docs/briefs/_drafts/`,
+- `<path-to-draft.md>` — an unnumbered draft brief (usually from `docs/blc/briefs/_drafts/`,
   or any path). It contains a `# H1` title and a provenance line stamped at draft-write
   time: `**Created:** <ISO-8601 UTC>` and `**Author:** <email>`, optionally
   `**Owner:** <email>`, `**Jira:** <Epic key>` and `**Depends on:** …`.
@@ -25,19 +25,19 @@ and get their identity here, at filing time, not while being written.
 
 ## Steps
 
-0. **Preflight.** If `docs/briefs/` or `docs/briefs/_drafts/` is missing, **stop** and
+0. **Preflight.** If `docs/blc/briefs/` or `docs/blc/briefs/_drafts/` is missing, **stop** and
    tell the user to run `blc-init-briefs` first. Do not scaffold the structure here — setup
    is `blc-init-briefs`'s job; this command assumes it exists.
-1. **Compute the next serial.** List `docs/briefs/`; from each entry **whose name begins
+1. **Compute the next serial.** List `docs/blc/briefs/`; from each entry **whose name begins
    with four digits**, parse `NNNN`; take the max and add 1; zero-pad to four. Entries
    without a leading four-digit prefix (`_drafts/`, `README`, etc.) are ignored. If there
    are none, start at `0001`. Enacts `BRIEFS-8` (contiguity).
-2. **Collision guard.** If `docs/briefs/NNNN-*` already exists, increment until free —
+2. **Collision guard.** If `docs/blc/briefs/NNNN-*` already exists, increment until free —
    defensive against a stale read. Assignment must reflect the directory *now*. Enacts
    `BRIEFS-3` (unique serials); its race is the known limitation recorded in the Contract.
-   Then check `docs/state/*.md` for another contributor claiming this serial. A claim there
+   Then check `docs/blc/state/*.md` for another contributor claiming this serial. A claim there
    is the only warning available for the half of the race the directory cannot show: they
-   have taken the number and not filed yet, so `docs/briefs/` looks free and is not. If one
+   have taken the number and not filed yet, so `docs/blc/briefs/` looks free and is not. If one
    is found in a file that is not yours, surface it and ask before taking the number.
 3. **Resolve the slug.** By the precedence above. Strip any leading `NNNN-` from a
    derived slug (in case the draft filename was pre-numbered). Validate `^[a-z0-9-]+$`
@@ -45,14 +45,14 @@ and get their identity here, at filing time, not while being written.
    reject otherwise. If the slug came from the H1 and exceeds ~40 chars, stop and ask for
    an explicit slug. If the slug already names an existing brief under a different
    serial, warn and surface it, then proceed.
-4. **Stamp and file.** Create `docs/briefs/NNNN-slug/` and write `brief.md` from the
+4. **Stamp and file.** Create `docs/blc/briefs/NNNN-slug/` and write `brief.md` from the
    draft (`BRIEFS-4`). Produce **exactly one** identity line directly under the H1 in the
    shape `BRIEFS-5` requires, prepending the
    serial and **carrying the draft's provenance forward unchanged**:
    `**Serial:** #NNNN · **Created:** <from draft> · **Author:** <from draft> · **Owner:** <from draft> · **Jira:** <from draft> · **Depends on:** <deps>`
    Write `Owner` and `Jira` only if the draft carried them. Never add them. An omitted
    `Owner` means `Author` when it is read, and an added one would remove that fallback. Keep
-   them before `Depends on`, which goes last — see `docs/briefs/README.md`, "`Depends on`
+   them before `Depends on`, which goes last — see `docs/blc/briefs/README.md`, "`Depends on`
    goes last". `<deps>` comes from the draft's
    `**Depends on:**` line — **which, along with the draft's separate `Created`/`Author`
    line and any `Owner`/`Jira` line, is consumed into this single line so no duplicate
@@ -63,23 +63,23 @@ and get their identity here, at filing time, not while being written.
    identity source — every repo already has one, so there is nothing extra to install or
    keep in sync.
 5. **Clean up.** Remove the draft file if it was a staging file. If your own
-   `docs/state/<git user.email lowercased>.md` claimed this serial, delete that entry — the
-   brief is filed, so the claim is now derivable from `docs/briefs/` and a declaration that
+   `docs/blc/state/<git user.email lowercased>.md` claimed this serial, delete that entry — the
+   brief is filed, so the claim is now derivable from `docs/blc/briefs/` and a declaration that
    repeats the record is the stale second copy this convention exists to avoid.
    *Note:* this command does not write a claim on the way in. The serial is computed and
    filed in the same run, so a claim written here would be cleared seconds later without
    ever being pushed. A claim is worth writing when a person decides to take a number and
-   before they run this — see `docs/state/README.md`.
+   before they run this — see `docs/blc/state/README.md`.
 6. **Report** the created path, serial, and depends-on. Do **not** auto-commit — leave
    that to `blc-commit-push-pr` (which carries `#NNNN` into the PR title).
 
 ## Rules
 
-The structural rules this command enacts are stated in `docs/contracts/v1.2.md`, clauses
+The structural rules this command enacts are stated in `docs/blc/contracts/v1.2.md`, clauses
 `BRIEFS-1` to `BRIEFS-8`. The steps above cite them rather than restate them, so the
 procedure cannot drift from the rule it implements.
 
-- **One brief per invocation.** Serial assignment re-reads `docs/briefs/` each run and
+- **One brief per invocation.** Serial assignment re-reads `docs/blc/briefs/` each run and
   files one placement; this is what keeps numbering atomic and collision-free.
 - The serial is assigned **only** here. Drafts are authored unnumbered, by whatever tool or
   hand writes them, and never guess a number.

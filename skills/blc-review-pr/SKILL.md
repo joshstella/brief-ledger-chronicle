@@ -68,7 +68,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
    - branch: `git diff <default-branch>...HEAD`.
 
 2. **Read the governing brief — this is what gives the review teeth on judgment, not just defects.**
-   - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the branch name against `docs/briefs/`, `briefs/`, `docs/`. A branch is `brief/<serial>-<letter>-<kebab>`, so the serial is in it.
+   - Find it: from the PR body's `## Brief` line if reviewing a PR; otherwise match the branch name against `docs/blc/briefs/`, `briefs/`, `docs/`. A branch is `brief/<serial>-<letter>-<kebab>`, so the serial is in it.
    - If found, read its **settled** decisions, its **open** decisions, and which phase this change belongs to.
    - If none is found, note "no governing brief" and review on preferences + AGENTS.md/CLAUDE.md alone — but say so, and treat intent as a **Your call** item, since it can't be checked.
 
@@ -103,4 +103,4 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 
 8. **Bug ledger.** Save confirmed **correctness** bugs (not preference/convention findings) to a `project` memory file keyed by branch: `review-<branch>.md`. Each entry: file, line, summary, status (`open`/`fixed`). On re-review of the same branch, flip previously-open bugs to `fixed` if the new diff resolves them — update in place, don't duplicate. Record the PR number in the file once it exists. Add/update the entry in MEMORY.md.
 
-9. **Big decisions → the brief's ledger.** Distinct from the bug ledger above and routed elsewhere on purpose: when a **Your call** item (or any ambiguity surfaced in this review) is resolved through the interaction with reasoning **not already in the brief**, append a **Big decisions** entry to the governing brief's `ledger.md` (format and rules in `docs/briefs/README.md`). This is the durable, narrative record; the bug ledger is transient branch tracking. Record **only information-bearing resolutions** — never a clean approval, never a bug fix. If nothing was genuinely decided, write nothing; the section is sparse by design, and that sparseness is the whole point.
+9. **Big decisions → the brief's ledger.** Distinct from the bug ledger above and routed elsewhere on purpose: when a **Your call** item (or any ambiguity surfaced in this review) is resolved through the interaction with reasoning **not already in the brief**, append a **Big decisions** entry to the governing brief's `ledger.md` (format and rules in `docs/blc/briefs/README.md`). This is the durable, narrative record; the bug ledger is transient branch tracking. Record **only information-bearing resolutions** — never a clean approval, never a bug fix. If nothing was genuinely decided, write nothing; the section is sparse by design, and that sparseness is the whole point.
