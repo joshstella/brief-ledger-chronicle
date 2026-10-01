@@ -12,9 +12,11 @@ test_ship_places_the_contract() {
   assert_file "$TARGET/docs/blc/contracts/v1.md"
   assert_file "$TARGET/docs/blc/contracts/v1.1.md"
   assert_file "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.3.md"
   assert_file "$TARGET/docs/blc/contracts/README.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.1.md"
   assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.3.md"
 }
 
 test_ship_places_the_contract_for_cursor_too() {
@@ -23,6 +25,7 @@ test_ship_places_the_contract_for_cursor_too() {
   assert_file "$TARGET/docs/blc/contracts/v1.md"
   assert_file "$TARGET/docs/blc/contracts/v1.1.md"
   assert_file "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.3.md"
   assert_file "$TARGET/docs/blc/contracts/README.md"
 }
 
@@ -41,7 +44,8 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
   # let a tool named in the omitted document go unchecked.
   for doc in "$TARGET/docs/blc/briefs/README.md" "$TARGET/docs/blc/briefs/_drafts/README.md" \
              "$TARGET/docs/blc/contracts/README.md" "$TARGET/docs/blc/contracts/v1.md" \
-             "$TARGET/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.2.md"; do
+             "$TARGET/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.2.md" \
+             "$TARGET/docs/blc/contracts/v1.3.md"; do
     [ -f "$doc" ] || continue
     # Underscores and digits included so a tool named off the lowercase-hyphen
     # convention is caught rather than skipped. A pattern that silently ignores the
@@ -146,7 +150,8 @@ test_ship_the_installed_contract_names_a_check_that_exists() {
   assert_status 0
   local contract path found=0
   for contract in "$TARGET/docs/blc/contracts/v1.md" "$TARGET/docs/blc/contracts/v1.1.md" \
-                  "$TARGET/docs/blc/contracts/v1.2.md"; do
+                  "$TARGET/docs/blc/contracts/v1.2.md" \
+                  "$TARGET/docs/blc/contracts/v1.3.md"; do
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$TARGET/$path" ] \
@@ -169,6 +174,16 @@ test_ship_the_briefs_readme_is_this_repos_own_file() {
     || fail "installed Contract v1.1 differs from this repository's own copy"
   cmp -s "$REPO_ROOT/docs/blc/contracts/v1.2.md" "$TARGET/docs/blc/contracts/v1.2.md" \
     || fail "installed Contract v1.2 differs from this repository's own copy"
+  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.3.md" "$TARGET/docs/blc/contracts/v1.3.md" \
+    || fail "installed Contract v1.3 differs from this repository's own copy"
+}
+
+# Publishing a version means marking the one before it superseded. Two versions that both say
+# `current` leave a reader to guess which clause text binds.
+test_ship_exactly_one_contract_version_is_current() {
+  local current
+  current=$(grep -lx '\*\*Status:\*\* current' "$REPO_ROOT"/docs/blc/contracts/v*.md | sed 's#.*/##')
+  assert_count "v1.3.md" "$current" "Contract versions marked current"
 }
 
 # A structural guard rather than a behavioural one: the drift can only come back by

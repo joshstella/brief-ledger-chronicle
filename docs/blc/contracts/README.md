@@ -15,10 +15,12 @@ legend cannot drift against itself.
 |---|---|---|
 | [v1](v1.md) | the structure of `docs/briefs/` | superseded by v1.1 |
 | [v1.1](v1.1.md) | the structure of `docs/briefs/` | superseded by v1.2 |
-| [v1.2](v1.2.md) | the structure of `docs/briefs/`, and `ledger.md` consistency | current |
+| [v1.2](v1.2.md) | the structure of `docs/briefs/`, and `ledger.md` consistency | superseded by v1.3 |
+| [v1.3](v1.3.md) | the structure of `docs/blc/briefs/`, and `ledger.md` consistency | current |
 
 A version states what holds for that version. A later version supersedes it without making
-it retroactively false.
+it retroactively false. v1 to v1.2 name `docs/briefs/`, the root before v1.3.
+That path is not in an installed copy: an install writes `docs/blc/briefs/`.
 
 ## What a Contract does not do
 

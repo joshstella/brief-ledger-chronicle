@@ -342,6 +342,7 @@ ownership_map() {
     docs/blc/contracts/v1.md \
     docs/blc/contracts/v1.1.md \
     docs/blc/contracts/v1.2.md \
+    docs/blc/contracts/v1.3.md \
     docs/blc/state/README.md \
     tools/validate-briefs.sh \
     tools/open-briefs.sh \
@@ -739,7 +740,7 @@ echo "Agent host:       $HOST"
 echo ""
 echo "This will create or update:"
 echo "  $TARGET_DIR/docs/blc/briefs/       (brief/ledger structure)"
-echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.2 — the briefs convention)"
+echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.3 — the briefs convention)"
 echo "  $TARGET_DIR/docs/blc/chronicles/   (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/blc/install-log/  (append-only record of every install)"
 echo "  $TARGET_DIR/docs/blc/state/        (one declaration per contributor)"

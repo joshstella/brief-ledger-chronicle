@@ -6,7 +6,7 @@
 # negative fixtures are the test; the self-check at the bottom is the claim that
 # this repo complies.
 #
-# Clause text is in docs/blc/contracts/v1.2.md (BRIEFS-1..8 unchanged from v1) and is not restated
+# Clause text is in docs/blc/contracts/v1.3.md (BRIEFS-1..8 unchanged from v1) and is not restated
 # here.
 
 VALIDATOR() { printf '%s' "$REPO_ROOT/tools/validate-briefs.sh"; }
@@ -377,7 +377,8 @@ test_briefs_this_repo_satisfies_contract_v1() {
 test_briefs_every_named_check_path_resolves() {
   local contract path found=0
   for contract in "$REPO_ROOT/docs/blc/contracts/v1.md" "$REPO_ROOT/docs/blc/contracts/v1.1.md" \
-                  "$REPO_ROOT/docs/blc/contracts/v1.2.md"; do
+                  "$REPO_ROOT/docs/blc/contracts/v1.2.md" \
+                  "$REPO_ROOT/docs/blc/contracts/v1.3.md"; do
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$REPO_ROOT/$path" ] || fail "${contract##*/} names a check that does not exist: $path"

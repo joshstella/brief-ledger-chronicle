@@ -28,7 +28,7 @@ hardcodes `docs/state`, `docs/install-log`, `docs/orientation.md`,
 install writes to `docs/blc/`: `install.sh` sources, destinations, ownership map and appended
 `.gitignore` block all move here (re-plan below). Update the skills, templates, `README.md`,
 `Manifesto.md`, the slides, `.gitignore` and the tests. Tests cover the new default and the
-positional override in each tool.
+positional override in each tool. Publish Contract v1.3, which was `d` (re-plan below).
 
 **b — the record.** Rewrite the path references inside existing briefs and ledgers so they
 resolve. Today that is 153 references in 28 files. This is the brief's settled exception to "The
@@ -39,7 +39,8 @@ record is the work". The chronicle is a rendering, so the next chronicle run ref
 decisions 1 and 2 settle. Blocked by both. A fresh install is already correct after `a`.
 
 **d — the contract.** Contract v1.3 re-scopes `BRIEFS-1` to `BRIEFS-10` to the new root.
-v1.2 stays published.
+v1.2 stays published. Done in `a` instead. `d` stays `pending` until `c` is settled, because
+the upgrade path may need a clause. If it does not, `d` is `skipped`.
 
 ## Dependency structure
 
@@ -80,6 +81,14 @@ writes, and `c` keeps only the upgrade of an existing install. The cost: an upgr
 existing install is broken between `a` and `c`. There is one user. A fallback in each tool to
 `docs/briefs` was rejected, because it is a third layout the brief does not plan for.
 
+**Contract v1.3 moves into `a`, settled 2026-10-01.** The reason is the same as for the fresh
+install. Every Contract version ships, and v1 to v1.2 say they cover `docs/briefs/`. A fresh
+install from `main` after `a` would hold a Contract about a directory it does not have, until
+`d` merged. A test caught this in `a`. v1.3 changes the root and nothing else: the clause
+text, the tags and the checks are the same. v1.2 is marked superseded and its text is not
+edited, which keeps the settled "v1.2 stays published". Rejected: mark the old paths as not
+in an installed copy until `d`, which keeps an install inconsistent on purpose for two phases.
+
 **The brief is retitled.** The draft was "Someone else's docs tree". On filing, its slug became
 `blc-docs-tree`, and on 2026-10-01 the title was changed to match: "The BLC docs tree".
 
@@ -103,6 +112,10 @@ existing install is broken between `a` and `c`. There is one user. A fallback in
   next chronicle run.
 - Merged PR descriptions and commit messages keep the old paths. The brief records this cost
   in its tension.
+- An upgrade of an old-layout install between `a` and `c` splits its install log. The old log
+  stays at `docs/install-log/`, and the installer starts a new one at `docs/blc/install-log/`.
+  The installer finds no previous entries, so it removes no stale toolkit paths. That is safe,
+  and `c` has to join the two logs.
 - A squash commit has no hash until its PR merges. So `b`'s branch adds `a`'s squash commit to
   `docs/blc/ignore-revs`, and `c`'s branch adds `b`'s. Between the merge of `a` and the merge
   of `b`, every brief shows the move as its last touch.

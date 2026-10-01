@@ -84,7 +84,7 @@ places, which is what makes a single source possible.
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
 
 **Shipped documents** — this repository's own `docs/blc/briefs/README.md`, the briefs Contract
-(`docs/blc/contracts/`, currently v1.2), and the tools those docs name:
+(`docs/blc/contracts/`, currently v1.3), and the tools those docs name:
 
 | | Purpose |
 |---|---|
@@ -123,7 +123,7 @@ The installer never files a brief. `blc-create-brief` is the single point of ser
 Anything else writing a `NNNN-slug/` folder bypasses both its allocation and its collision
 guard — see "Known limitation — writers outside the pipeline" in `docs/blc/briefs/README.md`.
 
-See `docs/blc/briefs/README.md` for the convention. See `docs/blc/contracts/v1.2.md` for the
+See `docs/blc/briefs/README.md` for the convention. See `docs/blc/contracts/v1.3.md` for the
 structural invariants.
 
 ## Requirements
