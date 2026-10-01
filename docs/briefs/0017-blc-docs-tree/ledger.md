@@ -1,16 +1,16 @@
-# Ledger — #0017 Someone else's docs tree
+# Ledger — #0017 The BLC docs tree
 
-`blc/2 #0017 pending a:pending b:pending c:pending d:pending`
+`blc/2 #0017 in-progress a:in-progress(brief/0017-a-the-move) b:pending c:pending d:pending`
 
 **Brief:** `docs/briefs/0017-blc-docs-tree/brief.md`
 **Started:** 2026-10-01
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the move | pending | — |
+| a | the move | in-progress | `brief/0017-a-the-move` |
 | b | the record | pending | — |
 | c | the installer | pending | — |
 | d | the contract | pending | — |
@@ -18,8 +18,8 @@
 The ids and labels are the brief's. What each phase covers changed against the repository, as
 the re-plan below records.
 
-**a — the move.** `git mv` `docs/briefs/`, `docs/contracts/`, `docs/chronicles/` and
-`docs/state/` under `docs/blc/`. Change the default root in the five tools that take a briefs
+**a — the move.** `git mv` `docs/briefs/`, `docs/contracts/`, `docs/chronicles/`,
+`docs/state/` and `docs/orientation.md` under `docs/blc/` (decision 3). Change the default root in the five tools that take a briefs
 directory: `validate-briefs.sh`, `open-briefs.sh`, `list-briefs.sh`, `orient.sh` and
 `jira-csv.sh`. Keep each positional argument. `orient.sh` also hardcodes `docs/state`,
 `docs/install-log`, `docs/orientation.md`, `docs/chronicles/chronicle.md` and
@@ -72,14 +72,17 @@ files it is 636 references in 80 files.
 
 **`#0013` is closed.** The settled decision that it finishes first is met.
 
+**The brief is retitled.** The draft was "Someone else's docs tree". On filing, its slug became
+`blc-docs-tree`, and on 2026-10-01 the title was changed to match: "The BLC docs tree".
+
 ## Open decisions
 
 | # | decision | blocks |
 |---|---|---|
 | 1 | From the brief: does an upgrade migrate an existing install, or refuse and print instructions? #0012 adds a constraint the brief did not name. The ownership map marks `docs/briefs`, `docs/state` and `docs/chronicles` as project trees, which the installer never changes. Moving them is a change to project-owned files. | `c` |
 | 2 | From the brief: what does an install do when `docs/blc/` exists and is not the toolkit's? | `c` |
-| 3 | New: does `docs/orientation.md` move to `docs/blc/orientation.md`? The project writes it, the toolkit reads it, and the installer does not ship it (#0008). | `a` |
-| 4 | New: the brief's tension says "Once there is a second adopter, the answer changes" about rewriting the record. #0013's evidence came from an install in another repository. Does that install count as a second adopter? If it does, the settled decision behind `b` rests on a condition that no longer holds. | `b` |
+| 3 | **Settled 2026-10-01: it moves.** `docs/orientation.md` becomes `docs/blc/orientation.md`. `orient.sh` reads it, and the brief's claim is one root for what the toolkit uses. | `a` |
+| 4 | **Settled 2026-10-01: still one user.** #0013's evidence came from an install in another repository owned by the same person. The condition behind `b` holds. | `b` |
 
 ## Complications
 
