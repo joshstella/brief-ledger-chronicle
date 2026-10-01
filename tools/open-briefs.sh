@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Answer "which briefs are open?" and say what it is costing to leave them open.
 #
-# Usage: open-briefs.sh [briefs-dir]     (default: docs/briefs)
+# Usage: open-briefs.sh [briefs-dir]     (default: docs/blc/briefs)
 #
 # No finding exits non-zero. This reports; it does not gate. A long deferral is often
 # the right call, so failing a build on one would forbid the thing this is meant to
-# surface — see docs/briefs/README.md, "the ledger is an archive, and a bad inbox".
+# surface — see docs/blc/briefs/README.md, "the ledger is an archive, and a bad inbox".
 # A broken environment is not a finding: a missing briefs directory or a target outside
 # a repository exits 2, because those mean the question could not be asked at all.
 #
-# The vocabulary it reads is defined once in docs/briefs/README.md, "Ledger status".
+# The vocabulary it reads is defined once in docs/blc/briefs/README.md, "Ledger status".
 # This script does not restate it. One state is not in that vocabulary because no
 # ledger asserts it: a brief with no ledger.md has not been started. That is derived
 # from absence rather than read, and it is a resting state, not a finding — filing
@@ -29,7 +29,7 @@
 # a surprise, and one that reaches the network cannot run offline. Fetch first if the
 # numbers need to be current.
 
-BRIEFS_DIR="${1:-docs/briefs}"
+BRIEFS_DIR="${1:-docs/blc/briefs}"
 
 # The phase-row matcher is shared with validate-briefs.sh, so it lives in lib/ rather
 # than here. A missing library is a broken install, not a finding: it exits 2 with the
@@ -151,7 +151,7 @@ branch_ref() {
 }
 
 # Classify every field of a pointer, one `kind value` line each. The vocabulary is in
-# docs/briefs/README.md, "Ledger status": a branch, `PR#14`, and `!123` for a GitLab merge
+# docs/blc/briefs/README.md, "Ledger status": a branch, `PR#14`, and `!123` for a GitLab merge
 # request, separated by commas. `commit <sha>` is not handled because it cannot arrive: the
 # status line is split on spaces, so it only survives on a closed phase, which is never read.
 #

@@ -28,7 +28,7 @@
 #
 # Fenced blocks are skipped, and that is not a refinement — it is the third way these two
 # readers could disagree. Anchoring defeats an example with prose in front of it, but not an
-# example sitting at column 0 inside a fence, which is exactly how `docs/briefs/README.md`
+# example sitting at column 0 inside a fence, which is exactly how `docs/blc/briefs/README.md`
 # shows the line. A ledger that documents its own format would have handed a reader the
 # example instead of its own status. Found in review, before any ledger here did it.
 #

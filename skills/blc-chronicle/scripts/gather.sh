@@ -9,7 +9,7 @@
 # first. Used by the closed-date incremental-run mechanism.
 set -euo pipefail
 
-BRIEFS_DIR="docs/briefs"
+BRIEFS_DIR="docs/blc/briefs"
 SINCE="${1:-}"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
@@ -69,7 +69,7 @@ echo
 
 rm -f "$tmp"
 
-echo "## Parked / considered — docs/briefs/_drafts"
+echo "## Parked / considered — docs/blc/briefs/_drafts"
 if [ -d "$BRIEFS_DIR/_drafts" ]; then
   found=no
   for f in "$BRIEFS_DIR/_drafts"/*.md ; do

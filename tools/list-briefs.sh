@@ -41,7 +41,7 @@ while [ $# -gt 0 ]; do
     *) break ;;
   esac
 done
-BRIEFS_DIR="${1:-docs/briefs}"
+BRIEFS_DIR="${1:-docs/blc/briefs}"
 # The scan behind --tsv feeds the chronicle, which narrates every brief. A filtered scan
 # would be a second "which briefs" for it to disagree with.
 if [ "$MODE" = tsv ] && [ -n "$OWNER" ]; then
