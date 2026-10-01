@@ -1,6 +1,6 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:done(PR#69) b:done(PR#75) c:in-progress(brief/0007-c-my-assignments,PR#76) d:pending`
+`blc/2 #0007 in-progress a:done(PR#69) b:done(PR#75) c:done(PR#76) d:pending`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the mapping | done (PR#69) | — |
 | b | the fields | done (PR#75) | — |
-| c | my assignments | in-progress | `brief/0007-c-my-assignments` |
+| c | my assignments | done (PR#76) | — |
 | d | the publisher | pending | — |
 
 **a — the mapping.** `docs/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
