@@ -1,6 +1,6 @@
 # Ledger — #0016 The readers that guess
 
-`blc/2 #0016 in-progress a:in-progress(brief/0016-a-the-identity-reader) b:pending c:pending d:pending`
+`blc/2 #0016 in-progress a:done(PR#70) b:in-progress(brief/0016-b-the-pointer-vocabulary) c:pending d:pending`
 
 **Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the identity reader | in-progress | `brief/0016-a-the-identity-reader` |
-| b | the pointer vocabulary | pending | — |
+| a | the identity reader | done (PR#70) | — |
+| b | the pointer vocabulary | in-progress | `brief/0016-b-the-pointer-vocabulary` |
 | c | the forge probe | pending | — |
 | d | the forge in prose | pending | — |
 
