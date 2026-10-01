@@ -114,36 +114,6 @@ entry_index()   { printf '%s' "${1%%:*}"; }
 # so the two cannot drift apart. The positional read that used to sit here reported
 # `[no-line]` for placements the other reader handled; #0014 phase `b` has the history.
 
-# Pull the branch out of a pointer, which may hold a branch, a PR, a commit, or
-# a comma-separated pair. Anything that is not a PR or a bare commit is a branch.
-pointer_branch() {
-  local p field
-  p="$1"
-  local IFS=,
-  for field in $p; do
-    field="${field# }"
-    case "$field" in
-      PR#*|"PR "*|commit\ *) continue ;;
-      "") continue ;;
-      *) printf '%s' "$field"; return 0 ;;
-    esac
-  done
-  return 1
-}
-
-pointer_pr() {
-  local p field
-  p="$1"
-  local IFS=,
-  for field in $p; do
-    field="${field# }"
-    case "$field" in
-      PR#*) printf '%s' "${field#PR#}"; return 0 ;;
-    esac
-  done
-  return 1
-}
-
 branch_ref() {
   local b="$1"
   if git rev-parse --verify --quiet "refs/heads/$b" >/dev/null 2>&1; then
@@ -153,6 +123,51 @@ branch_ref() {
     printf 'refs/remotes/origin/%s' "$b"; return 0
   fi
   return 1
+}
+
+# Classify every field of a pointer, one `kind value` line each. The vocabulary is in
+# docs/briefs/README.md, "Ledger status": a branch, `PR#14`, and `!123` for a GitLab merge
+# request, separated by commas. `commit <sha>` is not handled because it cannot arrive: the
+# status line is split on spaces, so it only survives on a closed phase, which is never read.
+#
+# Branches have no fixed shape, so a field that is none of the fixed tokens is a branch only
+# if a branch by that name exists. Otherwise it is `unknown`, and the caller reports it in
+# words that do not pick a cause: a deleted branch and a tracker key look identical here, and
+# a deleted branch is the stale pointer this tool exists to catch. Every field is read, so an
+# unknown one neither hides a real branch after it nor vanishes behind one before it.
+#
+# `set -f` for the reason given at `blc_status_phase_entries`: the pointer is data from a file,
+# and an unquoted split globs, so `(*)` would report the working directory's file names.
+pointer_fields() {
+  local field had_f=0
+  local IFS=,
+  case "$-" in *f*) had_f=1 ;; esac
+  set -f
+  for field in $1; do
+    field="${field#"${field%%[! ]*}"}"
+    field="${field%"${field##*[! ]}"}"
+    case "$field" in
+      "") ;;
+      # Digits only: anything else would reach `gh` as a PR number, or as an option.
+      PR#*)
+        case "${field#PR#}" in
+          ""|*[!0-9]*) printf 'unknown %s\n' "$field" ;;
+          *) printf 'pr %s\n' "${field#PR#}" ;;
+        esac ;;
+      '!'*)
+        case "${field#!}" in
+          ""|*[!0-9]*) printf 'unknown %s\n' "$field" ;;
+          *) printf 'mr %s\n' "${field#!}" ;;
+        esac ;;
+      *)
+        if branch_ref "$field" >/dev/null; then
+          printf 'branch %s\n' "$field"
+        else
+          printf 'unknown %s\n' "$field"
+        fi ;;
+    esac
+  done
+  [ "$had_f" -eq 1 ] || set +f
 }
 
 # ── Walk the briefs ──────────────────────────────────────────────────────────
@@ -262,37 +277,66 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     print_header
     OPEN=$((OPEN + 1))
 
-    branch="$(pointer_branch "$ptr")" || branch=""
-    pr="$(pointer_pr "$ptr")" || pr=""
+    # The status line is split on spaces, so `(feature/x, PR#14)` arrives as `(feature/x,`
+    # and the rest is lost. Reading the fragment would measure part of what was written and
+    # report the remainder as absent.
+    case "$entry" in
+      *"("*")") ;;
+      *"("*)
+        finding "[$state]" "phase $idx: pointer is cut at a space; separate its fields with commas only"
+        continue ;;
+    esac
 
-    if [ -z "$branch" ]; then
-      finding "[$state]" "phase $idx: no branch recorded, so nothing can resolve what it parked"
+    branches=""; unknowns=""; pr=""; mr=""
+    while IFS=' ' read -r kind value; do
+      case "$kind" in
+        branch)  branches="$branches$value"$'\n' ;;
+        unknown) unknowns="$unknowns$value"$'\n' ;;
+        pr)      [ -n "$pr" ] || pr="$value" ;;
+        mr)      [ -n "$mr" ] || mr="$value" ;;
+      esac
+    done <<FIELDS
+$(pointer_fields "$ptr")
+FIELDS
+
+    while IFS= read -r field; do
+      [ -n "$field" ] || continue
+      finding "[$state]" "phase $idx: '$field' is not a PR or MR, and no branch by that name exists"
+    done <<UNKNOWN
+$unknowns
+UNKNOWN
+
+    if [ -z "$branches" ]; then
+      # An unknown field may be the branch, deleted. Saying "no branch recorded" beside it
+      # would assert the cause the line above declines to pick.
+      [ -n "$unknowns" ] \
+        || finding "[$state]" "phase $idx: no branch recorded, so nothing can resolve what it parked"
       continue
     fi
 
-    if ! ref="$(branch_ref "$branch")"; then
-      finding "[$state]" "phase $idx: branch '$branch' does not exist; the ledger points at nothing"
-      continue
-    fi
-
-    behind="$(git rev-list --count "$ref..$TRUNK" 2>/dev/null || printf '?')"
-    ahead="$(git rev-list --count "$TRUNK..$ref" 2>/dev/null || printf '?')"
-
-    detail="phase $idx: $branch — $behind commit(s) of $TRUNK landed since, $ahead unmerged"
-
+    forge=""
     if [ -n "$pr" ]; then
       if [ "$HAVE_GH" -eq 1 ]; then
         pr_state="$(gh pr view "$pr" --json state -q .state 2>/dev/null)"
         [ -n "$pr_state" ] || pr_state="unknown"
-        detail="$detail, PR #$pr $pr_state"
+        forge="$forge, PR #$pr $pr_state"
       else
-        detail="$detail, PR #$pr (state not checked: no gh)"
+        forge="$forge, PR #$pr (state not checked: no gh)"
       fi
-    else
-      detail="$detail, no PR"
     fi
+    # GitLab is not asked yet; detecting the forge is #0016 phase `c`.
+    [ -n "$mr" ] && forge="$forge, MR !$mr (state not checked)"
+    [ -n "$forge" ] || forge=", no PR"
 
-    finding "[$state]" "$detail"
+    while IFS= read -r branch; do
+      [ -n "$branch" ] || continue
+      ref="$(branch_ref "$branch")"
+      behind="$(git rev-list --count "$ref..$TRUNK" 2>/dev/null || printf '?')"
+      ahead="$(git rev-list --count "$TRUNK..$ref" 2>/dev/null || printf '?')"
+      finding "[$state]" "phase $idx: $branch — $behind commit(s) of $TRUNK landed since, $ahead unmerged$forge"
+    done <<BRANCHES
+$branches
+BRANCHES
     # A here-doc rather than a pipe: the loop body increments OPEN, DRIFT and the other
     # counters, and a pipe would run it in a subshell where every one of those increments
     # is discarded at the closing `done`.

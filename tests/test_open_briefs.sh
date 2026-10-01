@@ -12,11 +12,28 @@
 
 QUERY() { printf '%s' "$REPO_ROOT/tools/open-briefs.sh"; }
 
-# PATH without gh, so PR-state lookup takes its documented offline path. The runner
-# puts an inert gh stub on PATH for the installer tests; letting it through here
-# would make the assertions depend on a stub's silence.
+# A short PATH, so the runner's inert gh stub for the installer tests cannot answer here.
+# It does not hide gh: GitHub's Ubuntu runners and many machines install it in /usr/bin.
+# So no fixture run through this puts a PR on an open phase; those use run_query_with_gh.
 run_query() {
   ( cd "$REPO" && PATH="/usr/bin:/bin" bash "$(QUERY)" "$@" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+}
+
+# A gh first on PATH that answers every call with $1 and records its arguments, so a PR
+# lookup never reaches the network and a test can prove which calls were made.
+# usage: ob_gh_stub <state>
+ob_gh_stub() {
+  OB_GH="$TMP/ob-gh"
+  mkdir -p "$OB_GH"
+  : > "$OB_GH/calls"
+  printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/calls"\nprintf "%%s\\n" "%s"\n' \
+    "$OB_GH" "$1" > "$OB_GH/gh"
+  chmod +x "$OB_GH/gh"
+}
+
+run_query_with_gh() {
+  ( cd "$REPO" && PATH="$OB_GH:/usr/bin:/bin" bash "$(QUERY)" "$@" ) >"$OUT" 2>"$ERR"
   LAST_STATUS=$?
 }
 
@@ -153,7 +170,8 @@ test_open_briefs_reports_a_deferred_phase_too() {
 }
 
 # The incident this tool exists for: a branch named in the ledger that no longer
-# exists, leaving the record pointing at nothing.
+# exists, leaving the record pointing at nothing. The finding names what was checked and
+# not the cause, because a tracker key in the same place reads identically.
 test_open_briefs_reports_a_branch_that_does_not_exist() {
   make_repo
   add_ledger 0001-ghost '`blc/1 #0001 in-progress 1:in-progress(feature/deleted)`' \
@@ -161,7 +179,8 @@ test_open_briefs_reports_a_branch_that_does_not_exist() {
   commit_all
   run_query docs/briefs
   assert_status 0
-  assert_out "branch 'feature/deleted' does not exist"
+  assert_out "phase 1: 'feature/deleted' is not a PR or MR, and no branch by that name exists"
+  assert_not_contains "no branch recorded" "$OUT"
 }
 
 test_open_briefs_reports_an_open_phase_with_no_branch_recorded() {
@@ -172,6 +191,153 @@ test_open_briefs_reports_an_open_phase_with_no_branch_recorded() {
   run_query docs/briefs
   assert_status 0
   assert_out "no branch recorded"
+}
+
+# ── The pointer vocabulary ───────────────────────────────────────────────────
+#
+# Every field of a pointer is read. A field that is no fixed token and no existing branch is
+# reported, never dropped and never taken as the branch, wherever it sits.
+
+ob_open_phase() {
+  make_repo
+  add_ledger 0001-ptr "\`blc/2 #0001 in-progress a:in-progress($1)\`" \
+    '| a | in-progress | doing it |'
+  commit_all
+}
+
+test_open_briefs_an_unknown_field_before_the_branch_does_not_cost_its_measurement() {
+  ob_open_phase 'PROJ-1234,feature/x'
+  make_branch feature/x
+  advance_main 2
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: 'PROJ-1234' is not a PR or MR, and no branch by that name exists"
+  assert_out "phase a: feature/x — 2 commit(s) of main landed since"
+}
+
+test_open_briefs_an_unknown_field_after_the_branch_is_reported() {
+  ob_open_phase 'feature/x,PROJ-1234'
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: feature/x — 0 commit(s) of main landed since"
+  assert_out "phase a: 'PROJ-1234' is not a PR or MR, and no branch by that name exists"
+}
+
+# A closed phase's pointer is never resolved, so nothing is guessed about it (decision 14).
+test_open_briefs_does_not_read_a_closed_phase_pointer() {
+  make_repo
+  add_ledger 0001-ptr '`blc/2 #0001 done a:done(PR#3,PROJ-1234)`' \
+    '| a | done (PR#3) | did it |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "PROJ-1234" "$OUT"
+  assert_out "Nothing open."
+}
+
+test_open_briefs_reads_a_merge_request_without_asking_a_forge() {
+  ob_open_phase 'feature/x,!123'
+  make_branch feature/x
+  ob_gh_stub OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "phase a: feature/x — 0 commit(s) of main landed since, 0 unmerged, MR !123 (state not checked)"
+  assert_not_contains "no branch by that name" "$OUT"
+  [ ! -s "$OB_GH/calls" ] || fail "gh was asked about a merge request: $(cat "$OB_GH/calls")"
+}
+
+test_open_briefs_a_bang_without_digits_is_not_a_merge_request() {
+  ob_open_phase 'feature/x,!abc'
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: '!abc' is not a PR or MR, and no branch by that name exists"
+  assert_not_contains "MR !" "$OUT"
+}
+
+# A field is data, not a pattern. Unguarded, `zz*` would expand to the files below and report
+# each one as a pointer field.
+test_open_briefs_does_not_glob_a_pointer_field() {
+  ob_open_phase 'feature/x,zz*'
+  make_branch feature/x
+  touch "$REPO/zzfile1" "$REPO/zzfile2"
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: 'zz*' is not a PR or MR, and no branch by that name exists"
+  assert_not_contains "zzfile" "$OUT"
+}
+
+# Anything but digits after `PR#` would reach gh as a PR number, or as an option.
+test_open_briefs_a_pr_without_digits_is_reported_and_not_looked_up() {
+  ob_open_phase 'feature/x,PR#abc,PR#'
+  make_branch feature/x
+  ob_gh_stub OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "phase a: 'PR#abc' is not a PR or MR, and no branch by that name exists"
+  assert_out "phase a: 'PR#' is not a PR or MR, and no branch by that name exists"
+  assert_out "no PR"
+  [ ! -s "$OB_GH/calls" ] || fail "gh was asked about a malformed PR: $(cat "$OB_GH/calls")"
+}
+
+# The stub is the control: it proves the PR was looked up, not just echoed from the pointer.
+test_open_briefs_looks_up_a_pr_through_gh() {
+  ob_open_phase 'feature/x,PR#14'
+  make_branch feature/x
+  ob_gh_stub MERGED
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "PR #14 MERGED"
+  grep -q '^pr view 14 ' "$OB_GH/calls" || fail "gh was not asked about PR 14: $(cat "$OB_GH/calls")"
+}
+
+# The status line is split on spaces, so this pointer arrives as `(feature/x,`. Reporting
+# "no branch recorded" here would be wrong: the phase has one, and it exists.
+test_open_briefs_a_pointer_cut_at_a_space_is_reported() {
+  ob_open_phase 'feature/x, PR#14'
+  make_branch feature/x
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: pointer is cut at a space; separate its fields with commas only"
+  assert_not_contains "no branch recorded" "$OUT"
+  assert_out "1 open phase(s)"
+}
+
+# `commit <sha>` holds a space. On a closed phase it is never read, so it costs nothing.
+test_open_briefs_a_commit_on_a_closed_phase_is_not_reported() {
+  make_repo
+  add_ledger 0001-ptr '`blc/1 #0001 done(commit 383ed5b) 1:done(commit 383ed5b)`' \
+    '| `phase 1 — a thing` | done (commit 383ed5b) | did it |'
+  commit_all
+  run_query docs/briefs
+  assert_status 0
+  assert_not_contains "cut at a space" "$OUT"
+  assert_out "Nothing open."
+}
+
+test_open_briefs_measures_every_branch_in_a_pointer() {
+  ob_open_phase 'feature/x,feature/y'
+  make_branch feature/x
+  advance_main 1
+  make_branch feature/y
+  run_query docs/briefs
+  assert_status 0
+  assert_out "phase a: feature/x — 1 commit(s) of main landed since"
+  assert_out "phase a: feature/y — 0 commit(s) of main landed since"
+  assert_out "1 open phase(s)"
+}
+
+# An unknown field may be the deleted branch, so "no branch recorded" beside it would claim a
+# cause. A pointer with only fixed tokens still gets that finding.
+test_open_briefs_says_no_branch_only_when_no_field_could_be_one() {
+  ob_open_phase 'PR#14,!7'
+  ob_gh_stub OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "phase a: no branch recorded"
+  assert_not_contains "no branch by that name" "$OUT"
+  assert_not_contains "cut at a space" "$OUT"
 }
 
 # The redundancy the status line buys has a price, and this is the check that makes
@@ -452,7 +618,7 @@ test_open_briefs_exits_zero_even_when_everything_is_wrong() {
   run_query docs/briefs
   assert_status 0
   assert_out "[drift]"
-  assert_out "does not exist"
+  assert_out "no branch by that name exists"
 }
 
 # ── Usage errors are still errors ────────────────────────────────────────────

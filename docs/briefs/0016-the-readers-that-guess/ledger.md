@@ -69,6 +69,12 @@ named.
 | 10 | **Settled 2026-09-30: it moves.** `BRIEFS-5` checks the shared reader's field values. | `a` |
 | 11 | Does detection ship as a program a skill can run, or only as a sourced library? | `c` |
 | 12 | Is PR/MR state normalised to one vocabulary, or printed as each CLI reports it? | `c` |
+| 13 | **Settled 2026-09-30.** A field that is no fixed token and no existing branch is reported without a cause: "not a PR or MR, and no branch by that name exists". | `b` |
+| 14 | **Settled 2026-09-30.** Only open phases' pointers are read. | `b` |
+| 15 | **Settled 2026-09-30, then reversed.** `PR 14` was to be read as a PR. It cannot arrive; see below. | `b` |
+| 16 | **Settled 2026-09-30.** Every existing branch in a pointer is measured, one line each. | `b` |
+| 17 | **Settled 2026-09-30.** A pointer cut short by a space is reported, not read in part. | `b` |
+| 18 | **Settled 2026-10-01.** A `deferred` or `skipped` reason goes in the phase table, never the pointer. | `b` |
 
 **10 — settled: move.** One reader means one reader, including for the `[defect]` clause.
 "One reader" argues for moving the checks. `BRIEFS-5` is a `[defect]` clause, and moving
@@ -84,6 +90,21 @@ four coordinated `install.sh` edits for each one: roster, prune list, summary, a
 **12.** `gh` reports `OPEN`/`MERGED`/`CLOSED`. `glab` reports `opened`/`merged`/`closed`.
 `open-briefs.sh` output is read by people, and two spellings of one state in one report is
 noise.
+
+**13.** A deleted branch and a tracker key look the same to the parser. A deleted branch is the
+stale pointer the tool exists to catch, so calling every unknown field "unrecognised" would hide
+it, and calling it "a missing branch" is the old guess. The finding states what was checked.
+
+**14.** A closed phase's pointer is never resolved, so the tool never guesses about it, and
+decision 4 has nothing to correct there.
+
+**15 — reversed, and 17.** Decision 15 was settled on a false premise. `blc_status_phase_entries`
+splits the status line on spaces, inside the parentheses too, so `PR 14` reaches the parser as
+`PR`. A space anywhere in an open phase's pointer, as in `(feature/x, PR#14)`, cut the pointer
+and made the tool say "no branch recorded" for a phase that had one. No ledger here had that
+shape. Decision 17 chose to report the cut in `open-briefs.sh` and to keep the shared tokenizer,
+because `BRIEFS-9` reads it and changing it is a gate change. `commit <sha>` holds a space too,
+so it is written only on closed phases, which nothing reads.
 
 ## Complications
 
@@ -172,3 +193,41 @@ Fifteen mutants were run, and all were killed:
 
 The roster mutant is killed by `test_ship_places_a_validator_that_runs`. The filter
 `test_contract_ship` selects no tests, because that file's functions are named `test_ship_*`.
+
+## Phase b — what it does
+
+`open-briefs.sh` classifies every field of an open phase's pointer: `PR#N`, `!N` (a GitLab merge
+request, decision 3), or an existing branch, where `N` is digits. Any other non-empty field is
+reported (decisions 4, 13), so an unknown field no longer hides the branch after it or vanishes behind
+the branch before it. Every existing branch is measured (decision 16). Beside a branch, `!N` is
+shown as `MR !N (state not checked)`; no forge is asked until phase `c`. A pointer cut short by
+a space is reported (decision 17). Fields are not globbed. `docs/briefs/README.md` states the
+pointer format and where a reason goes (decision 18), and its tracker section no longer
+describes the guess.
+
+**Known and left as they are**, by choice on 2026-10-01, after review:
+
+- Only the first PR and the first MR in a pointer are shown; a second is dropped.
+- A pointer with a PR or MR and no branch says "no branch recorded" and does not show them.
+- The cut check says "cut at a space" for `(x)y`, which has no space. A space before the `(`
+  still gives "no branch recorded".
+- A branch listed twice is measured twice.
+- `!0` is read as a merge request, and `PR#0` is looked up as a PR.
+- An empty field, as in `(feature/x,,)`, is dropped without a finding.
+- A branch whose name begins with `PR#` or `!` is never measured. If it is not a well-formed
+  token, it is reported as "no branch by that name exists", though the branch exists.
+
+**What changed in the output.** A branch that does not exist used to read "branch 'x' does not
+exist". It now reads "'x' is not a PR or MR, and no branch by that name exists". On this
+repository's ledgers the output is unchanged.
+
+**Proof.** `tests/test_open_briefs.sh` gains twelve tests. PR lookups go through a `gh` stub
+first on `PATH`, which records its calls. `/usr/bin/gh` exists here and on GitHub's Ubuntu
+runners, so the file's old claim that its short `PATH` hides `gh` was false; it did no harm only
+because no fixture put a PR on an open phase. Twelve mutants were run, and all were killed. One
+first survived because its fixture had a space in the pointer and tested nothing; the fixture
+was fixed.
+
+Review found two faults, both fixed: a pointer field was globbed, so `(*)` reported the working
+directory's file names, and `PR#` took any suffix, so `PR#abc` reached `gh` as a PR number and
+`PR#--web` as an option. The old parser had both. Each fix has a test that fails without it.

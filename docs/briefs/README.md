@@ -135,6 +135,16 @@ failure this convention is trying to avoid, in miniature.
 **`done` points at a PR or a commit, not a branch,** because the branch is usually deleted by
 then. A commit is allowed so the vocabulary works with no forge at all.
 
+**A pointer's fields are separated by commas, with no spaces:** `feature/x,PR#14`. A GitLab
+merge request is written `!123`. The status line is split on spaces, so a space cuts a pointer
+short. On an open phase `open-briefs.sh` reports that, rather than read part of the pointer.
+`commit <sha>` contains a space, so it is written only on a closed phase, whose pointer nothing
+reads.
+
+A pointer holds only those fields. **The reason for `deferred` and `skipped` goes in the phase
+table, not the pointer:** on an open phase, any other field is reported. A branch whose name
+begins with `PR#` or `!` is never measured.
+
 **If a reason was given, it is `deferred`.** Both `in-progress` and `deferred` fit a parked
 branch, so the tie is broken by rule rather than by mood on the day.
 
@@ -260,19 +270,15 @@ is therefore computable from the ledger.
 Storing the key instead would put a value in the record that only the tracker can produce.
 This side could not rebuild it if it were lost.
 
-It would also need a place, and there are two per-phase places. Neither understands a key, and
-one of them would guess.
+It would also need a place, and there are two per-phase places. Neither understands a key.
 
 In the phase table, `phase-row.sh` finds a row by its id, and no reader parses a key out of it.
 
-In the status line it is worse, because something reads the parenthetical and guesses.
-`BRIEFS-9` checks that each phase id has a row in the phase table and stops there, but
-`open-briefs.sh` treats anything in the pointer that is not a PR or a commit as a branch, and
-takes the first such field. What a key costs then depends on where it sits. Written after the
-branch it is dropped with no trace. Written before it, or alone, it is reported as a branch
-that does not exist. Written before a real branch it also costs that branch's distance from
-the trunk, because the tool stops on the phase, and that distance is the measurement it exists
-to produce. On a phase that is not open the pointer is never parsed. No shape is a reader of
+In the status line, `BRIEFS-9` checks that each phase id has a row in the phase table and
+stops there. `open-briefs.sh` reads every field of an open phase's pointer. A key is not a PR,
+not an MR and not an existing branch, so it is reported wherever it sits: `'PROJ-1234' is not
+a PR or MR, and no branch by that name exists`. That is a finding on every run, about a key
+that is correct. On a phase that is not open the pointer is never read. No shape is a reader of
 a key.
 
 Finding by summary has two consequences worth stating plainly.
