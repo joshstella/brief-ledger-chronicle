@@ -1,10 +1,11 @@
 # Ledger — #0016 The readers that guess
 
-`blc/2 #0016 in-progress a:done(PR#70) b:done(PR#71) c:done(PR#72) d:in-progress(brief/0016-d-the-forge-in-prose,PR#73)`
+`blc/2 #0016 done a:done(PR#70) b:done(PR#71) c:done(PR#72) d:done(PR#73)`
 
 **Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-01
 
 ## Phases
 
@@ -13,7 +14,7 @@
 | a | the identity reader | done (PR#70) | — |
 | b | the pointer vocabulary | done (PR#71) | — |
 | c | the forge probe | done (PR#72) | — |
-| d | the forge in prose | in-progress | `brief/0016-d-the-forge-in-prose` |
+| d | the forge in prose | done (PR#73) | — |
 
 The phases follow the seam the brief names in Tension: `a` is the reader half, `b` is where the
 two halves meet, and `c` and `d` are the forge half.
