@@ -1,6 +1,6 @@
 # Ledger — #0016 The readers that guess
 
-`blc/2 #0016 in-progress a:done(PR#70) b:in-progress(brief/0016-b-the-pointer-vocabulary) c:pending d:pending`
+`blc/2 #0016 in-progress a:done(PR#70) b:in-progress(brief/0016-b-the-pointer-vocabulary,PR#71) c:pending d:pending`
 
 **Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
