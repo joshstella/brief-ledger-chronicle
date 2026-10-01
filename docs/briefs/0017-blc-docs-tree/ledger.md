@@ -19,24 +19,24 @@ The ids and labels are the brief's. What each phase covers changed against the r
 the re-plan below records.
 
 **a — the move.** `git mv` `docs/briefs/`, `docs/contracts/`, `docs/chronicles/`,
-`docs/state/` and `docs/orientation.md` under `docs/blc/` (decision 3). Change the default root in the five tools that take a briefs
-directory: `validate-briefs.sh`, `open-briefs.sh`, `list-briefs.sh`, `orient.sh` and
-`jira-csv.sh`. Keep each positional argument. `orient.sh` also hardcodes `docs/state`,
-`docs/install-log`, `docs/orientation.md`, `docs/chronicles/chronicle.md` and
-`docs/contracts/v1.2.md`. Those follow the same root. `gather.sh` hardcodes `docs/briefs` with no
-argument, and it gains the same default. Update the source side of `install.sh`, the skills,
-templates, `README.md`, `Manifesto.md`, the slides, `.gitignore` and the tests. Tests cover the
-new default and the positional override in each tool. Installed targets keep the old layout until
-`c`.
+`docs/state/` and `docs/orientation.md` under `docs/blc/` (decision 3). Change the default root
+in the five tools that take a briefs directory: `validate-briefs.sh`, `open-briefs.sh`,
+`list-briefs.sh`, `orient.sh` and `jira-csv.sh`. Keep each positional argument. `orient.sh` also
+hardcodes `docs/state`, `docs/install-log`, `docs/orientation.md`,
+`docs/chronicles/chronicle.md` and `docs/contracts/v1.2.md`. Those follow the same root.
+`gather.sh` hardcodes `docs/briefs` with no argument, and it gains the same default. A fresh
+install writes to `docs/blc/`: `install.sh` sources, destinations, ownership map and appended
+`.gitignore` block all move here (re-plan below). Update the skills, templates, `README.md`,
+`Manifesto.md`, the slides, `.gitignore` and the tests. Tests cover the new default and the
+positional override in each tool.
 
 **b — the record.** Rewrite the path references inside existing briefs and ledgers so they
 resolve. Today that is 153 references in 28 files. This is the brief's settled exception to "The
 record is the work". The chronicle is a rendering, so the next chronicle run refreshes it and
 `b` does not edit it.
 
-**c — the installer.** `install.sh` writes to `docs/blc/`, the ownership map moves to the new
-paths, and an upgrade of an existing install does what open decisions 1 and 2 settle. Blocked by
-both.
+**c — the installer.** An upgrade of an install that has the old layout does what open
+decisions 1 and 2 settle. Blocked by both. A fresh install is already correct after `a`.
 
 **d — the contract.** Contract v1.3 re-scopes `BRIEFS-1` to `BRIEFS-10` to the new root.
 v1.2 stays published.
@@ -72,6 +72,14 @@ files it is 636 references in 80 files.
 
 **`#0013` is closed.** The settled decision that it finishes first is met.
 
+**A fresh install moves into `a`, settled 2026-10-01.** Everything `a` changes also ships:
+the tools, the skills, the shipped READMEs and the templates. In the brief's split, `install.sh`
+on `main` would install tools that read `docs/blc/briefs` into a target where it creates
+`docs/briefs`, from the merge of `a` to the merge of `c`. So `a` also moves where a fresh install
+writes, and `c` keeps only the upgrade of an existing install. The cost: an upgrade of an
+existing install is broken between `a` and `c`. There is one user. A fallback in each tool to
+`docs/briefs` was rejected, because it is a third layout the brief does not plan for.
+
 **The brief is retitled.** The draft was "Someone else's docs tree". On filing, its slug became
 `blc-docs-tree`, and on 2026-10-01 the title was changed to match: "The BLC docs tree".
 
@@ -86,9 +94,6 @@ files it is 636 references in 80 files.
 
 ## Complications
 
-- `install.sh` names each shipped file twice: as a source path in this repository and as a
-  destination in the target. `a` moves the sources and `c` moves the destinations. Between the
-  two, the installer reads from the new layout and writes the old one.
 - `.gitignore` in this repository, and the block that `install.sh` appends to a target's
   `.gitignore`, name `docs/chronicles/`. An existing target keeps the old rule after an upgrade
   unless `c` handles it.
