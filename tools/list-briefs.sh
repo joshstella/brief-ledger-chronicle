@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/list-briefs.sh [--tsv] [BRIEFS_DIR]
+# tools/list-briefs.sh [--tsv | --owner EMAIL] [BRIEFS_DIR]
 # Emit the brief timeline, newest last-touch first.
 # Run from the repository root. Writes to stdout.
 #
@@ -7,6 +7,10 @@
 #            nothing else, so a caller can put it under whatever heading it likes
 #   --tsv    the sorted scan behind that table, one brief per line:
 #            <unix-last-touch> <slug> <dir> <first-iso> <last-iso>, tab separated
+#   --owner  the table, with only the briefs assigned to EMAIL that are not done or
+#            skipped. Assigned means `Owner`, or `Author` when there is no `Owner`, compared
+#            without regard to case. A malformed `Owner` is reported on stderr. This reads
+#            the working tree and does not fetch: the blc-my-briefs skill does that first.
 #
 # --tsv exists because the chronicle needs the same briefs in the same order for
 # its narration list, where it applies its own date filter and reads each ledger
@@ -25,8 +29,25 @@
 set -euo pipefail
 
 MODE=table
-if [ "${1:-}" = "--tsv" ]; then MODE=tsv; shift; fi
+OWNER=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tsv) MODE=tsv; shift ;;
+    --owner)
+      [ $# -ge 2 ] && [ -n "$2" ] || { echo "error: --owner needs an email" >&2; exit 1; }
+      OWNER="$2"; shift 2 ;;
+    --) shift; break ;;
+    -*) echo "error: unknown option $1" >&2; exit 1 ;;
+    *) break ;;
+  esac
+done
 BRIEFS_DIR="${1:-docs/briefs}"
+# The scan behind --tsv feeds the chronicle, which narrates every brief. A filtered scan
+# would be a second "which briefs" for it to disagree with.
+if [ "$MODE" = tsv ] && [ -n "$OWNER" ]; then
+  echo "error: --owner filters the table; it does not apply to --tsv" >&2
+  exit 1
+fi
 
 # The status-line locator is shared with open-briefs.sh, so it lives in lib/. Symlinks are
 # resolved first: `dirname "$BASH_SOURCE"` reports the directory this was *reached* through,
@@ -104,6 +125,44 @@ brief_depends() {
   printf '%s' "${dep:-—}"
 }
 
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+
+# The email a brief is assigned to: `Owner`, or `Author` when `Owner` is absent. An `Owner`
+# that is present and not an email, blank included, is reported and assigns the brief to no
+# one: falling back to `Author` would show the brief to the person who filed it, which is the
+# one answer `Owner` was written to override. Reported here, not in validate-briefs.sh,
+# because a typo here makes "mine" come back empty and look like an answer (#0007 decision 6).
+# The `Author` fallback is checked the same way: validate-briefs.sh does not anchor its email
+# check, so `me@x.org, you@x.org` passes there and would match no one here.
+# usage: brief_assignee <brief.md> <serial>; prints the email or returns 1
+BLC_EMAIL_CHAR="[^ @\`\"'<>,]"
+BLC_EMAIL_RE="^${BLC_EMAIL_CHAR}+@${BLC_EMAIL_CHAR}+\\.${BLC_EMAIL_CHAR}+\$"
+brief_assignee() {
+  local identity label=Owner email
+  identity=$(blc_identity_line "$1") || return 1
+  if ! email=$(blc_identity_field "$identity" Owner); then
+    label=Author
+    email=$(blc_identity_field "$identity" Author) || return 1
+  fi
+  # Backticks, quotes and angle brackets are markdown or mail syntax around an address, and a
+  # comma means more than one: each would make the brief match no one, with no message.
+  if printf '%s' "$email" | grep -qE "$BLC_EMAIL_RE"; then
+    printf '%s' "$email"
+    return 0
+  fi
+  printf "%s: %s '%s' is not an email, so the brief is assigned to no one\n" "$2" "$label" "$email" >&2
+  return 1
+}
+
+# A brief is assigned while it is not finished: planned, no-line, in-progress, deferred.
+# blc/1 states can carry a pointer, as in `done(commit 383ed5b)`.
+is_closed() {
+  case "$1" in
+    done|done[\(\ ]*|skipped|skipped[\(\ ]*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
@@ -137,16 +196,25 @@ fi
 echo "| serial | title | status | first | last | depends-on |"
 echo "|---|---|---|---|---|---|"
 
+rows=""
 if [ -s "$tmp" ]; then
-  sort -k1,1nr -k2,2r "$tmp" | while IFS=$'\t' read -r _last_key slug d first_disp last_disp; do
+  rows=$(sort -k1,1nr -k2,2r "$tmp" | while IFS=$'\t' read -r _last_key slug d first_disp last_disp; do
     serial="#${slug%%-*}"
-    title=$(brief_title "${d}brief.md")
     status=$(brief_status "${d}ledger.md")
+    if [ -n "$OWNER" ]; then
+      ! is_closed "$status" || continue
+      assignee=$(brief_assignee "${d}brief.md" "$serial") || continue
+      [ "$(lower "$assignee")" = "$(lower "$OWNER")" ] || continue
+    fi
+    title=$(brief_title "${d}brief.md")
     dep=$(brief_depends "${d}brief.md")
     printf '| %s | %s | %s | %s | %s | %s |\n' \
       "$(cell "$serial")" "$(cell "$title")" "$(cell "$status")" \
       "$(cell "$first_disp")" "$(cell "$last_disp")" "$(cell "$dep")"
-  done
+  done)
+fi
+if [ -n "$rows" ]; then
+  printf '%s\n' "$rows"
 else
   echo "| — | — | — | — | — | — |"
 fi

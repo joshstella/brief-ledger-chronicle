@@ -194,6 +194,52 @@ labels in order and expects exactly those six. Two mutants were run, and both we
 `Jira` after `Depends on`, and no `Owner`. The test pins the order only. The rule that `Owner`
 is written only when the draft has one is prose, and nothing tests it.
 
+## Phase c — what it does
+
+`tools/list-briefs.sh --owner <email>` prints the brief table with only the briefs assigned to
+that email that are not `done` or `skipped` (decisions 7 and 8). Assigned means `Owner`, or
+`Author` when the brief has no `Owner`. The two are compared without regard to case. It reads
+both through #0016's shared reader. With nothing assigned, it prints the dash row, as for an
+empty tree. `--owner` with `--tsv` is an error, because the chronicle's scan lists every brief.
+Without `--owner`, the output is byte-identical to the output before this phase.
+
+An `Owner` that is present and not one email is reported on stderr, and the brief is assigned
+to no one. This covers a blank `Owner`, two emails in one field, and an address in backticks,
+quotes or angle brackets. It does not fall back to `Author`, because `Owner` was written to say
+the filer is not the executor. The `Author` it falls back to gets the same check, because
+`validate-briefs.sh` does not anchor its `Author` check. Only unfinished briefs are checked.
+The exit status stays 0 (decision 6).
+
+The new utility skill `blc-my-briefs` fetches and then runs the query. The query reads the
+working tree, so a fetch alone changes nothing it sees. On the default branch the skill runs
+`git pull --ff-only`. On any other branch it does not pull, and it says how many commits the
+checkout is behind `origin/<default>`. Chosen on 2026-10-01. A utility skill is found by glob,
+so `install.sh` needs no edit. `README.md` and the two test lists of utility skills name it.
+
+**Proof.** `tests/test_list_briefs.sh` gains 13 tests: owner, fallback, an `Owner` that takes
+the brief away from its `Author`, case, unfinished states including `planned` and a `blc/1`
+`done(commit …)`, a malformed `Owner`, an `Owner` in markup, a malformed `Author`, no report on
+a finished brief, the unfiltered table, the dash row, argument errors, and no fetch. Seventeen
+mutants were run, and all were killed. One mutant survived at first: an email check with no end
+anchor accepted `me@x.org, you@x.org`, which then matched no one and reported nothing. The
+two-email fixture was added. Review then found the same silence for an address in backticks and
+for the `Author` fallback. Both are fixed, with a test each. The skill is prose, and nothing
+tests its fetch or pull.
+
+**Known and left as they are**, by choice on 2026-10-01, after review:
+
+- An argument after the briefs directory is ignored. `list-briefs.sh docs/briefs --owner me@x.org`
+  prints every brief. `main` already ignored `docs/briefs --tsv` the same way.
+- `--owner --tsv` takes `--tsv` as the email and prints a dash row.
+- A brief with no identity line, or no `Author`, is dropped from `--owner` without a message.
+  `validate-briefs.sh` reports both as `BRIEFS-5` defects.
+- The loop's output is captured with `$( )`, so an error inside the loop no longer stops the
+  script.
+- `is_closed` uses backslash escapes in a bracket expression. Only bash 5.2 was tested.
+- In the skill, the behind-count fails when `origin/<default>` does not exist, and every
+  failed `pull --ff-only` is called a divergence, though a dirty tree or a branch with no
+  upstream also fails it.
+
 ## Open decisions
 
 The brief carries eight. Their phase references are renumbered to the ids above, and one is
