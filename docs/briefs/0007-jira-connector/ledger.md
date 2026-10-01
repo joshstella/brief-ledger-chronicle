@@ -1,6 +1,6 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:in-progress(PR#69) b:pending c:pending d:pending`
+`blc/2 #0007 in-progress a:done(PR#69) b:in-progress(brief/0007-b-the-fields) c:pending d:pending`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the mapping | in-progress | PR#69 |
-| b | the fields | pending | — |
+| a | the mapping | done (PR#69) | — |
+| b | the fields | in-progress | `brief/0007-b-the-fields` |
 | c | my assignments | pending | — |
 | d | the publisher | pending | — |
 
@@ -30,7 +30,11 @@ step 4. What is left is three small edits to that one skill:
   settled that an omitted `Owner` means `Author` at read time. A fallback would make the
   field always present and quietly delete that decision.
 - Move the `Jira:` append to *before* `Depends on`, which today it follows. Phase `a` found
-  why: anything after `Depends on` is inside the dependency scan. It is in step 4, line 53.
+  why: anything after `Depends on` was inside the dependency scan. #0016 has since ended
+  `Depends on` at the next `·` in every reader here, so the move no longer fixes a trap in this
+  toolkit. It keeps the README's order, and that order is the backstop #0016 kept (its
+  decision 5) for a reader elsewhere that still reads greedily. `Owner:` goes before it too.
+  It is in step 4, line 53.
 - Drop "(and, later, `**Jira:** …`)" from the `## Input` bullet at line 20. "Later" is the
   same future tense as "added when wired", which phase `a` removed from the README one file
   away.
@@ -87,6 +91,27 @@ mean coordinated edits in four places. And `Owner:` on the identity line lands w
 `validate-briefs.sh` already decides shape, so open decision 6 now has a precedent it lacked
 when written: #0015 established that a new check ships `[judgment]` and that promotion to
 `[defect]` has three stated criteria, one of which nothing in this repository currently meets.
+
+## Re-plan after #0016, 2026-10-01
+
+Phase `a` merged as PR#69 on 2026-09-30. #0016 then ran and changed three things under the
+remaining phases.
+
+**`b`'s reason changed, and its edits did not.** See the `b` row above.
+
+**`c` moves to `list-briefs.sh` (decision 7).** The brief chose between `open-briefs.sh` and a
+sibling. Since then `open-briefs.sh` has become a phase-level report of exceptions: it measures
+branches and asks the forge. "What is mine" is a question about briefs, not phases.
+`list-briefs.sh` already lists every brief with its state and reads the identity line through
+#0016's shared reader. An owner filter there adds a flag, not a program, so `install.sh` needs
+no new roster entry. `c` still needs a skill that fetches and then runs the query.
+
+**`d` is deferred, by choice on 2026-10-01.** Five of its decisions are open (1, 3, 4, 5 and 9),
+and no Jira tenant is reachable. The re-plan also found a blocker the brief does not name. Jira
+Cloud assigns an issue by `accountId`, not by email. A lookup by email often returns nothing,
+because of the site's privacy settings. So "set the Epic assignee from `Owner`" may not be
+possible as written. A publisher built now would be proven only against a stub. `d` stays
+`deferred` until a tenant exists to test against. The brief stays open while it does.
 
 ## Phase a — what it does
 
@@ -165,8 +190,8 @@ added.
 | 4 | Status map. Default: a small config map, not a hardcoded "In Progress". | `d` |
 | 5 | Where auth lives. Env, a gitignored project file, or a CLI. No tokens in git. | `d` |
 | 6 | **Settled 2026-09-30, see below.** Contract clause? | `b` |
-| 7 | Extend `open-briefs.sh` or add a sibling? | `c` |
-| 8 | Which states count as "assigned"? Default: `pending`, `in-progress`, `deferred`. | `c` |
+| 7 | **Settled 2026-10-01: neither.** `list-briefs.sh --owner <email>`. | `c` |
+| 8 | **Settled 2026-10-01: the default.** Every brief that is not `done` or `skipped`. | `c` |
 | 9 | **Added by this re-plan.** How does the publisher reach Jira such that a test can substitute for it? Without an answer `d` cannot be written, let alone merged. | `d` |
 
 ## Big decisions
