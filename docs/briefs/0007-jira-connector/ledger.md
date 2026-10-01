@@ -291,16 +291,23 @@ output is unchanged. `blc_phase_label` in `tools/lib/phase-row.sh` reads a label
 row shapes that `blc-start-brief` writes. It returns 2 when two rows could be the phase, so the
 export refuses rather than picks one. It accepts any spacing before the em dash, because the
 shared row matcher does. A mutant found the first version refused `a—label`, a row that the
-gate counts as phase `a`.
+gate counts as phase `a`. It returns 1 when the cell after the id is a state, such as `done`
+or `done (PR#70)`. A table with no label column puts the status there.
 
-**Proof.** `tests/test_jira_csv.sh` has 17 tests. One compares a whole export: phases out of
+**Review found two defects, and both are fixed.** The Epic row kept its pointer, so `#0008`
+exported its Epic as `done(PR#45)`. The README said each state is one value to map, and for
+Epics that was false. The whole-export test used an Epic state with no pointer, so neither the
+tests nor the mutants saw it. The label reader also took a status cell as a label on a table
+with no label column, and the export named a ticket `#0001/a — done`.
+
+**Proof.** `tests/test_jira_csv.sh` has 19 tests. One compares a whole export: phases out of
 table order, a skipped phase, and pointers to drop. The others cover quoting, the serial
-spellings, the `Author` fallback, each refusal, the load list, and a run from a fixture
-install. `test_contract_ship.sh` installs the script and runs it in a fresh target. The
-bootstrap-walk test in `test_clauses.sh` now covers it. The two readers have 10 new tests and
-one new assertion in `test_list_briefs.sh`. The suite goes to 465 passing. Mutants: 26 of 26
-on the script, and 25 of 26 on the readers. The survivor rewrites a branch that the matcher
-never lets the reader reach.
+spellings, the `Author` fallback, the Epic pointer, an Epic with no phases, each refusal, the
+load list, and a run from a fixture install. `test_contract_ship.sh` installs the script and
+runs it in a fresh target. The bootstrap-walk test in `test_clauses.sh` now covers it. The two
+readers have 11 new tests and one new assertion in `test_list_briefs.sh`. The suite goes to
+468 passing. Mutants: 27 of 27 on the script, and 27 of 28 on the readers. The survivor
+rewrites a branch that the matcher never lets the reader reach.
 
 Run against this repository, the script exports `#0007`, `#0008` and `#0010` to `#0016`. It
 refuses `#0001` to `#0006`, which are `blc/1`. It refuses `#0009`, because a second table in
@@ -312,6 +319,18 @@ that ledger has a cell that also matches phase `a`.
   import steps come from Atlassian's documentation, read on 2026-10-01.
 - Two candidate rows are refused even when they give the same label, as in `#0009`.
 - Lines end in LF, not the CRLF of RFC 4180.
+
+Also left as they are, by choice on 2026-10-01, after review:
+
+- A repeated phase id, as in `a:done a:pending`, exports two Tasks with one summary.
+  `validate-briefs.sh` does not report it either.
+- The serial on the status line is not compared with the folder's serial.
+- The title is read with `sed | head -1` under `pipefail`. A brief with very many `# ` lines
+  can make the script exit 141 with no message. Nothing reaches stdout.
+- The script header lists only some of the refusals.
+- The Description holds the path as the caller typed it. A trailing slash on `BRIEFS_DIR`
+  gives `//`, and an absolute `BRIEFS_DIR` puts a local path into Jira.
+- A `\|` inside a label cell cuts the label short.
 
 ## Open decisions
 
@@ -336,6 +355,7 @@ added.
 | 14 | **Settled 2026-10-01.** A skipped phase is exported, with Status `skipped`. The Epic shows the whole plan, and the importer mapping decides what `skipped` becomes. | `d` |
 | 15 | **Settled 2026-10-01.** A phase is a `Task`. Every Jira Cloud project template has that work type. | `d` |
 | 16 | **Settled 2026-10-01.** The export writes to stdout. The person who runs it redirects the output to a file. | `d` |
+| 17 | **Settled 2026-10-01.** A `blc/2` brief whose status line names no phase exports as an Epic with no Tasks. A planned brief is still a real Epic. | `d` |
 
 ## Big decisions
 

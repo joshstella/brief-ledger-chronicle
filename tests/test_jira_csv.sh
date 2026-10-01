@@ -70,6 +70,25 @@ test_jira_csv_assigns_the_author_when_there_is_no_owner() {
   assert_out '"Task","#0001/a — the first","2","1","me@x.org",'
 }
 
+# The Epic's state drops its pointer too, or every finished brief is its own value to map.
+test_jira_csv_drops_the_pointer_from_the_epic_state() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 done(PR#45) a:done(PR#44)' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | done | — |'
+  run_jc 1
+  assert_status 0
+  assert_out '"Epic","#0001 — The thing","1","","me@x.org","done",'
+}
+
+# A brief whose line names no phase yet is still an Epic.
+test_jira_csv_exports_an_epic_with_no_phases() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  run_jc 1
+  assert_status 0
+  [ "$(wc -l < "$OUT")" -eq 2 ] || fail "expected the header and the Epic only: $(cat "$OUT")"
+}
+
 # A comma or a quote in a title must not split the field.
 test_jira_csv_quotes_every_field_and_doubles_quotes() {
   jc_repo

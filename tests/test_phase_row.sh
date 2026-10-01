@@ -251,6 +251,22 @@ test_phase_row_label_strips_backticks_and_strikethrough() {
   [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the column one" ] || fail "c: got $PR_RC '$PR_LABEL'"
 }
 
+# A table with no label column puts the status after the id. A label that only starts with a
+# state word is still a label.
+test_phase_row_label_refuses_a_state_in_the_label_cell() {
+  pr_source_lib
+  pr_fixture '| id | status | what |' '|---|---|---|' \
+    '| a | done | x |' '| b | done (PR#70) | x |' '| c | in-progress(brief/x) | x |' \
+    '| d | skipped | x |' '| e | pending review | x |'
+  local i
+  for i in a b c d; do
+    pr_label "$i"
+    [ "$PR_RC" -eq 1 ] && [ -z "$PR_LABEL" ] || fail "$i: got $PR_RC '$PR_LABEL'"
+  done
+  pr_label e
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "pending review" ] || fail "e: got $PR_RC '$PR_LABEL'"
+}
+
 test_phase_row_label_reads_a_dash_with_no_space_before_it() {
   pr_source_lib
   pr_fixture '| `a—the row scan` | done |'

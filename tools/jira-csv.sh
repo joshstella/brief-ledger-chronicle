@@ -110,8 +110,10 @@ case "$STATUS_LINE" in
   blc/2\ *) ;;
   *) die "#$SERIAL: the status line is not blc/2, and only blc/2 has lettered phases" ;;
 esac
-# blc/2 states carry no spaces, so the brief's state is the third field.
+# blc/2 states carry no spaces, so the brief's state is the third field. Its pointer goes, as
+# a phase's does: `done(PR#45)` would be one more value to map for every brief.
 read -r _schema _serial BRIEF_STATE _rest <<<"$STATUS_LINE"
+BRIEF_STATE="${BRIEF_STATE%%(*}"
 
 # A phase the gate would complain about is a phase this export would silently drop.
 UNPARSED=$(blc_status_unparsed_entries "$STATUS_LINE")
@@ -147,7 +149,7 @@ while IFS= read -r entry; do
   case "$rc" in
     0) ;;
     2) die "#$SERIAL: more than one row in $LEDGER could be phase $idx" ;;
-    *) die "#$SERIAL: no row in $LEDGER gives phase $idx a label" ;;
+    *) die "#$SERIAL: no row in $LEDGER gives phase $idx a label, or the cell after its id is a state" ;;
   esac
   id=$((id + 1))
   OUT+=$'\n'$(csv_row Task "#$SERIAL/$idx — $label" "$id" 1 "$ASSIGNEE" "$state" "$LEDGER")

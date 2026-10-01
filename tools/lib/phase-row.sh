@@ -79,6 +79,15 @@ blc_phase_label() {
   if [ "$cell" = "$idx" ]; then
     label="${line#*|}"
     label="${label%%|*}"
+    # A table with no label column puts the status here. A state is never a label, and taking
+    # it would name a ticket `#0001/a — done`.
+    local state trimmed="${label#"${label%%[! ]*}"}"
+    trimmed="${trimmed%"${trimmed##*[! ]}"}"
+    for state in pending in-progress deferred done skipped planned; do
+      case "$trimmed" in
+        "$state"|"$state("*|"$state ("*) return 1 ;;
+      esac
+    done
   else
     # Any spacing before the dash, because the matcher allows any: a row the gate counts as
     # the phase must not be one the export refuses.
