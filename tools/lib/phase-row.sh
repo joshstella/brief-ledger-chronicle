@@ -55,6 +55,48 @@ blc_phase_row_find() {
   grep -nE "$(blc_phase_row_pattern "$1")" "$2"
 }
 
+# Print the label of letter phase `$1` from the phase table in ledger `$2`. Returns 1 when no
+# row gives a label, and 2 when more than one row could be the phase's.
+#
+# The one column this file reads, because a Jira summary is `#<serial>/<letter> — <label>`
+# (docs/briefs/README.md, "Phase ids") and the label exists nowhere else. Only the two shapes
+# `blc-start-brief` writes are read: the label in the cell after the id, or after the em dash
+# in the id's own cell. A third shape, or two candidate rows, returns non-zero rather than a
+# guess: a wrong label is a ticket summary that the next export cannot match.
+blc_phase_label() {
+  local idx="$1" rows line cell label
+  case "$idx" in
+    ""|*[!abcdefghijklmnopqrstuvwxyz]*) return 1 ;;
+  esac
+  rows=$(blc_phase_row_find "$idx" "$2") || return 1
+  [ "$(printf '%s\n' "$rows" | grep -c .)" -eq 1 ] || return 2
+  line="${rows#*:|}"
+  cell="${line%%|*}"
+  cell="${cell//\`/}"
+  cell="${cell//\~/}"
+  cell="${cell#"${cell%%[! ]*}"}"
+  cell="${cell%"${cell##*[! ]}"}"
+  if [ "$cell" = "$idx" ]; then
+    label="${line#*|}"
+    label="${label%%|*}"
+  else
+    # Any spacing before the dash, because the matcher allows any: a row the gate counts as
+    # the phase must not be one the export refuses.
+    cell="${cell#"$idx"}"
+    cell="${cell#"${cell%%[! ]*}"}"
+    case "$cell" in
+      —*) label="${cell#—}" ;;
+      *) return 1 ;;
+    esac
+  fi
+  label="${label//\`/}"
+  label="${label//\~/}"
+  label="${label#"${label%%[! ]*}"}"
+  label="${label%"${label##*[! ]}"}"
+  [ -n "$label" ] || return 1
+  printf '%s' "$label"
+}
+
 # ── What counts as a phase entry in a status line ────────────────────────────
 #
 # Shared for the same reason the matcher above is shared, and it was forked before it was

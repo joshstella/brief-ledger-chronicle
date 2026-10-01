@@ -219,3 +219,67 @@ test_phase_row_the_three_unmatched_shapes_are_still_unmatched() {
   done
   return 0
 }
+
+# ── The label (#0007 phase d) ────────────────────────────────────────────────
+
+pr_label() {
+  local rc=0
+  PR_LABEL=$(blc_phase_label "$1" "$PR_FILE") || rc=$?
+  PR_RC=$rc
+}
+
+test_phase_row_label_reads_the_cell_after_the_id() {
+  pr_source_lib
+  pr_fixture '| id | label | status |' '|---|---|---|' '| a | the row scan | done |'
+  pr_label a
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the row scan" ] || fail "got $PR_RC '$PR_LABEL'"
+}
+
+test_phase_row_label_reads_after_the_dash_in_the_id_cell() {
+  pr_source_lib
+  pr_fixture '| `a — the row scan` | done |'
+  pr_label a
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the row scan" ] || fail "got $PR_RC '$PR_LABEL'"
+}
+
+test_phase_row_label_strips_backticks_and_strikethrough() {
+  pr_source_lib
+  pr_fixture '| ~~`b — the dropped one`~~ | skipped |' '| c | ~~`the column one`~~ | skipped |'
+  pr_label b
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the dropped one" ] || fail "b: got $PR_RC '$PR_LABEL'"
+  pr_label c
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the column one" ] || fail "c: got $PR_RC '$PR_LABEL'"
+}
+
+test_phase_row_label_reads_a_dash_with_no_space_before_it() {
+  pr_source_lib
+  pr_fixture '| `a—the row scan` | done |'
+  pr_label a
+  [ "$PR_RC" -eq 0 ] && [ "$PR_LABEL" = "the row scan" ] || fail "got $PR_RC '$PR_LABEL'"
+}
+
+# A guessed label is a ticket summary that no later export can match.
+test_phase_row_label_refuses_two_candidate_rows() {
+  pr_source_lib
+  pr_fixture '| a | one | done |' '| a | two | done |'
+  pr_label a
+  [ "$PR_RC" -eq 2 ] && [ -z "$PR_LABEL" ] || fail "got $PR_RC '$PR_LABEL'"
+}
+
+test_phase_row_label_refuses_a_missing_row_an_empty_label_or_a_number() {
+  pr_source_lib
+  pr_fixture '| a |  | done |' '| 1 | numbered | done |'
+  local i
+  for i in a b 1; do
+    pr_label "$i"
+    [ "$PR_RC" -eq 1 ] && [ -z "$PR_LABEL" ] || fail "$i: got $PR_RC '$PR_LABEL'"
+  done
+}
+
+# The id cell must be the id. A row whose first cell only begins with it is another phase.
+test_phase_row_label_does_not_take_a_longer_id() {
+  pr_source_lib
+  pr_fixture '| `a2 — other` | done |'
+  pr_label a
+  [ "$PR_RC" -ne 0 ] || fail "read '$PR_LABEL' from phase a2's row"
+}
