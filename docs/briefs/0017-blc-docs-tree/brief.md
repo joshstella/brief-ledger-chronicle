@@ -1,7 +1,6 @@
 # Someone else's docs tree
 
-**Created:** 2026-09-16T10:59:03Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0013
+**Serial:** #0017 · **Created:** 2026-09-16T10:59:03Z · **Author:** josh.stella@gmail.com · **Depends on:** #0013
 
 ## Ground
 
