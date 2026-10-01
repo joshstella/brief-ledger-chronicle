@@ -19,9 +19,10 @@
 # open decision on brief #0004. Reporting the commit distance and letting a human
 # judge is honest; inventing a number here would smuggle a decision into a tool.
 #
-# git is required. The forge is not: PR state is looked up through `gh` when it is
-# present and skipped silently when it is not, because this project treats external
-# tools as optional artifacts to piggyback on, never as load-bearing.
+# git is required. The forge is not: PR and MR state is looked up through `gh` or `glab`
+# when detect-forge.sh recognises the remote, and reported as not checked when it does not,
+# because this project treats external tools as optional artifacts to piggyback on, never
+# as load-bearing.
 #
 # Distances are measured against local refs and are only as fresh as your last fetch.
 # This tool does not fetch: a reporting command that mutates the repository would be
@@ -72,6 +73,12 @@ for BLC_LIB in phase-row status-line; do
   fi
   . "$BLC_LIB_DIR/$BLC_LIB.sh"
 done
+# Run with bash rather than executed, so a copy that lost its execute bit still answers.
+BLC_DETECT_FORGE="${BLC_LIB_DIR%/lib}/detect-forge.sh"
+if [ ! -r "$BLC_DETECT_FORGE" ]; then
+  printf 'error: cannot read %s\n' "$BLC_DETECT_FORGE" >&2
+  exit 2
+fi
 
 OPEN=0
 DRIFT=0
@@ -101,8 +108,26 @@ for candidate in main master trunk; do
 done
 [ -n "$TRUNK" ] || TRUNK="HEAD"
 
-HAVE_GH=0
-command -v gh >/dev/null 2>&1 && HAVE_GH=1
+# Asked at most once, and only when a PR or MR needs a state: each probe is a round trip to
+# the server. Called as a statement, never inside $( ), so the answer outlives the call.
+FORGE=""
+FORGE_ASKED=0
+detect_forge() {
+  [ "$FORGE_ASKED" -eq 0 ] || return 0
+  FORGE_ASKED=1
+  FORGE="$(bash "$BLC_DETECT_FORGE" 2>/dev/null)" || FORGE=""
+}
+
+# One vocabulary for both forges: `gh` says OPEN, `glab` says opened.
+state_word() {
+  case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+    open|opened) printf 'open' ;;
+    merged) printf 'merged' ;;
+    closed) printf 'closed' ;;
+    "") printf 'unknown' ;;
+    *) printf '%s' "$1" | tr '[:upper:]' '[:lower:]' ;;
+  esac
+}
 
 # A phase entry in the status line looks like  3:in-progress(feature/x,PR#14)
 # The pointer is optional; the state is not.
@@ -316,16 +341,25 @@ UNKNOWN
 
     forge=""
     if [ -n "$pr" ]; then
-      if [ "$HAVE_GH" -eq 1 ]; then
-        pr_state="$(gh pr view "$pr" --json state -q .state 2>/dev/null)"
-        [ -n "$pr_state" ] || pr_state="unknown"
-        forge="$forge, PR #$pr $pr_state"
-      else
-        forge="$forge, PR #$pr (state not checked: no gh)"
-      fi
+      detect_forge
+      case "$FORGE" in
+        github)
+          st="$(gh pr view "$pr" --json state -q .state </dev/null 2>/dev/null)"
+          forge="$forge, PR #$pr $(state_word "$st")" ;;
+        gitlab) forge="$forge, PR #$pr (state not checked: the remote is on GitLab)" ;;
+        *) forge="$forge, PR #$pr (state not checked: no forge detected)" ;;
+      esac
     fi
-    # GitLab is not asked yet; detecting the forge is #0016 phase `c`.
-    [ -n "$mr" ] && forge="$forge, MR !$mr (state not checked)"
+    if [ -n "$mr" ]; then
+      detect_forge
+      case "$FORGE" in
+        gitlab)
+          st="$(glab mr view "$mr" -F json --jq .state </dev/null 2>/dev/null)"
+          forge="$forge, MR !$mr $(state_word "$st")" ;;
+        github) forge="$forge, MR !$mr (state not checked: the remote is on GitHub)" ;;
+        *) forge="$forge, MR !$mr (state not checked: no forge detected)" ;;
+      esac
+    fi
     [ -n "$forge" ] || forge=", no PR"
 
     while IFS= read -r branch; do

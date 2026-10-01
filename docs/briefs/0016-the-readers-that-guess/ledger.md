@@ -1,6 +1,6 @@
 # Ledger — #0016 The readers that guess
 
-`blc/2 #0016 in-progress a:done(PR#70) b:in-progress(brief/0016-b-the-pointer-vocabulary,PR#71) c:pending d:pending`
+`blc/2 #0016 in-progress a:done(PR#70) b:done(PR#71) c:in-progress(brief/0016-c-the-forge-probe,PR#72) d:pending`
 
 **Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
@@ -11,8 +11,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the identity reader | done (PR#70) | — |
-| b | the pointer vocabulary | in-progress | `brief/0016-b-the-pointer-vocabulary` |
-| c | the forge probe | pending | — |
+| b | the pointer vocabulary | done (PR#71) | — |
+| c | the forge probe | in-progress | `brief/0016-c-the-forge-probe` |
 | d | the forge in prose | pending | — |
 
 The phases follow the seam the brief names in Tension: `a` is the reader half, `b` is where the
@@ -67,8 +67,8 @@ named.
 | # | decision | blocks |
 |---|---|---|
 | 10 | **Settled 2026-09-30: it moves.** `BRIEFS-5` checks the shared reader's field values. | `a` |
-| 11 | Does detection ship as a program a skill can run, or only as a sourced library? | `c` |
-| 12 | Is PR/MR state normalised to one vocabulary, or printed as each CLI reports it? | `c` |
+| 11 | **Settled 2026-10-01: a program.** `tools/detect-forge.sh` prints `github` or `gitlab`; `open-briefs.sh` and the skills all run it. | `c` |
+| 12 | **Settled 2026-10-01: normalised** to `open`, `merged`, `closed`. | `c` |
 | 13 | **Settled 2026-09-30.** A field that is no fixed token and no existing branch is reported without a cause: "not a PR or MR, and no branch by that name exists". | `b` |
 | 14 | **Settled 2026-09-30.** Only open phases' pointers are read. | `b` |
 | 15 | **Settled 2026-09-30, then reversed.** `PR 14` was to be read as a PR. It cannot arrive; see below. | `b` |
@@ -123,11 +123,13 @@ need correcting in #0007's ledger when that phase is planned.
 identity-line field. If it lands first, it lands as a third local parser, which is exactly the
 drift this brief exists to close. Phase `a` here should land before #0007 phase `c` starts.
 
-**Unverified: what `auth status --hostname` actually checks.** Both CLIs document the flag and
-report through the exit code; that much was checked locally. Whether each validates the token
-against the host or only reads local config was not checked, because it needs the network.
-That difference decides whether an expired token counts as a match (see decision 9) and has to
-be settled in `c` before the fallback is written.
+**Checked 2026-10-01: `auth status --hostname` asks the server.** With `gh` 2.97.0, the probe
+for `github.com` exits 0 with the network and 1 with the GitHub API blocked. `glab` 1.113.0 calls
+`GET /api/v4/user`; with no valid token for `gitlab.com` it reported `401 Unauthorized` and
+exited 1. So an expired token, no network and no account all read as "no match", and the tool
+says it did not check (decision 9). No other fallback is needed. One probe took 0.27s. A
+successful `glab` lookup was not observed, because no valid GitLab token exists on this machine;
+the tests use stub CLIs.
 
 ## Phase a — what it does
 
@@ -231,3 +233,59 @@ was fixed.
 Review found two faults, both fixed: a pointer field was globbed, so `(*)` reported the working
 directory's file names, and `PR#` took any suffix, so `PR#abc` reached `gh` as a PR number and
 `PR#--web` as an option. The old parser had both. Each fix has a test that fails without it.
+
+## Phase c — what it does
+
+`tools/detect-forge.sh [remote]` prints `github` or `gitlab` for the remote's host (decision 11).
+With no argument it reads `origin`. When there is no `origin` and exactly one remote, it reads
+that remote, because `gh` found a repository through any remote before this phase. It does not
+choose among two or more. It reads the host from a `scheme://user@host:port/path` URL or from
+an scp-style `user@host:path`, and lowercases it. A path that begins with `/`, `./` or `../`,
+and a `file:///` URL, have no host. It then asks both CLIs `auth status --hostname <host>`. When exactly one accepts, it prints that
+forge and exits 0. When neither accepts, when both accept, or when the remote has no host, it
+prints nothing on stdout, gives the reason on stderr and exits 1. It exits 2 outside a git
+repository or when the remote does not exist. `install.sh` ships it beside `open-briefs.sh`.
+
+`open-briefs.sh` runs the detector only when an open phase has a PR or an MR, and only once per
+run. On GitHub it asks `gh` about `PR#N`. On GitLab it asks `glab` about `!N`. It does not ask
+one forge about the other's number: it says "state not checked: the remote is on GitLab" (or
+GitHub). With no forge detected it says "state not checked: no forge detected". States are
+normalised to `open`, `merged` and `closed` (decision 12); an empty answer reads `unknown`, and
+any other word is shown in lower case. A missing detector is a broken install, so
+`open-briefs.sh` exits 2 and names it.
+
+**What changed in the output.** A PR state was `gh`'s word, `OPEN` or `MERGED`. It is now
+`open` or `merged`. "(state not checked: no gh)" is now "(state not checked: no forge
+detected)". An `!N` beside a branch on a GitLab remote now has a state. On a remote that no CLI
+accepts, a PR is no longer looked up through whatever `gh` is installed.
+
+**Known and left as they are**, by choice on 2026-10-01, after review:
+
+- A relative path with a colon, such as `sub/team:r.git`, is read as the host `sub/team`, and
+  `file://localhost/...` as the host `localhost`. Git reads both as local. No CLI accepts such a
+  host, so the result is still "no forge detected", one round trip later.
+- A bracketed IPv6 host, such as `ssh://git@[::1]/r.git`, is not read.
+- `open-briefs.sh` drops the detector's reason. "Both CLIs accept the host" also reads "no forge
+  detected", because decision 9 asks only that the tool say it did not check.
+
+**Proof.** `tests/test_detect_forge.sh` holds 13 tests. Each runs with a `PATH` that holds only
+links to `git` and `tr` and the stub CLIs the test names, so "not installed" can be tested on a
+machine with `/usr/bin/gh`. `tests/test_open_briefs.sh` replaces its `gh` stub with a `gh` and a
+`glab` that accept one forge and record every call. It has 9 new tests and 2 fewer old ones, 7
+more in all.
+`test_ship_places_an_open_briefs_query_that_runs` runs the installed `open-briefs.sh` in a fresh
+target. `fixture_install_tool` copies the detector when it installs `open-briefs.sh`.
+
+Twenty-two mutants were run, and all were killed:
+
+- in the detector: both accepting treated as a match, `glab` not asked once `gh` accepts, the
+  host not lowercased, URL user or port kept, scp user kept, a local path with a colon read as
+  a host, a missing remote exiting 1, the probe not naming the host, no fallback to the only
+  remote, a fallback to the first of many, a fallback that replaces a named remote;
+- in `open-briefs.sh`: detection on every lookup, detection with nothing to look up, PR or MR
+  state not normalised, `opened` not mapped, an empty state not called `unknown`, an MR asked of
+  `gh`, a PR asked of `glab`, a PR asked on GitLab, the missing-detector check removed.
+
+Three first survived. The MR test matched `open` as a substring of `opened`, no test gave an
+empty state, and no local path held a colon. Each test was fixed or added. The roster mutant is
+killed by the ship test above.

@@ -20,16 +20,24 @@ run_query() {
   LAST_STATUS=$?
 }
 
-# A gh first on PATH that answers every call with $1 and records its arguments, so a PR
-# lookup never reaches the network and a test can prove which calls were made.
-# usage: ob_gh_stub <state>
-ob_gh_stub() {
-  OB_GH="$TMP/ob-gh"
+# A gh and a glab first on PATH, so no lookup reaches the network and a test can prove which
+# calls were made: every call is recorded as `<cli> <args>`. `auth status` succeeds only for
+# the CLI named by $1 (github, gitlab or none); every other call prints $2, as a state.
+# The fixture repo gets a remote, because detection reads its host.
+# usage: ob_forge <github|gitlab|none> <state>
+ob_forge() {
+  OB_GH="$TMP/ob-forge"
   mkdir -p "$OB_GH"
   : > "$OB_GH/calls"
-  printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/calls"\nprintf "%%s\\n" "%s"\n' \
-    "$OB_GH" "$1" > "$OB_GH/gh"
-  chmod +x "$OB_GH/gh"
+  local cli forge
+  for cli in gh glab; do
+    forge=github; [ "$cli" = glab ] && forge=gitlab
+    printf '#!/bin/sh\nprintf "%%s %%s\\n" %s "$*" >> "%s/calls"\ncase "$1 $2" in "auth status") [ "%s" = "%s" ]; exit $? ;; esac\nprintf "%%s\\n" "%s"\n' \
+      "$cli" "$OB_GH" "$1" "$forge" "$2" > "$OB_GH/$cli"
+    chmod +x "$OB_GH/$cli"
+  done
+  git -C "$REPO" remote add origin https://forge.example/o/r.git 2>/dev/null \
+    || git -C "$REPO" remote set-url origin https://forge.example/o/r.git
 }
 
 run_query_with_gh() {
@@ -236,17 +244,6 @@ test_open_briefs_does_not_read_a_closed_phase_pointer() {
   assert_out "Nothing open."
 }
 
-test_open_briefs_reads_a_merge_request_without_asking_a_forge() {
-  ob_open_phase 'feature/x,!123'
-  make_branch feature/x
-  ob_gh_stub OPEN
-  run_query_with_gh docs/briefs
-  assert_status 0
-  assert_out "phase a: feature/x — 0 commit(s) of main landed since, 0 unmerged, MR !123 (state not checked)"
-  assert_not_contains "no branch by that name" "$OUT"
-  [ ! -s "$OB_GH/calls" ] || fail "gh was asked about a merge request: $(cat "$OB_GH/calls")"
-}
-
 test_open_briefs_a_bang_without_digits_is_not_a_merge_request() {
   ob_open_phase 'feature/x,!abc'
   make_branch feature/x
@@ -272,7 +269,7 @@ test_open_briefs_does_not_glob_a_pointer_field() {
 test_open_briefs_a_pr_without_digits_is_reported_and_not_looked_up() {
   ob_open_phase 'feature/x,PR#abc,PR#'
   make_branch feature/x
-  ob_gh_stub OPEN
+  ob_forge github OPEN
   run_query_with_gh docs/briefs
   assert_status 0
   assert_out "phase a: 'PR#abc' is not a PR or MR, and no branch by that name exists"
@@ -281,15 +278,111 @@ test_open_briefs_a_pr_without_digits_is_reported_and_not_looked_up() {
   [ ! -s "$OB_GH/calls" ] || fail "gh was asked about a malformed PR: $(cat "$OB_GH/calls")"
 }
 
-# The stub is the control: it proves the PR was looked up, not just echoed from the pointer.
-test_open_briefs_looks_up_a_pr_through_gh() {
+# ── The forge ────────────────────────────────────────────────────────────────
+#
+# The stubs are the control: they prove a state was looked up, not echoed from the pointer,
+# and which CLI was asked.
+
+test_open_briefs_looks_up_a_pr_through_gh_on_a_github_remote() {
   ob_open_phase 'feature/x,PR#14'
   make_branch feature/x
-  ob_gh_stub MERGED
+  ob_forge github MERGED
   run_query_with_gh docs/briefs
   assert_status 0
-  assert_out "PR #14 MERGED"
-  grep -q '^pr view 14 ' "$OB_GH/calls" || fail "gh was not asked about PR 14: $(cat "$OB_GH/calls")"
+  assert_out "unmerged, PR #14 merged"
+  grep -q '^gh pr view 14 ' "$OB_GH/calls" || fail "gh was not asked about PR 14: $(cat "$OB_GH/calls")"
+}
+
+test_open_briefs_looks_up_an_mr_through_glab_on_a_gitlab_remote() {
+  ob_open_phase 'feature/x,!123'
+  make_branch feature/x
+  ob_forge gitlab opened
+  run_query_with_gh docs/briefs
+  assert_status 0
+  # Anchored: glab's own word, `opened`, contains `open`.
+  grep -q 'phase a: feature/x — 0 commit(s) of main landed since, 0 unmerged, MR !123 open$' "$OUT" \
+    || fail "MR state not reported as open: $(cat "$OUT")"
+  grep -q '^glab mr view 123 ' "$OB_GH/calls" || fail "glab was not asked about MR 123: $(cat "$OB_GH/calls")"
+}
+
+# A lookup that answers nothing (no such PR, a lapsed token) must not print a blank state.
+test_open_briefs_a_state_the_forge_does_not_give_reads_unknown() {
+  ob_open_phase 'feature/x,PR#14'
+  make_branch feature/x
+  ob_forge github ''
+  run_query_with_gh docs/briefs
+  assert_status 0
+  grep -q 'PR #14 unknown$' "$OUT" || fail "an empty state was not reported as unknown: $(cat "$OUT")"
+}
+
+test_open_briefs_does_not_ask_github_about_a_merge_request() {
+  ob_open_phase 'feature/x,!123'
+  make_branch feature/x
+  ob_forge github OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "MR !123 (state not checked: the remote is on GitHub)"
+  assert_not_contains "view" "$OB_GH/calls"
+}
+
+test_open_briefs_does_not_ask_gitlab_about_a_pr() {
+  ob_open_phase 'feature/x,PR#14'
+  make_branch feature/x
+  ob_forge gitlab opened
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "PR #14 (state not checked: the remote is on GitLab)"
+  assert_not_contains "view" "$OB_GH/calls"
+}
+
+test_open_briefs_says_it_did_not_check_when_no_forge_is_detected() {
+  ob_open_phase 'feature/x,PR#14,!123'
+  make_branch feature/x
+  ob_forge none OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "PR #14 (state not checked: no forge detected), MR !123 (state not checked: no forge detected)"
+  assert_not_contains "view" "$OB_GH/calls"
+}
+
+# Each probe is a round trip to the server, so two phases with PRs must not cost two.
+test_open_briefs_detects_the_forge_once_per_run() {
+  make_repo
+  add_ledger 0001-ptr '`blc/2 #0001 in-progress a:in-progress(feature/x,PR#1) b:in-progress(feature/x,PR#2)`' \
+    '| a | in-progress | one |' '| b | in-progress | two |'
+  commit_all
+  make_branch feature/x
+  ob_forge github OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "PR #1 open"
+  assert_out "PR #2 open"
+  [ "$(grep -c '^gh auth status' "$OB_GH/calls")" -eq 1 ] \
+    || fail "detection ran more than once: $(cat "$OB_GH/calls")"
+}
+
+test_open_briefs_does_not_detect_a_forge_with_nothing_to_look_up() {
+  ob_open_phase 'feature/x'
+  make_branch feature/x
+  ob_forge github OPEN
+  run_query_with_gh docs/briefs
+  assert_status 0
+  assert_out "no PR"
+  [ ! -s "$OB_GH/calls" ] || fail "a forge was asked with no PR or MR: $(cat "$OB_GH/calls")"
+}
+
+# A missing detector is a broken install: a scan that could not ask must not print a report.
+test_open_briefs_errors_when_the_detector_is_missing() {
+  make_repo
+  commit_all
+  local tools="$TMP/ob-tools"
+  mkdir -p "$tools/lib"
+  cp "$REPO_ROOT/tools/open-briefs.sh" "$tools/"
+  cp "$REPO_ROOT"/tools/lib/*.sh "$tools/lib/"
+  ( cd "$REPO" && bash "$tools/open-briefs.sh" docs/briefs ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 2
+  assert_contains "detect-forge.sh" "$ERR"
 }
 
 # The status line is split on spaces, so this pointer arrives as `(feature/x,`. Reporting
@@ -332,7 +425,7 @@ test_open_briefs_measures_every_branch_in_a_pointer() {
 # cause. A pointer with only fixed tokens still gets that finding.
 test_open_briefs_says_no_branch_only_when_no_field_could_be_one() {
   ob_open_phase 'PR#14,!7'
-  ob_gh_stub OPEN
+  ob_forge github OPEN
   run_query_with_gh docs/briefs
   assert_status 0
   assert_out "phase a: no branch recorded"

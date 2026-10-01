@@ -343,6 +343,7 @@ ownership_map() {
     docs/state/README.md \
     tools/validate-briefs.sh \
     tools/open-briefs.sh \
+    tools/detect-forge.sh \
     tools/list-briefs.sh \
     tools/orient.sh \
     tools/lib/phase-row.sh \
@@ -725,7 +726,7 @@ echo "  $TARGET_DIR/docs/contracts/     (Contract v1.2 — the briefs convention
 echo "  $TARGET_DIR/docs/chronicles/    (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
 echo "  $TARGET_DIR/docs/state/         (one declaration per contributor)"
-echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, list-briefs.sh, orient.sh, lib/)"
+echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, detect-forge.sh, list-briefs.sh, orient.sh, lib/)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
