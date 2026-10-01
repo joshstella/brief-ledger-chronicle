@@ -270,6 +270,49 @@ tests its fetch or pull.
   failed `pull --ff-only` is called a divergence, though a dirty tree or a branch with no
   upstream also fails it.
 
+## Phase d — what it does
+
+`tools/jira-csv.sh <serial>` writes one brief as a Jira Cloud CSV import, to stdout. The first
+row is the Epic, with the summary `#<serial> — <title>`. Then each phase is a `Task` with the
+summary `#<serial>/<letter> — <label>`, in status-line order. Each Task gives the Epic's
+`Work item ID` as its `Parent`. The assignee is the brief's, by the shared rule. The Status
+column holds the BLC state without its pointer, so the importer maps one value per state.
+`install.sh` ships the script. "Reporting to a tracker" in the README now says how to import
+the file, and what drifts after the import.
+
+The script refuses, with exit 1 and nothing on stdout, a brief that it cannot export whole.
+That is a brief with a `Jira:` key, an assignee that is not one email, a `blc/1` ledger, a
+numbered phase, a status-line entry that is not a phase, or a phase label that cannot be read.
+A blank `Jira:` or `—` is read as "not imported yet".
+
+Two shared readers changed. `blc_identity_assignee` in `tools/lib/identity-line.sh` now holds
+the `Owner`-else-`Author` rule and its email check. `list-briefs.sh --owner` calls it, and its
+output is unchanged. `blc_phase_label` in `tools/lib/phase-row.sh` reads a label from the two
+row shapes that `blc-start-brief` writes. It returns 2 when two rows could be the phase, so the
+export refuses rather than picks one. It accepts any spacing before the em dash, because the
+shared row matcher does. A mutant found the first version refused `a—label`, a row that the
+gate counts as phase `a`.
+
+**Proof.** `tests/test_jira_csv.sh` has 17 tests. One compares a whole export: phases out of
+table order, a skipped phase, and pointers to drop. The others cover quoting, the serial
+spellings, the `Author` fallback, each refusal, the load list, and a run from a fixture
+install. `test_contract_ship.sh` installs the script and runs it in a fresh target. The
+bootstrap-walk test in `test_clauses.sh` now covers it. The two readers have 10 new tests and
+one new assertion in `test_list_briefs.sh`. The suite goes to 465 passing. Mutants: 26 of 26
+on the script, and 25 of 26 on the readers. The survivor rewrites a branch that the matcher
+never lets the reader reach.
+
+Run against this repository, the script exports `#0007`, `#0008` and `#0010` to `#0016`. It
+refuses `#0001` to `#0006`, which are `blc/1`. It refuses `#0009`, because a second table in
+that ledger has a cell that also matches phase `a`.
+
+**Known and left as they are:**
+
+- No file from this script has been imported into a real Jira. The column names and the
+  import steps come from Atlassian's documentation, read on 2026-10-01.
+- Two candidate rows are refused even when they give the same label, as in `#0009`.
+- Lines end in LF, not the CRLF of RFC 4180.
+
 ## Open decisions
 
 The brief carries eight. Their phase references are renumbered to the ids above, and one is
@@ -290,6 +333,9 @@ added.
 | 11 | **Settled 2026-10-01.** A brief whose identity line has `Jira:` is not exported, because it was already imported and a second import duplicates every row. | `d` |
 | 12 | **Settled 2026-10-01.** The Epic summary is `#<serial> — <title>`. | `d` |
 | 13 | **Settled 2026-10-01.** A brief whose assignee is not one email is not exported. An Epic with no assignee would import without a message. | `d` |
+| 14 | **Settled 2026-10-01.** A skipped phase is exported, with Status `skipped`. The Epic shows the whole plan, and the importer mapping decides what `skipped` becomes. | `d` |
+| 15 | **Settled 2026-10-01.** A phase is a `Task`. Every Jira Cloud project template has that work type. | `d` |
+| 16 | **Settled 2026-10-01.** The export writes to stdout. The person who runs it redirects the output to a file. | `d` |
 
 ## Big decisions
 
