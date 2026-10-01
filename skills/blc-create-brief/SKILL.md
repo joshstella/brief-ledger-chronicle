@@ -17,7 +17,7 @@ and get their identity here, at filing time, not while being written.
 - `<path-to-draft.md>` — an unnumbered draft brief (usually from `docs/briefs/_drafts/`,
   or any path). It contains a `# H1` title and a provenance line stamped at draft-write
   time: `**Created:** <ISO-8601 UTC>` and `**Author:** <email>`, optionally
-  `**Depends on:** …` (and, later, `**Jira:** …`).
+  `**Owner:** <email>`, `**Jira:** <Epic key>` and `**Depends on:** …`.
 - `[slug]` — optional explicit slug. **Slug precedence: this arg → the draft's filename
   stem → kebab-cased H1.** The usual path is to name your draft file what you want the
   slug to be (`mobile-ts-theme.md` → slug `mobile-ts-theme`); the H1 of a real brief is
@@ -49,10 +49,14 @@ and get their identity here, at filing time, not while being written.
    draft (`BRIEFS-4`). Produce **exactly one** identity line directly under the H1 in the
    shape `BRIEFS-5` requires, prepending the
    serial and **carrying the draft's provenance forward unchanged**:
-   `**Serial:** #NNNN · **Created:** <from draft> · **Author:** <from draft> · **Depends on:** <deps>`
-   (append `· **Jira:** …` if the draft carried it.) `<deps>` comes from the draft's
+   `**Serial:** #NNNN · **Created:** <from draft> · **Author:** <from draft> · **Owner:** <from draft> · **Jira:** <from draft> · **Depends on:** <deps>`
+   Write `Owner` and `Jira` only if the draft carried them. Never add them. An omitted
+   `Owner` means `Author` when it is read, and an added one would remove that fallback. Keep
+   them before `Depends on`, which goes last — see `docs/briefs/README.md`, "`Depends on`
+   goes last". `<deps>` comes from the draft's
    `**Depends on:**` line — **which, along with the draft's separate `Created`/`Author`
-   line, is consumed into this single line so no duplicate remains** — or `—` if absent.
+   line and any `Owner`/`Jira` line, is consumed into this single line so no duplicate
+   remains** — or `—` if absent.
    If the draft is missing `Created`/`Author`, resolve `Author` from `git config
    user.email` (falling back to `user.name`) and stamp `Created` = now, warning that the
    draft should have carried them from write time, then proceed. Git config is the only
