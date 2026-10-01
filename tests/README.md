@@ -124,10 +124,10 @@ then this costs nothing to run anywhere.
 
 ## Stubbed toolchain
 
-`install.sh`'s project mode requires `git`, `gh`, `node`, `npm` and `claude` on
-`PATH`. Only `git` is used by anything it actually does, and `claude` cannot be
-installed on a CI runner at all — so `run.sh` puts inert stubs for the other four
-on `PATH` and lets the real `git` through.
+`install.sh`'s project mode requires `git`, `gh` or `glab`, `node`, `npm` and
+`claude` on `PATH`. Only `git` is used by anything it actually does, and `claude`
+cannot be installed on a CI runner at all — so `run.sh` puts inert stubs for `gh`,
+`node`, `npm` and `claude` on `PATH` and lets the real `git` through.
 
 Tests that care about the dependency check build their own `PATH` instead, via
 `run_install_with_path`. `test_project_missing_dependency_aborts_before_writing`

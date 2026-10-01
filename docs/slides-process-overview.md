@@ -205,8 +205,8 @@ docs/install-log/
 
 ## Slide 12 — How to Install
 
-**Requirements:** `git`, `gh` (GitHub CLI). Claude Code installs also expect `node`, `npm`,
-and the `claude` CLI.
+**Requirements:** `git`, and `gh` (GitHub CLI) or `glab` (GitLab CLI) for your forge. Claude
+Code installs also expect `node`, `npm`, and the `claude` CLI.
 
 ```bash
 # 1. Clone the process repo (once per machine)

@@ -15,7 +15,17 @@
       "Bash(gh pr checks:*)",
       "Bash(gh repo view:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(glab auth status:*)",
+      "Bash(glab mr view:*)",
+      "Bash(glab mr list:*)",
+      "Bash(glab mr diff:*)",
+      "Bash(glab ci get:*)",
+      "Bash(glab ci status:*)",
+      "Bash(glab ci list:*)",
+      "Bash(glab ci trace:*)",
+      "Bash(glab repo view:*)",
+      "Bash(bash tools/detect-forge.sh:*)"
     ]
   }
 }

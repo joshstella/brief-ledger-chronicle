@@ -127,8 +127,10 @@ structural invariants.
 
 ## Requirements
 
-`git` and `gh` (GitHub CLI). Claude Code installs also expect `node`, `npm`, and the
-`claude` CLI. The installer checks and tells you what is missing before writing anything.
+`git`, and the CLI for your forge: `gh` (GitHub CLI) or `glab` (GitLab CLI). The skills run
+`tools/detect-forge.sh` to learn which one the remote needs, so either will do. Claude Code
+installs also expect `node`, `npm`, and the `claude` CLI. The installer checks and tells you
+what is missing before writing anything.
 
 ## Tests
 

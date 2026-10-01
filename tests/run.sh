@@ -223,7 +223,7 @@ if [ -z "${BLC_AWK_INNER:-}" ]; then
   exit 0
 fi
 
-# install.sh's project mode gates on git, gh, node, npm and claude being on PATH.
+# install.sh's project mode gates on git, gh or glab, node, npm and claude being on PATH.
 # Only git is actually used by anything it does, and `claude` cannot be installed on
 # a CI runner at all — so the suite supplies inert stubs for the other four and lets
 # the real git through. Tests that care about the dependency check build their own

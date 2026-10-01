@@ -169,3 +169,43 @@ test_project_missing_dependency_aborts_before_writing() {
   assert_no_dir "$TARGET/.claude"
   assert_no_dir "$TARGET/docs"
 }
+
+# A PATH with every program in /usr/bin and /bin except gh and glab, plus inert node, npm and
+# claude, and the forge CLIs named in $@. Prepending cannot hide /usr/bin/gh, which GitHub's
+# Ubuntu runners have.
+# usage: pm_forge_path [gh] [glab]
+pm_forge_path() {
+  PM_YARD="$TMP/pm-yard"
+  rm -rf "$PM_YARD"
+  mkdir -p "$PM_YARD"
+  local f name
+  for f in /usr/bin/* /bin/*; do
+    name="${f##*/}"
+    case "$name" in gh|glab) continue ;; esac
+    [ -e "$PM_YARD/$name" ] || ln -s "$f" "$PM_YARD/$name"
+  done
+  for name in node npm claude "$@"; do
+    rm -f "$PM_YARD/$name"
+    printf '#!/bin/sh\nexit 0\n' > "$PM_YARD/$name"
+    chmod +x "$PM_YARD/$name"
+  done
+}
+
+test_project_glab_alone_satisfies_the_forge_check() {
+  pm_forge_path glab
+  run_install_with_path "$PM_YARD" y --target "$TARGET"
+  assert_status 0
+  assert_out "[✓] glab"
+  assert_not_contains "[✗]" "$OUT"
+}
+
+test_project_no_forge_cli_aborts_before_writing() {
+  pm_forge_path
+  run_install_with_path "$PM_YARD" y --target "$TARGET"
+  assert_status 1
+  assert_out "gh or glab — neither found"
+  assert_out "brew install gh "
+  assert_out "brew install glab "
+  assert_no_dir "$TARGET/.claude"
+  assert_no_dir "$TARGET/docs"
+}
