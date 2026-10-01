@@ -1,6 +1,6 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:in-progress(PR#69) b:pending c:pending d:pending`
+`blc/2 #0007 in-progress a:done(PR#69) b:in-progress(brief/0007-b-the-fields,PR#75) c:pending d:pending`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the mapping | in-progress | PR#69 |
-| b | the fields | pending | — |
+| a | the mapping | done (PR#69) | — |
+| b | the fields | in-progress | `brief/0007-b-the-fields` |
 | c | my assignments | pending | — |
 | d | the publisher | pending | — |
 
@@ -30,15 +30,19 @@ step 4. What is left is three small edits to that one skill:
   settled that an omitted `Owner` means `Author` at read time. A fallback would make the
   field always present and quietly delete that decision.
 - Move the `Jira:` append to *before* `Depends on`, which today it follows. Phase `a` found
-  why: anything after `Depends on` is inside the dependency scan. It is in step 4, line 53.
+  why: anything after `Depends on` was inside the dependency scan. #0016 has since ended
+  `Depends on` at the next `·` in every reader here, so the move no longer fixes a trap in this
+  toolkit. It keeps the README's order, and that order is the backstop #0016 kept (its
+  decision 5) for a reader elsewhere that still reads greedily. `Owner:` goes before it too.
+  It is in step 4.
 - Drop "(and, later, `**Jira:** …`)" from the `## Input` bullet at line 20. "Later" is the
   same future tense as "added when wired", which phase `a` removed from the README one file
   away.
 
 No Jira call. Absence of either field stays ordinary.
 
-**c — my assignments.** A program that lists open briefs for an email — `Owner`, or `Author`
-when `Owner` is absent. It does not fetch. A skill fetches, then runs it. Tests land with it.
+**c — my assignments.** `list-briefs.sh --owner <email>` lists the briefs assigned to an email
+— `Owner`, or `Author` when `Owner` is absent (decision 7). It does not fetch. A skill fetches, then runs it. Tests land with it.
 
 **d — the publisher.** When Jira is configured, creates the Epic and the phase tickets, sets the
 Epic assignee from `Owner`, and transitions on a ledger status change. Unconfigured, it exits
@@ -87,6 +91,32 @@ mean coordinated edits in four places. And `Owner:` on the identity line lands w
 `validate-briefs.sh` already decides shape, so open decision 6 now has a precedent it lacked
 when written: #0015 established that a new check ships `[judgment]` and that promotion to
 `[defect]` has three stated criteria, one of which nothing in this repository currently meets.
+
+## Re-plan after #0016, 2026-10-01
+
+Phase `a` merged as PR#69 on 2026-09-30. #0016 then ran and changed three things under the
+remaining phases.
+
+**`b`'s reason changed, and its edits did not.** See the `b` row above.
+
+**`c` moves to `list-briefs.sh` (decision 7).** The brief chose between `open-briefs.sh` and a
+sibling. Since then `open-briefs.sh` has become a phase-level report of exceptions: it measures
+branches and asks the forge. "What is mine" is a question about briefs, not phases.
+`list-briefs.sh` already lists every brief with its state and reads the identity line through
+#0016's shared reader. An owner filter there adds a flag, not a program, so `install.sh` needs
+no new tool entry. `c` still needs a skill that fetches and then runs the query. Whether that
+skill is a process skill, which `install.sh` and three tests list by name, is decided in `c`.
+
+**`d` waits for a Jira tenant, by choice on 2026-10-01.** Five of its decisions are open (1, 3,
+4, 5 and 9), and no Jira tenant is reachable. The re-plan also found a possible blocker the brief
+does not name. Jira Cloud's API assigns an issue by `accountId`, not by email. A search by email
+can return no match when the user's profile hides the email. So "set the Epic assignee from
+`Owner`" may not be possible as written. This is from Atlassian's API, not from a test, because
+no tenant is reachable. A publisher built now would be proven only against a stub.
+
+`d` stays `pending`, not `deferred`. `deferred` means code parked on a branch, and `d` has no
+code. `open-briefs.sh` reads a `deferred` phase and would report "no branch recorded" on every
+run. The brief stays `in-progress` while `d` waits.
 
 ## Phase a — what it does
 
@@ -152,6 +182,18 @@ payload is two decisions. They are moved. This is not a new habit: eight of the 
 here have no `## Big decisions` section, so the same silence covers most of this repository's
 record. Closing that is not this brief's work, and it is named here so it is not lost.
 
+## Phase b — what it does
+
+`blc-create-brief` writes the identity line as `Serial · Created · Author · Owner · Jira ·
+Depends on`. It writes `Owner` and `Jira` only when the draft carries them, and adds neither. A draft's own `Owner` or `Jira` line is consumed into the identity line, the same as
+its `Created` and `Author` line. The `## Input` section no longer says "later".
+
+**Proof.** The skill is prose, and nothing runs it. The order of its template is still a fact a
+test can read. `test_identity_line_create_brief_writes_the_readme_order` reads the template's
+labels in order and expects exactly those six. Two mutants were run, and both were killed:
+`Jira` after `Depends on`, and no `Owner`. The test pins the order only. The rule that `Owner`
+is written only when the draft has one is prose, and nothing tests it.
+
 ## Open decisions
 
 The brief carries eight. Their phase references are renumbered to the ids above, and one is
@@ -165,8 +207,8 @@ added.
 | 4 | Status map. Default: a small config map, not a hardcoded "In Progress". | `d` |
 | 5 | Where auth lives. Env, a gitignored project file, or a CLI. No tokens in git. | `d` |
 | 6 | **Settled 2026-09-30, see below.** Contract clause? | `b` |
-| 7 | Extend `open-briefs.sh` or add a sibling? | `c` |
-| 8 | Which states count as "assigned"? Default: `pending`, `in-progress`, `deferred`. | `c` |
+| 7 | **Settled 2026-10-01: neither.** `list-briefs.sh --owner <email>`. | `c` |
+| 8 | **Settled 2026-10-01.** Every brief that is not `done` or `skipped`. This includes `planned` (no ledger) and `no-line`, which the brief's default did not name. | `c` |
 | 9 | **Added by this re-plan.** How does the publisher reach Jira such that a test can substitute for it? Without an answer `d` cannot be written, let alone merged. | `d` |
 
 ## Big decisions
@@ -266,7 +308,7 @@ That leaves one silence. A typo in `Owner:` makes phase `c` return an empty list
 executor cannot tell "nothing is mine" from "my address is misspelled in that brief". This is
 the shape #0014 and #0015 each found: a result that looks like an answer and is not.
 
-**The assignments program reports a malformed `Owner:` on stderr.** It is already reading the
+**The assignments query reports a malformed `Owner:` on stderr.** It is already reading the
 field from every open brief, so the check costs a comparison. It prints and does not gate,
 which is what a report owes a reader who may not own the brief that is wrong. Not a Contract
 clause, not a new version, and the finding lands in front of the one person looking for it.

@@ -215,3 +215,18 @@ test_identity_line_both_tools_read_the_library() {
   assert_loads_library validate-briefs.sh identity-line
   assert_loads_library list-briefs.sh identity-line
 }
+
+# ── The writer ───────────────────────────────────────────────────────────────
+
+# blc-create-brief is the one writer of the identity line, and it is prose, which nothing runs.
+# The order of its template is still a fact a test can read. `Depends on` goes last as the
+# backstop for a reader outside this toolkit that reads it to the end of the line.
+test_identity_line_create_brief_writes_the_readme_order() {
+  local skill="$REPO_ROOT/skills/blc-create-brief/SKILL.md" tpl labels
+  tpl="$(grep -o '`\*\*Serial:\*\* #NNNN[^`]*`' "$skill")"
+  [ "$(printf '%s\n' "$tpl" | grep -c .)" -eq 1 ] \
+    || fail "expected one identity-line template in blc-create-brief, found: $tpl"
+  labels="$(printf '%s' "$tpl" | grep -o '\*\*[A-Za-z ]*:\*\*' | tr -d '*:' | paste -sd'|')"
+  [ "$labels" = "Serial|Created|Author|Owner|Jira|Depends on" ] \
+    || fail "blc-create-brief writes the fields in the order: $labels"
+}
