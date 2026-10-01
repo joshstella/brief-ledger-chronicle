@@ -120,6 +120,8 @@ fixture_install_tool() {
   cp "$REPO_ROOT/tools/$tool" "$repo/tools/$tool"
   chmod +x "$repo/tools/$tool"
   cp "$REPO_ROOT"/tools/lib/*.sh "$repo/tools/lib/"
+  # open-briefs.sh refuses to run without the forge detector beside it.
+  [ "$tool" != open-briefs.sh ] || cp "$REPO_ROOT/tools/detect-forge.sh" "$repo/tools/detect-forge.sh"
 }
 
 # ── Assertions ───────────────────────────────────────────────────────────────

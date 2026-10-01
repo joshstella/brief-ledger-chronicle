@@ -233,3 +233,59 @@ was fixed.
 Review found two faults, both fixed: a pointer field was globbed, so `(*)` reported the working
 directory's file names, and `PR#` took any suffix, so `PR#abc` reached `gh` as a PR number and
 `PR#--web` as an option. The old parser had both. Each fix has a test that fails without it.
+
+## Phase c — what it does
+
+`tools/detect-forge.sh [remote]` prints `github` or `gitlab` for the remote's host (decision 11).
+With no argument it reads `origin`. When there is no `origin` and exactly one remote, it reads
+that remote, because `gh` found a repository through any remote before this phase. It does not
+choose among two or more. It reads the host from a `scheme://user@host:port/path` URL or from
+an scp-style `user@host:path`, and lowercases it. A path that begins with `/`, `./` or `../`,
+and a `file:///` URL, have no host. It then asks both CLIs `auth status --hostname <host>`. When exactly one accepts, it prints that
+forge and exits 0. When neither accepts, when both accept, or when the remote has no host, it
+prints nothing on stdout, gives the reason on stderr and exits 1. It exits 2 outside a git
+repository or when the remote does not exist. `install.sh` ships it beside `open-briefs.sh`.
+
+`open-briefs.sh` runs the detector only when an open phase has a PR or an MR, and only once per
+run. On GitHub it asks `gh` about `PR#N`. On GitLab it asks `glab` about `!N`. It does not ask
+one forge about the other's number: it says "state not checked: the remote is on GitLab" (or
+GitHub). With no forge detected it says "state not checked: no forge detected". States are
+normalised to `open`, `merged` and `closed` (decision 12); an empty answer reads `unknown`, and
+any other word is shown in lower case. A missing detector is a broken install, so
+`open-briefs.sh` exits 2 and names it.
+
+**What changed in the output.** A PR state was `gh`'s word, `OPEN` or `MERGED`. It is now
+`open` or `merged`. "(state not checked: no gh)" is now "(state not checked: no forge
+detected)". An `!N` beside a branch on a GitLab remote now has a state. On a remote that no CLI
+accepts, a PR is no longer looked up through whatever `gh` is installed.
+
+**Known and left as they are**, by choice on 2026-10-01, after review:
+
+- A relative path with a colon, such as `sub/team:r.git`, is read as the host `sub/team`, and
+  `file://localhost/...` as the host `localhost`. Git reads both as local. No CLI accepts such a
+  host, so the result is still "no forge detected", one round trip later.
+- A bracketed IPv6 host, such as `ssh://git@[::1]/r.git`, is not read.
+- `open-briefs.sh` drops the detector's reason. "Both CLIs accept the host" also reads "no forge
+  detected", because decision 9 asks only that the tool say it did not check.
+
+**Proof.** `tests/test_detect_forge.sh` holds 13 tests. Each runs with a `PATH` that holds only
+links to `git` and `tr` and the stub CLIs the test names, so "not installed" can be tested on a
+machine with `/usr/bin/gh`. `tests/test_open_briefs.sh` replaces its `gh` stub with a `gh` and a
+`glab` that accept one forge and record every call. It has 9 new tests and 2 fewer old ones, 7
+more in all.
+`test_ship_places_an_open_briefs_query_that_runs` runs the installed `open-briefs.sh` in a fresh
+target. `fixture_install_tool` copies the detector when it installs `open-briefs.sh`.
+
+Twenty-two mutants were run, and all were killed:
+
+- in the detector: both accepting treated as a match, `glab` not asked once `gh` accepts, the
+  host not lowercased, URL user or port kept, scp user kept, a local path with a colon read as
+  a host, a missing remote exiting 1, the probe not naming the host, no fallback to the only
+  remote, a fallback to the first of many, a fallback that replaces a named remote;
+- in `open-briefs.sh`: detection on every lookup, detection with nothing to look up, PR or MR
+  state not normalised, `opened` not mapped, an empty state not called `unknown`, an MR asked of
+  `gh`, a PR asked of `glab`, a PR asked on GitLab, the missing-detector check removed.
+
+Three first survived. The MR test matched `open` as a substring of `opened`, no test gave an
+empty state, and no local path held a colon. Each test was fixed or added. The roster mutant is
+killed by the ship test above.

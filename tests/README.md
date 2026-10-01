@@ -90,6 +90,8 @@ tests/
   test_briefs.sh          Contract clauses BRIEFS-1..8 (currently v1.2), plus this repo's own compliance
   test_brief_checks.sh    project checks in brief-checks/ (#0011)
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
+  test_detect_forge.sh    which forge hosts the remote, asked of stub gh and glab on a PATH
+                          that holds nothing else (#0016)
   test_contract_ship.sh   what a target receives of the Contract and its validator
   test_gather.sh          the chronicle digest: both modes, its refusals, its ceiling
   test_source_tree.sh     file modes in this repo's own tree, which no install test can see

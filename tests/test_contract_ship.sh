@@ -87,6 +87,18 @@ test_ship_places_the_open_briefs_query() {
     || fail "installed open-briefs.sh is not executable"
 }
 
+# open-briefs.sh exits 2 without the detector beside it, so a target that got one and not the
+# other would have a query that cannot run. Asserted by running it, not by listing files.
+test_ship_places_an_open_briefs_query_that_runs() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  [ -x "$TARGET/tools/detect-forge.sh" ] || fail "installed detect-forge.sh is not executable"
+  git -C "$TARGET" init -q 2>/dev/null
+  ( cd "$TARGET" && PATH="/usr/bin:/bin" ./tools/open-briefs.sh docs/briefs ) >"$TMP/q.txt" 2>&1
+  assert_count 0 "$?" "open-briefs exit status in a fresh target"
+  assert_contains "open-briefs: docs/briefs" "$TMP/q.txt"
+}
+
 # The rules without the check would be a Contract whose strongest claim is backed
 # by nothing in the tree that holds it.
 test_ship_places_a_validator_that_runs() {
