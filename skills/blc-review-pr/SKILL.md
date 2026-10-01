@@ -63,7 +63,7 @@ Discipline that keeps this useful: every **Couldn't verify** and **Your call** i
 ## Steps
 
 1. **Resolve the review target** per Usage above and fetch the diff:
-   - PR: `gh pr diff <number>`, and `gh pr view <number>` for title/description.
+   - PR: run `bash tools/detect-forge.sh` first. On `github`, `gh pr diff <number>`, and `gh pr view <number>` for title/description. On `gitlab` the PR is a merge request: `glab mr diff <number>` and `glab mr view <number>`. If it exits non-zero, stop and show the user the reason it printed — do not guess which CLI to ask. A staged or branch review needs no forge.
    - staged: `git diff --staged`.
    - branch: `git diff <default-branch>...HEAD`.
 

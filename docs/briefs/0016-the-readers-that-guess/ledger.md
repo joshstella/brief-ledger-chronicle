@@ -75,6 +75,9 @@ named.
 | 16 | **Settled 2026-09-30.** Every existing branch in a pointer is measured, one line each. | `b` |
 | 17 | **Settled 2026-09-30.** A pointer cut short by a space is reported, not read in part. | `b` |
 | 18 | **Settled 2026-10-01.** A `deferred` or `skipped` reason goes in the phase table, never the pointer. | `b` |
+| 19 | **Settled 2026-10-01.** `install.sh` requires `gh` or `glab`, not `gh`. | `d` |
+| 20 | **Settled 2026-10-01.** A skill whose detector exits non-zero stops and shows the reason. It does not ask which forge. | `d` |
+| 21 | **Settled 2026-10-01.** The Claude settings template allows `glab`'s read-only commands beside `gh`'s, and the detector. | `d` |
 
 **10 — settled: move.** One reader means one reader, including for the `[defect]` clause.
 "One reader" argues for moving the checks. `BRIEFS-5` is a `[defect]` clause, and moving
@@ -289,3 +292,35 @@ Twenty-two mutants were run, and all were killed:
 Three first survived. The MR test matched `open` as a substring of `opened`, no test gave an
 empty state, and no local path held a colon. Each test was fixed or added. The roster mutant is
 killed by the ship test above.
+
+## Phase d — what it does
+
+`blc-commit-push-pr` runs `bash tools/detect-forge.sh` in its preflight, in place of
+`gh auth status`. A table gives the `gh` and the `glab` command for each step that talks to the
+forge: open, checks, merge, merge methods and failed jobs. `blc-review-pr` runs the detector
+only when it reviews a PR by number, because a staged or branch review needs no forge.
+`blc-next-brief-phase` runs it to check that the previous phase merged. When the detector exits
+non-zero, each skill stops and shows its reason (decision 20). A repository with no
+`tools/detect-forge.sh`, such as one that has only the machine-mode skills, also stops; before
+this phase it worked with `gh` alone. Chosen on 2026-10-01, the same as `blc-orient` needs
+`tools/orient.sh`.
+
+The `glab` commands and flags were checked against `glab` 1.113.0. Their output was not
+observed, because no valid GitLab token exists on this machine. The JSON fields the skill reads
+(`.status`, `.state`, `merge_method`, `squash_option`) come from GitLab's API, not from a run.
+On GitLab, checks and failed jobs are asked of the merge request's pipeline, not the branch's.
+`glab mr merge` and `glab mr create` prompt unless given `--yes`. `glab mr merge` sets
+auto-merge when a pipeline is running, so the skill passes `--auto-merge=false`.
+
+`install.sh` project mode now requires `gh` or `glab` (decision 19). It used to require `gh`,
+which refused every GitLab project, though nothing the installer does uses either. The
+install hint names both. `README.md`, `docs/slides-process-overview.md` and `tests/README.md`
+say the same. The Claude settings template allows nine read-only `glab` commands and the
+detector (decision 21).
+
+**Proof.** The skills are prose, and nothing tests prose. `tests/test_project_mode.sh` gains two
+tests. Each runs the installer on a `PATH` that links every program in `/usr/bin` and `/bin`
+except `gh` and `glab`, because prepending to `PATH` cannot hide `/usr/bin/gh`. With `glab`
+alone the install passes. With neither it stops before it writes anything and names both. Two
+mutants were run, and both were killed: `gh` required again, and a missing forge CLI not
+counted as missing.

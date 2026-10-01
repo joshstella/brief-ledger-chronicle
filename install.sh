@@ -265,7 +265,8 @@ install_hint() {
   local dep="$1"
   case "$dep" in
     git)    echo "    macOS: brew install git  |  Linux: sudo apt install git" ;;
-    gh)     echo "    macOS: brew install gh   |  Linux: https://cli.github.com/manual/installation" ;;
+    gh)     echo "    GitHub — macOS: brew install gh    |  Linux: https://cli.github.com/manual/installation" ;;
+    glab)   echo "    GitLab — macOS: brew install glab  |  Linux: https://gitlab.com/gitlab-org/cli#installation" ;;
     node)   echo "    macOS: brew install node |  Linux: https://nodejs.org/en/download" ;;
     npm)    echo "    Comes with Node.js — install node first" ;;
     claude) echo "    https://claude.ai/code — install the Claude Code CLI" ;;
@@ -511,8 +512,21 @@ echo ""
 echo "Checking dependencies..."
 
 MISSING=()
-for dep in git gh node npm claude; do
-  if command -v "$dep" &>/dev/null; then
+for dep in git FORGE node npm claude; do
+  # Either forge CLI will do: the skills ask tools/detect-forge.sh which one the remote
+  # needs, so requiring gh would refuse every GitLab project.
+  if [[ "$dep" == FORGE ]]; then
+    if command -v gh &>/dev/null || command -v glab &>/dev/null; then
+      for cli in gh glab; do
+        command -v "$cli" &>/dev/null && echo "  [✓] $cli"
+      done
+    else
+      echo "  [✗] gh or glab — neither found"
+      install_hint gh
+      install_hint glab
+      MISSING+=("gh or glab")
+    fi
+  elif command -v "$dep" &>/dev/null; then
     echo "  [✓] $dep"
   else
     echo "  [✗] $dep — not found"

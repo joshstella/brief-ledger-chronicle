@@ -22,7 +22,7 @@ If no argument is given, use the most recently updated `in-progress` brief ledge
 
 2. **Read the ledger and the brief.** Surface: completed phases and what each recorded as learned or changed; the remaining phase list; recorded open decisions and any resolutions; complications.
 
-3. **Confirm the previous phase actually landed.** Check that its PR is merged (`gh pr view` on the phase branch). If it isn't, say so — a chained next phase depends on it, and planning on top of unmerged work is how branches diverge. Also read the previous phase's bug ledger (`review-<branch>.md`): if it has `open` correctness bugs, they come before new work.
+3. **Confirm the previous phase actually landed.** Check that its PR is merged. Run `bash tools/detect-forge.sh`; on `github` use `gh pr view <branch> --json state`, on `gitlab` use `glab mr view <branch> -F json --jq .state` (a merge request reads `merged`). If the detector exits non-zero, stop: show the user the reason it printed and tell them to log in to their forge's CLI — do not guess which CLI to ask. If it isn't, say so — a chained next phase depends on it, and planning on top of unmerged work is how branches diverge. Also read the previous phase's bug ledger (`review-<branch>.md`): if it has `open` correctness bugs, they come before new work.
 
 4. **RE-PLAN the remaining phases — this is the point of the command.**
    - Re-read the remaining sequence against what the completed phases *found*, not against the original plan. Did a completed phase resolve an open decision in a way that reorders, splits, merges, or removes a later phase? (The canonical case: a phase that was provisional-pending-a-decision in `blc-start-brief` — its downstream sequence is now either confirmed or rewritten.)

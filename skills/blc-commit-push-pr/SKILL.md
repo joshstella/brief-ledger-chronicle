@@ -1,7 +1,7 @@
 ---
 name: blc-commit-push-pr
 description: >-
-  Stage, review, commit, push, and open a PR. Use when the user asks to blc-commit-push-pr or to commit and open a pull request.
+  Stage, review, commit, push, and open a PR (a merge request on GitLab). Use when the user asks to blc-commit-push-pr or to commit and open a pull or merge request.
 ---
 
 # blc-commit-push-pr
@@ -10,8 +10,20 @@ Stage changed files, review them **before anything leaves the machine**, and onl
 The review is a gate, not a formality: a `Request changes` verdict stops the chain before the commit. Nothing reaches the remote unreviewed.
 Steps:
 0. **Preflight — stop here if either check fails:**
-   - Run `gh auth status` to confirm gh is installed and authenticated. If it fails or shows no active account, stop and tell the user to run `brew install gh && gh auth login` before continuing.
+   - From the repository root, run `bash tools/detect-forge.sh`. It prints `github` or `gitlab`, and it exits 0 only when exactly one of `gh` and `glab` is logged in to the remote's host. If it exits non-zero, stop: show the user the reason it printed, and tell them to install and log in to the CLI for their forge (`gh auth login` or `glab auth login`). Do not choose a forge yourself — a CLI that answers for the wrong host opens nothing, or opens it in the wrong place. If `tools/detect-forge.sh` does not exist, the toolkit is not installed in this repository: stop and say so.
+   - Use that forge's commands from the table below for every step that talks to the forge. On GitLab a PR is a merge request (MR), numbered `!N`.
    - Run `git branch --show-current`. If it is `main` or `master`, stop and tell the user a PR cannot be created from the default branch — they should create a feature branch first (`git checkout -b <name>`).
+
+   | Step | `github` | `gitlab` |
+   |---|---|---|
+   | Open (7) | `gh pr create --title "<t>" --body "<body>"` | `glab mr create --title "<t>" --description "<body>" --yes` |
+   | Checks (9) | `gh pr checks <n>` | `glab ci get --merge-request <n> -F json --jq .status` |
+   | Merge (9) | `gh pr merge <n> --squash` | `glab mr merge <n> --squash --auto-merge=false --yes` |
+   | Merge methods (9) | `gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed` | `glab repo view -F json --jq '{merge_method, squash_option}'` |
+   | Failed jobs (9) | `gh run view <run-id> --log-failed` | `glab ci get --merge-request <n> --status failed --with-job-details`, then `glab ci trace <job-id>` |
+
+   On GitLab, ask about the merge request's pipeline, not the branch's: a project that runs pipelines only for merge requests has none on the branch. `glab mr merge` sets auto-merge by default when a pipeline is running, so `--auto-merge=false` makes it merge now or fail.
+
 1. Run `git status` and `git diff` to understand what changed.
 2. Run `git log -5 --oneline` to match the repo's commit message style.
 3. Stage the relevant files (prefer specific file names over `git add -A` — exclude anything that looks like secrets, generated output, or build artefacts).
@@ -22,7 +34,7 @@ Steps:
    `Co-Authored-By: Claude <noreply@anthropic.com>`
    Then commit.
 6. Push to the current branch (with `-u origin <branch>` if the branch has no upstream yet).
-7. Create a PR with `gh pr create`. Pass the body via HEREDOC so formatting is preserved.
+7. Create the PR with the forge's open command. Pass the body via HEREDOC so formatting is preserved.
    - **Title** under 70 characters. If this work executes a brief, prefix the title with the brief's serial in brackets: `[#NNNN] <summary>`. Derive `NNNN` from the active brief — the branch name if it leads with a four-digit serial, otherwise the `docs/briefs/NNNN-slug/` folder being executed. For ad-hoc work not tied to a brief, omit the prefix and title as usual. (Because main is squash-merged, the title becomes the commit subject on main, so `[#NNNN]` lands in the permanent history and any commit traces back to the brief that specified it.)
    The body must include:
    - `## Summary` — 2–4 bullets.
@@ -30,9 +42,9 @@ Steps:
    - `## Brief` — the governing brief and phase this work came from, as serial + path: `#NNNN — docs/briefs/NNNN-slug/brief.md — phase <N>`. Write `none` if this change isn't from a brief. This line is what lets `blc-review-pr` find the intent to check against later.
    Run the Summary and Test plan bullets through the `blc-ste-writing` skill (STE-flavored mode) before opening the PR — the Brief line and title stay as specified above (identifiers, not prose).
 8. Return the PR URL, plus the review verdict and any carried-forward suggestions, in the same response.
-9. **If asked to wait for CI and merge once green** (now, or in a later message on the same PR): don't poll manually with repeated sleeps or re-invocations. Use the Monitor tool to run a background poll loop against `gh pr checks <number>` that emits a line on each check's status change and exits once every check reports a terminal (non-pending) status.
+9. **If asked to wait for CI and merge once green** (now, or in a later message on the same PR): don't poll manually with repeated sleeps or re-invocations. Use the Monitor tool to run a background poll loop against the forge's checks command that emits a line on each check's status change and exits once every check reports a terminal (non-pending) status.
    When the run lands:
-   - **All required checks passed** → merge with `gh pr merge <number> --squash` (confirm this repo's actual default merge method first if unclear — check via `gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`).
-   - **Failed** → fetch `gh run view <run-id> --log-failed` and get the actual list of failing test/job names. If a known pre-existing baseline of acceptable failures has already been established earlier in this conversation (e.g. confirmed against main's own CI), compare the new failure set against it by name — only treat it as "the known flake" if the set is identical. Never assume a failure is pre-existing/flaky without checking; a new failure needs real diagnosis, not dismissal.
+   - **All required checks passed** → merge with the forge's merge command (confirm this repo's actual default merge method first if unclear, with the forge's merge-methods command).
+   - **Failed** → fetch the failed jobs' logs with the forge's failed-jobs command and get the actual list of failing test/job names. If a known pre-existing baseline of acceptable failures has already been established earlier in this conversation (e.g. confirmed against main's own CI), compare the new failure set against it by name — only treat it as "the known flake" if the set is identical. Never assume a failure is pre-existing/flaky without checking; a new failure needs real diagnosis, not dismissal.
    If the outcome is something the user would want to know even if they've stepped away, follow up with PushNotification (under 200 chars, lead with the actionable fact — e.g. "PR #122 merged" or "PR #122: 2 new test failures, not the known flake") rather than leaving it sitting silently in chat.
 Do not amend existing commits. If the pre-commit hook fails, fix the issue and create a new commit.
