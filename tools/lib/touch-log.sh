@@ -10,8 +10,14 @@
 # every one of those dates to the day of the move:
 #
 #   the move     `git log -- <dir>` does not follow a rename, so a moved folder has no history
-#                before the move. Each tracked file under a folder is followed on its own
-#                with `--follow`, which only works on a single path.
+#                before the move. Each tracked file under a folder is followed back through
+#                its earlier names, and the log runs over all of them.
+#
+# Not `git log --follow`, which was the first version of this. `--follow` follows copies as
+# well as renames: a new ledger that is close to an older brief's ledger inherited that
+# brief's history, and its first date moved to before it existed. Briefs and ledgers are
+# written from the same templates, so near-copies are the normal case here, not a corner.
+# `blc_touch_renames` reads only rename records, and only those are followed.
 #
 #   the rewrite  phase `b` rewrites the paths inside every brief and ledger. That is a real
 #                content change, so following renames cannot hide it. It would become every
@@ -45,25 +51,59 @@ blc_touch_skip() {
   done < "$1"
 }
 
-# usage: blc_touch_log SKIP PATH...
+# usage: blc_touch_renames
+# Prints `<old path><TAB><new path>` for every rename in the history of HEAD, relative to the
+# top of the repository. One walk of the history, so a tool reads it once, not once per brief.
+# A merge commit records no renames of its own here, and that is fine for a squash-merge
+# history. The quoting is off so a non-ASCII name matches the name `ls-files` prints.
+blc_touch_renames() {
+  # A repository with no commits has no HEAD, and `git log` exits 128. Its callers run under
+  # `pipefail` plus `set -e`, so the failure has to stop here: a fresh install has no history,
+  # and that is not an error.
+  { git -c core.quotePath=false log -M --diff-filter=R --name-status --format= 2>/dev/null || true; } \
+    | awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'
+}
+
+# usage: blc_touch_names RENAMES PATH
+# Prints PATH, then every name it had before, newest first. A name used again after a rename
+# would bring the new file's commits in with the old one's. Nothing here does that, and the
+# move in #0017 leaves the old names empty.
+blc_touch_names() {
+  printf '%s\n' "$1" | awk -F'\t' -v start="$2" '
+    NF == 2 { older[$2] = older[$2] SUBSEP $1 }
+    END {
+      queue[1] = start; n = 1; seen[start] = 1
+      for (i = 1; i <= n; i++) {
+        print queue[i]
+        k = split(older[queue[i]], names, SUBSEP)
+        for (j = 2; j <= k; j++) if (!(names[j] in seen)) { seen[names[j]] = 1; queue[++n] = names[j] }
+      }
+    }
+  '
+}
+
+# usage: blc_touch_log SKIP RENAMES PATH...
 # Prints `<unix-author-time> <iso-author-time>` for each commit that touched any PATH, newest
 # first, once per commit, minus the commits in SKIP (the output of `blc_touch_skip`). A
-# directory PATH covers every file tracked under it, each followed through renames.
+# directory PATH covers every file tracked under it, each followed back through the renames
+# in RENAMES (the output of `blc_touch_renames`).
 blc_touch_log() {
-  local skip="$1" p f
-  shift
+  local skip="$1" renames="$2" p f name
+  shift 2
   {
     for p in "$@"; do
-      if [ -d "$p" ]; then
-        # The folder's own log still runs: it is the only one that sees a file deleted
-        # from the folder, which `ls-files` no longer lists.
-        git log --format='%H %at %aI' -- "$p" 2>/dev/null || true
-        while IFS= read -r f; do
-          git log --follow --format='%H %at %aI' -- "$f" 2>/dev/null || true
-        done < <(git ls-files -- "$p" 2>/dev/null)
-      else
-        git log --follow --format='%H %at %aI' -- "$p" 2>/dev/null || true
-      fi
+      # The folder's own log still runs: it is the only one that sees a file deleted from
+      # the folder, which `ls-files` no longer lists.
+      [ -d "$p" ] && { git log --format='%H %at %aI' -- "$p" 2>/dev/null || true; }
+      # `--full-name` because the rename records are relative to the top of the repository,
+      # and `:(top)` below reads them that way from any working directory.
+      while IFS= read -r f; do
+        blc_touch_names "$renames" "$f" | sed 's/^/:(top)/' | {
+          set --
+          while IFS= read -r name; do set -- "$@" "$name"; done
+          git log --format='%H %at %aI' -- "$@" 2>/dev/null || true
+        }
+      done < <(git ls-files --full-name -- "$p" 2>/dev/null)
     done
   } | awk -v skip="$skip" '
     BEGIN { n = split(skip, s, "\n"); for (i = 1; i <= n; i++) if (s[i] != "") ignored[s[i]] = 1 }

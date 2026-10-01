@@ -15,11 +15,11 @@ run_list() {
 
 list_repo() {
   REPO="$TMP/repo"
-  mkdir -p "$REPO/docs/briefs"
+  mkdir -p "$REPO/docs/blc/briefs"
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email t@example.com
   git -C "$REPO" config user.name Test
-  echo "# Briefs" > "$REPO/docs/briefs/README.md"
+  echo "# Briefs" > "$REPO/docs/blc/briefs/README.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm root >/dev/null 2>&1
 }
@@ -27,9 +27,9 @@ list_repo() {
 # usage: list_brief <folder> <title> [ledger-status-line]
 list_brief() {
   local folder="$1" title="$2" status="${3:-}"
-  mkdir -p "$REPO/docs/briefs/$folder"
-  printf '# %s\n' "$title" > "$REPO/docs/briefs/$folder/brief.md"
-  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/briefs/$folder/ledger.md"
+  mkdir -p "$REPO/docs/blc/briefs/$folder"
+  printf '# %s\n' "$title" > "$REPO/docs/blc/briefs/$folder/brief.md"
+  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/blc/briefs/$folder/ledger.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "add $folder" >/dev/null 2>&1
 }
@@ -39,7 +39,7 @@ list_brief() {
 test_list_briefs_emits_a_table_with_no_caller() {
   list_repo
   list_brief 0001-thing "The thing" '`blc/2 #0001 done a:done`'
-  run_list docs/briefs
+  run_list docs/blc/briefs
   assert_status 0
   assert_out "| serial | title | status | first | last | depends-on |"
   assert_out "| #0001 | The thing | done |"
@@ -50,22 +50,14 @@ test_list_briefs_emits_a_table_with_no_caller() {
 test_list_briefs_emits_no_heading_of_its_own() {
   list_repo
   list_brief 0001-thing "The thing"
-  run_list docs/briefs
+  run_list docs/blc/briefs
   assert_status 0
   assert_not_contains "## Briefs" "$OUT"
 }
 
-test_list_briefs_defaults_to_docs_briefs() {
-  list_repo
-  list_brief 0001-thing "The thing"
-  run_list
-  assert_status 0
-  assert_out "| #0001 | The thing |"
-}
-
 test_list_briefs_renders_an_empty_tree_as_a_dash_row() {
   list_repo
-  run_list docs/briefs
+  run_list docs/blc/briefs
   assert_status 0
   assert_out "| — | — | — | — | — | — |"
 }
@@ -75,13 +67,13 @@ test_list_briefs_renders_an_empty_tree_as_a_dash_row() {
 # was the defect, not either reader on its own.
 test_list_briefs_reads_a_status_line_under_frontmatter() {
   list_repo
-  mkdir -p "$REPO/docs/briefs/0001-fm"
-  printf '# The thing\n' > "$REPO/docs/briefs/0001-fm/brief.md"
+  mkdir -p "$REPO/docs/blc/briefs/0001-fm"
+  printf '# The thing\n' > "$REPO/docs/blc/briefs/0001-fm/brief.md"
   printf -- '---\ntitle: fm\ntags: [ledger]\n---\n\n# Ledger\n`blc/2 #0001 done a:done`\n' \
-    > "$REPO/docs/briefs/0001-fm/ledger.md"
+    > "$REPO/docs/blc/briefs/0001-fm/ledger.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "add 0001-fm" >/dev/null 2>&1
-  run_list docs/briefs
+  run_list docs/blc/briefs
   assert_status 0
   assert_out "| #0001 | The thing | done |"
 }
@@ -90,9 +82,9 @@ test_list_briefs_refuses_without_a_briefs_directory() {
   REPO="$TMP/bare"
   mkdir -p "$REPO"
   git -C "$REPO" init -q -b main
-  run_list docs/briefs
-  [ "$LAST_STATUS" -ne 0 ] || fail "expected a non-zero status with no docs/briefs"
-  assert_err "No docs/briefs"
+  run_list docs/blc/briefs
+  [ "$LAST_STATUS" -ne 0 ] || fail "expected a non-zero status with no docs/blc/briefs"
+  assert_err "No docs/blc/briefs"
 }
 
 # ── The --tsv contract ───────────────────────────────────────────────────────
@@ -103,7 +95,7 @@ test_list_briefs_refuses_without_a_briefs_directory() {
 test_list_briefs_tsv_emits_five_tab_separated_fields() {
   list_repo
   list_brief 0001-thing "The thing"
-  run_list --tsv docs/briefs
+  run_list --tsv docs/blc/briefs
   assert_status 0
   local fields
   fields="$(head -1 "$OUT" | awk -F'\t' '{print NF}')"
@@ -114,7 +106,7 @@ test_list_briefs_tsv_emits_five_tab_separated_fields() {
 test_list_briefs_tsv_emits_no_table_markup() {
   list_repo
   list_brief 0001-thing "The thing"
-  run_list --tsv docs/briefs
+  run_list --tsv docs/blc/briefs
   assert_status 0
   assert_not_contains "| serial |" "$OUT"
 }
@@ -127,12 +119,12 @@ test_list_briefs_tsv_and_table_agree_on_order() {
   list_brief 0002-second "Second"
   list_brief 0003-third  "Third"
 
-  run_list --tsv docs/briefs
+  run_list --tsv docs/blc/briefs
   assert_status 0
   local tsv_order
   tsv_order="$(awk -F'\t' '{print $2}' "$OUT" | sed 's/-.*//' | tr '\n' ' ')"
 
-  run_list docs/briefs
+  run_list docs/blc/briefs
   assert_status 0
   local table_order
   table_order="$(grep -o '#[0-9]\{4\}' "$OUT" | tr -d '#' | tr '\n' ' ')"
@@ -143,7 +135,7 @@ test_list_briefs_tsv_and_table_agree_on_order() {
 
 test_list_briefs_tsv_is_empty_for_an_empty_tree() {
   list_repo
-  run_list --tsv docs/briefs
+  run_list --tsv docs/blc/briefs
   assert_status 0
   [ ! -s "$OUT" ] || fail "expected no output for an empty tree, got: $(head -1 "$OUT")"
 }
@@ -154,10 +146,10 @@ test_list_briefs_tsv_is_empty_for_an_empty_tree() {
 # The identity tail follows `**Author:** `, e.g. 'me@x.org · **Owner:** you@x.org'.
 lb_brief() {
   local folder="$1" tail="$2" status="${3:-}" n="${1%%-*}"
-  mkdir -p "$REPO/docs/briefs/$folder"
+  mkdir -p "$REPO/docs/blc/briefs/$folder"
   printf '# Brief %s\n\n**Serial:** #%s · **Created:** 2026-01-01T00:00:00Z · **Author:** %s · **Depends on:** —\n' \
-    "$n" "$n" "$tail" > "$REPO/docs/briefs/$folder/brief.md"
-  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/briefs/$folder/ledger.md"
+    "$n" "$n" "$tail" > "$REPO/docs/blc/briefs/$folder/brief.md"
+  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/blc/briefs/$folder/ledger.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "add $folder" >/dev/null 2>&1
 }
@@ -167,7 +159,7 @@ lb_listed() { grep -q "^| #$1 |" "$OUT"; }
 test_list_briefs_owner_lists_a_brief_owned_by_the_email() {
   list_repo
   lb_brief 0001-a 'filer@x.org · **Owner:** me@x.org' '`blc/2 #0001 in-progress a:in-progress`'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   lb_listed 0001 || fail "the owner's brief is not listed: $(cat "$OUT")"
 }
@@ -175,7 +167,7 @@ test_list_briefs_owner_lists_a_brief_owned_by_the_email() {
 test_list_briefs_owner_falls_back_to_author() {
   list_repo
   lb_brief 0001-a 'me@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   lb_listed 0001 || fail "a brief with no Owner is not listed for its Author: $(cat "$OUT")"
 }
 
@@ -183,16 +175,16 @@ test_list_briefs_owner_falls_back_to_author() {
 test_list_briefs_owner_takes_the_brief_away_from_the_author() {
   list_repo
   lb_brief 0001-a 'me@x.org · **Owner:** you@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   ! lb_listed 0001 || fail "the Author still sees a brief someone else owns"
-  run_list --owner you@x.org docs/briefs
+  run_list --owner you@x.org docs/blc/briefs
   lb_listed 0001 || fail "the Owner does not see the brief"
 }
 
 test_list_briefs_owner_ignores_case() {
   list_repo
   lb_brief 0001-a 'filer@x.org · **Owner:** Me@X.org'
-  run_list --owner mE@x.ORG docs/briefs
+  run_list --owner mE@x.ORG docs/blc/briefs
   lb_listed 0001 || fail "the match depends on case"
 }
 
@@ -206,7 +198,7 @@ test_list_briefs_owner_lists_only_unfinished_briefs() {
   lb_brief 0005-done 'me@x.org' '`blc/2 #0005 done a:done`'
   lb_brief 0006-skipped 'me@x.org' '`blc/2 #0006 skipped a:skipped`'
   lb_brief 0007-old 'me@x.org' '`blc/1 #0007 done(commit 383ed5b) 1:done`'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   local s
   for s in 0001 0002 0003 0004; do lb_listed "$s" || fail "#$s is unfinished and not listed"; done
@@ -219,7 +211,7 @@ test_list_briefs_owner_reports_a_malformed_owner() {
   lb_brief 0001-a 'me@x.org · **Owner:** me at x dot org'
   lb_brief 0002-b 'me@x.org · **Owner:**'
   lb_brief 0003-c 'me@x.org · **Owner:** me@x.org, you@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   assert_contains "#0001: Owner 'me at x dot org' is not an email" "$ERR"
   assert_contains "#0002: Owner '' is not an email" "$ERR"
@@ -229,7 +221,7 @@ test_list_briefs_owner_reports_a_malformed_owner() {
   ! lb_listed 0002 || fail "a blank Owner fell back to the Author"
   ! lb_listed 0003 || fail "a two-email Owner was listed"
   # Assigned to no one means no one, including the malformed value itself.
-  run_list --owner 'me@x.org, you@x.org' docs/briefs
+  run_list --owner 'me@x.org, you@x.org' docs/blc/briefs
   ! lb_listed 0003 || fail "a malformed Owner was listed under its own value"
 }
 
@@ -238,7 +230,7 @@ test_list_briefs_owner_reports_an_owner_in_markup() {
   list_repo
   lb_brief 0001-a 'me@x.org · **Owner:** `me@x.org`'
   lb_brief 0002-b 'me@x.org · **Owner:** <me@x.org>'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_contains "#0001: Owner '\`me@x.org\`' is not an email" "$ERR"
   assert_contains "#0002: Owner '<me@x.org>' is not an email" "$ERR"
 }
@@ -247,7 +239,7 @@ test_list_briefs_owner_reports_an_owner_in_markup() {
 test_list_briefs_owner_reports_a_malformed_author_it_falls_back_to() {
   list_repo
   lb_brief 0001-a 'me@x.org, you@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   assert_contains "#0001: Author 'me@x.org, you@x.org' is not an email" "$ERR"
   ! lb_listed 0001 || fail "a two-email Author was listed"
@@ -256,7 +248,7 @@ test_list_briefs_owner_reports_a_malformed_author_it_falls_back_to() {
 test_list_briefs_owner_does_not_report_a_finished_brief() {
   list_repo
   lb_brief 0001-a 'me@x.org · **Owner:** nope' '`blc/2 #0001 done a:done`'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   [ ! -s "$ERR" ] || fail "a finished brief was reported: $(cat "$ERR")"
 }
 
@@ -264,7 +256,7 @@ test_list_briefs_without_owner_reports_nothing_and_lists_everything() {
   list_repo
   lb_brief 0001-a 'me@x.org · **Owner:** nope'
   lb_brief 0002-b 'me@x.org' '`blc/2 #0002 done a:done`'
-  run_list docs/briefs
+  run_list docs/blc/briefs
   [ ! -s "$ERR" ] || fail "the unfiltered table reported: $(cat "$ERR")"
   lb_listed 0001 && lb_listed 0002 || fail "the unfiltered table dropped a brief: $(cat "$OUT")"
 }
@@ -272,7 +264,7 @@ test_list_briefs_without_owner_reports_nothing_and_lists_everything() {
 test_list_briefs_owner_with_nothing_assigned_is_a_dash_row() {
   list_repo
   lb_brief 0001-a 'you@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   assert_out "| — | — | — | — | — | — |"
 }
@@ -296,7 +288,7 @@ test_list_briefs_owner_does_not_fetch() {
   git clone -q --bare "$REPO" "$TMP/upstream.git"
   git -C "$REPO" remote add origin "$TMP/upstream.git"
   lb_brief 0001-a 'me@x.org'
-  run_list --owner me@x.org docs/briefs
+  run_list --owner me@x.org docs/blc/briefs
   assert_status 0
   [ ! -e "$REPO/.git/FETCH_HEAD" ] || fail "the query fetched"
 }

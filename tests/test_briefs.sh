@@ -6,7 +6,7 @@
 # negative fixtures are the test; the self-check at the bottom is the claim that
 # this repo complies.
 #
-# Clause text is in docs/contracts/v1.2.md (BRIEFS-1..8 unchanged from v1) and is not restated
+# Clause text is in docs/blc/contracts/v1.2.md (BRIEFS-1..8 unchanged from v1) and is not restated
 # here.
 
 VALIDATOR() { printf '%s' "$REPO_ROOT/tools/validate-briefs.sh"; }
@@ -362,10 +362,10 @@ test_briefs_8_a_gap_does_not_fail_the_run() {
 # ── This repository complies with its own Contract ──────────────────────────
 
 test_briefs_this_repo_satisfies_contract_v1() {
-  run_validator "$REPO_ROOT/docs/briefs"
+  run_validator "$REPO_ROOT/docs/blc/briefs"
   assert_status 0
   assert_out "0 defect(s)"
-  # Without this the test passes on an empty docs/briefs, which is compliance by
+  # Without this the test passes on an empty docs/blc/briefs, which is compliance by
   # vacancy rather than compliance.
   assert_matches "— [1-9][0-9]* brief(s)" "$OUT"
 }
@@ -376,8 +376,8 @@ test_briefs_this_repo_satisfies_contract_v1() {
 # the wider report on which clauses have checks; this is only the link itself.
 test_briefs_every_named_check_path_resolves() {
   local contract path found=0
-  for contract in "$REPO_ROOT/docs/contracts/v1.md" "$REPO_ROOT/docs/contracts/v1.1.md" \
-                  "$REPO_ROOT/docs/contracts/v1.2.md"; do
+  for contract in "$REPO_ROOT/docs/blc/contracts/v1.md" "$REPO_ROOT/docs/blc/contracts/v1.1.md" \
+                  "$REPO_ROOT/docs/blc/contracts/v1.2.md"; do
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$REPO_ROOT/$path" ] || fail "${contract##*/} names a check that does not exist: $path"
@@ -388,7 +388,7 @@ test_briefs_every_named_check_path_resolves() {
 
 # ── The optional identity fields, and what the validator does not say ────────
 #
-# #0007 phase `a`. `docs/briefs/README.md` states that `validate-briefs.sh` says nothing
+# #0007 phase `a`. `docs/blc/briefs/README.md` states that `validate-briefs.sh` says nothing
 # about `Jira:` or `Owner:`, and that a malformed value costs you a report and not a brief.
 # That is a claim about a program that ships today, so the phase's documentation-only
 # exemption does not reach it. Without a fixture the sentence is true by accident, and a

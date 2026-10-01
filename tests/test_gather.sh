@@ -23,7 +23,7 @@ run_gather() {
 # the filesystem happened to do.
 gather_repo() {
   REPO="$TMP/repo"
-  BRIEFS="$REPO/docs/briefs"
+  BRIEFS="$REPO/docs/blc/briefs"
   mkdir -p "$BRIEFS/_drafts"
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email t@example.com
@@ -481,7 +481,7 @@ test_gather_names_the_total_when_it_truncates_the_commit_list() {
 
 test_gather_refuses_outside_a_git_repository() {
   REPO="$TMP/plain"
-  mkdir -p "$REPO/docs/briefs"
+  mkdir -p "$REPO/docs/blc/briefs"
   run_gather
   [ "$LAST_STATUS" -ne 0 ] || fail "expected a non-zero status outside a git repo"
   assert_err "Not inside a git repo."
@@ -492,8 +492,8 @@ test_gather_refuses_without_a_briefs_directory() {
   mkdir -p "$REPO"
   git -C "$REPO" init -q -b main
   run_gather
-  [ "$LAST_STATUS" -ne 0 ] || fail "expected a non-zero status with no docs/briefs"
-  assert_err "No docs/briefs"
+  [ "$LAST_STATUS" -ne 0 ] || fail "expected a non-zero status with no docs/blc/briefs"
+  assert_err "No docs/blc/briefs"
 }
 
 # ── Self-check ───────────────────────────────────────────────────────────────

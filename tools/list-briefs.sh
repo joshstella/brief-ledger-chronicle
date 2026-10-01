@@ -159,10 +159,11 @@ trap 'rm -f "$tmp"' EXIT
 # Beside the briefs directory, like every other path orient.sh derives from it. See
 # lib/touch-log.sh for what belongs in it.
 SKIP=$(blc_touch_skip "$(dirname "$BRIEFS_DIR")/ignore-revs")
+RENAMES=$(blc_touch_renames)
 
 for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
   [ -d "$d" ] || continue
-  touches=$(blc_touch_log "$SKIP" "$d")
+  touches=$(blc_touch_log "$SKIP" "$RENAMES" "$d")
   # `sed -n` and not `head -1`: head closes the pipe early, and under `set -o pipefail`
   # plus `set -e` the SIGPIPE kills this script mid-loop. sed and tail read all their input.
   # %at is the sort key. %aI is display. String-sorting %aI mis-orders two

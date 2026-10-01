@@ -86,7 +86,7 @@ test_clauses_briefs9_passes_every_ledger_in_this_repository() {
   # The brief promises it. Asserted against the real tree rather than a fixture, because
   # the promise is about this tree.
   local out
-  out="$(bash "$REPO_ROOT/tools/validate-briefs.sh" "$REPO_ROOT/docs/briefs" 2>&1)"
+  out="$(bash "$REPO_ROOT/tools/validate-briefs.sh" "$REPO_ROOT/docs/blc/briefs" 2>&1)"
   case "$out" in
     *"BRIEFS-9"*) fail "BRIEFS-9 complains about a ledger already in this repository:
 $out" ;;
@@ -197,10 +197,10 @@ $CL_OUT" ;;
 # with phase `z`. Each of the three tools says so in its own vocabulary.
 test_clauses_all_three_readers_agree_on_one_ledger() {
   # A real repository layout, because two of the three readers want git and all three want
-  # docs/briefs to be where it actually is.
+  # docs/blc/briefs to be where it actually is.
   local root="$TMP/clauses/agree"
   rm -rf "$root"
-  CL_DIR="$root/docs/briefs"
+  CL_DIR="$root/docs/blc/briefs"
   mkdir -p "$CL_DIR"
   # Two phases: `a` has a row, `q` deliberately does not. `q` is what makes the gate's
   # assertion positive — a validator that reads this line MUST complain about `q`, so a
@@ -221,9 +221,9 @@ test_clauses_all_three_readers_agree_on_one_ledger() {
   git -C "$root" commit -qm fixture >/dev/null 2>&1
 
   local open_out list_out val_out open_rc list_rc val_rc
-  open_out="$(cd "$root" && bash tools/open-briefs.sh docs/briefs 2>&1)"; open_rc=$?
-  list_out="$(cd "$root" && bash tools/list-briefs.sh docs/briefs 2>&1)"; list_rc=$?
-  val_out="$(cd "$root" && bash tools/validate-briefs.sh docs/briefs 2>&1)"; val_rc=$?
+  open_out="$(cd "$root" && bash tools/open-briefs.sh docs/blc/briefs 2>&1)"; open_rc=$?
+  list_out="$(cd "$root" && bash tools/list-briefs.sh docs/blc/briefs 2>&1)"; list_rc=$?
+  val_out="$(cd "$root" && bash tools/validate-briefs.sh docs/blc/briefs 2>&1)"; val_rc=$?
 
   [ "$open_rc" -eq 0 ] || fail "open-briefs exited $open_rc"
   [ "$list_rc" -eq 0 ] || fail "list-briefs exited $list_rc"
@@ -282,7 +282,7 @@ $val_out" ;;
 cl_three_tool_repo() {
   CL_ROOT="$TMP/clauses/$1"
   rm -rf "$CL_ROOT"
-  CL_DIR="$CL_ROOT/docs/briefs"
+  CL_DIR="$CL_ROOT/docs/blc/briefs"
   mkdir -p "$CL_DIR"
   shift
   cl_brief 0001 tok -- "$@"
@@ -295,7 +295,7 @@ cl_three_tool_repo() {
   git -C "$CL_ROOT" commit -qm fixture >/dev/null 2>&1
 }
 
-# A multi-letter id is not a phase index — `docs/briefs/README.md` says a phase has one id
+# A multi-letter id is not a phase index — `docs/blc/briefs/README.md` says a phase has one id
 # and the index is a letter. Before the tokenizer was shared, open-briefs.sh followed `bc`
 # as a live phase while the gate did not see it at all.
 test_clauses_the_gate_and_the_reporter_agree_on_a_multi_letter_id() {
@@ -305,8 +305,8 @@ test_clauses_the_gate_and_the_reporter_agree_on_a_multi_letter_id() {
     '' '| a | thing | done |'
 
   local open_out val_out
-  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/briefs 2>&1)"
-  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/blc/briefs 2>&1)"
+  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/blc/briefs 2>&1)"
 
   # Neither may treat `bc` as a phase to follow.
   case "$open_out" in
@@ -329,8 +329,8 @@ test_clauses_the_gate_and_the_reporter_agree_on_a_timestamp() {
     '' '| a | thing | in-progress |'
 
   local open_out val_out
-  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/briefs 2>&1)"
-  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+  open_out="$(cd "$CL_ROOT" && bash tools/open-briefs.sh docs/blc/briefs 2>&1)"
+  val_out="$(cd "$CL_ROOT" && bash tools/validate-briefs.sh docs/blc/briefs 2>&1)"
   case "$open_out" in
     *"phase 2026"*) fail "open-briefs parsed a timestamp as a phase:
 $open_out" ;;
@@ -343,7 +343,7 @@ $val_out" ;;
 
 cl_assert_gate_clean_rc() {
   local rc
-  ( cd "$1" && bash tools/validate-briefs.sh docs/briefs >/dev/null 2>&1 ); rc=$?
+  ( cd "$1" && bash tools/validate-briefs.sh docs/blc/briefs >/dev/null 2>&1 ); rc=$?
   [ "$rc" -eq 0 ] || fail "a [judgment] blocked the run (exit $rc)"
 }
 
@@ -496,7 +496,7 @@ $CL_OUT" ;;
   done
 }
 
-# docs/contracts/README.md, promotion criterion 3, states that criterion 3 is unmet for every
+# docs/blc/contracts/README.md, promotion criterion 3, states that criterion 3 is unmet for every
 # [judgment] in this repository. That is a claim about the present, and the present moves. If
 # a ledger here ever produces a judgment, the claim goes false and the sentence needs
 # rewriting — which is the failure mode this whole brief exists to stop.
@@ -512,7 +512,7 @@ $CL_OUT" ;;
 # check, and an unstated half is how the seventh got written.
 test_clauses_the_promotion_criteria_still_describe_this_repository() {
   local out
-  out="$(cd "$REPO_ROOT" && bash tools/validate-briefs.sh docs/briefs 2>&1)"
+  out="$(cd "$REPO_ROOT" && bash tools/validate-briefs.sh docs/blc/briefs 2>&1)"
 
   # Positive control: the run must have reached the clauses at all.
   case "$out" in
@@ -527,7 +527,7 @@ $out" ;;
   case "$out" in
     *", 0 judgment(s)"*) ;;
     *) fail "a ledger in this repository now produces a judgment, so promotion criterion 3 in
-docs/contracts/README.md ('unmet for every [judgment] in this repository') is stale.
+docs/blc/contracts/README.md ('unmet for every [judgment] in this repository') is stale.
 Update the sentence, then update this test:
 $out" ;;
   esac
@@ -554,7 +554,7 @@ test_clauses_validate_briefs_runs_through_a_symlink() {
   mkdir -p "$linkdir"
   ln -s "$REPO_ROOT/tools/validate-briefs.sh" "$linkdir/validate-briefs.sh"
   local out
-  out="$(cd "$REPO_ROOT" && bash "$linkdir/validate-briefs.sh" docs/briefs 2>&1)"
+  out="$(cd "$REPO_ROOT" && bash "$linkdir/validate-briefs.sh" docs/blc/briefs 2>&1)"
   [ $? -ne 2 ] || fail "validate-briefs could not find its library through a symlink"
   case "$out" in
     *"cannot read"*) fail "validate-briefs looked for lib/ beside the link" ;;
@@ -575,7 +575,7 @@ test_clauses_a_missing_library_refuses_to_report_a_clean_tree() {
   cp -r "$REPO_ROOT/docs" "$sandbox/docs"
 
   local out rc
-  out="$(cd "$sandbox" && bash tools/validate-briefs.sh docs/briefs 2>&1)"; rc=$?
+  out="$(cd "$sandbox" && bash tools/validate-briefs.sh docs/blc/briefs 2>&1)"; rc=$?
   [ "$rc" -eq 2 ] || fail "a missing library exited $rc, not 2"
   case "$out" in
     *"cannot read"*) ;;

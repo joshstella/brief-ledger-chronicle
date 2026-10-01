@@ -4,7 +4,7 @@
 # every test_*.sh is sourced into one shell by run.sh.
 make_brief_checks_repo() {
   BC_REPO="$TMP/repo"
-  BC_BRIEFS="$BC_REPO/docs/briefs"
+  BC_BRIEFS="$BC_REPO/docs/blc/briefs"
   BC_CHECKS="$BC_REPO/brief-checks"
   mkdir -p "$BC_BRIEFS/_drafts"
   echo "# Briefs" > "$BC_BRIEFS/README.md"

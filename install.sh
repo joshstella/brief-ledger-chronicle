@@ -826,14 +826,15 @@ done <<< "$SCAFFOLD_DIRS"
 # would hide the exception, so the ignore is the contents, then the one file.
 #
 # This is the one place the installer writes to a file it does not own, so it appends and
-# never rewrites: an existing .gitignore keeps everything it had. Either line of the block
-# means a previous run wrote it, so the block is not written twice.
+# never rewrites: an existing .gitignore keeps everything it had. A target that already
+# has the `docs/blc/chronicles/` directory rule is left alone — that rule still hides
+# chronicle.md. Un-hiding it there is a hand edit, not an installer behaviour.
 #
 # The rules before #0017 name `docs/chronicles/`, and they do not match the new location. A
 # target that has them gets this block as well, and keeps the old lines, which now match
 # nothing. Removing them is the upgrade's job in #0017 phase `c`, not a fresh install's.
 GITIGNORE_DST="$TARGET_DIR/.gitignore"
-if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/blc/chronicles/*' "$GITIGNORE_DST" || grep -qxF '!docs/blc/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
+if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/blc/chronicles/' "$GITIGNORE_DST" || grep -qxF '!docs/blc/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
   log_skipped_as ".gitignore" "chronicles ignore rule already present"
 else
   if [[ -f "$GITIGNORE_DST" ]]; then

@@ -28,6 +28,7 @@ TOUCH_LIB="$(git rev-parse --show-toplevel)/tools/lib/touch-log.sh"
 # shellcheck source=/dev/null
 . "$TOUCH_LIB"
 SKIP="$(blc_touch_skip "$(dirname "$BRIEFS_DIR")/ignore-revs")"
+RENAMES="$(blc_touch_renames)"
 # git parses the date, so this does not depend on which `date` the host has. It prints
 # `--max-age=<unix time>`.
 CUTOFF=0
@@ -89,7 +90,7 @@ if [ -d "$BRIEFS_DIR/_drafts" ]; then
     [ -e "$f" ] || continue
     base=$(basename "$f"); [ "$base" = "README.md" ] && continue
     if [ -n "$SINCE" ]; then
-      recent=$(blc_touch_log "$SKIP" "$f" | sed -n '1s/ .*//p')
+      recent=$(blc_touch_log "$SKIP" "$RENAMES" "$f" | sed -n '1s/ .*//p')
       [ -n "$recent" ] && [ "$recent" -ge "$CUTOFF" ] || continue
     fi
     echo "- ${base}: $(grep -m1 '^# ' "$f" 2>/dev/null | sed 's/^# //')"

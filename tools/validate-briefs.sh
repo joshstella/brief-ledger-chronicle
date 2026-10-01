@@ -326,7 +326,11 @@ done
 run_project_checks() {
   local repo_root checks_dir script output status
 
-  repo_root="$(cd "$BRIEFS_DIR/../.." && pwd)"
+  # The root is found by depth from docs/blc/briefs, not from git: this validator runs
+  # without a repository. The depth is the layout, so a move of the briefs directory has to
+  # change it. #0017 moved it and missed this line at first, and an absent directory here
+  # reads as "no project checks", so the gate passed without running any.
+  repo_root="$(cd "$BRIEFS_DIR/../../.." && pwd)"
   checks_dir="$repo_root/brief-checks"
   [ -d "$checks_dir" ] || return 0
 

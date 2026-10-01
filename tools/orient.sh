@@ -98,6 +98,7 @@ if [ -r "$TOUCH_LIB" ]; then
   # shellcheck source=/dev/null
   . "$TOUCH_LIB"
   SKIP="$(blc_touch_skip "$BLC_ROOT/ignore-revs")"
+  RENAMES="$(blc_touch_renames)"
 fi
 if [ -d "$STATE_DIR" ]; then
   for f in "$STATE_DIR"/*.md; do
@@ -108,7 +109,7 @@ if [ -d "$STATE_DIR" ]; then
     # Nothing prunes this directory, so age is reported rather than enforced —
     # a declaration someone abandoned shows up as old instead of as truth.
     if [ -r "$TOUCH_LIB" ]; then
-      touched="$(blc_touch_log "$SKIP" "$f" | sed -n '1s/^[^ ]* \(.\{10\}\).*/\1/p')"
+      touched="$(blc_touch_log "$SKIP" "$RENAMES" "$f" | sed -n '1s/^[^ ]* \(.\{10\}\).*/\1/p')"
     else
       touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
     fi

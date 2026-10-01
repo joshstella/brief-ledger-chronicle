@@ -9,21 +9,21 @@
 test_ship_places_the_contract() {
   run_install y --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/contracts/v1.md"
-  assert_file "$TARGET/docs/contracts/v1.1.md"
-  assert_file "$TARGET/docs/contracts/v1.2.md"
-  assert_file "$TARGET/docs/contracts/README.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.2.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.1.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_file "$TARGET/docs/blc/contracts/README.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.1.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.2.md"
 }
 
 test_ship_places_the_contract_for_cursor_too() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/contracts/v1.md"
-  assert_file "$TARGET/docs/contracts/v1.1.md"
-  assert_file "$TARGET/docs/contracts/v1.2.md"
-  assert_file "$TARGET/docs/contracts/README.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.1.md"
+  assert_file "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_file "$TARGET/docs/blc/contracts/README.md"
 }
 
 # Generalised deliberately. A test naming open-briefs.sh would have caught the bug
@@ -39,9 +39,9 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
   # Every document install.sh ships under docs/, not the ones that happen to name a
   # tool today. The property is about the shipped set; scanning a subset of it would
   # let a tool named in the omitted document go unchecked.
-  for doc in "$TARGET/docs/briefs/README.md" "$TARGET/docs/briefs/_drafts/README.md" \
-             "$TARGET/docs/contracts/README.md" "$TARGET/docs/contracts/v1.md" \
-             "$TARGET/docs/contracts/v1.1.md" "$TARGET/docs/contracts/v1.2.md"; do
+  for doc in "$TARGET/docs/blc/briefs/README.md" "$TARGET/docs/blc/briefs/_drafts/README.md" \
+             "$TARGET/docs/blc/contracts/README.md" "$TARGET/docs/blc/contracts/v1.md" \
+             "$TARGET/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.2.md"; do
     [ -f "$doc" ] || continue
     # Underscores and digits included so a tool named off the lowercase-hyphen
     # convention is caught rather than skipped. A pattern that silently ignores the
@@ -94,9 +94,9 @@ test_ship_places_an_open_briefs_query_that_runs() {
   assert_status 0
   [ -x "$TARGET/tools/detect-forge.sh" ] || fail "installed detect-forge.sh is not executable"
   git -C "$TARGET" init -q 2>/dev/null
-  ( cd "$TARGET" && PATH="/usr/bin:/bin" ./tools/open-briefs.sh docs/briefs ) >"$TMP/q.txt" 2>&1
+  ( cd "$TARGET" && PATH="/usr/bin:/bin" ./tools/open-briefs.sh docs/blc/briefs ) >"$TMP/q.txt" 2>&1
   assert_count 0 "$?" "open-briefs exit status in a fresh target"
-  assert_contains "open-briefs: docs/briefs" "$TMP/q.txt"
+  assert_contains "open-briefs: docs/blc/briefs" "$TMP/q.txt"
 }
 
 # Run in a target with no briefs, it must get far enough to say so: a missing library stops
@@ -107,7 +107,7 @@ test_ship_places_a_jira_export_that_runs() {
   [ -x "$TARGET/tools/jira-csv.sh" ] || fail "installed jira-csv.sh is not executable"
   ( cd "$TARGET" && PATH="/usr/bin:/bin" ./tools/jira-csv.sh 1 ) >"$TMP/j.txt" 2>&1
   assert_count 1 "$?" "jira-csv exit status in a fresh target"
-  assert_contains "no brief #0001 in docs/briefs" "$TMP/j.txt"
+  assert_contains "no brief #0001 in docs/blc/briefs" "$TMP/j.txt"
 }
 
 # The rules without the check would be a Contract whose strongest claim is backed
@@ -118,21 +118,21 @@ test_ship_places_a_validator_that_runs() {
   assert_file "$TARGET/tools/validate-briefs.sh"
   [ -x "$TARGET/tools/validate-briefs.sh" ] \
     || fail "installed validator is not executable"
-  "$TARGET/tools/validate-briefs.sh" "$TARGET/docs/briefs" >"$TMP/v.txt" 2>&1
+  "$TARGET/tools/validate-briefs.sh" "$TARGET/docs/blc/briefs" >"$TMP/v.txt" 2>&1
   assert_count 0 "$?" "validator exit status against a fresh target"
   assert_contains "clauses decided" "$TMP/v.txt"
 }
 
 # The failure this phase could most easily introduce. The shipped README points at
 # the Contract with a relative link, which resolves in this repository whether or
-# not install.sh places docs/contracts/ in the target.
+# not install.sh places docs/blc/contracts/ in the target.
 test_ship_every_relative_link_in_the_briefs_readme_resolves() {
   run_install y --target "$TARGET"
   assert_status 0
-  local readme="$TARGET/docs/briefs/README.md" link found=0
+  local readme="$TARGET/docs/blc/briefs/README.md" link found=0
   for link in $(grep -oE '\]\(\.\.?/[^)]+\)' "$readme" | sed 's/^](\(.*\))$/\1/' | sort -u); do
     found=$((found + 1))
-    [ -e "$TARGET/docs/briefs/$link" ] \
+    [ -e "$TARGET/docs/blc/briefs/$link" ] \
       || fail "installed briefs README links to $link, absent from the target"
   done
   [ "$found" -gt 0 ] || fail "expected a relative link in the installed briefs README"
@@ -145,8 +145,8 @@ test_ship_the_installed_contract_names_a_check_that_exists() {
   run_install y --target "$TARGET"
   assert_status 0
   local contract path found=0
-  for contract in "$TARGET/docs/contracts/v1.md" "$TARGET/docs/contracts/v1.1.md" \
-                  "$TARGET/docs/contracts/v1.2.md"; do
+  for contract in "$TARGET/docs/blc/contracts/v1.md" "$TARGET/docs/blc/contracts/v1.1.md" \
+                  "$TARGET/docs/blc/contracts/v1.2.md"; do
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$TARGET/$path" ] \
@@ -161,13 +161,13 @@ test_ship_the_installed_contract_names_a_check_that_exists() {
 test_ship_the_briefs_readme_is_this_repos_own_file() {
   run_install y --target "$TARGET"
   assert_status 0
-  cmp -s "$REPO_ROOT/docs/briefs/README.md" "$TARGET/docs/briefs/README.md" \
+  cmp -s "$REPO_ROOT/docs/blc/briefs/README.md" "$TARGET/docs/blc/briefs/README.md" \
     || fail "installed briefs README differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/contracts/v1.md" "$TARGET/docs/contracts/v1.md" \
+  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.md" "$TARGET/docs/blc/contracts/v1.md" \
     || fail "installed Contract v1 differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/contracts/v1.1.md" "$TARGET/docs/contracts/v1.1.md" \
+  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.1.md" \
     || fail "installed Contract v1.1 differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/contracts/v1.2.md" "$TARGET/docs/contracts/v1.2.md" \
+  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.2.md" "$TARGET/docs/blc/contracts/v1.2.md" \
     || fail "installed Contract v1.2 differs from this repository's own copy"
 }
 
@@ -179,18 +179,18 @@ test_ship_no_second_copy_of_the_briefs_docs_exists() {
 
 # The Contract is toolkit-owned and replaced every run (#0012b).
 test_ship_default_replaces_a_stale_contract() {
-  mkdir -p "$TARGET/docs/contracts"
-  echo "OLD CONTRACT" > "$TARGET/docs/contracts/v1.md"
-  echo "OLD SUPERSEDED" > "$TARGET/docs/contracts/v1.1.md"
-  echo "OLD CURRENT" > "$TARGET/docs/contracts/v1.2.md"
+  mkdir -p "$TARGET/docs/blc/contracts"
+  echo "OLD CONTRACT" > "$TARGET/docs/blc/contracts/v1.md"
+  echo "OLD SUPERSEDED" > "$TARGET/docs/blc/contracts/v1.1.md"
+  echo "OLD CURRENT" > "$TARGET/docs/blc/contracts/v1.2.md"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_not_contains "OLD CONTRACT" "$TARGET/docs/contracts/v1.md"
-  assert_not_contains "OLD SUPERSEDED" "$TARGET/docs/contracts/v1.1.md"
-  assert_not_contains "OLD CURRENT" "$TARGET/docs/contracts/v1.2.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/contracts/v1.2.md"
+  assert_not_contains "OLD CONTRACT" "$TARGET/docs/blc/contracts/v1.md"
+  assert_not_contains "OLD SUPERSEDED" "$TARGET/docs/blc/contracts/v1.1.md"
+  assert_not_contains "OLD CURRENT" "$TARGET/docs/blc/contracts/v1.2.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.1.md"
+  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.2.md"
 }
 
 # The Contract README ships into every target, and #0015b gave it a command to run and a path
@@ -210,7 +210,7 @@ IN_SOURCE_ONLY_MARKER="not in an installed copy"
 test_ship_the_contract_readme_marks_paths_it_does_not_ship() {
   run_install y --target "$TARGET"
   assert_status 0
-  local readme="$TARGET/docs/contracts/README.md" path absent=0
+  local readme="$TARGET/docs/blc/contracts/README.md" path absent=0
   assert_file "$readme"
 
   # Blank-line-separated blocks, so the marker has to sit beside the path it excuses. A

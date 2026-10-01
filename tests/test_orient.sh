@@ -35,16 +35,16 @@ orient_repo() {
 # usage: orient_brief <folder> <title> [status-line]
 orient_brief() {
   local folder="$1" title="$2" status="${3:-}"
-  mkdir -p "$REPO/docs/briefs/$folder"
-  printf '# %s\n' "$title" > "$REPO/docs/briefs/$folder/brief.md"
-  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/briefs/$folder/ledger.md"
+  mkdir -p "$REPO/docs/blc/briefs/$folder"
+  printf '# %s\n' "$title" > "$REPO/docs/blc/briefs/$folder/brief.md"
+  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/blc/briefs/$folder/ledger.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "add $folder" >/dev/null 2>&1
 }
 
 orient_declaration() {
-  mkdir -p "$REPO/docs/state"
-  printf '# %s\n\n## 2026-09-09 — %s\n' "$1" "$2" > "$REPO/docs/state/$1.md"
+  mkdir -p "$REPO/docs/blc/state"
+  printf '# %s\n\n## 2026-09-09 — %s\n' "$1" "$2" > "$REPO/docs/blc/state/$1.md"
   git -C "$REPO" add -A
   git -C "$REPO" commit -qm "declare $1" >/dev/null 2>&1
 }
@@ -66,8 +66,8 @@ test_orient_stays_under_the_budget_in_this_repo() {
 # A cap governs quantity, and quantity is the only thing about the authored file
 # that can be checked. Nothing here says the principles are the right ones.
 test_orient_authored_file_stays_under_its_cap() {
-  local t; t="$(tokens_of "$REPO_ROOT/docs/orientation.md")"
-  [ "$t" -le 250 ] || fail "docs/orientation.md is $t tokens, over the 250 cap"
+  local t; t="$(tokens_of "$REPO_ROOT/docs/blc/orientation.md")"
+  [ "$t" -le 250 ] || fail "docs/blc/orientation.md is $t tokens, over the 250 cap"
 }
 
 # ── Determinism ──────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ test_orient_runs_clean_in_a_repo_with_nothing() {
 
 test_orient_runs_clean_with_an_empty_briefs_directory() {
   orient_repo
-  mkdir -p "$REPO/docs/briefs"
+  mkdir -p "$REPO/docs/blc/briefs"
   run_orient
   assert_status 0
   assert_out "Nothing open."
@@ -187,8 +187,8 @@ test_orient_reports_a_declaration_with_its_author_and_age() {
 
 test_orient_ignores_the_state_readme() {
   orient_repo
-  mkdir -p "$REPO/docs/state"
-  printf '# Declarations\n\n## Not a declaration\n' > "$REPO/docs/state/README.md"
+  mkdir -p "$REPO/docs/blc/state"
+  printf '# Declarations\n\n## Not a declaration\n' > "$REPO/docs/blc/state/README.md"
   git -C "$REPO" add -A && git -C "$REPO" commit -qm readme >/dev/null 2>&1
   run_orient
   assert_status 0
@@ -199,8 +199,8 @@ test_orient_ignores_the_state_readme() {
 # someone with nothing unfiled, and must not be reported as in-flight work.
 test_orient_ignores_an_emptied_declaration() {
   orient_repo
-  mkdir -p "$REPO/docs/state"
-  : > "$REPO/docs/state/someone@example.com.md"
+  mkdir -p "$REPO/docs/blc/state"
+  : > "$REPO/docs/blc/state/someone@example.com.md"
   run_orient
   assert_status 0
   assert_out "Nobody has declared unfiled work"
@@ -220,21 +220,21 @@ test_orient_reports_two_contributors_separately() {
 
 test_orient_derives_off_limits_from_the_install_log() {
   orient_repo
-  mkdir -p "$REPO/docs/install-log"
-  cat > "$REPO/docs/install-log/install-log.md" <<'LOG'
+  mkdir -p "$REPO/docs/blc/install-log"
+  cat > "$REPO/docs/blc/install-log/install-log.md" <<'LOG'
 # Install log
 
 ## 2026-09-09T00:00:00Z — HOST
 
 ### Created
 
-  - docs/briefs
+  - docs/blc/briefs
   - tools
 LOG
   git -C "$REPO" add -A && git -C "$REPO" commit -qm log >/dev/null 2>&1
   run_orient
   assert_status 0
-  assert_out "docs/briefs"
+  assert_out "docs/blc/briefs"
   assert_out "tools"
 }
 
@@ -242,8 +242,8 @@ LOG
 # and then belongs to the project, so orient must not tell a reader to keep off it.
 test_orient_does_not_claim_ownership_the_log_does_not_record() {
   orient_repo
-  mkdir -p "$REPO/docs/install-log"
-  cat > "$REPO/docs/install-log/install-log.md" <<'LOG'
+  mkdir -p "$REPO/docs/blc/install-log"
+  cat > "$REPO/docs/blc/install-log/install-log.md" <<'LOG'
 # Install log
 
 ### Created
@@ -260,8 +260,8 @@ LOG
 # spends tokens to say one thing.
 test_orient_collapses_a_child_under_its_logged_parent() {
   orient_repo
-  mkdir -p "$REPO/docs/install-log"
-  cat > "$REPO/docs/install-log/install-log.md" <<'LOG'
+  mkdir -p "$REPO/docs/blc/install-log"
+  cat > "$REPO/docs/blc/install-log/install-log.md" <<'LOG'
 # Install log
 
 ### Created
@@ -353,7 +353,7 @@ test_orient_runs_inside_a_fresh_install() {
 test_orient_authored_file_does_not_ship_to_a_target() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_no_file "$TARGET/docs/orientation.md"
+  assert_no_file "$TARGET/docs/blc/orientation.md"
 }
 
 # ── The wiring (phase e) ─────────────────────────────────────────────────────
@@ -372,9 +372,9 @@ test_orient_is_named_by_the_three_orientation_steps() {
 }
 
 # blc-create-brief is where a serial claim is cleared, and where a peer's claim is the
-# only warning available for the half of the race docs/briefs/ cannot show.
+# only warning available for the half of the race docs/blc/briefs/ cannot show.
 test_orient_create_brief_knows_about_declarations() {
-  assert_contains "docs/state" "$REPO_ROOT/skills/blc-create-brief/SKILL.md"
+  assert_contains "docs/blc/state" "$REPO_ROOT/skills/blc-create-brief/SKILL.md"
 }
 
 # The rules file is what a target's agents actually read, so the wiring has to
@@ -383,7 +383,7 @@ test_orient_is_named_in_the_rules_a_target_receives() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
   assert_contains "tools/orient.sh" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
-  assert_contains "docs/state" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+  assert_contains "docs/blc/state" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
 }
 
 # The brief's Ground: three skills told an agent to read AGENTS.md, and in a fresh

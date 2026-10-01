@@ -1,4 +1,4 @@
-# The declaration convention — docs/state/, from #0008b.
+# The declaration convention — docs/blc/state/, from #0008b.
 #
 # Phase b ships a convention, not a program, and a convention has almost nothing a
 # test can hold onto. What follows is deliberately limited to the two things that
@@ -12,15 +12,15 @@
 # answers now so that c has something to be wrong against.
 
 # The rule, in one line: lowercase the address, use it verbatim.
-state_path_for() { printf 'docs/state/%s.md' "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"; }
+state_path_for() { printf 'docs/blc/state/%s.md' "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"; }
 
 # ── The rule ─────────────────────────────────────────────────────────────────
 
 test_state_filename_is_the_lowercased_address() {
   local got
   got="$(state_path_for 'Josh.Stella@Example.COM')"
-  [ "$got" = "docs/state/josh.stella@example.com.md" ] \
-    || fail "expected docs/state/josh.stella@example.com.md, got $got"
+  [ "$got" = "docs/blc/state/josh.stella@example.com.md" ] \
+    || fail "expected docs/blc/state/josh.stella@example.com.md, got $got"
 }
 
 # @ and . survive. A slug rule would have eaten both, and the README promises they
@@ -67,36 +67,36 @@ test_state_the_derived_path_is_actually_writable() {
 test_state_directory_is_scaffolded_into_a_target() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_dir "$TARGET/docs/state"
+  assert_dir "$TARGET/docs/blc/state"
 }
 
 test_state_readme_ships_to_a_target() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/state/README.md"
-  assert_contains "One file per contributor" "$TARGET/docs/state/README.md"
+  assert_file "$TARGET/docs/blc/state/README.md"
+  assert_contains "One file per contributor" "$TARGET/docs/blc/state/README.md"
 }
 
 test_state_ships_on_both_hosts() {
   run_install y --host claude --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/state/README.md"
+  assert_file "$TARGET/docs/blc/state/README.md"
 }
 
 test_state_is_named_in_the_install_summary() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_out "docs/state/"
+  assert_out "docs/blc/state/"
 }
 
 # Declarations are committed inputs, not generated output. If a future change ever
-# ignores this directory the way docs/chronicles/ is partly ignored, the whole
+# ignores this directory the way docs/blc/chronicles/ is partly ignored, the whole
 # single-writer design stops working — a peer cannot read what was never pushed.
 test_state_is_not_gitignored_in_a_target() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
   if [ -f "$TARGET/.gitignore" ]; then
-    assert_not_contains "docs/state" "$TARGET/.gitignore"
+    assert_not_contains "docs/blc/state" "$TARGET/.gitignore"
   fi
   return 0
 }
