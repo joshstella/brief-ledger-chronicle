@@ -1,10 +1,11 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:done(PR#69) b:done(PR#75) c:done(PR#76) d:in-progress(brief/0007-d-the-publisher,PR#78)`
+`blc/2 #0007 done a:done(PR#69) b:done(PR#75) c:done(PR#76) d:done(PR#78)`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-01
 
 ## Phases
 
@@ -13,7 +14,7 @@
 | a | the mapping | done (PR#69) | — |
 | b | the fields | done (PR#75) | — |
 | c | my assignments | done (PR#76) | — |
-| d | the publisher | in-progress (PR#78) | `brief/0007-d-the-publisher` |
+| d | the publisher | done (PR#78) | — |
 
 **a — the mapping.** `docs/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
 brief maps to Epic, phase maps to ticket, `Owner:` is an optional identity-line field distinct
