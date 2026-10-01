@@ -44,3 +44,30 @@ blc_identity_field() {
   value="${value%"${value##*[! ]}"}"
   printf '%s' "$value"
 }
+
+# The email a brief is assigned to, read from identity line `$1`: `Owner`, or `Author` when
+# there is no `Owner`. Prints the email and returns 0. Returns 1, printing nothing, when the
+# line has neither. Returns 2 when the field it chose is not one email, and prints that field
+# as `<label> '<value>'` so the caller can say what is wrong in its own words.
+#
+# The one place this file decides shape. `list-briefs.sh --owner` and `jira-csv.sh` must agree
+# about whose a brief is, and an email check written twice is two answers. A malformed `Owner`
+# does not fall back to `Author`: `Owner` exists to say the filer is not the executor. `Author`
+# is checked here too, because BRIEFS-5's check is not anchored and passes `a@x.org, b@x.org`.
+# Backticks, quotes and angle brackets are markup around an address, and a comma means more
+# than one; each would match no one.
+BLC_EMAIL_CHAR="[^ @\`\"'<>,]"
+BLC_EMAIL_RE="^${BLC_EMAIL_CHAR}+@${BLC_EMAIL_CHAR}+\\.${BLC_EMAIL_CHAR}+\$"
+blc_identity_assignee() {
+  local label=Owner email
+  if ! email=$(blc_identity_field "$1" Owner); then
+    label=Author
+    email=$(blc_identity_field "$1" Author) || return 1
+  fi
+  if printf '%s' "$email" | grep -qE "$BLC_EMAIL_RE"; then
+    printf '%s' "$email"
+    return 0
+  fi
+  printf "%s '%s'" "$label" "$email"
+  return 2
+}

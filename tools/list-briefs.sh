@@ -127,31 +127,21 @@ brief_depends() {
 
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-# The email a brief is assigned to: `Owner`, or `Author` when `Owner` is absent. An `Owner`
-# that is present and not an email, blank included, is reported and assigns the brief to no
-# one: falling back to `Author` would show the brief to the person who filed it, which is the
-# one answer `Owner` was written to override. Reported here, not in validate-briefs.sh,
-# because a typo here makes "mine" come back empty and look like an answer (#0007 decision 6).
-# The `Author` fallback is checked the same way: validate-briefs.sh does not anchor its email
-# check, so `me@x.org, you@x.org` passes there and would match no one here.
+# The email a brief is assigned to, by the shared rule in lib/identity-line.sh. A brief whose
+# assignee is malformed is reported and assigned to no one. Reported here, not in
+# validate-briefs.sh, because a typo makes "mine" come back empty and look like an answer
+# (#0007 decision 6).
 # usage: brief_assignee <brief.md> <serial>; prints the email or returns 1
-BLC_EMAIL_CHAR="[^ @\`\"'<>,]"
-BLC_EMAIL_RE="^${BLC_EMAIL_CHAR}+@${BLC_EMAIL_CHAR}+\\.${BLC_EMAIL_CHAR}+\$"
 brief_assignee() {
-  local identity label=Owner email
+  local identity email rc=0
   identity=$(blc_identity_line "$1") || return 1
-  if ! email=$(blc_identity_field "$identity" Owner); then
-    label=Author
-    email=$(blc_identity_field "$identity" Author) || return 1
-  fi
-  # Backticks, quotes and angle brackets are markdown or mail syntax around an address, and a
-  # comma means more than one: each would make the brief match no one, with no message.
-  if printf '%s' "$email" | grep -qE "$BLC_EMAIL_RE"; then
-    printf '%s' "$email"
-    return 0
-  fi
-  printf "%s: %s '%s' is not an email, so the brief is assigned to no one\n" "$2" "$label" "$email" >&2
-  return 1
+  email=$(blc_identity_assignee "$identity") || rc=$?
+  case "$rc" in
+    0) printf '%s' "$email" ;;
+    2) printf '%s: %s is not an email, so the brief is assigned to no one\n' "$2" "$email" >&2
+       return 1 ;;
+    *) return 1 ;;
+  esac
 }
 
 # A brief is assigned while it is not finished: planned, no-line, in-progress, deferred.
