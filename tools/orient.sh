@@ -90,6 +90,15 @@ echo
 echo "### Picked up, not yet filed"
 echo
 declared=0
+# A declaration's age follows renames and skips the ignore list, as the brief dates do. #0017
+# moved this directory, and a plain `git log` would have aged every declaration to the move.
+# Without the lib the age is the plain log's, which is a worse answer and still an answer.
+TOUCH_LIB="$ROOT/tools/lib/touch-log.sh"
+if [ -r "$TOUCH_LIB" ]; then
+  # shellcheck source=/dev/null
+  . "$TOUCH_LIB"
+  SKIP="$(blc_touch_skip "$BLC_ROOT/ignore-revs")"
+fi
 if [ -d "$STATE_DIR" ]; then
   for f in "$STATE_DIR"/*.md; do
     [ -e "$f" ] || continue
@@ -98,7 +107,11 @@ if [ -d "$STATE_DIR" ]; then
     who="$(basename "$f" .md)"
     # Nothing prunes this directory, so age is reported rather than enforced —
     # a declaration someone abandoned shows up as old instead of as truth.
-    touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
+    if [ -r "$TOUCH_LIB" ]; then
+      touched="$(blc_touch_log "$SKIP" "$f" | sed -n '1s/^[^ ]* \(.\{10\}\).*/\1/p')"
+    else
+      touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
+    fi
     echo "- **$who** (last written ${touched:-uncommitted})"
     sed -n 's/^## /  · /p' "$f"
     declared=$((declared + 1))

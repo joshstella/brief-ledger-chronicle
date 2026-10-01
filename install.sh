@@ -350,7 +350,8 @@ ownership_map() {
     tools/orient.sh \
     tools/lib/phase-row.sh \
     tools/lib/status-line.sh \
-    tools/lib/identity-line.sh; do
+    tools/lib/identity-line.sh \
+    tools/lib/touch-log.sh; do
     printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
   done
 

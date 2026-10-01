@@ -91,6 +91,8 @@ existing install is broken between `a` and `c`. There is one user. A fallback in
 | 2 | From the brief: what does an install do when `docs/blc/` exists and is not the toolkit's? | `c` |
 | 3 | **Settled 2026-10-01: it moves.** `docs/orientation.md` becomes `docs/blc/orientation.md`. `orient.sh` reads it, and the brief's claim is one root for what the toolkit uses. | `a` |
 | 4 | **Settled 2026-10-01: still one user.** #0013's evidence came from an install in another repository owned by the same person. The condition behind `b` holds. | `b` |
+| 5 | **Settled 2026-10-01: dates follow renames and skip an ignore list.** The move reset every brief's first and last dates to the move commit, because `git log -- <dir>` does not follow a rename. `b` would then reset every last date again, because its rewrite is a real content change. The new `tools/lib/touch-log.sh` follows each tracked file with `--follow` and drops the commits that `docs/blc/ignore-revs` names. `list-briefs.sh`, `gather.sh` and `orient.sh` all read dates through it. Rejected: follow renames only, which loses the timeline at `b`. Accept the reset, which loses it at `a`. Drop `b`, which reverses a settled decision. The cost is a list kept by hand, against "derived beats declared". | `a` |
+| 6 | **Settled 2026-10-01: "first" means when the brief was written.** Following renames moves some first dates earlier, because the old reader lost history at each folder rename. "First" is now the first commit of the brief's text, including its time as a draft. Rejected: the ledger's first commit (when work started), and both as two columns. `Created:` is not a source. It is written by hand, and #0005's is 18 hours after its first commit. | `a` |
 
 ## Complications
 
@@ -101,3 +103,9 @@ existing install is broken between `a` and `c`. There is one user. A fallback in
   next chronicle run.
 - Merged PR descriptions and commit messages keep the old paths. The brief records this cost
   in its tension.
+- A squash commit has no hash until its PR merges. So `b`'s branch adds `a`'s squash commit to
+  `docs/blc/ignore-revs`, and `c`'s branch adds `b`'s. Between the merge of `a` and the merge
+  of `b`, every brief shows the move as its last touch.
+- An upgrade of an existing install moves that target's tree in its own commit. That target
+  needs the commit in its own ignore list, or its dates reset (decision 5). `c` has to handle
+  this.
