@@ -1,6 +1,6 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:done(PR#69) b:in-progress(brief/0007-b-the-fields) c:pending d:pending`
+`blc/2 #0007 in-progress a:done(PR#69) b:in-progress(brief/0007-b-the-fields,PR#75) c:pending d:pending`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
