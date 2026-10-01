@@ -4,7 +4,7 @@
 # titles) is asserted through the chronicle in test_gather.sh, which is where those
 # tests were written and where they still run. This file covers what the extraction
 # newly made possible or newly put at risk: the tool standing on its own, the --tsv
-# contract the chronicle depends on, and the fact that it ships.
+# contract the chronicle depends on, the --owner filter, and the fact that it ships.
 
 LIST() { printf '%s' "$REPO_ROOT/tools/list-briefs.sh"; }
 
@@ -146,6 +146,156 @@ test_list_briefs_tsv_is_empty_for_an_empty_tree() {
   run_list --tsv docs/briefs
   assert_status 0
   [ ! -s "$OUT" ] || fail "expected no output for an empty tree, got: $(head -1 "$OUT")"
+}
+
+# ── --owner: what is mine (#0007 phase c) ────────────────────────────────────
+
+# usage: lb_brief <folder> <identity-tail> [ledger-status-line]
+# The identity tail follows `**Author:** `, e.g. 'me@x.org · **Owner:** you@x.org'.
+lb_brief() {
+  local folder="$1" tail="$2" status="${3:-}" n="${1%%-*}"
+  mkdir -p "$REPO/docs/briefs/$folder"
+  printf '# Brief %s\n\n**Serial:** #%s · **Created:** 2026-01-01T00:00:00Z · **Author:** %s · **Depends on:** —\n' \
+    "$n" "$n" "$tail" > "$REPO/docs/briefs/$folder/brief.md"
+  [ -n "$status" ] && printf '# Ledger\n%s\n' "$status" > "$REPO/docs/briefs/$folder/ledger.md"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -qm "add $folder" >/dev/null 2>&1
+}
+
+lb_listed() { grep -q "^| #$1 |" "$OUT"; }
+
+test_list_briefs_owner_lists_a_brief_owned_by_the_email() {
+  list_repo
+  lb_brief 0001-a 'filer@x.org · **Owner:** me@x.org' '`blc/2 #0001 in-progress a:in-progress`'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  lb_listed 0001 || fail "the owner's brief is not listed: $(cat "$OUT")"
+}
+
+test_list_briefs_owner_falls_back_to_author() {
+  list_repo
+  lb_brief 0001-a 'me@x.org'
+  run_list --owner me@x.org docs/briefs
+  lb_listed 0001 || fail "a brief with no Owner is not listed for its Author: $(cat "$OUT")"
+}
+
+# Owner exists to say the filer is not the executor. Listing it for both would undo that.
+test_list_briefs_owner_takes_the_brief_away_from_the_author() {
+  list_repo
+  lb_brief 0001-a 'me@x.org · **Owner:** you@x.org'
+  run_list --owner me@x.org docs/briefs
+  ! lb_listed 0001 || fail "the Author still sees a brief someone else owns"
+  run_list --owner you@x.org docs/briefs
+  lb_listed 0001 || fail "the Owner does not see the brief"
+}
+
+test_list_briefs_owner_ignores_case() {
+  list_repo
+  lb_brief 0001-a 'filer@x.org · **Owner:** Me@X.org'
+  run_list --owner mE@x.ORG docs/briefs
+  lb_listed 0001 || fail "the match depends on case"
+}
+
+# Decision 8: assigned is everything not finished, a brief with no ledger included.
+test_list_briefs_owner_lists_only_unfinished_briefs() {
+  list_repo
+  lb_brief 0001-planned 'me@x.org'
+  lb_brief 0002-going 'me@x.org' '`blc/2 #0002 in-progress a:in-progress`'
+  lb_brief 0003-parked 'me@x.org' '`blc/2 #0003 deferred a:deferred`'
+  lb_brief 0004-noline 'me@x.org' 'no status line here'
+  lb_brief 0005-done 'me@x.org' '`blc/2 #0005 done a:done`'
+  lb_brief 0006-skipped 'me@x.org' '`blc/2 #0006 skipped a:skipped`'
+  lb_brief 0007-old 'me@x.org' '`blc/1 #0007 done(commit 383ed5b) 1:done`'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  local s
+  for s in 0001 0002 0003 0004; do lb_listed "$s" || fail "#$s is unfinished and not listed"; done
+  for s in 0005 0006 0007; do ! lb_listed "$s" || fail "#$s is finished and listed"; done
+}
+
+# A misspelt Owner makes "mine" come back empty, which looks like an answer (decision 6).
+test_list_briefs_owner_reports_a_malformed_owner() {
+  list_repo
+  lb_brief 0001-a 'me@x.org · **Owner:** me at x dot org'
+  lb_brief 0002-b 'me@x.org · **Owner:**'
+  lb_brief 0003-c 'me@x.org · **Owner:** me@x.org, you@x.org'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  assert_contains "#0001: Owner 'me at x dot org' is not an email" "$ERR"
+  assert_contains "#0002: Owner '' is not an email" "$ERR"
+  # One owner per brief. Two would match neither of them, and say nothing.
+  assert_contains "#0003: Owner 'me@x.org, you@x.org' is not an email" "$ERR"
+  ! lb_listed 0001 || fail "a malformed Owner fell back to the Author"
+  ! lb_listed 0002 || fail "a blank Owner fell back to the Author"
+  ! lb_listed 0003 || fail "a two-email Owner was listed"
+}
+
+# Markdown or mail syntax around an address would make it match no one, with no message.
+test_list_briefs_owner_reports_an_owner_in_markup() {
+  list_repo
+  lb_brief 0001-a 'me@x.org · **Owner:** `me@x.org`'
+  lb_brief 0002-b 'me@x.org · **Owner:** <me@x.org>'
+  run_list --owner me@x.org docs/briefs
+  assert_contains "#0001: Owner '\`me@x.org\`' is not an email" "$ERR"
+  assert_contains "#0002: Owner '<me@x.org>' is not an email" "$ERR"
+}
+
+# validate-briefs.sh does not anchor its Author check, so this Author passes BRIEFS-5.
+test_list_briefs_owner_reports_a_malformed_author_it_falls_back_to() {
+  list_repo
+  lb_brief 0001-a 'me@x.org, you@x.org'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  assert_contains "#0001: Author 'me@x.org, you@x.org' is not an email" "$ERR"
+  ! lb_listed 0001 || fail "a two-email Author was listed"
+}
+
+test_list_briefs_owner_does_not_report_a_finished_brief() {
+  list_repo
+  lb_brief 0001-a 'me@x.org · **Owner:** nope' '`blc/2 #0001 done a:done`'
+  run_list --owner me@x.org docs/briefs
+  [ ! -s "$ERR" ] || fail "a finished brief was reported: $(cat "$ERR")"
+}
+
+test_list_briefs_without_owner_reports_nothing_and_lists_everything() {
+  list_repo
+  lb_brief 0001-a 'me@x.org · **Owner:** nope'
+  lb_brief 0002-b 'me@x.org' '`blc/2 #0002 done a:done`'
+  run_list docs/briefs
+  [ ! -s "$ERR" ] || fail "the unfiltered table reported: $(cat "$ERR")"
+  lb_listed 0001 && lb_listed 0002 || fail "the unfiltered table dropped a brief: $(cat "$OUT")"
+}
+
+test_list_briefs_owner_with_nothing_assigned_is_a_dash_row() {
+  list_repo
+  lb_brief 0001-a 'you@x.org'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  assert_out "| — | — | — | — | — | — |"
+}
+
+test_list_briefs_owner_refuses_a_missing_email_and_tsv() {
+  list_repo
+  run_list --owner
+  assert_status 1
+  assert_contains "--owner needs an email" "$ERR"
+  run_list --tsv --owner me@x.org
+  assert_status 1
+  assert_contains "does not apply to --tsv" "$ERR"
+  run_list --bogus
+  assert_status 1
+  assert_contains "unknown option --bogus" "$ERR"
+}
+
+# The skill fetches. The query must not: a report that changes the repository is a surprise.
+test_list_briefs_owner_does_not_fetch() {
+  list_repo
+  git clone -q --bare "$REPO" "$TMP/upstream.git"
+  git -C "$REPO" remote add origin "$TMP/upstream.git"
+  lb_brief 0001-a 'me@x.org'
+  run_list --owner me@x.org docs/briefs
+  assert_status 0
+  [ ! -e "$REPO/.git/FETCH_HEAD" ] || fail "the query fetched"
 }
 
 # ── It has to travel ─────────────────────────────────────────────────────────
