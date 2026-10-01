@@ -80,9 +80,7 @@ test_blc_root_validate_briefs_reads_its_argument() {
   assert_out "validate-briefs: elsewhere/briefs — 1 brief(s)"
 }
 
-# Project checks live at the repository root, three levels above docs/blc/briefs. The
-# validator finds them by depth, and #0017 first moved the tree without changing the depth:
-# the validator looked in docs/ and ran no checks, and passed.
+# Project checks live at the repository root, read from the working directory.
 test_blc_root_validate_briefs_finds_project_checks_at_the_root() {
   br_repo new
   mkdir -p "$REPO/brief-checks"
@@ -90,6 +88,20 @@ test_blc_root_validate_briefs_finds_project_checks_at_the_root() {
   br_run tools/validate-briefs.sh
   assert_status 1
   assert_out "root check ran"
+}
+
+# The validator once found the root by depth above the briefs directory. Given the old
+# docs/briefs layout, three levels up was the repository's parent: it ran the parent's
+# brief-checks/ and skipped the repository's own.
+test_blc_root_validate_briefs_runs_only_the_repositorys_checks_for_any_briefs_path() {
+  br_repo old
+  mkdir -p "$REPO/brief-checks" "$TMP/brief-checks"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo "root check ran"' 'exit 1' > "$REPO/brief-checks/rule.sh"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo "outside check ran"' 'exit 1' > "$TMP/brief-checks/rule.sh"
+  br_run tools/validate-briefs.sh docs/briefs
+  assert_status 1
+  assert_out "root check ran"
+  assert_not_contains "outside check ran" "$OUT"
 }
 
 # ── open-briefs.sh ───────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@ make_brief_checks_repo() {
 }
 
 run_brief_checks_validator() {
-  bash "$REPO_ROOT/tools/validate-briefs.sh" "$BC_BRIEFS" >"$OUT" 2>&1
+  ( cd "$BC_REPO" && bash "$REPO_ROOT/tools/validate-briefs.sh" "$BC_BRIEFS" ) >"$OUT" 2>&1
   LAST_STATUS=$?
 }
 

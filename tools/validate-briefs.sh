@@ -2,6 +2,7 @@
 # Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-10.
 #
 # Usage: validate-briefs.sh [briefs-dir]     (default: docs/blc/briefs)
+# Run from the repository root. Project checks are read from brief-checks/ there.
 #
 # Exit 0 if no [defect] clause is violated, 1 otherwise. [judgment] findings are
 # printed and never affect the exit status — the Contract says a judgment clause
@@ -326,11 +327,11 @@ done
 run_project_checks() {
   local repo_root checks_dir script output status
 
-  # The root is found by depth from docs/blc/briefs, not from git: this validator runs
-  # without a repository. The depth is the layout, so a move of the briefs directory has to
-  # change it. #0017 moved it and missed this line at first, and an absent directory here
-  # reads as "no project checks", so the gate passed without running any.
-  repo_root="$(cd "$BRIEFS_DIR/../../.." && pwd)"
+  # The root is the working directory, as for every other tool, not a depth above the briefs
+  # directory. A depth is right for one layout only: given any other briefs path it lands
+  # somewhere else, and outside the repository it runs scripts the repository does not hold.
+  # Not git's top level either, because this validator runs without a repository.
+  repo_root="$PWD"
   checks_dir="$repo_root/brief-checks"
   [ -d "$checks_dir" ] || return 0
 
