@@ -1,6 +1,6 @@
 # Ledger — #0007 Jira as a reporting surface, written from BLC
 
-`blc/2 #0007 in-progress a:done(PR#69) b:done(PR#75) c:done(PR#76) d:pending`
+`blc/2 #0007 in-progress a:done(PR#69) b:done(PR#75) c:done(PR#76) d:in-progress(brief/0007-d-the-publisher)`
 
 **Brief:** `docs/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
@@ -13,7 +13,7 @@
 | a | the mapping | done (PR#69) | — |
 | b | the fields | done (PR#75) | — |
 | c | my assignments | done (PR#76) | — |
-| d | the publisher | pending | — |
+| d | the publisher | in-progress | `brief/0007-d-the-publisher` |
 
 **a — the mapping.** `docs/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
 brief maps to Epic, phase maps to ticket, `Owner:` is an optional identity-line field distinct
@@ -44,9 +44,11 @@ No Jira call. Absence of either field stays ordinary.
 **c — my assignments.** `list-briefs.sh --owner <email>` lists the briefs assigned to an email
 — `Owner`, or `Author` when `Owner` is absent (decision 7). It does not fetch. A skill fetches, then runs it. Tests land with it.
 
-**d — the publisher.** When Jira is configured, creates the Epic and the phase tickets, sets the
-Epic assignee from `Owner`, and transitions on a ledger status change. Unconfigured, it exits
-zero and writes nothing. It never reads Jira to update a brief or a ledger. Tests land with it.
+**d — the publisher.** Re-planned on 2026-10-01 as a CSV export; see "d becomes a CSV export"
+below. `tools/jira-csv.sh <serial>` prints one brief as a CSV for Jira's importer: an Epic row
+and one ticket row per phase. It calls nothing and reads nothing from Jira. Tests land with it.
+The label stays "the publisher", because the README's examples cite `#0007/d — the publisher`
+and a CSV export still publishes.
 
 ## Dependency structure
 
@@ -117,6 +119,34 @@ no tenant is reachable. A publisher built now would be proven only against a stu
 `d` stays `pending`, not `deferred`. `deferred` means code parked on a branch, and `d` has no
 code. `open-briefs.sh` reads a `deferred` phase and would report "no branch recorded" on every
 run. The brief stays `in-progress` while `d` waits.
+
+## d becomes a CSV export, 2026-10-01
+
+Earlier the same day, `d` was left `pending` until a Jira tenant existed. It was then re-planned
+as a CSV file for Jira's own importer. Atlassian's documentation for Jira Cloud, read on
+2026-10-01, gives three facts that decide the shape:
+
+- **One file can hold the hierarchy.** Each row has a `Work item ID`. A child gives its
+  parent's ID in a `Parent` column, and a `Work type` column says Epic or Task. Parents come
+  before children.
+- **The importer sets the assignee from an email.** This removes the `accountId` problem above,
+  for this path only.
+- **A second import duplicates every row** unless each row carries a `Work item key`. Decision 2
+  stores no phase key, so the export is a one-shot seed (decision 11).
+
+Four open decisions dissolve, because the export calls nothing: 1, 3, 5 and 9. Decision 4 is
+settled by the importer's own value mapping.
+
+**What this does not deliver.** The brief's success criteria say that a ledger status change
+updates Jira, and that the next write from BLC restores a hand edit on the board. A CSV import
+does neither. After the first import, the board is not updated from here. A live publisher
+would close that gap, and it would bring back every decision dissolved here. It is not planned.
+
+The export reads each phase's label from the ledger's phase table, because the README fixes the
+ticket summary as `#<serial>/<letter> — <label>`. No reader of labels exists, and one is added
+to `tools/lib/phase-row.sh`. The rule that picks a brief's assignee moves from `list-briefs.sh`
+into `tools/lib/identity-line.sh`, so the query and the export cannot disagree about whose a
+brief is.
 
 ## Phase a — what it does
 
@@ -247,15 +277,19 @@ added.
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | When is the Epic created? Default: Epic at filing, tickets at `blc-start-brief`, transitions whenever the status line changes. | `d` |
+| 1 | **Dissolved 2026-10-01.** The Epic and its tickets are created when a person imports the CSV. | `d` |
 | 2 | **Settled 2026-09-30, see below.** Where do phase ticket keys live? | `b` |
-| 3 | Jira is down. Confirm: warn, do not block. | `d` |
-| 4 | Status map. Default: a small config map, not a hardcoded "In Progress". | `d` |
-| 5 | Where auth lives. Env, a gitignored project file, or a CLI. No tokens in git. | `d` |
+| 3 | **Dissolved 2026-10-01.** The export does not contact Jira. | `d` |
+| 4 | **Settled 2026-10-01.** The CSV carries BLC's phase states. Jira's importer maps each value to a status. | `d` |
+| 5 | **Dissolved 2026-10-01.** The person who imports is logged in to Jira. The export needs no credentials. | `d` |
 | 6 | **Settled 2026-09-30, see below.** Contract clause? | `b` |
 | 7 | **Settled 2026-10-01: neither.** `list-briefs.sh --owner <email>`. | `c` |
 | 8 | **Settled 2026-10-01.** Every brief that is not `done` or `skipped`. This includes `planned` (no ledger) and `no-line`, which the brief's default did not name. | `c` |
-| 9 | **Added by this re-plan.** How does the publisher reach Jira such that a test can substitute for it? Without an answer `d` cannot be written, let alone merged. | `d` |
+| 9 | **Dissolved 2026-10-01.** The export writes a file. A test reads the file. | `d` |
+| 10 | **Settled 2026-10-01.** One run exports one brief, named by its serial. | `d` |
+| 11 | **Settled 2026-10-01.** A brief whose identity line has `Jira:` is not exported, because it was already imported and a second import duplicates every row. | `d` |
+| 12 | **Settled 2026-10-01.** The Epic summary is `#<serial> — <title>`. | `d` |
+| 13 | **Settled 2026-10-01.** A brief whose assignee is not one email is not exported. An Epic with no assignee would import without a message. | `d` |
 
 ## Big decisions
 
