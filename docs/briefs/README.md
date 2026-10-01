@@ -257,11 +257,32 @@ Managers report from a board they already know. The people doing the work change
 A project that configures nothing loses nothing: no tracker, no publish, and every command
 in this document behaves the same. Absence is the ordinary case, not an error.
 
-**No command here publishes to a tracker today.** This section states the mapping a publisher
-must follow. It does not describe something you can run.
-
 **A brief is an Epic. A phase is a ticket under it.** The Epic key goes on the identity line
-as `Jira:`. Its assignee is `Owner`, or `Author` where `Owner` is omitted.
+as `Jira:`. Its assignee is `Owner`, or `Author` where `Owner` is omitted. The Epic summary
+is `#<serial> — <title>`. A phase ticket summary has the form that "Phase ids" above fixes.
+
+**`tools/jira-csv.sh` seeds Jira once. It does not keep Jira current.** It writes one brief
+as a Jira Cloud CSV import: the Epic first, then one Task per phase in status-line order.
+Skipped phases are included. Run it from the repo root and send the output to a file:
+
+```
+tools/jira-csv.sh 0007 > 0007.csv
+```
+
+To import the file:
+
+1. Open the Jira CSV importer and select the file.
+2. Map each column to the Jira field with the same name.
+3. On the value-mapping screen, map each BLC state to a status in the project workflow.
+4. After the import, write the Epic key into the brief as `**Jira:** <key>`.
+
+The Status column holds the BLC state without its pointer: `done`, not `done(PR#69)`. So
+each state is one value to map, not one value per phase.
+
+The script refuses a brief that already has a `Jira:` key, because a second import makes a
+second Epic. It also refuses a brief that it cannot export whole. Examples are a `blc/1`
+ledger, an assignee that is not one email, and a phase with no readable label. A refusal
+writes nothing to stdout, so a redirect does not leave a partial file that looks complete.
 
 **No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
 the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
@@ -281,21 +302,18 @@ a PR or MR, and no branch by that name exists`. That is a finding on every run, 
 that is correct. On a phase that is not open the pointer is never read. No shape is a reader of
 a key.
 
-Finding by summary has two consequences worth stating plainly.
+**After the import, the board and the record drift apart.** Nothing here writes to Jira
+again. A phase that finishes here stays at its imported status on the board until someone
+changes it there. A status changed on the board never reaches the ledger. Anyone who treats
+the board as the record will see this as a bug.
 
-**Rename a ticket by hand and the next publish will not recognise it.** That is the same rule
-as every other hand edit. A status changed on the board is stale reporting until the next
-write from here, and the next write puts it back. Anyone treating the board as the record will
-experience this as a bug.
-
-**Rename a phase label here and its ticket orphans too.** The label is part of the summary, so
-the ledger is the thing the tracker is matched against. This one needs no hand edit on the
-board at all: an ordinary edit here is enough. Treat a phase label as fixed once a brief is
-started, or expect to repair the tracker by hand.
+**Treat a phase label as fixed once its brief is in Jira.** The label is part of the ticket
+summary. If you rename the label here or the ticket on the board, the two no longer match.
+Any later tool that finds tickets by summary will not find that one.
 
 **None of this is in the Contract, and none of it is checked.** An export is not part of how a
 record must be shaped, so `validate-briefs.sh` says nothing about `Jira:` or `Owner:`. A
-malformed value costs you a report, not a brief.
+malformed value costs you a report or a refused export, not a brief.
 
 **`Owner` is not a tracker field.** It is read from disk to answer "what is mine", by projects
 with no tracker at all. It is described here because this is where the identity line is

@@ -99,6 +99,17 @@ test_ship_places_an_open_briefs_query_that_runs() {
   assert_contains "open-briefs: docs/briefs" "$TMP/q.txt"
 }
 
+# Run in a target with no briefs, it must get far enough to say so: a missing library stops
+# it earlier, with a different message.
+test_ship_places_a_jira_export_that_runs() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  [ -x "$TARGET/tools/jira-csv.sh" ] || fail "installed jira-csv.sh is not executable"
+  ( cd "$TARGET" && PATH="/usr/bin:/bin" ./tools/jira-csv.sh 1 ) >"$TMP/j.txt" 2>&1
+  assert_count 1 "$?" "jira-csv exit status in a fresh target"
+  assert_contains "no brief #0001 in docs/briefs" "$TMP/j.txt"
+}
+
 # The rules without the check would be a Contract whose strongest claim is backed
 # by nothing in the tree that holds it.
 test_ship_places_a_validator_that_runs() {

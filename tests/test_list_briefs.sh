@@ -228,6 +228,9 @@ test_list_briefs_owner_reports_a_malformed_owner() {
   ! lb_listed 0001 || fail "a malformed Owner fell back to the Author"
   ! lb_listed 0002 || fail "a blank Owner fell back to the Author"
   ! lb_listed 0003 || fail "a two-email Owner was listed"
+  # Assigned to no one means no one, including the malformed value itself.
+  run_list --owner 'me@x.org, you@x.org' docs/briefs
+  ! lb_listed 0003 || fail "a malformed Owner was listed under its own value"
 }
 
 # Markdown or mail syntax around an address would make it match no one, with no message.

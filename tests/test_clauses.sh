@@ -443,11 +443,12 @@ cl_extract_walk() {
   sed -n '/^BLC_SELF=/,/^BLC_LIB_DIR=/p' "$REPO_ROOT/tools/$1" | grep -v '^ *exit '
 }
 
-test_clauses_the_three_bootstrap_walks_are_identical() {
-  local ob lb vb
+test_clauses_the_bootstrap_walks_are_identical() {
+  local ob lb vb jc
   ob="$(cl_extract_walk open-briefs.sh)"
   lb="$(cl_extract_walk list-briefs.sh)"
   vb="$(cl_extract_walk validate-briefs.sh)"
+  jc="$(cl_extract_walk jira-csv.sh)"
 
   [ -n "$ob" ] || fail "could not extract the symlink walk from open-briefs.sh"
   # A comparison of two empty strings succeeds. Prove the extraction found something.
@@ -460,6 +461,8 @@ test_clauses_the_three_bootstrap_walks_are_identical() {
 $(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$lb") || true)"
   [ "$ob" = "$vb" ] || fail "open-briefs.sh and validate-briefs.sh symlink walks have drifted:
 $(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$vb") || true)"
+  [ "$ob" = "$jc" ] || fail "open-briefs.sh and jira-csv.sh symlink walks have drifted:
+$(diff <(printf '%s\n' "$ob") <(printf '%s\n' "$jc") || true)"
 }
 
 # The unknown-field guard exists so a typo cannot silently answer "no", which would read as

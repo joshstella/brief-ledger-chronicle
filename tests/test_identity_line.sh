@@ -63,6 +63,43 @@ test_identity_line_unknown_fields_are_tolerated() {
     || fail "a field the reader does not know broke the one after it"
 }
 
+# ── The assignee ─────────────────────────────────────────────────────────────
+
+IL_HEAD='**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** '
+
+test_identity_line_assignee_is_the_owner_or_else_the_author() {
+  il_source_lib
+  [ "$(blc_identity_assignee "${IL_HEAD}a@b.com · **Owner:** o@b.com · **Depends on:** —")" = o@b.com ] \
+    || fail "Owner was not the assignee"
+  [ "$(blc_identity_assignee "${IL_HEAD}a@b.com · **Depends on:** —")" = a@b.com ] \
+    || fail "Author was not the assignee when there is no Owner"
+}
+
+test_identity_line_assignee_returns_1_with_neither_field() {
+  il_source_lib
+  local out rc=0
+  out=$(blc_identity_assignee '**Serial:** #0001 · **Depends on:** —') || rc=$?
+  [ "$rc" -eq 1 ] && [ -z "$out" ] || fail "expected 1 and nothing, got $rc and '$out'"
+}
+
+# A malformed Owner is not passed over for the Author: Owner says the filer is not the executor.
+test_identity_line_assignee_returns_2_and_names_a_malformed_field() {
+  il_source_lib
+  local out rc line
+  while IFS='|' read -r line want; do
+    rc=0
+    out=$(blc_identity_assignee "${IL_HEAD}${line}") || rc=$?
+    [ "$rc" -eq 2 ] && [ "$out" = "$want" ] \
+      || fail "for '$line' expected 2 and \"$want\", got $rc and \"$out\""
+  done <<'CASES'
+a@b.com · **Owner:** nope|Owner 'nope'
+a@b.com · **Owner:**|Owner ''
+a@b.com · **Owner:** `o@b.com`|Owner '`o@b.com`'
+a@b.com · **Owner:** <o@b.com>|Owner '<o@b.com>'
+a@b.com, c@b.com|Author 'a@b.com, c@b.com'
+CASES
+}
+
 test_identity_line_locates_the_first_serial_line() {
   il_source_lib
   local f="$TMP/il-locate.md"
