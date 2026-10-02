@@ -291,6 +291,13 @@ and runs to the next blank line. `blc-start-brief` writes one for each phase it 
 named so that a report quotes the record and does not guess which part of it to quote. Neither
 is required: a brief without them is valid, and `validate-briefs.sh` does not look for them.
 
+`jira-csv.sh` copies the claim into the Epic's Description and each phase's paragraph, without
+its bold lead, into that Task's Description. The path of the brief or the ledger follows the
+text. A missing text gives the path alone and a warning on stderr, and the export still
+succeeds. Two `## The claim` sections, or two paragraphs for one phase, stop the export,
+because either could be the one meant. The Description is a copy from the day of the export:
+a later edit to the brief or the ledger does not reach the board.
+
 **No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
 the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
 is therefore computable from the ledger.
