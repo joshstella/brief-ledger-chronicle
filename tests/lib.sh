@@ -124,6 +124,13 @@ fixture_install_tool() {
   [ "$tool" != open-briefs.sh ] || cp "$REPO_ROOT/tools/detect-forge.sh" "$repo/tools/detect-forge.sh"
 }
 
+# A target seeded by hand to look installed needs the install log too: the installer treats
+# a docs/blc/ without one as the project's own and refuses it.
+mark_prior_install() {
+  mkdir -p "$TARGET/docs/blc/install-log"
+  printf '# Install log\n' > "$TARGET/docs/blc/install-log/install-log.md"
+}
+
 # ── Assertions ───────────────────────────────────────────────────────────────
 
 assert_status() {

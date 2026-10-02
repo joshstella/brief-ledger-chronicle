@@ -130,6 +130,8 @@ SKIPPED=()
 REPLACED=()
 REMOVED=()
 CONFLICTS=()
+MOVED=()
+DROPPED=()
 
 log_created() { CREATED+=("$1"); echo "  [+] $1"; }
 log_skipped() { SKIPPED+=("$1"); echo "  [~] $1 (already exists, skipped)"; }
@@ -139,6 +141,8 @@ log_relinked() { CREATED+=("$1 (replaced dangling symlink)"); echo "  [+] $1 (re
 log_skipped_as() { SKIPPED+=("$1 ($2)"); echo "  [~] $1 ($2)"; }
 log_conflict() { SKIPPED+=("$1"); echo "  [!] $1 ($2 — NOT replaced; see below)"; }
 log_removed() { REMOVED+=("$1"); echo "  [-] $1 (removed — no longer shipped)"; }
+log_moved() { MOVED+=("$1 → $2"); echo "  [→] $1 → $2"; }
+log_dropped() { DROPPED+=("$1"); echo "  [-] $1 (old copy of a toolkit file — dropped, replaced below)"; }
 
 # Toolkit-owned files are replaced every run. Project-owned paths never reach here.
 place_file() {
@@ -724,6 +728,84 @@ fi
 
 echo "  [✓] all install sources present"
 
+# ── Step 2b: The old layout ───────────────────────────────────────────────────
+# Before #0017 an install wrote its trees straight under docs/. An upgrade moves them under
+# docs/blc/. Everything that can stop the move is checked here, before the prompt, so a
+# refused install has written nothing.
+#
+# Moving project trees breaks #0012's "never written after creation" once, on purpose: the
+# move changes where the files are, not what they hold, and the install log names each one.
+
+OLD_LAYOUT="briefs contracts chronicles state install-log orientation.md"
+OLD_LOG="docs/install-log/install-log.md"
+
+# Where an old-layout path lands. Every old path is docs/<x>; its new home is docs/blc/<x>.
+new_layout_path() { printf 'docs/blc/%s\n' "${1#docs/}"; }
+
+# The old names of the files the toolkit ships under docs/blc/. These are replaced by the
+# install, so an old copy is dropped, not moved, and never counts as a clash.
+old_toolkit_files() {
+  map_rows toolkit | awk -F'\t' '$4 ~ /^docs\/blc\// { sub(/^docs\/blc\//, "docs/", $4); print $4 }'
+}
+
+OLD_ROOTS=()
+for name in $OLD_LAYOUT; do
+  if [[ -e "$TARGET_DIR/docs/$name" || -L "$TARGET_DIR/docs/$name" ]]; then
+    OLD_ROOTS+=("docs/$name")
+  fi
+done
+
+# A docs/blc/ the toolkit installed carries its install log. Without the log, anything in
+# it is the project's own, and installing into it would mix two owners in one tree.
+if [[ -d "$TARGET_DIR/docs/blc" && ! -f "$TARGET_DIR/docs/blc/install-log/install-log.md" ]] \
+   && [[ -n "$(find "$TARGET_DIR/docs/blc" -mindepth 1 ! -type d -print -quit)" ]]; then
+  echo ""
+  echo "error: $TARGET_DIR/docs/blc/ holds files this toolkit did not install." >&2
+  echo "  The toolkit keeps everything it uses under docs/blc/, and it has no install log there," >&2
+  echo "  so these files belong to the project. Nothing was written to the target." >&2
+  echo "  Move them out of docs/blc/, or empty it, and re-run." >&2
+  exit 1
+fi
+
+OLD_MOVES=()
+OLD_CLASHES=()
+if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
+  OLD_TOOLKIT="$(old_toolkit_files)"
+  for root in "${OLD_ROOTS[@]}"; do
+    # A move through a symlink moves the link, not the tree it points at, and the project
+    # would be left with a dangling name. Same refusal as the prune.
+    if [[ -L "$TARGET_DIR/$root" ]]; then
+      echo ""
+      echo "error: $root is a symlink, so the installer cannot move it to docs/blc/." >&2
+      echo "  Nothing was written to the target. Move it by hand and re-run." >&2
+      exit 1
+    fi
+  done
+  while IFS= read -r rel; do
+    [[ -n "$rel" ]] || continue
+    printf '%s\n' "$OLD_TOOLKIT" | grep -qxF -- "$rel" && continue
+    # The two logs are joined, not moved, so both existing is the expected case.
+    [[ "$rel" == "$OLD_LOG" ]] && { OLD_MOVES+=("$rel"); continue; }
+    dst="$(new_layout_path "$rel")"
+    if [[ -e "$TARGET_DIR/$dst" || -L "$TARGET_DIR/$dst" ]]; then
+      OLD_CLASHES+=("$rel → $dst")
+    else
+      OLD_MOVES+=("$rel")
+    fi
+  done < <(for root in "${OLD_ROOTS[@]}"; do
+             (cd "$TARGET_DIR" && find "$root" ! -type d)
+           done | LC_ALL=C sort)
+fi
+
+if [[ ${#OLD_CLASHES[@]} -gt 0 ]]; then
+  echo ""
+  echo "error: these project files exist in both the old docs/ layout and docs/blc/:" >&2
+  for item in "${OLD_CLASHES[@]}"; do echo "  $item" >&2; done
+  echo "  The installer moves the old layout under docs/blc/ and will not choose between" >&2
+  echo "  two copies. Nothing was written to the target. Keep one of each pair and re-run." >&2
+  exit 1
+fi
+
 # ── Step 3: Target confirmation ───────────────────────────────────────────────
 
 # Skill counts are only used for the summary below, and are computed here rather than
@@ -760,6 +842,19 @@ echo "Toolkit-owned paths above are replaced every run. Local edits to them do n
 echo "Project-owned files ($RULES_FILE, numbered briefs, ledgers, declarations, chronicles)"
 echo "are never written after creation."
 
+if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
+  echo ""
+  echo "This target has the old layout. These project files move under docs/blc/:"
+  for rel in ${OLD_MOVES[@]+"${OLD_MOVES[@]}"}; do
+    if [[ "$rel" == "$OLD_LOG" ]]; then
+      echo "  $rel → docs/blc/install-log/install-log.md (joined, old entries first)"
+    else
+      echo "  $rel → $(new_layout_path "$rel")"
+    fi
+  done
+  echo "Old copies of the toolkit's own docs are dropped; this install replaces them."
+fi
+
 # open-briefs.sh reads git history, so a target outside a repository receives a
 # documented tool that cannot run there — the briefs README tells the reader it reads
 # their ledgers back, and it exits 2 instead. Said before the prompt rather than after
@@ -786,6 +881,63 @@ fi
 echo ""
 echo "Installing..."
 echo ""
+
+# ── Step 3a: Move the old layout ──────────────────────────────────────────────
+# Step 2b proved every move has a free destination. Runs before the prune, because the
+# prune reads the install log, and only the joined log holds the old installs' entries.
+
+# The old entries come first so the log stays oldest-first. The new log's header is dropped:
+# both logs start with the same header, and one file needs it once.
+join_install_logs() {
+  local old="$TARGET_DIR/$OLD_LOG" new="$TARGET_DIR/docs/blc/install-log/install-log.md"
+  if [[ ! -f "$new" ]]; then
+    mkdir -p "$(dirname "$new")"
+    mv "$old" "$new"
+    log_moved "$OLD_LOG" "docs/blc/install-log/install-log.md"
+    return 0
+  fi
+  {
+    cat "$old"
+    echo ""
+    awk 'found || /^## / { found = 1; print }' "$new"
+  } > "$new.joining"
+  mv "$new.joining" "$new"
+  rm "$old"
+  log_moved "$OLD_LOG" "docs/blc/install-log/install-log.md (joined, old entries first)"
+}
+
+if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
+  echo "Moving the old layout under docs/blc/..."
+  for rel in ${OLD_MOVES[@]+"${OLD_MOVES[@]}"}; do
+    if [[ "$rel" == "$OLD_LOG" ]]; then
+      join_install_logs
+      continue
+    fi
+    dst="$(new_layout_path "$rel")"
+    mkdir -p "$TARGET_DIR/$(dirname "$dst")"
+    mv "$TARGET_DIR/$rel" "$TARGET_DIR/$dst"
+    log_moved "$rel" "$dst"
+  done
+  # What is left is the toolkit's own old docs: Step 2b refused anything else that did
+  # not move. They are dropped, not moved, because this install writes the current copy.
+  # Each one is checked against the list again, because a wrong delete loses project work.
+  for root in "${OLD_ROOTS[@]}"; do
+    [[ -e "$TARGET_DIR/$root" ]] || continue
+    while IFS= read -r rel; do
+      [[ -n "$rel" ]] || continue
+      if ! printf '%s\n' "$OLD_TOOLKIT" | grep -qxF -- "$rel"; then
+        echo "  [!] $rel (not moved and not a toolkit file — left in place)"
+        continue
+      fi
+      rm -f "$TARGET_DIR/$rel"
+      log_dropped "$rel"
+    done < <(cd "$TARGET_DIR" && find "$root" ! -type d | LC_ALL=C sort)
+    if [[ -d "$TARGET_DIR/$root" ]]; then
+      find "$TARGET_DIR/$root" -depth -type d -empty -delete
+    fi
+  done
+  echo ""
+fi
 
 # ── Step 3b: Prune stale skills and commands ─────────────────────────────────
 # Runs before replacement so a project is not left with stale trees beside fresh copies.
@@ -986,6 +1138,17 @@ while IFS=$'\t' read -r _owner kind src _dst; do
 done < <(map_rows toolkit)
 [[ -n "$CMD_LIST" ]] || CMD_LIST="  (none — this host takes them all as skills)"$'\n'
 
+# Only an upgrade from the old layout has this section. A move happens once per target, so
+# an empty section on every later entry would say nothing.
+MOVED_SECTION=""
+if [[ $((${#MOVED[@]} + ${#DROPPED[@]})) -gt 0 ]]; then
+  MOVED_SECTION=$'\n\n'"### Moved — old docs/ layout to docs/blc/"$'\n'
+  for m in ${MOVED[@]+"${MOVED[@]}"}; do MOVED_SECTION+=$'\n'"  - $m"; done
+  for d in ${DROPPED[@]+"${DROPPED[@]}"}; do
+    MOVED_SECTION+=$'\n'"  - $d (old copy of a toolkit file — dropped)"
+  done
+fi
+
 cat >> "$LOG_FILE" <<ENTRY_EOF
 ## $TIMESTAMP — $MACHINE
 
@@ -1029,7 +1192,7 @@ $(if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   for s in ${SKIPPED[@]+"${SKIPPED[@]}"}; do echo "  - $s"; done
 else
   echo "  (none)"
-fi)
+fi)$MOVED_SECTION
 
 ENTRY_EOF
 
@@ -1062,6 +1225,12 @@ if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   for item in ${SKIPPED[@]+"${SKIPPED[@]}"}; do echo "  $item"; done
 fi
 
+if [[ ${#MOVED[@]} -gt 0 ]]; then
+  echo ""
+  echo "Moved from the old docs/ layout (${#MOVED[@]}):"
+  for item in ${MOVED[@]+"${MOVED[@]}"}; do echo "  $item"; done
+fi
+
 echo ""
 echo "Next steps:"
 echo "  1. Review and edit $RULES_FILE — fill in the project-specific section."
@@ -1074,5 +1243,12 @@ else
   echo "  3. Skills are under .cursor/skills/ — local edits are replaced on the next install."
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
   echo "  5. Open docs/blc/install-log/install-log.md to see what this run did."
+fi
+# The tools date a brief by its last commit. The commit that holds this move touches every
+# brief, so unless it is ignored, every brief shows the move as its last work.
+if [[ ${#MOVED[@]} -gt 0 ]]; then
+  echo "  6. This run moved the old docs/ layout. After the commit in step 4, add it to the"
+  echo "     ignore list so each brief keeps its own dates, and commit that too:"
+  echo "       echo \"\$(git rev-parse HEAD)  # BLC moved docs/ under docs/blc/\" >> docs/blc/ignore-revs"
 fi
 echo ""

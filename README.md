@@ -27,6 +27,10 @@ Add `--yes` to skip the confirmation prompt. Re-running replaces every toolkit-o
 (skills, commands, process rules, shipped brief docs, tools) with this checkout. Stale
 skills and commands named in the install log are removed. `AGENTS.md` / `CLAUDE.md`,
 numbered briefs, ledgers, declarations, and chronicles are never written after creation.
+There is one exception. A target installed before the toolkit moved under `docs/blc/` has
+those trees straight under `docs/`. An install moves them under `docs/blc/`, does not change
+what they hold, and lists each move in the install log. It stops first, and changes nothing,
+if `docs/blc/` holds files it did not install or a project file is in both places.
 Local edits to toolkit-owned files do not survive an install. Customize through
 `AGENTS.md` (guidance) and `brief-checks/` (enforced project rules), not by editing the
 installed copy.

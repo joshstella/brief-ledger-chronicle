@@ -106,6 +106,7 @@ test_project_replaces_a_tuned_command_on_reinstall() {
 }
 
 test_project_replaces_an_existing_briefs_readme() {
+  mark_prior_install
   mkdir -p "$TARGET/docs/blc/briefs"
   echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/blc/briefs/README.md"
   run_install y --target "$TARGET"
@@ -132,6 +133,7 @@ test_project_writes_no_numbered_brief() {
 # whether that folder existed rather than whether serial 0001 was free. Installing
 # into a repo that already held briefs wrote a second #0001 every time.
 test_project_install_over_existing_0001_creates_no_duplicate_serial() {
+  mark_prior_install
   mkdir -p "$TARGET/docs/blc/briefs/0001-resonance"
   printf '# Resonance\n\n**Serial:** #0001\n' > "$TARGET/docs/blc/briefs/0001-resonance/brief.md"
   run_install y --target "$TARGET"
