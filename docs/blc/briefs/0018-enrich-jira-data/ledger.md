@@ -1,16 +1,16 @@
 # Ledger — #0018 The Jira export carries what the brief says, not only where it is
 
-`blc/2 #0018 pending a:pending b:pending c:pending`
+`blc/2 #0018 in-progress a:in-progress(brief/0018-a-the-sources) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0018-enrich-jira-data/brief.md`
 **Started:** 2026-10-02
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the sources | pending | — |
+| a | the sources | in-progress | `brief/0018-a-the-sources` |
 | b | the descriptions | pending | — |
 | c | the wiki markup | pending | — |
 
@@ -36,7 +36,8 @@ the existing refusals still writing nothing to stdout.
 to `[text|url]`, a markdown table to a wiki table (header cells `||`, separator row dropped),
 and the lines of one paragraph joined into one line. List items and table rows keep their own
 lines. Text inside a code span is not converted. Tests for each construct, for code that holds
-asterisks, and for the claim sections of #0008 and #0012, which hold tables and italics. `c`
+asterisks, and for a fixture claim that holds a table and italics, as the claims of #0008 and
+#0012 do. `c`
 closes only after one import by hand into a Jira Cloud site shows the result.
 
 ## Dependency structure
@@ -56,10 +57,15 @@ that state reaches no board.
 | 2 | **Settled 2026-10-02: the conversion covers italic, tables and wrapped lines too.** The brief settled bold, code and links, and "everything else stays as text". A scan of the claim sections at start showed that list misses three things. Markdown `*italic*` is wiki bold, and #0008, #0012 and #0014 use it. The claims of #0008 and #0012 hold markdown tables, and a wiki renderer reads any line starting with a pipe as a table row, so the separator row shows as dashes. Every paragraph is wrapped at about 95 columns, and a wiki renderer is understood to show a single newline as a line break. That last point is from memory of the wiki format, not a source, and the import in `c` checks it. Rejected: italic and joining only, and the settled list unchanged. | `c` |
 | 3 | **Settled 2026-10-02: the brief's `b` is two phases.** Copying the text and converting it are separate work, each with its own tests. With decision 2, one phase is too large to review in one sitting. Rejected: the brief's two phases. | — |
 
+## Scope
+
+**Settled 2026-10-02: this is for briefs filed from now on.** No existing brief is exported, so
+`a` adds no paragraphs to old ledgers, and 9 of the 17 have none. A brief started after `a`
+gets a paragraph for each phase from `blc-start-brief`. For such a brief, a missing paragraph
+means a step was skipped, and the warning in `b` says so.
+
 ## Complications
 
-- 8 of 17 existing ledgers have phase paragraphs. The other 9 export their Tasks with paths
-  only and a warning for each phase. `a` does not add paragraphs to old ledgers.
 - No existing ledger has two paragraphs for the same phase. `b` still has to decide what one
   does: the export refuses an ambiguous phase row today, and the same rule fits here.
 - No claim section has a `{`, a line starting with `#`, or a link. Each would mean something in
