@@ -18,18 +18,20 @@ The brief has two phases, `a` and `b`. Its `b` is split here into `b` and `c` (d
 
 **a — the sources.** README, "Reporting to a tracker": the brief's summary is its
 `## The claim` section, and a phase's description is the ledger paragraph that begins
-`**<id> — <label>.**` and runs to the next blank line. Say what the export does when one is
-missing, that the Description is a copy from the import date, and that "Map field value" must
-stay unticked for Description, because it removes every line break. `blc-start-brief` step 6
-writes one such paragraph for each phase it plans. No program changes, and no Contract clause.
+`**<id> — <label>.**` and runs to the next blank line. Say that "Map field value" must stay
+unticked for Description, because it removes every line break. `blc-start-brief` step 6 writes
+one such paragraph for each phase it plans. No program changes, and no Contract clause. What
+the export does with the sources is documented in `b`, with the code, so the README does not
+describe an export that does not exist yet.
 
 **b — the descriptions.** `tools/jira-csv.sh` puts the claim section, then the brief and ledger
 paths, in the Epic's Description. It puts each phase's paragraph, without its bold
 `**<id> — <label>.**` lead, then the ledger path, in that Task's Description. The text is copied
 as it is in the record. A missing claim or paragraph gives the paths alone and one warning on
-stderr for each. Tests: claim present and missing, paragraph present and missing for each
-phase, a quote, a comma and a newline inside the text, the whole-export comparison updated, and
-the existing refusals still writing nothing to stdout.
+stderr for each. README: what the export copies, what a missing source gives, and that the
+Description is a copy from the import date. Tests: claim present and missing, paragraph present
+and missing for each phase, a quote, a comma and a newline inside the text, the whole-export
+comparison updated, and the existing refusals still writing nothing to stdout.
 
 **c — the wiki markup.** The copied text is converted from markdown to Jira wiki markup:
 `**bold**` to `*bold*`, `*italic*` to `_italic_`, `` `code` `` to `{{code}}`, `[text](url)`
