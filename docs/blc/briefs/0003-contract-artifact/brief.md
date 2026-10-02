@@ -17,7 +17,7 @@ from every case ever decided. The Manifesto now names this directly in *The pres
 is missing*: a legal system with no statute layer, all holdings and no codification.
 
 **The artifact is not hypothetical, and it is not elsewhere. It is already in this repo,
-degraded.** `docs/briefs/README.md` §"Structural invariants (checkable)" publishes eight
+degraded.** `docs/blc/briefs/README.md` §"Structural invariants (checkable)" publishes eight
 present-tense rules, each tagged `[defect]` (hard violation) or `[advisory]` (flag for a
 human). That is a Contract. It was written by hand, it was never named, and it lives buried
 inside a narrative README that is mostly explanation.
@@ -36,7 +36,7 @@ Checking the repo, all three failures are **live, in this tree, today**:
    `install.sh` only (args, force, hosts, install log, machine and project mode). Eight rules are
    published, believed, and checked by nothing.
 2. **The rules exist in three places, in two forms, and two of them have already
-   diverged.** They are asserted in `docs/briefs/README.md` (93 lines), asserted again in
+   diverged.** They are asserted in `docs/blc/briefs/README.md` (93 lines), asserted again in
    `templates/docs/briefs/README.md` (112 lines), and *enacted as procedure* in
    `skills/create-brief/SKILL.md`, whose steps re-implement invariants 2, 3 and 5 — the slug
    regex, the collision guard, the identity-line shape — rather than citing them. None of
@@ -81,7 +81,7 @@ demand, read once. A Contract cannot, because others depend on it. So it can rot
 **A contract that has drifted is worse than no contract, because it is believed.**
 
 Per the evidence above, this is not a risk to guard against in future. It is the current
-state of `docs/briefs/README.md`. Any design here resting on discipline will fail exactly
+state of `docs/blc/briefs/README.md`. Any design here resting on discipline will fail exactly
 the way the two README copies already failed. The mechanism must be structural.
 
 ## Half the mechanism already exists here
@@ -110,7 +110,7 @@ for that pattern. It has to finish applying it, and then do the half that is lef
 Consolidate the present-tense rules this repo already publishes into a real Contract, and
 make them enforceable. Concretely:
 
-- Extract the eight structural invariants out of `docs/briefs/README.md` into a Contract as
+- Extract the eight structural invariants out of `docs/blc/briefs/README.md` into a Contract as
   the single source, leaving the README to explain and link rather than restate, and leaving
   `create-brief` to cite the clauses it enacts rather than paraphrase them.
 - Write the validator the README has been promising, so `[defect]` rules are checked rather
@@ -194,7 +194,7 @@ itself.
 ## Open decisions
 
 1. **Where it lives and how versions are kept.** One file superseded in place with history
-   in git, or `docs/contracts/v1.md`, `v2.md` side by side? Side-by-side makes "what could I
+   in git, or `docs/blc/contracts/v1.md`, `v2.md` side by side? Side-by-side makes "what could I
    rely on in v1" answerable without archaeology; in-place keeps one obvious current answer.
    Decide against the extraction in hand rather than in the abstract.
 

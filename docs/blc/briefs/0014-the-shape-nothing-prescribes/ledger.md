@@ -1,7 +1,7 @@
 # Ledger — #0014 The shape nothing prescribes
 `blc/2 #0014 done a:done(PR#61) b:done(PR#62) c:done(PR#63) d:done(PR#64)`
 
-**Brief:** `docs/briefs/0014-the-shape-nothing-prescribes/brief.md`
+**Brief:** `docs/blc/briefs/0014-the-shape-nothing-prescribes/brief.md`
 **Started:** 2026-09-16
 **Status:** done
 **Closed:** 2026-09-29
@@ -110,7 +110,7 @@ and no mechanism holding it.
    it.
 3. **The anchor did not defeat a fenced example.** Prose in front of an example loses to the
    anchor; an example at column 0 inside a fence does not — and that is precisely how
-   `docs/briefs/README.md` prints the status line. A ledger documenting its own format would
+   `docs/blc/briefs/README.md` prints the status line. A ledger documenting its own format would
    have handed both readers `#9999`. Nothing here does it yet, which is the only reason it
    was invisible. The locator now tracks fences.
 4. **The `[no-line]` message described the locator that had been removed.** It still told
@@ -237,14 +237,14 @@ comment, and `c`'s review showed that reverting it leaves the suite green on a m
 line and costs a `[defect]` someone else's build.
 
 That second one is code, and it is not `d`'s. It is filed as the draft
-`docs/briefs/_drafts/the-interpreter-nothing-pins.md` and named in `d`'s criteria as a
+`docs/blc/briefs/_drafts/the-interpreter-nothing-pins.md` and named in `d`'s criteria as a
 precondition. Folding it in was considered and rejected: a matrix over awk and shell
 implementations is portability infrastructure that serves the whole suite, and #0014's subject
 is one reader per format. A brief that absorbs every precondition it discovers stops being
 reviewable, and this repository's own precedent is the other way — complication 11 became its
 own clause, and the missing memory layer became its own draft rather than a phase here.
 
-**What `d` shipped.** A "Promotion" section in `docs/contracts/README.md`, and nothing else.
+**What `d` shipped.** A "Promotion" section in `docs/blc/contracts/README.md`, and nothing else.
 No clause changed, no version bumped, no check written.
 
 It went in that file rather than in a Contract version because promotion is clause *lifecycle*,
@@ -272,7 +272,7 @@ in place makes every citation of the old version silently wrong.
 
 **The reversibility claim was also wrong.** The first draft said a gate has been demoted to a
 report here before, citing #0003. What #0003 demoted was a *planned* gate, during planning,
-before it shipped — `docs/briefs/0003-contract-artifact/ledger.md:14`, a phase marked skipped.
+before it shipped — `docs/blc/briefs/0003-contract-artifact/ledger.md:14`, a phase marked skipped.
 No published clause in this repository has ever changed its tag in either direction. The
 citation is sound for the claim it carries elsewhere in this brief, that this project has
 chosen report over gate at design time; it says nothing about the cost of reversing a shipped
@@ -307,7 +307,7 @@ one or more digits, whole token: catches `a1` and `bc2`, excludes `2026-01-01T00
 a digit), `https` (no digits), and `A1` (uppercase). So the widening is available and admits
 neither a timestamp nor a URL.
 
-That makes a sentence in the current Contract false. `docs/contracts/v1.2.md` justifies the
+That makes a sentence in the current Contract false. `docs/blc/contracts/v1.2.md` justifies the
 boundary by saying "widening to catch it means accepting timestamps and URLs as candidate
 phases, which was judged the worse trade". The trade it describes is not the trade available.
 The clause's *behaviour* is defensible and unchanged; its stated *reason* was wrong, and it was
@@ -543,7 +543,7 @@ The deciding point is that the failure mode is asymmetric — a `[judgment]` tha
 gated costs a warning nobody acted on, while a `[defect]` that should have reported breaks
 someone else's build on the day they upgrade, for a ledger that was legal when they wrote it.
 
-This is not a new mechanism and deliberately so. `docs/contracts/v1.1.md` already defines
+This is not a new mechanism and deliberately so. `docs/blc/contracts/v1.1.md` already defines
 `[judgment]` as "scope `both` · checked: `tools/validate-briefs.sh` (never blocks)", and
 `BRIEFS-8` has shipped that way since v1. Phase `c` adds clauses, not a reporting tier.
 

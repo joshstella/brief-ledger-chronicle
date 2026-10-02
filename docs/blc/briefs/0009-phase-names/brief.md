@@ -99,7 +99,7 @@ Contract version — v1.1 gets one over-specific phrase corrected in phase `a`.
 
 | Phase | Work |
 |---|---|
-| `a — the convention` | Write the id shape (letter + label), the branch derivation, the closeout suffix, the Jira summary shape, and the 26-phase ceiling into `docs/briefs/README.md`. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Record the seam where a reader meets it: phases before this brief are numeric, and why they stay that way. Reword Contract v1.1's collision-recovery step from "ledger `blc/1` line" to "ledger status line" — it must stop naming a version before any ledger writes `blc/2`. Prose and skills only; no parser and no clause touched. |
+| `a — the convention` | Write the id shape (letter + label), the branch derivation, the closeout suffix, the Jira summary shape, and the 26-phase ceiling into `docs/blc/briefs/README.md`. Point `start-brief` and `next-brief-phase` at it; they write `blc/2` and letter indexes. Record the seam where a reader meets it: phases before this brief are numeric, and why they stay that way. Reword Contract v1.1's collision-recovery step from "ledger `blc/1` line" to "ledger status line" — it must stop naming a version before any ledger writes `blc/2`. Prose and skills only; no parser and no clause touched. |
 | `b — the readers` | Make both parsers dual-read. `gather.sh` hardcodes the version twice (the `grep -m1 'blc/1'` and the `^blc\/1` anchor in the status sed); both take `blc/[0-9]+`. `open-briefs.sh` already matches `blc/*`, but its drift check finds the phase-table row by `grep "^\|.*phase $idx "`, which matches neither a letter index nor a row written as `` `a — the convention` ``. Left alone it fails silent — reporting no drift rather than erroring — which is worse than breaking. |
 | `c — the check` | Tests that both parsers read `blc/1` with numeric indexes and `blc/2` with letters, and that the drift check still fires on a letter-indexed ledger whose phase table disagrees. That last one is the regression that `b` would otherwise ship silently. |
 
@@ -202,5 +202,5 @@ Resolved 2026-09-07 during drafting.
 - No written artifact carries an unpadded serial.
 - #0007 can cite this without inventing a second scheme.
 - No historical ledger is rewritten, and no merged branch is renamed.
-- `docs/briefs/README.md` explains the numeric-to-letter seam, so a reader hitting
+- `docs/blc/briefs/README.md` explains the numeric-to-letter seam, so a reader hitting
   `1:done` in #0004 and `a:done` in any brief filed after it finds the reason rather than a defect.

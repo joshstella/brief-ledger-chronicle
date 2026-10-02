@@ -4,7 +4,7 @@
 
 ## Ground
 
-The convention already named a tracker field. `docs/briefs/README.md` says a Jira key is
+The convention already named a tracker field. `docs/blc/briefs/README.md` says a Jira key is
 a correlation ID on the identity line (`· **Jira:** PROJ-1234`), "added when wired."
 `create-brief` says it will carry that field if the draft had one. The Manifesto says a
 tracker is optional, never load-bearing, and must not be required to exist.
@@ -62,7 +62,7 @@ stale list. The new skill must fetch first. The query program must not.
 still has to keep that bar: BLC runs without Jira.
 
 **5. Auth and network are not in this toolkit.** `install.sh` does not check a Jira
-host or a token. Secrets must not land in `docs/briefs/`.
+host or a token. Secrets must not land in `docs/blc/briefs/`.
 
 ## Change
 

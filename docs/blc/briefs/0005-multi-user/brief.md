@@ -30,7 +30,7 @@ three, in that order.
 
 The three holes live in this repository. The near-miss under item 3 does not. It is supplied.
 
-**1. Serial allocation races across machines.** `docs/contracts/v1.md` recorded it as a known
+**1. Serial allocation races across machines.** `docs/blc/contracts/v1.md` recorded it as a known
 limitation, named the fix — allocation against the pushed remote rather than the local
 checkout — and stated it is not built. That text stays in v1. The restated limitation,
 including recovery, is Contract v1.1.
@@ -54,7 +54,7 @@ step of one skill. Two people on two phases of one brief would collide on that f
 not the use case this brief now designs for. See settled decisions.
 
 **3. `start-brief` can overwrite a ledger that someone else is holding.**
-`docs/briefs/0004-deferral-surfacing/ledger.md:116` records this as complication 8:
+`docs/blc/briefs/0004-deferral-surfacing/ledger.md:116` records this as complication 8:
 `start-brief:26` refuses to proceed only when it finds status `in-progress`. A ledger at
 `pending` — written, no phase begun — is unguarded. The entry notes it is a one-line guard that
 was deliberately not taken during a vocabulary phase, because smuggling a behaviour change into
@@ -72,9 +72,9 @@ Phases 2 to 4 close them, cheapest first.
 
 | Phase | Work |
 |---|---|
-| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/briefs/README.md`, the clobber hole beside it, and a sharpening of concurrent filing. That sharpening is Contract v1.1, not an in-place rewrite of v1. Prose only. No clause, no check. |
+| 1 — state the assumptions | Write each of the three where its surface is documented: the ledger's single-writer assumption in `docs/blc/briefs/README.md`, the clobber hole beside it, and a sharpening of concurrent filing. That sharpening is Contract v1.1, not an in-place rewrite of v1. Prose only. No clause, no check. |
 | 2 — the clobber guard | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: a skill guard is not a check (open decision 4). Restart is explicit confirmation, not `--force` (open decision 5). |
-| 3 — ledger write-ownership | State in `docs/briefs/README.md` that one person owns the serial, the ledger stays one file, and commit-before-branch is how that owner makes it visible on their other machines. Not a Contract clause. |
+| 3 — ledger write-ownership | State in `docs/blc/briefs/README.md` that one person owns the serial, the ledger stays one file, and commit-before-branch is how that owner makes it visible on their other machines. Not a Contract clause. |
 | 4 — remote-aware allocation | **Skipped.** Leave the race. The later merge renumbers. Fetch-then-allocate does not close the gap, and a lock at filing is a coordination step this brief rejected. |
 
 Phase 1 precedes the rest because that is the ordering this repo enforces on itself. Phases 2

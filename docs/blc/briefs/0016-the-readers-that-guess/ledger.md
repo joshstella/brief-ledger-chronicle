@@ -2,7 +2,7 @@
 
 `blc/2 #0016 done a:done(PR#70) b:done(PR#71) c:done(PR#72) d:done(PR#73)`
 
-**Brief:** `docs/briefs/0016-the-readers-that-guess/brief.md`
+**Brief:** `docs/blc/briefs/0016-the-readers-that-guess/brief.md`
 **Started:** 2026-09-30
 **Status:** done
 **Closed:** 2026-10-01
@@ -33,7 +33,7 @@ true. The PR must state that `BRIEFS-6` examines less than it did (decision 8).
 (decision 3). The parser checks every field it does not recognise instead of stopping at the
 first one. A field that is not a PR, an MR or a commit and does not resolve as a branch is
 reported as unrecognised, not as a missing branch (decision 4). The record format in
-`docs/briefs/README.md` gains the token. No forge is called yet: `!123` is parsed and shown, and
+`docs/blc/briefs/README.md` gains the token. No forge is called yet: `!123` is parsed and shown, and
 its state is reported as not checked.
 
 **c — the forge probe.** Detection per decision 9: take the remote's host, and ask
@@ -207,7 +207,7 @@ request, decision 3), or an existing branch, where `N` is digits. Any other non-
 reported (decisions 4, 13), so an unknown field no longer hides the branch after it or vanishes behind
 the branch before it. Every existing branch is measured (decision 16). Beside a branch, `!N` is
 shown as `MR !N (state not checked)`; no forge is asked until phase `c`. A pointer cut short by
-a space is reported (decision 17). Fields are not globbed. `docs/briefs/README.md` states the
+a space is reported (decision 17). Fields are not globbed. `docs/blc/briefs/README.md` states the
 pointer format and where a reason goes (decision 18), and its tracker section no longer
 describes the guess.
 

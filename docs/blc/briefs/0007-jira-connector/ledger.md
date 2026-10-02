@@ -2,7 +2,7 @@
 
 `blc/2 #0007 done a:done(PR#69) b:done(PR#75) c:done(PR#76) d:done(PR#78)`
 
-**Brief:** `docs/briefs/0007-jira-connector/brief.md`
+**Brief:** `docs/blc/briefs/0007-jira-connector/brief.md`
 **Started:** 2026-09-30
 **Status:** done
 **Closed:** 2026-10-01
@@ -16,7 +16,7 @@
 | c | my assignments | done (PR#76) | — |
 | d | the publisher | done (PR#78) | — |
 
-**a — the mapping.** `docs/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
+**a — the mapping.** `docs/blc/briefs/README.md` and `Manifesto.md`: Jira is optional reporting,
 brief maps to Epic, phase maps to ticket, `Owner:` is an optional identity-line field distinct
 from `Author`. The Epic key lives on the brief; no phase key is stored at all, per decision 2.
 Drops "added when wired". Documentation only — no field is carried, validated, or published by
@@ -368,7 +368,7 @@ The brief offered one answer — a field per phase — and flinched at it in the
 The flinch was correct, though not for the reason I first wrote down. I argued that a second
 parenthetical would break a line two Contract clauses gate on. Review showed that claim is
 false twice: `BRIEFS-10` reads frontmatter and fences, not the status line, and both clauses
-are `[judgment]` and never block. `docs/briefs/README.md` says so eleven lines below the
+are `[judgment]` and never block. `docs/blc/briefs/README.md` says so eleven lines below the
 section I was writing.
 
 The true objection is the opposite shape and is stronger. `blc_status_phase_entries` splits a
@@ -395,7 +395,7 @@ The phase table has the same cost in a quieter form: `phase-row.sh` already carr
 table schemas and says in its own comment that it does not parse columns. A key column needs
 a reader, and that reader is a fourth schema.
 
-Neither is necessary, because #0009 already made the identity derivable. `docs/briefs/README.md`
+Neither is necessary, because #0009 already made the identity derivable. `docs/blc/briefs/README.md`
 pins the Jira summary as `#<serial>/<letter> — <label>`. That string is computable from the
 ledger with no call to Jira. So the publisher lists the children of the Epic on the identity
 line and matches the summary it can regenerate.
@@ -405,7 +405,7 @@ it carried rather than resolved, recording that it "binds #0007". Settling decis
 depending on that format is what binds it. The dependency also made #0009's worked examples
 wrong: they were written when #0007 had five numbered phases and the publisher was `c`, and
 the re-plan above moved the publisher to `d`. Five example cells in "Phase ids" named a phase
-that is now "my assignments". They are corrected in `docs/briefs/README.md`, because decision
+that is now "my assignments". They are corrected in `docs/blc/briefs/README.md`, because decision
 2 makes that table the one place the format is written, and an example there that contradicts
 the ledger is the drift the citation was meant to avoid.
 

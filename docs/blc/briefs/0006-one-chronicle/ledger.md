@@ -1,7 +1,7 @@
 # Ledger — #0006 One chronicle, newest first, with a brief table
 `blc/1 #0006 done(PR#30) 1:done(PR#28) 2:done(PR#28) 3:done(PR#29) 4:done(PR#29) 5:done(PR#30)`
 
-**Brief:** `docs/briefs/0006-one-chronicle/brief.md`
+**Brief:** `docs/blc/briefs/0006-one-chronicle/brief.md`
 **Status:** done (PR #30)
 **Date:** 2026-09-04
 
@@ -11,8 +11,8 @@
 |---|---|---|
 | `phase 1 — the digest` | done (PR#28) | `gather.sh` emits a Markdown table of every brief, newest last-touch first, on full and incremental runs. Columns: serial, title, status, first, last, depends-on. Title from the first `#` line of `brief.md`. Status from the ledger `blc/1` overall token, or `planned` if there is no ledger. Incremental filtering stays for commits and for what is new to narrate. The table is not filtered. |
 | `phase 2 — the check` | done (PR#28) | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. Also rewrite the tests that today pin first-commit list order and the `executed` token — those strings will move or die when the table lands. |
-| `phase 3 — the skill and the path` | done (PR#29) | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
-| `phase 4 — the ignore` | done (PR#29) | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/chronicles/` may stay ignored. |
+| `phase 3 — the skill and the path` | done (PR#29) | Rewrite `skills/chronicle/SKILL.md`: write only `docs/blc/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; no sibling; drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. Instruction, not a check. |
+| `phase 4 — the ignore` | done (PR#29) | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore`, `tests/test_project_mode.sh`, and any README/slides that still say "never committed." Other files under `docs/blc/chronicles/` may stay ignored. |
 | `phase 5 — the Manifesto` | done (PR#30) | Phase 4 named README and slides. The Manifesto still said a Contract is the only derived artifact in git. That sentence is false once `chronicle.md` sits in the tree. Rewrite it so a chronicle may be committed as a rendering, and a Contract stays the file others build against. |
 
 ## Dependency structure

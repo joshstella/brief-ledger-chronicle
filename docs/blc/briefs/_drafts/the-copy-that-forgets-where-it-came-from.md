@@ -19,7 +19,7 @@ From inside an installed project you cannot answer:
 - whether a re-run of `install.sh` would change anything
 - whether two projects are running the same toolkit
 
-`docs/install-log/` records that an install happened. It does not record what was installed.
+`docs/blc/install-log/` records that an install happened. It does not record what was installed.
 
 ## Why it has not been a problem
 

@@ -16,7 +16,7 @@ finding at all.
 
 `blc-start-brief` has said a phase id looks like `a — domain types` since the initial commit
 on 2026-08-02 and has never been edited. Nothing in `skills/`, `templates/`, or
-`docs/briefs/README.md` prescribes a phase-table header. The shape three ledgers now share was
+`docs/blc/briefs/README.md` prescribes a phase-table header. The shape three ledgers now share was
 never chosen. It was copied.
 
 This is the toolkit's own principle arriving on schedule: **a skill guard is not a check.** The
@@ -82,7 +82,7 @@ That is the difference between a gap someone has to remember and one the gate fi
 | Phase | Work |
 |---|---|
 | `a — the shared matcher` | One implementation of the phase-row matcher in `tools/lib/`, read by `open-briefs.sh`, with a guard that fails if any tool re-derives it. No behaviour change. Carries the installer and ownership-map work a new `tools/` path brings with it. |
-| `b — the shared locator` | One implementation of the status-line locator in `tools/lib/`, read by `open-briefs.sh` and `list-briefs.sh`. The two disagreed by design — one walked structurally past frontmatter, the other searched the whole file — and `c` adds a third reader. **Amended 2026-09-22 to match what shipped:** the planned resolution was a whole-file search with an anchored match, and review added two more properties before it merged. Fenced blocks are skipped, because an example at column 0 inside a fence defeats the anchor and that is how `docs/briefs/README.md` prints the line. An unterminated fence falls back rather than swallowing the file, for the same reason the unterminated-frontmatter skip was reversed. Returns identical results on every ledger here. |
+| `b — the shared locator` | One implementation of the status-line locator in `tools/lib/`, read by `open-briefs.sh` and `list-briefs.sh`. The two disagreed by design — one walked structurally past frontmatter, the other searched the whole file — and `c` adds a third reader. **Amended 2026-09-22 to match what shipped:** the planned resolution was a whole-file search with an anchored match, and review added two more properties before it merged. Fenced blocks are skipped, because an example at column 0 inside a fence defeats the anchor and that is how `docs/blc/briefs/README.md` prints the line. An unterminated fence falls back rather than swallowing the file, for the same reason the unterminated-frontmatter skip was reversed. Returns identical results on every ledger here. |
 | `c — the clauses` | Two `[judgment]` clauses, neither of which blocks. `BRIEFS-9`: every phase id in a status line is findable in the phase table. `BRIEFS-10`: a ledger's frontmatter and code fences are closed. `validate-briefs.sh` becomes the third reader of both shared pieces, with a test that fails if the readers ever disagree. Validator checks citing each clause, Contract v1.2 text, and tests — including the three shapes #0013 left unmatched, which become complaints instead of silences. |
 | `d — the promotion` | The version at which the two `[judgment]` clauses become `[defect]`, and what has to be true first. Unblocked 2026-09-22 by open decision 2, and narrowed by it: a clause that never fails a build has no day-one crossing to manage, so what remains is the promotion rather than the introduction. **Amended 2026-09-29 after `c` merged (PR#63):** `d` stays decision-only and writes no check, because `c` produced two preconditions that are criteria rather than code. `BRIEFS-9` now has a *published* blind spot — v1.2 states that `a1:done` written for `a:done` is not caught — so the criteria must answer whether a gate may carry a documented hole. And `BRIEFS-10` rests on an awk program no test pins to an implementation, which a `[judgment]` can survive and a `[defect]` cannot; that work is filed as the draft `the-interpreter-nothing-pins` and named here as a criterion rather than folded in, since a matrix over interpreters is not this brief's subject. |
 
@@ -199,7 +199,7 @@ Resolved 2026-09-16 during drafting.
    honest signal; a clause that reports first is the kinder upgrade. #0003 faced this exact
    question and demoted a gate to a report, and this follows it.
 
-   `BRIEFS-9` lands as `[judgment]`, which is not a new mechanism: `docs/contracts/v1.1.md`
+   `BRIEFS-9` lands as `[judgment]`, which is not a new mechanism: `docs/blc/contracts/v1.1.md`
    already defines the tag as "scope `both` · checked: `tools/validate-briefs.sh` (never
    blocks)", and `BRIEFS-8` has shipped that way since v1. The validator prints the finding,
    counts it in the summary, and exits zero.

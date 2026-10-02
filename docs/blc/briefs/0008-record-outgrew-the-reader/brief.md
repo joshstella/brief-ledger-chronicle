@@ -33,7 +33,7 @@ partition #0005 used for ledgers, applied to every source.
 | part | produced by | one writer per | staleness |
 |---|---|---|---|
 | what is in flight — landed | derived from git and the ledgers | brief | impossible |
-| what is in flight — intended | declared in `docs/state/<contributor>.md` | contributor | real, self-pruning |
+| what is in flight — intended | declared in `docs/blc/state/<contributor>.md` | contributor | real, self-pruning |
 | what is off-limits | derived from the installer's ownership map and the Contract | — | impossible |
 | what is desirable, and the architecture | assembled from one authored file, size-capped | repo | real, bounded |
 
@@ -54,7 +54,7 @@ detail about *one* brief, not fine detail about everything.
 | rung | artifact | ~tokens |
 |---|---|---|
 | 1 — what / why | `README.md` · `Manifesto.md` | 1,677 · 2,538 |
-| 2 — how a surface works | `docs/briefs/README.md` · `docs/contracts/README.md` | 2,947 · 1,048 |
+| 2 — how a surface works | `docs/blc/briefs/README.md` · `docs/blc/contracts/README.md` | 2,947 · 1,048 |
 | 3 — one unit of work | one brief · one ledger, median | 1,993 · 1,578 |
 
 Rung 0 is the missing one, and it is the only rung a reader needs before knowing which
@@ -116,9 +116,9 @@ tools. The declaration convention comes before the verb that aggregates it.
 | Phase | Work |
 |---|---|
 | `a — the layering` | The table comes from `skills/chronicle/scripts/gather.sh`; the verb belongs in `tools/`. Today both tools are standalone and nothing in `tools/` reaches into a skill. Settle the direction — move the table logic down to `tools/` and have `gather.sh` call it, or accept the new coupling — then make the move. No new behaviour. |
-| `b — the declaration` | The `docs/state/` convention: one file per contributor, named from `git config user.email` under a stated normalization rule. It holds only what cannot be derived — work picked up but not yet filed, and a serial about to be claimed. Not a status report, not a standup, not recurring. Written when work is picked up, emptied when it lands. |
-| `c — the verb` | The tool itself. Emits the parts. Landed state from the ledgers and git; intended state aggregated from `docs/state/`; off-limits from the installer's ownership classes and the Contract clauses; desirable and architecture read from the authored file. Exits zero and says so when a source is absent, so it works in a project with no briefs and no declarations. |
-| `d — the check` | Tests: output is deterministic across two runs with no repo change; each part degrades to a stated absence rather than an error; total stays under the budget; two contributors' declaration files never touch the same path; it runs clean in a fixture project with an empty `docs/briefs/` and no `docs/state/`. This is a script, so unlike a skill it can actually be asserted. |
+| `b — the declaration` | The `docs/blc/state/` convention: one file per contributor, named from `git config user.email` under a stated normalization rule. It holds only what cannot be derived — work picked up but not yet filed, and a serial about to be claimed. Not a status report, not a standup, not recurring. Written when work is picked up, emptied when it lands. |
+| `c — the verb` | The tool itself. Emits the parts. Landed state from the ledgers and git; intended state aggregated from `docs/blc/state/`; off-limits from the installer's ownership classes and the Contract clauses; desirable and architecture read from the authored file. Exits zero and says so when a source is absent, so it works in a project with no briefs and no declarations. |
+| `d — the check` | Tests: output is deterministic across two runs with no repo change; each part degrades to a stated absence rather than an error; total stays under the budget; two contributors' declaration files never touch the same path; it runs clean in a fixture project with an empty `docs/blc/briefs/` and no `docs/blc/state/`. This is a script, so unlike a skill it can actually be asserted. |
 | `e — the read` | Point `start-brief` step 4, `next-brief-phase` step 5, and `review-pr` step 3 at the command. Have `create-brief` write the declaration when a serial is claimed, and clear it at filing. This is a skill guard, not a check — see the Tension. |
 
 ## Tension
@@ -174,7 +174,7 @@ repository as the actual test, and expect the filtering rule above to be what br
 
 **Declarations scale with people, and rungs must not.** Twenty contributors is twenty
 files. The verb aggregating them into a few lines is what preserves the flat rung cost,
-so `docs/state/` is a *source* and never something a reader opens directly. If anyone
+so `docs/blc/state/` is a *source* and never something a reader opens directly. If anyone
 starts reading the directory, the rung property is already broken.
 
 **Deriving off-limits couples the verb to the installer.** Ownership classes live in
@@ -253,7 +253,7 @@ Resolved 2026-09-07 during drafting.
   not be broken, what this project values.
 - Total output stays under the budget, and a test asserts it.
 - Two runs with no repository change produce identical output.
-- It runs clean in a project with an empty `docs/briefs/`, reporting absence rather
+- It runs clean in a project with an empty `docs/blc/briefs/`, reporting absence rather
   than failing.
 - Nothing it produces is written to a tracked file.
 - Two contributors working simultaneously never write the same path — not a ledger, not

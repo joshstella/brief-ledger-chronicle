@@ -25,7 +25,7 @@ Two changes, both in `tools/open-briefs.sh`:
    when none of them agrees with the status line.** One matcher serves both index alphabets:
    the id standing alone in the first cell, plus the legacy shapes already in the tree.
 2. **A ledger may open with YAML frontmatter, and its status line sits under the title
-   wherever the title landed.** `open-briefs` skips a leading `---` block. `docs/briefs/README.md`
+   wherever the title landed.** `open-briefs` skips a leading `---` block. `docs/blc/briefs/README.md`
    says so in the sentence that currently says "line under its title".
 
 Neither tool gains an exit code. Both still report and never gate.
@@ -83,7 +83,7 @@ to suit a reader is not.
 | Phase | Work |
 |---|---|
 | `a — the row scan` | One matcher, both alphabets: the id alone in the first cell, plus `phase N` anywhere in the row for `blc/1` and `id —` in the first cell for `blc/2`. Every match considered, `head -1` gone. Drift reported only when no matching row agrees with the state. Regression tests: a ledger with a second table that mentions `phase N`, and a letter-indexed ledger whose phase row puts the id alone in its own cell. The four contract tests stay green. |
-| `b — the line's home` | `open-briefs` skips a leading `---` frontmatter block before reading the status line. `docs/briefs/README.md` states the placement rule for both shapes. The `[no-line]` text says where it looked. Regression test for a frontmatter ledger in `test_open_briefs.sh`, and a matching one in `test_list_briefs.sh` pinning that the permissive reader keeps agreeing. |
+| `b — the line's home` | `open-briefs` skips a leading `---` frontmatter block before reading the status line. `docs/blc/briefs/README.md` states the placement rule for both shapes. The `[no-line]` text says where it looked. Regression test for a frontmatter ledger in `test_open_briefs.sh`, and a matching one in `test_list_briefs.sh` pinning that the permissive reader keeps agreeing. |
 
 Independent in logic — different code paths, different defects. Sequential in practice,
 because both edit `tools/open-briefs.sh` and a parallel pair would conflict for no gain.
@@ -152,7 +152,7 @@ Resolved 2026-09-16 during drafting.
   every adopter to migrate.
 - **Only a leading `---` block is skipped.** Line 1 exactly, closed by the next `---`. Not
   TOML fences, not a block further down, not a frontmatter parser.
-- **Neither tool gains a non-zero exit.** `docs/briefs/README.md` says these observe rather
+- **Neither tool gains a non-zero exit.** `docs/blc/briefs/README.md` says these observe rather
   than gate, and a defect in a reporter is not a reason to make it a gate.
 - **Each phase carries its own tests.** Both defects are silent failures, so a phase that
   merged without its regression test would be indistinguishable from one that shipped nothing.

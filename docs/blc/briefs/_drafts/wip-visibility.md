@@ -36,7 +36,7 @@ by design is not worth building.
 > this. It requires asking people.
 
 That is still true. `record-outgrew-the-reader.md` carries it in its Tension, and answers
-the reachable part of it with per-contributor declarations in `docs/state/` — which
+the reachable part of it with per-contributor declarations in `docs/blc/state/` — which
 convert "ask every peer" into "read a directory," without pretending to reach the work
 nobody has written down.
 

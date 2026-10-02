@@ -11,7 +11,7 @@
 
 ## Ground
 
-BLC already supports a brief that someone else executes. `docs/briefs/README.md`, "Ledger
+BLC already supports a brief that someone else executes. `docs/blc/briefs/README.md`, "Ledger
 status": *"A team member is given the brief. That person runs `blc-start-brief` and the later
 phases."* `Author` is who filed. The owner is who executes. Those are different people by
 design.

@@ -1,7 +1,7 @@
 # Ledger — #0005 Closing the single-writer holes
 `blc/1 #0005 done(PR#26) 1:done(PR#26) 2:done(PR#26) 3:done(PR#26) 4:skipped`
 
-**Brief:** `docs/briefs/0005-multi-user/brief.md`
+**Brief:** `docs/blc/briefs/0005-multi-user/brief.md`
 **Status:** done (PR #26)
 **Date:** 2026-08-25
 
@@ -9,9 +9,9 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — state the assumptions` | done (PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
+| `phase 1 — state the assumptions` | done (PR#26) | Write each of the three single-writer assumptions where a reader meets them: ledger write-ownership and the clobber hole in `docs/blc/briefs/README.md` (Known limitations), and concurrent filing in Contract v1.1. v1 stays as published. Prose only — no clause, no check. |
 | `phase 2 — the clobber guard` | done (PR#26) | Make `start-brief` refuse to overwrite any ledger it did not just create, not only an `in-progress` one. Instruction only: open decision 4 resolved as "label it so." |
-| `phase 3 — ledger write-ownership` | done (PR#26) | State in `docs/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
+| `phase 3 — ledger write-ownership` | done (PR#26) | State in `docs/blc/briefs/README.md`: one owner per serial, one ledger file, commit-before-branch for that owner's other machines. Not a Contract clause. Open decisions 1 and 2 resolved. |
 | `phase 4 — remote-aware allocation` | skipped | Leave the race. Second merge renumbers. Fetch-then-allocate does not close TOCTOU. A lock at filing is a coordination step this brief rejected. Open decision 3. |
 
 ## Dependency structure
@@ -53,12 +53,12 @@ Carried from the brief, with what each blocks.
    The same gap applies to `create-brief`. Phase 4 will not add a remote-aware allocator,
    so that skill stays an instruction too. **Not closed.**
 
-3. **`docs/briefs/README.md` had no stated ownership rule.** Phase 1 named the hole.
+3. **`docs/blc/briefs/README.md` had no stated ownership rule.** Phase 1 named the hole.
    **Phase 3 states the convention** under Ledger status: one owner per serial, one file,
    commit-before-branch. Remaining: nothing checks it, and it is not a Contract clause.
 
 4. **The Contract's concurrent-filing paragraph does not mention the local collision guard.**
-   `docs/contracts/v1.md` describes the cross-machine race only. Phase 1 publishes v1.1 with
+   `docs/blc/contracts/v1.md` describes the cross-machine race only. Phase 1 publishes v1.1 with
    the restated limitation rather than rewriting v1. The mechanism lives at
    `skills/create-brief/SKILL.md:35`.
 

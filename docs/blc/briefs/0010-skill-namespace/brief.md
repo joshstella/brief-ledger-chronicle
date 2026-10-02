@@ -69,7 +69,7 @@ in this list indefinitely. There is no mechanism by which a future addition cons
 installed project, and no warning when one lands on a name already in use.
 
 **The blast radius outside the record is small and known.** Twenty-four files name a
-skill, excluding `docs/briefs/`. The change is mechanical throughout.
+skill, excluding `docs/blc/briefs/`. The change is mechanical throughout.
 
 ## Change
 
@@ -78,8 +78,8 @@ hosts, so there is no useful place to stop in the middle.
 
 | Phase | Work |
 |---|---|
-| `a — the names` | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update `PROCESS_SKILLS` in `install.sh`, the machine-mode symlink loop, and the template-presence check. Update every cross-reference in `README.md`, `Manifesto.md`, `docs/`, and the skills' own prose, including the `to-do` mentions in `README.md` and `docs/slides-process-overview.md`. Write the naming rule into `docs/briefs/README.md` so the next skill is born prefixed rather than renamed later. |
-| `b — the check` | Tests that a fresh install places nine skills, all prefixed, and six slash-commands, all prefixed; that no unprefixed name and no `to-do` survives anywhere outside `docs/briefs/`; and that both hosts agree on the six. Update the `to-do` assertions in `tests/test_hosts.sh` and `tests/test_machine_mode.sh`, which currently require the skill this phase removes. |
+| `a — the names` | Rename nine directories under `skills/` to `blc-<name>` and delete `skills/to-do/`. Update `PROCESS_SKILLS` in `install.sh`, the machine-mode symlink loop, and the template-presence check. Update every cross-reference in `README.md`, `Manifesto.md`, `docs/`, and the skills' own prose, including the `to-do` mentions in `README.md` and `docs/slides-process-overview.md`. Write the naming rule into `docs/blc/briefs/README.md` so the next skill is born prefixed rather than renamed later. |
+| `b — the check` | Tests that a fresh install places nine skills, all prefixed, and six slash-commands, all prefixed; that no unprefixed name and no `to-do` survives anywhere outside `docs/blc/briefs/`; and that both hosts agree on the six. Update the `to-do` assertions in `tests/test_hosts.sh` and `tests/test_machine_mode.sh`, which currently require the skill this phase removes. |
 
 ## Tension
 
@@ -168,10 +168,10 @@ does not.
 A fresh install into an empty project places nine skills, all `blc-`-prefixed, and six
 slash-commands, all `blc-`-prefixed.
 
-`rg 'start-brief|review-pr|to-do'` outside `docs/briefs/` returns nothing unprefixed and
+`rg 'start-brief|review-pr|to-do'` outside `docs/blc/briefs/` returns nothing unprefixed and
 no surviving `to-do`.
 
 The full test suite passes with the `to-do` assertions in `tests/test_hosts.sh` and
 `tests/test_machine_mode.sh` removed rather than adjusted to a renamed skill.
 
-`docs/briefs/README.md` states the naming rule, so the next skill is born with the prefix.
+`docs/blc/briefs/README.md` states the naming rule, so the next skill is born with the prefix.
