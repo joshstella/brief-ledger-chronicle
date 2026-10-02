@@ -46,7 +46,8 @@ install is already correct after `a`.
 
 **d — the contract.** Contract v1.3 re-scopes `BRIEFS-1` to `BRIEFS-10` to the new root.
 v1.2 stays published. Done in `a` instead. `d` stays `pending` until `c` is settled, because
-the upgrade path may need a clause. If it does not, `d` is `skipped`.
+the upgrade path may need a clause. If it does not, `d` is `skipped`. `c` added no clause: the
+upgrade is installer behaviour, and the Contract covers the structure of the briefs directory.
 
 ## Dependency structure
 
@@ -127,7 +128,7 @@ The brief's text is not edited.
 
 - `.gitignore` in this repository, and the block that `install.sh` appends to a target's
   `.gitignore`, name `docs/chronicles/`. An existing target keeps the old rule after an upgrade
-  unless `c` handles it.
+  unless `c` handles it. **Settled in `c`:** the old rule stays (decision 12).
 - The chronicle narrates old paths in past tense. It is a rendering, so `b` leaves it to the
   next chronicle run.
 - Merged PR descriptions and commit messages keep the old paths. The brief records this cost
@@ -135,13 +136,17 @@ The brief's text is not edited.
 - An upgrade of an old-layout install between `a` and `c` splits its install log. The old log
   stays at `docs/install-log/`, and the installer starts a new one at `docs/blc/install-log/`.
   The installer finds no previous entries, so it removes no stale toolkit paths. That is safe,
-  and `c` has to join the two logs.
+  and `c` has to join the two logs. **Done in `c`:** the upgrade joins them, oldest first, before
+  it prunes, so the prune reads the old installs' entries (decision 11).
 - A squash commit has no hash until its PR merges. So `b`'s branch adds `a`'s squash commit to
   `docs/blc/ignore-revs`, and `c`'s branch adds `b`'s. Between the merge of `a` and the merge
-  of `b`, every brief shows the move as its last touch.
+  of `b`, every brief shows the move as its last touch. **Done:** `b` added `a`'s commit and `c`
+  added `b`'s. Of the briefs, `c`'s own commit changes only this ledger, which is work on
+  #0017, so it is not ignored and the chain ends there.
 - An upgrade of an existing install moves that target's tree in its own commit. That target
   needs the commit in its own ignore list, or its dates reset (decision 5). `c` has to handle
-  this.
+  this. **Done in `c`:** the installer cannot know that commit, so after a move it prints the
+  command that adds it. A test runs the command and checks that a brief keeps its own dates.
 - `a`'s squash commit records this ledger as a delete and a create, not a rename: `a` changed it
   too much for git to match the two. So the reader cannot follow it back, and with that commit
   ignored, the commits to this ledger on `main` before the move do not count. #0017's last date
