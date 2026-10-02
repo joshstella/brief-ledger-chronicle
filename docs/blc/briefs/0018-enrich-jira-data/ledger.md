@@ -1,6 +1,6 @@
 # Ledger — #0018 The Jira export carries what the brief says, not only where it is
 
-`blc/2 #0018 in-progress a:done(PR#88) b:in-progress(PR#89) c:pending`
+`blc/2 #0018 in-progress a:done(PR#88) b:done(PR#89) c:in-progress(brief/0018-c-the-wiki-markup)`
 
 **Brief:** `docs/blc/briefs/0018-enrich-jira-data/brief.md`
 **Started:** 2026-10-02
@@ -11,8 +11,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the sources | done (PR#88) | — |
-| b | the descriptions | in-progress (PR#89) | `brief/0018-b-the-descriptions` |
-| c | the wiki markup | pending | — |
+| b | the descriptions | done (PR#89) | — |
+| c | the wiki markup | in-progress | `brief/0018-c-the-wiki-markup` |
 
 The brief has two phases, `a` and `b`. Its `b` is split here into `b` and `c` (decision 3).
 
@@ -60,6 +60,7 @@ that state reaches no board.
 | 3 | **Settled 2026-10-02: the brief's `b` is two phases.** Copying the text and converting it are separate work, each with its own tests. With decision 2, one phase is too large to review in one sitting. Rejected: the brief's two phases. | — |
 | 4 | **Settled 2026-10-02: two paragraphs for one phase stop the export.** The export already refuses a phase with two candidate rows, because it cannot tell which one is meant. Two paragraphs are the same case. Two `## The claim` sections in one brief are too. Rejected: take the first, which exports a guess. | `b` |
 | 5 | **Settled 2026-10-02: the paths stay as they are.** The brief says the Epic gets "the two paths". The export writes the brief path in the Epic and the ledger path in each Task, and the brief misread that. The text goes before the path that is there now, so a brief with no named sources exports exactly as before. | `b` |
+| 6 | **Settled 2026-10-02: headings convert, and code spans escape wiki characters.** Two additions to decision 2, found while building `c`. A `### x` line is a numbered list item in wiki markup, and `b`'s own test showed that a claim can hold one, so it becomes `h3. x`. The renderer is understood to read wiki formatting inside `{{...}}`, so `{{--max-age}}` could show struck through. Inside a code span, each wiki formatting character gets a backslash. The import by hand checks both. | `c` |
 
 ## Scope
 
