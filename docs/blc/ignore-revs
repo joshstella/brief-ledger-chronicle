@@ -1,0 +1,6 @@
+# Commits that are not work on the briefs they touch. tools/lib/touch-log.sh drops them
+# when it dates a brief, so the timeline keeps each brief's own last touch.
+# One commit per line. Abbreviated hashes work. Say why each one is here.
+
+# #0017 phase a (PR #80): moved the whole record from docs/ to docs/blc/.
+ac14aa8ec010c0cd561b7b21feee2171b013eca3

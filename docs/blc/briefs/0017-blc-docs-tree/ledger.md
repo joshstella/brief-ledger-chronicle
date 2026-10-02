@@ -1,8 +1,8 @@
 # Ledger — #0017 The BLC docs tree
 
-`blc/2 #0017 in-progress a:in-progress(brief/0017-a-the-move,PR#80) b:pending c:pending d:pending`
+`blc/2 #0017 in-progress a:done(PR#80) b:in-progress(brief/0017-b-the-record) c:pending d:pending`
 
-**Brief:** `docs/briefs/0017-blc-docs-tree/brief.md`
+**Brief:** `docs/blc/briefs/0017-blc-docs-tree/brief.md`
 **Started:** 2026-10-01
 **Status:** in-progress
 
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the move | in-progress | `brief/0017-a-the-move` |
-| b | the record | pending | — |
+| a | the move | done (PR#80) | — |
+| b | the record | in-progress | `brief/0017-b-the-record` |
 | c | the installer | pending | — |
 | d | the contract | pending | — |
 
@@ -31,9 +31,12 @@ install writes to `docs/blc/`: `install.sh` sources, destinations, ownership map
 positional override in each tool. Publish Contract v1.3, which was `d` (re-plan below).
 
 **b — the record.** Rewrite the path references inside existing briefs and ledgers so they
-resolve. Today that is 153 references in 28 files. This is the brief's settled exception to "The
-record is the work". The chronicle is a rendering, so the next chronicle run refreshes it and
-`b` does not edit it.
+resolve. When `a` merged, that was 166 references in 33 files: 29 brief and ledger files and the
+four drafts. This is the brief's settled exception to "The record is the work". Two kinds of
+reference keep the old path, settled 2026-10-01. #0017's own brief and ledger describe the move,
+so they are not rewritten. A line that tells what an older version did keeps the path that
+version used. Add `a`'s squash commit to `docs/blc/ignore-revs`. The chronicle is a rendering, so
+the next chronicle run refreshes it and `b` does not edit it.
 
 **c — the installer.** An upgrade of an install that has the old layout does what open
 decisions 1 and 2 settle. Blocked by both. A fresh install is already correct after `a`.
@@ -123,3 +126,8 @@ in an installed copy until `d`, which keeps an install inconsistent on purpose f
 - An upgrade of an existing install moves that target's tree in its own commit. That target
   needs the commit in its own ignore list, or its dates reset (decision 5). `c` has to handle
   this.
+- `a`'s squash commit records this ledger as a delete and a create, not a rename: `a` changed it
+  too much for git to match the two. So the reader cannot follow it back, and with that commit
+  ignored, the commits to this ledger on `main` before the move do not count. #0017's last date
+  is its brief's last commit before the move, until a later commit touches it. Only #0017 is
+  affected. The other moved files were renamed with small changes.
