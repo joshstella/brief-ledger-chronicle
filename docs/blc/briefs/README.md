@@ -338,10 +338,10 @@ A project can enforce rules about its own records that the Contract does not cov
 shell scripts in **`brief-checks/` at the repository root**. The installer never creates,
 writes to, or scans that directory — it is project-owned.
 
-After `tools/validate-briefs.sh` finishes the eight Contract clauses, it runs
+After `tools/validate-briefs.sh` finishes the Contract's clauses, it runs
 `brief-checks/*.sh` in sorted filename order. It reads `brief-checks/` in the directory it runs
-from, so run it from the repository root, as every tool here expects. Each script receives the briefs directory as
-its first argument (the same path you passed to `validate-briefs.sh`, default
+from, so run it from the repository root, as every tool here expects. Each script receives the
+briefs directory as its first argument (the same path you passed to `validate-briefs.sh`, default
 `docs/blc/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
 script printed is echoed under its filename.
 
