@@ -57,8 +57,9 @@ only briefs that are not yet imported. As of filing, no brief has been imported.
 
 | Phase | Work |
 |---|---|
-| `a — the sources` | README, "Reporting to a tracker": the brief's summary is its `## The claim` section, and a phase's description is the ledger paragraph that begins `**<id> — <label>.**`. Say what the export does when one is missing. `blc-start-brief` writes a phase description for each phase it plans. No Contract clause. |
-| `b — the export` | `jira-csv.sh` puts the brief summary, then the two paths, in the Epic's Description. It puts each phase's description, then the ledger path, in that Task's Description. A missing source gives the paths alone and a warning on stderr. Tests: summary present, summary missing, description present and missing per phase, a quote and a comma and a newline inside the prose, and the whole-export comparison updated. |
+| `a — the sources` | README, "Reporting to a tracker": the brief's summary is its `## The claim` section, and a phase's description is the ledger paragraph that begins `**<id> — <label>.**`. Say what the export does when one is missing. In the import steps, say to leave "Map field value" unticked for Description, because it removes every line break. `blc-start-brief` writes a phase description for each phase it plans. No Contract clause. |
+| `b — the export` | `jira-csv.sh` puts the brief summary, then the two paths, in the Epic's Description. It puts each phase's description, then the ledger path, in that Task's Description. The text is converted from markdown to Jira wiki markup on the way. A missing source gives the paths alone and a warning on stderr. Tests: summary present, summary missing, description present and missing per phase, a quote and a comma and a newline inside the prose, each converted construct, and the whole-export comparison updated. |
+
 `a` comes before `b`. `b` reads only what `a` names.
 
 ## Tension
@@ -90,13 +91,19 @@ Resolved 2026-10-02, at filing:
   brief's phase table is not used.
 - **No update path for Epics already in Jira.** No brief has been imported, so there is
   nothing to update.
+- **The export converts the markdown that the briefs use to Jira wiki markup.** Jira Cloud's
+  CSV importer reads a Description as wiki markup, not markdown ([JRACLOUD-79205][md], closed
+  without a fix in 2024). Copied as written, `**bold**` shows stray asterisks and `` `code` ``
+  shows its backticks. The export converts bold to `*bold*`, code to `{{code}}`, and
+  `[text](url)` to `[text|url]`. Everything else stays as text. The wording does not change,
+  so "copied, not written" still holds. The source for this is Atlassian's documentation, not
+  an import, so `b` closes only after one import by hand.
+
+[md]: https://jira.atlassian.com/browse/JRACLOUD-79205
 
 ## Open decisions
 
-1. **Markdown in a Jira Description.** The prose is markdown. The CSV importer may write it as
-   plain text or read it as Jira wiki markup. This is not known from this repository. Default:
-   copy it as written, and check one import by hand before `b` closes. Blocks `b`.
-2. **A length limit.** A whole `## The claim` can be long. The longest in this repository is
+1. **A length limit.** A whole `## The claim` can be long. The longest in this repository is
    about 1,500 characters. Default: no limit in the export. Blocks `b`.
 
 ## Non-goals
@@ -116,5 +123,8 @@ Resolved 2026-10-02, at filing:
 - A brief or phase with no named source exports with the paths alone and one warning per
   missing source.
 - Prose with quotes, commas, and newlines stays inside one CSV field.
-- The README names both sources and says the Description is a copy from the import date.
+- Bold, code, and links in the copied text show as formatting in Jira, not as markdown
+  characters. One import by hand confirms it.
+- The README names both sources, says the Description is a copy from the import date, and
+  says to leave "Map field value" unticked for Description.
 - A new brief started with `blc-start-brief` has a phase description for each phase.
