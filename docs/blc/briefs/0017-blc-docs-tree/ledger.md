@@ -152,3 +152,8 @@ The brief's text is not edited.
   ignored, the commits to this ledger on `main` before the move do not count. #0017's last date
   is its brief's last commit before the move, until a later commit touches it. Only #0017 is
   affected. The other moved files were renamed with small changes.
+- `a` shipped a bug that one ignored commit could not show. `touch-log.sh` gave awk the ignore
+  list as a `-v` value with one hash per line, and the one true awk, which macOS ships, refuses
+  a newline there. When `c` added a second entry, `list-briefs.sh`, `orient.sh` and `gather.sh`
+  failed under that awk in CI. Fixed in `c`: the list goes to awk on one line, and a test
+  ignores two commits.

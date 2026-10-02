@@ -105,8 +105,10 @@ blc_touch_log() {
         }
       done < <(git ls-files --full-name -- "$p" 2>/dev/null)
     done
-  } | awk -v skip="$skip" '
-    BEGIN { n = split(skip, s, "\n"); for (i = 1; i <= n; i++) if (s[i] != "") ignored[s[i]] = 1 }
+  # One line, not one hash per line: the one true awk refuses a newline in a -v value, and
+  # that is the awk macOS ships. A hash holds no space, so a space is a safe separator.
+  } | awk -v skip="$(printf '%s' "$skip" | tr '\n' ' ')" '
+    BEGIN { n = split(skip, s, " "); for (i = 1; i <= n; i++) if (s[i] != "") ignored[s[i]] = 1 }
     !($1 in ignored) && !seen[$1]++ { print $2, $3 }
   ' | sort -k1,1nr
 }

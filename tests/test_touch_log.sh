@@ -92,6 +92,22 @@ test_touch_log_drops_an_ignored_commit_named_by_an_abbreviated_hash() {
   assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates ignore-revs new/0001-a/)" "dates without the move"
 }
 
+# Two entries make the skip list two lines. The one true awk refused that in a -v value, and
+# every tool that dates briefs failed under it once a second commit was ignored.
+test_touch_log_drops_two_ignored_commits() {
+  tl_source_lib
+  tl_repo
+  tl_ledger old/0001-a/ledger.md a
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
+  git -C "$REPO" mv old new
+  tl_commit 2026-02-01T00:00:00-04:00 "move"
+  printf 'edit\n' >> "$REPO/new/0001-a/ledger.md"
+  tl_commit 2026-03-01T00:00:00-04:00 "rewrite"
+  git -C "$REPO" log --format=%H -2 > "$REPO/ignore-revs"
+  assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates ignore-revs new/0001-a/)" "dates without either commit"
+  [ ! -s "$ERR" ] || fail "two ignored commits reported: $(cat "$ERR")"
+}
+
 test_touch_log_without_an_ignore_file_ignores_nothing() {
   tl_source_lib
   tl_repo
