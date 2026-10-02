@@ -1,6 +1,6 @@
 # Ledger — #0018 The Jira export carries what the brief says, not only where it is
 
-`blc/2 #0018 in-progress a:in-progress(brief/0018-a-the-sources) b:pending c:pending`
+`blc/2 #0018 in-progress a:done(PR#88) b:in-progress(PR#89) c:pending`
 
 **Brief:** `docs/blc/briefs/0018-enrich-jira-data/brief.md`
 **Started:** 2026-10-02
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the sources | in-progress | `brief/0018-a-the-sources` |
-| b | the descriptions | pending | — |
+| a | the sources | done (PR#88) | — |
+| b | the descriptions | in-progress (PR#89) | `brief/0018-b-the-descriptions` |
 | c | the wiki markup | pending | — |
 
 The brief has two phases, `a` and `b`. Its `b` is split here into `b` and `c` (decision 3).
@@ -24,8 +24,8 @@ one such paragraph for each phase it plans. No program changes, and no Contract 
 the export does with the sources is documented in `b`, with the code, so the README does not
 describe an export that does not exist yet.
 
-**b — the descriptions.** `tools/jira-csv.sh` puts the claim section, then the brief and ledger
-paths, in the Epic's Description. It puts each phase's paragraph, without its bold
+**b — the descriptions.** `tools/jira-csv.sh` puts the claim section, then the brief path, in
+the Epic's Description (decision 5). It puts each phase's paragraph, without its bold
 `**<id> — <label>.**` lead, then the ledger path, in that Task's Description. The text is copied
 as it is in the record. A missing claim or paragraph gives the paths alone and one warning on
 stderr for each. README: what the export copies, what a missing source gives, and that the
@@ -58,6 +58,8 @@ that state reaches no board.
 | 1 | **Settled 2026-10-02: no length limit.** From the brief. The longest claim section in the repository is about 1,500 characters. Rejected: a cap with a marked cut. | `b` |
 | 2 | **Settled 2026-10-02: the conversion covers italic, tables and wrapped lines too.** The brief settled bold, code and links, and "everything else stays as text". A scan of the claim sections at start showed that list misses three things. Markdown `*italic*` is wiki bold, and #0008, #0012 and #0014 use it. The claims of #0008 and #0012 hold markdown tables, and a wiki renderer reads any line starting with a pipe as a table row, so the separator row shows as dashes. Every paragraph is wrapped at about 95 columns, and a wiki renderer is understood to show a single newline as a line break. That last point is from memory of the wiki format, not a source, and the import in `c` checks it. Rejected: italic and joining only, and the settled list unchanged. | `c` |
 | 3 | **Settled 2026-10-02: the brief's `b` is two phases.** Copying the text and converting it are separate work, each with its own tests. With decision 2, one phase is too large to review in one sitting. Rejected: the brief's two phases. | — |
+| 4 | **Settled 2026-10-02: two paragraphs for one phase stop the export.** The export already refuses a phase with two candidate rows, because it cannot tell which one is meant. Two paragraphs are the same case. Two `## The claim` sections in one brief are too. Rejected: take the first, which exports a guess. | `b` |
+| 5 | **Settled 2026-10-02: the paths stay as they are.** The brief says the Epic gets "the two paths". The export writes the brief path in the Epic and the ledger path in each Task, and the brief misread that. The text goes before the path that is there now, so a brief with no named sources exports exactly as before. | `b` |
 
 ## Scope
 
@@ -68,8 +70,8 @@ means a step was skipped, and the warning in `b` says so.
 
 ## Complications
 
-- No existing ledger has two paragraphs for the same phase. `b` still has to decide what one
-  does: the export refuses an ambiguous phase row today, and the same rule fits here.
+- No existing ledger has two paragraphs for the same phase. **Settled in `b`:** the export
+  refuses one (decision 4).
 - No claim section has a `{`, a line starting with `#`, or a link. Each would mean something in
   wiki markup that `c` does not convert. A later brief that adds one exports it wrong.
 - `skills/blc-start-brief/SKILL.md` is the one copy. `.cursor/skills` is a symbolic link to

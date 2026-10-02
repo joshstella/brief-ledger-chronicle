@@ -100,6 +100,113 @@ test_jira_csv_quotes_every_field_and_doubles_quotes() {
   assert_out '"Task","#0001/a — say ""hi"", then","2",'
 }
 
+# ── The descriptions ─────────────────────────────────────────────────────────
+
+# usage: jc_append_brief <folder> <lines...> — append lines to the brief's text.
+jc_append_brief() {
+  local f="$JC_DIR/docs/blc/briefs/$1/brief.md"
+  shift
+  printf '%s\n' "$@" >> "$f"
+}
+
+# The claim ends at the next `## ` heading and keeps its own `###` subheadings. Blank lines at
+# its ends go; the ones inside stay. A phase paragraph ends at the first blank line and loses its
+# bold lead. A quote and a comma stay inside one field.
+test_jira_csv_puts_the_claim_and_each_phase_paragraph_in_the_descriptions() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 in-progress a:in-progress b:pending' \
+    "${JC_TABLE_HEAD[@]}" \
+    '| a | the first | in-progress | — |' \
+    '| b | the second | pending | — |' \
+    '' \
+    '**a — the first.** Do "this", then' \
+    'that.' \
+    '' \
+    'Not part of a.' \
+    '' \
+    '**b — the second.**' \
+    'Its text starts on the next line.'
+  jc_append_brief 0001-a '' '## Ground' '' 'Not the claim.' '' '## The claim' '' \
+    '**One line.**' '' '### A part' 'More.' '' '## Change' '' 'Not the claim either.'
+  run_jc 1
+  assert_status 0
+  diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
+"Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
+"Epic","#0001 — The thing","1","","me@x.org","in-progress","**One line.**
+
+### A part
+More.
+
+docs/blc/briefs/0001-a/brief.md"
+"Task","#0001/a — the first","2","1","me@x.org","in-progress","Do ""this"", then
+that.
+
+docs/blc/briefs/0001-a/ledger.md"
+"Task","#0001/b — the second","3","1","me@x.org","pending","Its text starts on the next line.
+
+docs/blc/briefs/0001-a/ledger.md"
+CSV
+  [ ! -s "$ERR" ] || fail "expected no warning: $(cat "$ERR")"
+}
+
+# A missing source is a thinner ticket, not a refusal, and the warning names what is missing.
+test_jira_csv_warns_and_writes_the_path_when_a_source_is_missing() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned a:pending b:pending' \
+    "${JC_TABLE_HEAD[@]}" \
+    '| a | the first | pending | — |' \
+    '| b | the second | pending | — |' \
+    '' \
+    '**b — the second.** Has text.'
+  run_jc 1
+  assert_status 0
+  assert_out '"Epic","#0001 — The thing","1","","me@x.org","planned","docs/blc/briefs/0001-a/brief.md"'
+  assert_out '"Task","#0001/a — the first","2","1","me@x.org","pending","docs/blc/briefs/0001-a/ledger.md"'
+  assert_out '"Task","#0001/b — the second","3","1","me@x.org","pending","Has text.'
+  assert_err "has no '## The claim' text"
+  assert_err '#0001/a: no paragraph'
+  [ "$(wc -l < "$ERR")" -eq 2 ] || fail "expected two warnings: $(cat "$ERR")"
+}
+
+# A paragraph whose label is not the table's is not trusted as that phase's description.
+test_jira_csv_warns_on_a_paragraph_with_another_label() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned a:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |' '' '**a — an old name.** Text.'
+  run_jc 1
+  assert_status 0
+  assert_out '"Task","#0001/a — the first","2","1","me@x.org","pending","docs/blc/briefs/0001-a/ledger.md"'
+  assert_err "does not carry the label 'the first'"
+}
+
+# A label is free text. Passed to awk with -v, the `\t` here would become a tab, and the
+# paragraph would not be found.
+test_jira_csv_reads_a_label_with_a_backslash_as_written() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned a:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | split on \t | pending | — |' '' '**a — split on \t.** Text.'
+  run_jc 1
+  assert_status 0
+  assert_out '"Task","#0001/a — split on \t","2","1","me@x.org","pending","Text.'
+}
+
+test_jira_csv_refuses_two_paragraphs_for_one_phase() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned a:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |' '' \
+    '**a — the first.** One.' '' '**a — the first.** Two.'
+  run_jc 1
+  jc_refused 'more than one paragraph'
+}
+
+test_jira_csv_refuses_two_claim_sections() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' 'One.' '' '## The claim' 'Two.'
+  run_jc 1
+  jc_refused "two '## The claim' sections"
+}
+
 test_jira_csv_takes_the_serial_in_any_of_its_spellings() {
   jc_repo
   jc_brief 0008-a 'Eight' "${JC_IDENTITY/0001/0008}" 'blc/2 #0008 planned a:pending' \
