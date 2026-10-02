@@ -60,6 +60,7 @@ If no argument is given, list candidate brief files (search `docs/blc/briefs/`, 
    - Brief path and title; status `pending`; date.
    - The **status line** directly under the title — `blc/2 #NNNN <status> a:<status> b:<status> …` — per `docs/blc/briefs/README.md`, "Ledger status". Phase indexes are letters. Update it in the same edit as any status change, never separately. Never write `blc/1`: it is the numeric-index schema, still read but no longer written.
    - The **full phase list** with stable ids and per-phase status. The vocabulary is `pending` / `in-progress` / `deferred` / `done` / `skipped`, defined once in `docs/blc/briefs/README.md` and used at both levels. `in-progress` and `deferred` name their branch, and their PR once one exists.
+   - A **phase description** for each phase, after the phase list: one paragraph that begins with the id and label in bold, `**a — domain types.**`, then says what the phase does and what it touches. End it with a blank line, and write exactly one per phase. This paragraph is the phase's description in tracker reports, so write it for a reader who has not seen the brief. See `docs/blc/briefs/README.md`, "Reporting to a tracker".
    - The **dependency structure** (chain vs parallel; which phase is provisional pending which decision).
    - Branch(es) created.
    - Open decisions (with the phase each blocks) and any complications found in step 4.

@@ -272,7 +272,8 @@ tools/jira-csv.sh 0007 > 0007.csv
 To import the file:
 
 1. Open the Jira CSV importer and select the file.
-2. Map each column to the Jira field with the same name.
+2. Map each column to the Jira field with the same name. Leave "Map field value" unticked for
+   Description: it removes every line break from the text.
 3. On the value-mapping screen, map each BLC state to a status in the project workflow.
 4. After the import, write the Epic key into the brief as `**Jira:** <key>`.
 
@@ -283,6 +284,12 @@ The script refuses a brief that already has a `Jira:` key, because a second impo
 second Epic. It also refuses a brief that it cannot export whole. Examples are a `blc/1`
 ledger, an assignee that is not one email, and a phase with no readable label. A refusal
 writes nothing to stdout, so a redirect does not leave a partial file that looks complete.
+
+**A brief's summary is its `## The claim` section. A phase's description is a paragraph in
+the ledger.** The paragraph begins with the phase id and label in bold, `**a — the sources.**`,
+and runs to the next blank line. `blc-start-brief` writes one for each phase it plans. They are
+named so that a report quotes the record and does not guess which part of it to quote. Neither
+is required: a brief without them is valid, and `validate-briefs.sh` does not look for them.
 
 **No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
 the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
