@@ -2,10 +2,11 @@
 
 | serial | title | status | first | last | depends-on |
 |---|---|---|---|---|---|
+| #0017 | The BLC docs tree | done | 2026-09-16T04:11:33-07:00 | 2026-10-02T15:43:48-04:00 | #0013 |
 | #0007 | Jira as a reporting surface, written from BLC | done | 2026-09-07T23:09:10-04:00 | 2026-10-01T14:38:30-04:00 | — |
-| #0016 | The readers that guess | done | 2026-09-30T16:45:08-04:00 | 2026-10-01T11:05:31-04:00 | — |
+| #0016 | The readers that guess | done | 2026-09-30T16:16:06-04:00 | 2026-10-01T11:05:31-04:00 | — |
 | #0015 | The interpreter nothing pins | done | 2026-09-29T14:01:37-04:00 | 2026-09-30T11:47:50-04:00 | #0014 |
-| #0014 | The shape nothing prescribes | done | 2026-09-16T05:59:30-07:00 | 2026-09-29T13:18:40-04:00 | #0013 |
+| #0014 | The shape nothing prescribes | done | 2026-09-16T04:11:33-07:00 | 2026-09-29T13:18:40-04:00 | #0013 |
 | #0013 | A reader that cannot find it reports it missing | done | 2026-09-16T04:11:33-07:00 | 2026-09-16T04:59:49-07:00 | — |
 | #0011 | A project cannot add a gate | done | 2026-09-09T09:41:04-04:00 | 2026-09-10T20:45:11-04:00 | #0012 |
 | #0012 | An install is not an update | done | 2026-09-09T09:41:04-04:00 | 2026-09-10T14:36:35-04:00 | — |
@@ -13,21 +14,85 @@
 | #0010 | The skills live in someone else's namespace | done(PR#39) | 2026-09-08T09:29:26-04:00 | 2026-09-09T06:45:49-04:00 | #0009 |
 | #0009 | One name for a phase, used everywhere | done(PR#36) | 2026-09-07T23:09:10-04:00 | 2026-09-09T06:26:43-04:00 | #0004 |
 | #0006 | One chronicle, newest first, with a brief table | done(PR#30) | 2026-09-04T12:18:22-04:00 | 2026-09-07T23:09:10-04:00 | — |
-| #0005 | Closing the single-writer holes before the second writer arrives | done(PR#26) | 2026-08-25T10:13:58-04:00 | 2026-08-26T09:56:07-04:00 | #0003, #0004 |
+| #0005 | Closing the single-writer holes before the second writer arrives | done(PR#26) | 2026-08-24T14:25:31-04:00 | 2026-08-26T09:56:07-04:00 | #0003, #0004 |
 | #0004 | The ledger is an archive and a bad inbox | done(PR#18) | 2026-08-24T14:25:31-04:00 | 2026-08-24T14:47:30-04:00 | #0003 |
 | #0003 | A fourth artifact: the Contract | done(PR#11) | 2026-08-21T15:52:02-04:00 | 2026-08-24T14:41:42-04:00 | — |
 | #0002 | Add MIT license | done(commit 383ed5b) | 2026-08-02T13:50:18-04:00 | 2026-08-24T14:41:42-04:00 | #0001 |
 | #0001 | Bootstrap: brief-ledger-chronicle repository | done(commit 92a7168) | 2026-08-02T13:38:06-04:00 | 2026-08-24T14:41:42-04:00 | — |
 
-As of 2026-10-01, all sixteen briefs are done and no phase is open. The most recent close is
-#0007, which exports a brief to Jira as a one-shot CSV import. It closed with two of its own
-success criteria unmet: a ledger status change does not update Jira, and nothing restores a
-hand edit on the board. The ledger records that gap and says a live publisher is not planned.
-Four drafts wait in `docs/briefs/_drafts/` with no serial. They are about the toolkit's
-unmarked footprint in an adopter's `docs/` tree, a memory layer that three skills read and
-nothing writes, an install that records no provenance, and the unmeasured cost of handing a
-brief to another person. A fifth draft, on polling peers for work in progress, is marked
-superseded and stays only because older briefs cite it.
+As of 2026-10-02, all seventeen briefs are done and no phase is open. The most recent close is
+#0017, which moved everything the toolkit writes under `docs/blc/` and taught the installer to
+upgrade a project that has the old layout. The dates in the table above hold through that move
+only because `docs/blc/ignore-revs` names the two commits that touched every brief. A project
+that upgrades must add its own move commit to its own list, and the installer prints the
+command. Three drafts wait in `docs/blc/briefs/_drafts/` with no serial. They are about a
+memory layer that three skills read and nothing writes, an install that records no provenance,
+and the unmeasured cost of handing a brief to another person. A fourth draft, on polling peers
+for work in progress, is marked superseded and stays only because older briefs cite it.
+
+## The toolkit moves into its own directory — 2026-10-01 to 2026-10-02
+
+**#0017** was drafted on 2026-09-16 as "Someone else's docs tree", in the same commit that
+opened #0013's first phase. An install wrote five directories into the root of a project's
+`docs/`, and nothing marked them as the toolkit's. This repository could not feel that, because
+its own `docs/` was the toolkit's. The brief claimed one root, `docs/blc/`, and it took one
+deliberate exception to the project's values: phase `b` would rewrite the paths inside existing
+briefs and ledgers, against "the record is the work". It asked that anyone who later cites this
+as precedent cite its numbers too. At drafting, they were 124 dead links in thirteen briefs and
+twelve ledgers.
+
+The brief waited for #0013 to close, as its settled decisions required. Execution started on
+2026-10-01 with a re-plan, because four facts had changed. #0014 had already published Contract
+v1.2, so the re-scoped Contract became v1.3. #0007 had added a fifth tool that read the briefs
+root, and the chronicle's own `gather.sh` hardcoded it. The rewrite in `b` had grown to 153
+references in 28 files. And the brief's split would have shipped tools that read
+`docs/blc/briefs` into targets where the installer still created `docs/briefs`. So phase `a`
+also took the fresh install and Contract v1.3. A test had caught a fresh install that held a
+Contract about a directory it did not have.
+
+Phase `a` (PR#80) moved the tree and broke the timeline at once. Every brief's first and last
+dates became the move commit, because `git log -- <dir>` does not follow a rename, and `b` would
+reset them again with a real content change. The fork was how to keep dates through a move. The
+first version used `git log --follow`. A test found that it also follows copies: a new ledger
+took an older brief's history from a ledger that was nearly identical. The shipped answer,
+`tools/lib/touch-log.sh`, follows each file back through git's rename records and drops the
+commits that a hand-kept `docs/blc/ignore-revs` names. The ledger records the cost against
+"derived beats declared". A second fork came from the first. Following renames moved some first
+dates earlier, so "first" was settled as when the brief's text was written, including its time
+as a draft. That is why three first dates in the table above are earlier than in the previous
+run. Review found one more defect before merge. `validate-briefs.sh` found the repository root
+by counting directories above the briefs directory. After the move, the old layout, which the
+positional argument still allows, resolved to the parent of the repository, and review
+reproduced it running the parent's checks. It now reads `brief-checks/` from the working
+directory.
+
+Phase `b` (PR#81) rewrote 129 lines in 29 files. Two kinds of reference kept the old path:
+#0017's own brief and ledger, which describe the move, and sixteen lines that record what a tool
+did with the old path at the time. Those are what the installer scaffolded, gitignored or owned,
+a hardcoded default, and a command as it was run. That made the brief's success criterion
+"every path reference inside a brief or ledger resolves" false on purpose, and the ledger
+narrowed it to references to documents. The move also cost #0017 part of its own history. Its
+ledger changed too much in `a` for git to record a rename, so the commits to it before the move
+no longer count.
+
+Phase `c` (PR#82) settled the two decisions that had blocked it since drafting. An upgrade moves
+an old-layout install's trees under `docs/blc/` and logs each move. That is the one exception to
+#0012's rule that the installer never writes a project tree after creation. A `docs/blc/` that
+holds files but no toolkit install log stops the install before it changes anything. Five
+smaller decisions followed. The install log marks a `docs/blc/` as the toolkit's. A project
+file in both trees stops the upgrade. The move uses plain `mv`, so the installer never writes a
+project's index. The two install logs are joined, oldest first, before the prune reads them. Old
+`.gitignore` rules stay, because that file is append-only. The installer cannot know the commit
+that will hold a target's move, so it prints the command that adds it to the target's ignore
+list, and a test runs that command. CI then found a defect that `a` had shipped. `touch-log.sh`
+gave awk the ignore list with one hash per line, and the one true awk, which macOS ships,
+refuses a newline in a `-v` value. One ignored commit could not show it. The second, added in
+`c`, did. Phase `d` was skipped (PR#83): v1.3 had shipped in `a`, and the upgrade needed no
+clause.
+
+A cleanup after the close (PR#84) fixed two more readers that took text as a pattern.
+`open-briefs.sh` turned a `*` in a status line into file names, and `touch-log.sh` let a draft
+named `what-[x].md` match an unrelated draft named `what-x.md`.
 
 ## The tracker, and the readers that guess — 2026-09-30 to 2026-10-01
 
@@ -216,4 +281,4 @@ Cursor, made Simplified Technical English the default for process prose, added t
 and split process rules from project architecture. Those changes shaped everything above, and no brief or ledger explains them.
 This chronicle can report only what flowed through the registry.
 
-<!-- chronicle:closed-through:2026-10-01 -->
+<!-- chronicle:closed-through:2026-10-02 -->
