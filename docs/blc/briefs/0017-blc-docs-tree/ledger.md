@@ -1,6 +1,6 @@
 # Ledger — #0017 The BLC docs tree
 
-`blc/2 #0017 in-progress a:done(PR#80) b:in-progress(brief/0017-b-the-record) c:pending d:pending`
+`blc/2 #0017 in-progress a:done(PR#80) b:in-progress(brief/0017-b-the-record,PR#81) c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0017-blc-docs-tree/brief.md`
 **Started:** 2026-10-01
