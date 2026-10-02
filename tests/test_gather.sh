@@ -409,6 +409,33 @@ test_gather_incremental_says_so_when_nothing_is_new() {
   assert_out "(no new briefs since 2026-06-01)"
 }
 
+# The marker day is already narrated, all of it. git read a bare date as that day at the
+# current time of day, so whether a late commit on the marker day came back depended on the
+# hour of the run. Dates carry no offset, so they are local, as the marker is.
+test_gather_incremental_treats_the_whole_marker_day_as_narrated() {
+  gather_repo
+  gather_brief "0001-early"
+  gather_ledger "0001-early"
+  gather_commit "2026-03-01T00:00:01" "seed #0001"
+  gather_brief "0002-late"
+  gather_ledger "0002-late"
+  gather_commit "2026-03-01T23:59:00" "seed #0002"
+  gather_brief "0003-next"
+  gather_ledger "0003-next"
+  gather_commit "2026-03-02T00:00:30" "seed #0003"
+  run_gather "2026-03-01"
+  assert_status 0
+  local narrate commits
+  narrate=$(sed -n '/^## To narrate$/,/^## /p' "$OUT")
+  commits=$(sed -n '/^## Commits referencing/,$p' "$OUT")
+  printf '%s\n' "$narrate" | grep -q '0003-next' || fail "expected 0003-next in To narrate"
+  printf '%s\n' "$narrate" | grep -q '0002-late' && fail "did not expect 0002-late in To narrate"
+  printf '%s\n' "$narrate" | grep -q '0001-early' && fail "did not expect 0001-early in To narrate"
+  printf '%s\n' "$commits" | grep -q 'seed #0003' || fail "expected seed #0003 in the commits"
+  printf '%s\n' "$commits" | grep -q 'seed #0002' && fail "did not expect seed #0002 in the commits"
+  return 0
+}
+
 # A move under docs/blc/ that the ignore list names is not new work. A brief and a draft last
 # written before the cutoff, then moved after it, stay out of an incremental run.
 test_gather_incremental_skips_work_only_an_ignored_move_touched() {

@@ -31,10 +31,22 @@ SKIP="$(blc_touch_skip "$(dirname "$BRIEFS_DIR")/ignore-revs")"
 RENAMES="$(blc_touch_renames)"
 # git parses the date, so this does not depend on which `date` the host has. It prints
 # `--max-age=<unix time>`.
+#
+# The marker is a day, and everything on that day is already narrated. git reads a bare date
+# as that day at the current time of day, so the cutoff moved with the hour of the run: a
+# morning run re-listed the marked day's afternoon. A bare date therefore ends at midnight.
 CUTOFF=0
 if [ -n "$SINCE" ]; then
-  CUTOFF="$(git rev-parse --since="$SINCE")"
-  CUTOFF="${CUTOFF#--max-age=}"
+  case "$SINCE" in
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+      CUTOFF="$(git rev-parse --since="$SINCE 23:59:59")"
+      CUTOFF=$(( ${CUTOFF#--max-age=} + 1 ))
+      ;;
+    *)
+      CUTOFF="$(git rev-parse --since="$SINCE")"
+      CUTOFF="${CUTOFF#--max-age=}"
+      ;;
+  esac
 fi
 
 echo "# Chronicle source digest"
@@ -104,7 +116,7 @@ echo
 
 echo "## Commits referencing a brief serial"
 SINCE_FLAG=""
-[ -n "$SINCE" ] && SINCE_FLAG="--since=$SINCE"
+[ -n "$SINCE" ] && SINCE_FLAG="--max-age=$CUTOFF"
 # shellcheck disable=SC2086
 SERIALS=$(git log $SINCE_FLAG --format='%aI · %h · %s' 2>/dev/null | grep -E '#[0-9]{3,4}' || true)
 if [ -z "$SERIALS" ]; then
