@@ -161,6 +161,20 @@ test_open_briefs_reports_an_in_progress_phase_with_its_branch() {
   assert_out "1 open phase(s)"
 }
 
+# The status line is split on spaces. Unquoted, a `*` in it also globbed, and the header
+# showed the names of files in the working directory as the brief's state.
+test_open_briefs_prints_a_star_in_the_status_line_as_written() {
+  make_repo
+  add_ledger 0001-open '`blc/2 #0001 * a:in-progress(feature/x)`' \
+    '| a | in-progress | doing it |'
+  commit_all
+  make_branch feature/x
+  run_query docs/blc/briefs
+  assert_status 0
+  assert_out "0001-open  #0001 *"
+  assert_not_contains "#0001 docs" "$OUT"
+}
+
 test_open_briefs_reports_a_deferred_phase_too() {
   make_repo
   add_ledger 0001-parked '`blc/1 #0001 in-progress 1:deferred(feature/parked)`' \

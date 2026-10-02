@@ -81,6 +81,23 @@ test_touch_log_follows_a_chain_of_renames() {
     "first date of a draft that was filed and moved"
 }
 
+# A file's old names are names, not patterns. Read as a pattern, `what-[x].md` matched an
+# unrelated older draft, `what-x.md`, and the brief's first date moved to before it existed.
+test_touch_log_reads_an_old_name_literally() {
+  tl_source_lib
+  tl_repo
+  mkdir -p "$REPO/_drafts"
+  printf 'other\n' > "$REPO/_drafts/what-x.md"
+  tl_commit 2025-12-01T00:00:00-04:00 "another draft"
+  tl_ledger "_drafts/what-[x].md" mine
+  tl_commit 2026-01-01T00:00:00-04:00 "this draft"
+  mkdir -p "$REPO/0001-a"
+  git -C "$REPO" mv "_drafts/what-[x].md" 0001-a/brief.md
+  tl_commit 2026-02-01T00:00:00-04:00 "file"
+  assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates none 0001-a/ | tail -1)" \
+    "first date of a brief whose draft name holds a glob character"
+}
+
 test_touch_log_drops_an_ignored_commit_named_by_an_abbreviated_hash() {
   tl_source_lib
   tl_repo

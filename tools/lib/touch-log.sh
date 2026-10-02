@@ -96,9 +96,11 @@ blc_touch_log() {
       # the folder, which `ls-files` no longer lists.
       [ -d "$p" ] && { git log --format='%H %at %aI' -- "$p" 2>/dev/null || true; }
       # `--full-name` because the rename records are relative to the top of the repository,
-      # and `:(top)` below reads them that way from any working directory.
+      # and `:(top)` below reads them that way from any working directory. `literal` because
+      # each is a file name, not a pattern: a draft once named `what-[x].md` would otherwise
+      # take the history of a different draft named `what-x.md`.
       while IFS= read -r f; do
-        blc_touch_names "$renames" "$f" | sed 's/^/:(top)/' | {
+        blc_touch_names "$renames" "$f" | sed 's/^/:(top,literal)/' | {
           set --
           while IFS= read -r name; do set -- "$@" "$name"; done
           git log --format='%H %at %aI' -- "$@" 2>/dev/null || true

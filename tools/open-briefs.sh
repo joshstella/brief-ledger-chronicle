@@ -243,8 +243,12 @@ for dir in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]*/; do
     continue
   fi
 
+  # Split on spaces, but never glob: a `*` in a ledger's line would otherwise print as the
+  # names of files in the working directory. Globbing comes back at once for the loops below.
   # shellcheck disable=SC2086
+  set -f
   set -- $line
+  set +f
   shift                      # blc/N
   serial="$1"; shift         # #NNNN
   brief_state="$1"; shift    # brief-level state, possibly with a pointer
