@@ -18,7 +18,7 @@ whole lifecycle.
 ## Layout
 
 ```
-docs/briefs/
+docs/blc/briefs/
   _drafts/            committed holding area for unnumbered drafts
   NNNN-slug/          one filed brief
     brief.md          the spec (carries the identity line)
@@ -30,14 +30,14 @@ docs/briefs/
 
 A serial is a zero-padded four-digit identity handle (`0001`, `0002`, …) on the
 **folder**. It is **assigned at filing time by `/blc-create-brief`** — next serial = max in
-`docs/briefs/` + 1 — never chosen by the author and never assigned during authoring.
+`docs/blc/briefs/` + 1 — never chosen by the author and never assigned during authoring.
 That single point of assignment is what keeps numbers from colliding. The serial encodes
 **identity only** — never status or phase.
 
 Single assignment is not the same as no race. Two checkouts can fetch the same
 `origin/main`, compute the same next serial, and both be right until one pushes. Contract
-v1.2 records this as open. The narrow answer is to say out loud that you are taking a
-number, before you take it: see `docs/state/README.md`. It closes the window by making the
+v1.3 records this as open. The narrow answer is to say out loud that you are taking a
+number, before you take it: see `docs/blc/state/README.md`. It closes the window by making the
 claim visible, not by locking anything.
 
 ## The identity line
@@ -321,7 +321,7 @@ described, not because it is part of publishing.
 
 ## Structural invariants
 
-The rules this layout must satisfy live in **[Contract v1.2](../contracts/v1.2.md)**, clauses
+The rules this layout must satisfy live in **[Contract v1.3](../contracts/v1.3.md)**, clauses
 `BRIEFS-1` through `BRIEFS-10`. They are stated there and not restated here, so there is one
 place to read them and one place to change them. [v1](../contracts/v1.md) and
 [v1.1](../contracts/v1.1.md) are superseded and stay published; clauses `BRIEFS-1` through
@@ -339,9 +339,10 @@ shell scripts in **`brief-checks/` at the repository root**. The installer never
 writes to, or scans that directory — it is project-owned.
 
 After `tools/validate-briefs.sh` finishes the eight Contract clauses, it runs
-`brief-checks/*.sh` in sorted filename order. Each script receives the briefs directory as
+`brief-checks/*.sh` in sorted filename order. It reads `brief-checks/` in the directory it runs
+from, so run it from the repository root, as every tool here expects. Each script receives the briefs directory as
 its first argument (the same path you passed to `validate-briefs.sh`, default
-`docs/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
+`docs/blc/briefs`). **Exit 0 passes; any other exit fails the run.** On failure, whatever the
 script printed is echoed under its filename.
 
 Toolkit defects are evaluated first. A project check cannot suppress, downgrade, or clear a
@@ -380,7 +381,7 @@ If you automate anything that files briefs, route it through `/blc-create-brief`
 ## Known limitation — the ledger is an archive, and a bad inbox
 
 A ledger records what a brief is doing. Nothing reads it back. Every command here writes
-into `docs/briefs/`; none of them asks what is already sitting there unfinished. So a brief
+into `docs/blc/briefs/`; none of them asks what is already sitting there unfinished. So a brief
 that stalls stays stalled silently, and the cost of the stall grows in a place the record
 never looks.
 
@@ -404,7 +405,7 @@ there is no equivalent for one already in flight. `BRIEFS-8` flags a gap in the 
 sequence; nothing flags a gap in time.
 
 The structural half is sharper than the record-keeping half. A deferred phase parks code on
-a branch, and `docs/briefs/` has no concept of branches. The ledger names one in prose,
+a branch, and `docs/blc/briefs/` has no concept of branches. The ledger names one in prose,
 nothing resolves it, nothing notices it decaying, and deleting the branch leaves the ledger
 reading "code on branch" while pointing at nothing.
 
@@ -419,7 +420,7 @@ query nobody invokes buys exactly as much as no query. Until something calls it 
 branch that is quietly getting more expensive. A known boundary is a legitimate resting
 place; an unwatched one is not.
 
-The other known boundary, concurrent filing, is recorded in Contract v1.2 beside the
+The other known boundary, concurrent filing, is recorded in Contract v1.3 beside the
 clause it threatens. If two branches claim the same serial, the second to reach `main`
 renumbers. Fetching first does not prevent that.
 

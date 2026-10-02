@@ -100,7 +100,7 @@ $out"
 }
 
 # The candidate list is the scope of the claim. Promotion criterion 1 in
-# docs/contracts/README.md says the supported set may not be narrowed to whatever already
+# docs/blc/contracts/README.md says the supported set may not be narrowed to whatever already
 # passes, and quietly deleting a name from this list is exactly that move, with no other
 # symptom.
 test_interpreters_the_candidate_list_has_not_been_narrowed() {
@@ -538,7 +538,7 @@ $out" ;;
 # One record per document: path, the line that opens the claim region, the line that ends it.
 # Tab-separated and split by hand, for the reason blc_awk_plan splits by hand.
 IN_CLAIM_REGIONS="tests/README.md|## What this suite claims about interpreters|## Layout
-docs/contracts/README.md|1. **The check runs under every interpreter|2. **Every guard on the check"
+docs/blc/contracts/README.md|1. **The check runs under every interpreter|2. **Every guard on the check"
 
 # The command both documents send a reader to.
 IN_CLAIM_CMD="bash tests/run.sh --matrix-plan"

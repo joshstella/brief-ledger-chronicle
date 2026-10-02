@@ -307,17 +307,18 @@ fi
 #   source       path under $SCRIPT_DIR, or `-` when nothing is shipped
 #   destination  path under $TARGET_DIR
 #
-# A `file` entry beats an enclosing `tree` entry. `docs/briefs/` is the project's, but
-# `docs/briefs/README.md` inside it is shipped — stated here once so no reader has to
+# A `file` entry beats an enclosing `tree` entry. `docs/blc/briefs/` is the project's, but
+# `docs/blc/briefs/README.md` inside it is shipped — stated here once so no reader has to
 # infer the precedence from path lengths.
 #
 # A `tree` row means the installer may *create* the directory and may never write inside
-# it. Creating `docs/chronicles/` and handing it over is not the same act as putting a
+# it. Creating `docs/blc/chronicles/` and handing it over is not the same act as putting a
 # file in it, and the two would be indistinguishable if creation were also disowned.
 #
 # What this map does NOT cover: the empty directories `SCAFFOLD_DIRS` makes so that
 # placement has somewhere to land — `.cursor/`, `.cursor/rules/`, `.cursor/skills/`,
-# `docs/`, `docs/contracts/`, `docs/install-log/`, `tools/`, and the Claude equivalents.
+# `docs/`, `docs/blc/`, `docs/blc/contracts/`, `docs/blc/install-log/`, `tools/`, and the Claude
+# equivalents.
 # They hold nothing this installer authored, so replacing them is meaningless. Removing
 # them is not, and a later phase that prunes will have to decide about an emptied
 # `.cursor/skills/` on its own evidence. Stated here because a boundary nobody wrote down
@@ -335,13 +336,14 @@ ownership_map() {
   # are the same path: these travel from this repository's own docs/, so a target lives
   # by the files this repository lives by rather than by a template copy that drifts.
   for same in \
-    docs/briefs/README.md \
-    docs/briefs/_drafts/README.md \
-    docs/contracts/README.md \
-    docs/contracts/v1.md \
-    docs/contracts/v1.1.md \
-    docs/contracts/v1.2.md \
-    docs/state/README.md \
+    docs/blc/briefs/README.md \
+    docs/blc/briefs/_drafts/README.md \
+    docs/blc/contracts/README.md \
+    docs/blc/contracts/v1.md \
+    docs/blc/contracts/v1.1.md \
+    docs/blc/contracts/v1.2.md \
+    docs/blc/contracts/v1.3.md \
+    docs/blc/state/README.md \
     tools/validate-briefs.sh \
     tools/open-briefs.sh \
     tools/detect-forge.sh \
@@ -350,7 +352,8 @@ ownership_map() {
     tools/orient.sh \
     tools/lib/phase-row.sh \
     tools/lib/status-line.sh \
-    tools/lib/identity-line.sh; do
+    tools/lib/identity-line.sh \
+    tools/lib/touch-log.sh; do
     printf 'toolkit\tfile\t%s\t%s\n' "$same" "$same"
   done
 
@@ -383,13 +386,13 @@ ownership_map() {
   # thing this file says, not a thing it fails to say — #0011's brief-checks/ attaches
   # here, and an absent entry would be indistinguishable from an oversight.
   printf 'project\tfile\t-\t%s\n' "$RULES_FILE"
-  printf 'project\ttree\t-\tdocs/briefs\n'
-  printf 'project\ttree\t-\tdocs/state\n'
-  printf 'project\ttree\t-\tdocs/chronicles\n'
+  printf 'project\ttree\t-\tdocs/blc/briefs\n'
+  printf 'project\ttree\t-\tdocs/blc/state\n'
+  printf 'project\ttree\t-\tdocs/blc/chronicles\n'
   printf 'project\ttree\t-\tbrief-checks\n'
 
   printf 'append\tfile\t-\t.gitignore\n'
-  printf 'append\tfile\t-\tdocs/install-log/install-log.md\n'
+  printf 'append\tfile\t-\tdocs/blc/install-log/install-log.md\n'
 }
 
 # Rows for one owner. Callers filter further on the source column, which is stable and
@@ -446,7 +449,7 @@ safe_remove_toolkit_path() {
 # and commands lists are read — not ### Created, which names scaffold dirs that must
 # never be pruned.
 prune_stale_toolkit_paths() {
-  local log="$TARGET_DIR/docs/install-log/install-log.md"
+  local log="$TARGET_DIR/docs/blc/install-log/install-log.md"
   if [[ ! -f "$log" ]]; then
     echo "  [~] no install log yet — stale skills and commands are not removed"
     return 0
@@ -569,7 +572,7 @@ if [[ "$MODE" == "machine" ]]; then
   echo "Checking machine-mode sources..."
 
   MISSING_SOURCES=()
-  for src in "personal/CLAUDE.md" "skills" "docs/briefs/README.md"; do
+  for src in "personal/CLAUDE.md" "skills" "docs/blc/briefs/README.md"; do
     if [[ ! -e "$SCRIPT_DIR/$src" ]]; then
       echo "  [✗] $src — missing"
       MISSING_SOURCES+=("$src")
@@ -593,7 +596,7 @@ if [[ "$MODE" == "machine" ]]; then
   for s in $PROCESS_SKILLS; do
     echo "  $CLAUDE_HOME/commands/$s.md → skills/$s/SKILL.md"
   done
-  echo "  $CLAUDE_HOME/briefs/README.template.md  → docs/briefs/README.md"
+  echo "  $CLAUDE_HOME/briefs/README.template.md  → docs/blc/briefs/README.md"
   echo ""
   echo "Other skills are NOT linked — they install per-project via --target."
   echo ""
@@ -623,7 +626,7 @@ if [[ "$MODE" == "machine" ]]; then
                     "commands/$s.md"
   done
 
-  link_into_place "$SCRIPT_DIR/docs/briefs/README.md" \
+  link_into_place "$SCRIPT_DIR/docs/blc/briefs/README.md" \
                   "$CLAUDE_HOME/briefs/README.template.md" \
                   "briefs/README.template.md"
 
@@ -736,12 +739,12 @@ echo "Target directory: $TARGET_DIR"
 echo "Agent host:       $HOST"
 echo ""
 echo "This will create or update:"
-echo "  $TARGET_DIR/docs/briefs/        (brief/ledger structure)"
-echo "  $TARGET_DIR/docs/contracts/     (Contract v1.2 — the briefs convention)"
-echo "  $TARGET_DIR/docs/chronicles/    (chronicle.md; other files stay ignored)"
-echo "  $TARGET_DIR/docs/install-log/   (append-only record of every install)"
-echo "  $TARGET_DIR/docs/state/         (one declaration per contributor)"
-echo "  $TARGET_DIR/tools/              (validate-briefs.sh, open-briefs.sh, detect-forge.sh, list-briefs.sh, jira-csv.sh, orient.sh, lib/)"
+echo "  $TARGET_DIR/docs/blc/briefs/       (brief/ledger structure)"
+echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.3 — the briefs convention)"
+echo "  $TARGET_DIR/docs/blc/chronicles/   (chronicle.md; other files stay ignored)"
+echo "  $TARGET_DIR/docs/blc/install-log/  (append-only record of every install)"
+echo "  $TARGET_DIR/docs/blc/state/        (one declaration per contributor)"
+echo "  $TARGET_DIR/tools/                 (validate-briefs.sh, open-briefs.sh, detect-forge.sh, list-briefs.sh, jira-csv.sh, orient.sh, lib/)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
@@ -794,11 +797,11 @@ echo ""
 
 # ── Step 4: Scaffold docs structure ──────────────────────────────────────────
 
-SCAFFOLD_DIRS="$TARGET_DIR/docs/briefs/_drafts
-$TARGET_DIR/docs/contracts
-$TARGET_DIR/docs/chronicles
-$TARGET_DIR/docs/install-log
-$TARGET_DIR/docs/state
+SCAFFOLD_DIRS="$TARGET_DIR/docs/blc/briefs/_drafts
+$TARGET_DIR/docs/blc/contracts
+$TARGET_DIR/docs/blc/chronicles
+$TARGET_DIR/docs/blc/install-log
+$TARGET_DIR/docs/blc/state
 $TARGET_DIR/tools
 $TARGET_DIR/tools/lib
 $TARGET_DIR/$SKILLS_DST_REL"
@@ -819,16 +822,20 @@ while IFS= read -r dir; do
   fi
 done <<< "$SCAFFOLD_DIRS"
 
-# chronicle.md is the one committed rendering. Other files under docs/chronicles/
+# chronicle.md is the one committed rendering. Other files under docs/blc/chronicles/
 # stay ignored so a later archive feature has a place. A parent-directory rule
 # would hide the exception, so the ignore is the contents, then the one file.
 #
 # This is the one place the installer writes to a file it does not own, so it appends and
 # never rewrites: an existing .gitignore keeps everything it had. A target that already
-# has the old `docs/chronicles/` directory rule is left alone — that rule still hides
+# has the `docs/blc/chronicles/` directory rule is left alone — that rule still hides
 # chronicle.md. Un-hiding it there is a hand edit, not an installer behaviour.
+#
+# The rules before #0017 name `docs/chronicles/`, and they do not match the new location. A
+# target that has them gets this block as well, and keeps the old lines, which now match
+# nothing. Removing them is the upgrade's job in #0017 phase `c`, not a fresh install's.
 GITIGNORE_DST="$TARGET_DIR/.gitignore"
-if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/chronicles/' "$GITIGNORE_DST" || grep -qxF '!docs/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
+if [[ -f "$GITIGNORE_DST" ]] && { grep -qxF 'docs/blc/chronicles/' "$GITIGNORE_DST" || grep -qxF '!docs/blc/chronicles/chronicle.md' "$GITIGNORE_DST"; }; then
   log_skipped_as ".gitignore" "chronicles ignore rule already present"
 else
   if [[ -f "$GITIGNORE_DST" ]]; then
@@ -839,8 +846,8 @@ else
   fi
   cat >> "$GITIGNORE_DST" <<'GITIGNORE_EOF'
 # chronicle.md is the one committed rendering. Other files under this folder stay ignored.
-docs/chronicles/*
-!docs/chronicles/chronicle.md
+docs/blc/chronicles/*
+!docs/blc/chronicles/chronicle.md
 GITIGNORE_EOF
   log_created "$GITIGNORE_LABEL"
 fi
@@ -936,7 +943,7 @@ fi
 # onboarded project is a real event worth a line, and appending never overwrites, so the
 # installer's never-clobber posture is preserved without any exists-check at all.
 
-LOG_FILE="$TARGET_DIR/docs/install-log/install-log.md"
+LOG_FILE="$TARGET_DIR/docs/blc/install-log/install-log.md"
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 MACHINE="$(hostname)"
 VERSION="$(git -C "$SCRIPT_DIR" describe --tags --always 2>/dev/null || git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
@@ -954,11 +961,11 @@ toolchain is put together lives upstream in the brief-ledger-chronicle repositor
 not duplicated into every project it onboards.
 
 LOGHEAD_EOF
-  log_created "docs/install-log/install-log.md"
+  log_created "docs/blc/install-log/install-log.md"
 else
   # Deliberately not logged into SKIPPED: an append is neither a create nor a skip, and
   # recording it there would make the log list itself as skipped inside its own entry.
-  echo "  [+] docs/install-log/install-log.md (entry appended)"
+  echo "  [+] docs/blc/install-log/install-log.md (entry appended)"
 fi
 
 # Built inline rather than from the CREATED/SKIPPED arrays' raw form so the entry reads
@@ -1062,10 +1069,10 @@ echo "  2. Process rules are in $PROCESS_RULES_REL — the installer owns that f
 if [[ "$HOST" == "claude" ]]; then
   echo "  3. Review .claude/settings.local.json — add any project-specific permissions."
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
-  echo "  5. Open docs/install-log/install-log.md to see what this run did."
+  echo "  5. Open docs/blc/install-log/install-log.md to see what this run did."
 else
   echo "  3. Skills are under .cursor/skills/ — local edits are replaced on the next install."
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
-  echo "  5. Open docs/install-log/install-log.md to see what this run did."
+  echo "  5. Open docs/blc/install-log/install-log.md to see what this run did."
 fi
 echo ""

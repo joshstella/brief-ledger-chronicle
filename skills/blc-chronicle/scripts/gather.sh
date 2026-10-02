@@ -9,7 +9,7 @@
 # first. Used by the closed-date incremental-run mechanism.
 set -euo pipefail
 
-BRIEFS_DIR="docs/briefs"
+BRIEFS_DIR="docs/blc/briefs"
 SINCE="${1:-}"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
@@ -21,6 +21,21 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git 
 # .claude/skills/ in an install target. The root is the one fixed point both share.
 LIST_BRIEFS="$(git rev-parse --show-toplevel)/tools/list-briefs.sh"
 [ -x "$LIST_BRIEFS" ] || { echo "Missing $LIST_BRIEFS — the chronicle reads the brief table from it." >&2; exit 1; }
+# "New since the last chronicle" has to agree with the table's last-touch, or a commit the
+# table ignores — #0017's move — would put every brief back in front of the narrator.
+TOUCH_LIB="$(git rev-parse --show-toplevel)/tools/lib/touch-log.sh"
+[ -r "$TOUCH_LIB" ] || { echo "Missing $TOUCH_LIB — the chronicle dates drafts with it." >&2; exit 1; }
+# shellcheck source=/dev/null
+. "$TOUCH_LIB"
+SKIP="$(blc_touch_skip "$(dirname "$BRIEFS_DIR")/ignore-revs")"
+RENAMES="$(blc_touch_renames)"
+# git parses the date, so this does not depend on which `date` the host has. It prints
+# `--max-age=<unix time>`.
+CUTOFF=0
+if [ -n "$SINCE" ]; then
+  CUTOFF="$(git rev-parse --since="$SINCE")"
+  CUTOFF="${CUTOFF#--max-age=}"
+fi
 
 echo "# Chronicle source digest"
 echo
@@ -48,10 +63,9 @@ echo
 if [ -s "$tmp" ]; then
   narrated=0
   # Process substitution, not a pipe, so narrated is not trapped in a subshell.
-  while IFS=$'\t' read -r _last_key slug d _first _last; do
-    if [ -n "$SINCE" ]; then
-      recent=$(git log --since="$SINCE" -1 --format='%aI' -- "$d" 2>/dev/null || true)
-      [ -n "$recent" ] || continue
+  while IFS=$'\t' read -r last_key slug d _first _last; do
+    if [ -n "$SINCE" ] && [ "$last_key" -lt "$CUTOFF" ]; then
+      continue
     fi
     echo "- ${slug}"
     if [ -f "${d}ledger.md" ]; then
@@ -69,15 +83,15 @@ echo
 
 rm -f "$tmp"
 
-echo "## Parked / considered — docs/briefs/_drafts"
+echo "## Parked / considered — docs/blc/briefs/_drafts"
 if [ -d "$BRIEFS_DIR/_drafts" ]; then
   found=no
   for f in "$BRIEFS_DIR/_drafts"/*.md ; do
     [ -e "$f" ] || continue
     base=$(basename "$f"); [ "$base" = "README.md" ] && continue
     if [ -n "$SINCE" ]; then
-      recent=$(git log --since="$SINCE" -1 --format='%aI' -- "$f" 2>/dev/null || true)
-      [ -n "$recent" ] || continue
+      recent=$(blc_touch_log "$SKIP" "$RENAMES" "$f" | sed -n '1s/ .*//p')
+      [ -n "$recent" ] && [ "$recent" -ge "$CUTOFF" ] || continue
     fi
     echo "- ${base}: $(grep -m1 '^# ' "$f" 2>/dev/null | sed 's/^# //')"
     found=yes

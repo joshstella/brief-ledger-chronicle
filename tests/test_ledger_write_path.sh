@@ -6,13 +6,13 @@
 # phase has no successor, so `brief/<serial>-closeout` carries the close.
 #
 # Nothing here can check that a person followed the rule — the same ceiling every skill guard
-# has, and docs/briefs/README.md says so under Known limitations. These assert the instruction
+# has, and docs/blc/briefs/README.md says so under Known limitations. These assert the instruction
 # is present and says the right thing, which is the part that is checkable. The instruction was
 # wrong for six weeks precisely because nothing looked at it.
 
 WP_START() { printf '%s' "$REPO_ROOT/skills/blc-start-brief/SKILL.md"; }
 WP_NEXT()  { printf '%s' "$REPO_ROOT/skills/blc-next-brief-phase/SKILL.md"; }
-WP_README(){ printf '%s' "$REPO_ROOT/docs/briefs/README.md"; }
+WP_README(){ printf '%s' "$REPO_ROOT/docs/blc/briefs/README.md"; }
 
 # A commit that never leaves the machine does not put the ledger on another machine. The
 # instruction named that purpose while asking for an action that cannot achieve it.

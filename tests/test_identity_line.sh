@@ -121,18 +121,18 @@ test_identity_line_absent_returns_1() {
 il_repo() {
   IL_REPO="$TMP/il-repo"
   rm -rf "$IL_REPO"
-  mkdir -p "$IL_REPO/docs/briefs"
+  mkdir -p "$IL_REPO/docs/blc/briefs"
   git -C "$IL_REPO" init -q -b main
   git -C "$IL_REPO" config user.email t@example.com
   git -C "$IL_REPO" config user.name Test
-  echo "# Briefs" > "$IL_REPO/docs/briefs/README.md"
+  echo "# Briefs" > "$IL_REPO/docs/blc/briefs/README.md"
 }
 
 # usage: il_brief <folder> <lines...>
 il_brief() {
   local folder="$1"; shift
-  mkdir -p "$IL_REPO/docs/briefs/$folder"
-  printf '%s\n' "$@" > "$IL_REPO/docs/briefs/$folder/brief.md"
+  mkdir -p "$IL_REPO/docs/blc/briefs/$folder"
+  printf '%s\n' "$@" > "$IL_REPO/docs/blc/briefs/$folder/brief.md"
 }
 
 il_commit() {
@@ -156,7 +156,7 @@ test_identity_line_prose_above_the_line_does_not_reach_list_briefs() {
   local got
   got="$(il_list_depends 0001)"
   [ "$got" = "—" ] || fail "list-briefs.sh read prose above the identity line: '$got'"
-  bash "$REPO_ROOT/tools/validate-briefs.sh" "$IL_REPO/docs/briefs" >"$OUT" 2>&1 \
+  bash "$REPO_ROOT/tools/validate-briefs.sh" "$IL_REPO/docs/blc/briefs" >"$OUT" 2>&1 \
     || fail "the validator rejected the same brief: $(cat "$OUT")"
   assert_out "0 defect(s)"
 }
@@ -173,8 +173,8 @@ test_identity_line_both_tools_end_depends_on_at_the_separator() {
   local got
   got="$(il_list_depends 0001)"
   [ "$got" = "#0002" ] || fail "list-briefs.sh shows '$got', not #0002"
-  rm -rf "$IL_REPO/docs/briefs/0002-real"
-  bash "$REPO_ROOT/tools/validate-briefs.sh" "$IL_REPO/docs/briefs" >"$OUT" 2>&1 || true
+  rm -rf "$IL_REPO/docs/blc/briefs/0002-real"
+  bash "$REPO_ROOT/tools/validate-briefs.sh" "$IL_REPO/docs/blc/briefs" >"$OUT" 2>&1 || true
   assert_out "depends on #0002"
   assert_not_contains "#9999" "$OUT"
 }

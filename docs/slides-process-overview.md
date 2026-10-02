@@ -41,9 +41,9 @@ A portable workflow that keeps AI-assisted development traceable, reviewable, an
 
 | Layer | What it captures | Where it lives |
 |---|---|---|
-| **Brief** | The intent — why, what, how | `docs/briefs/NNNN-slug/` |
-| **Ledger** | The execution — what actually happened | `docs/briefs/NNNN-slug/ledger.md` |
-| **Chronicle** | The narrative — the story of the codebase | `docs/chronicles/chronicle.md` |
+| **Brief** | The intent — why, what, how | `docs/blc/briefs/NNNN-slug/` |
+| **Ledger** | The execution — what actually happened | `docs/blc/briefs/NNNN-slug/ledger.md` |
+| **Chronicle** | The narrative — the story of the codebase | `docs/blc/chronicles/chronicle.md` |
 
 Each layer is a plain Markdown file. No app. No database. Just git.
 
@@ -60,7 +60,7 @@ A brief is a short spec that answers:
 - What are the phases, in order?
 
 ```
-docs/briefs/0017-chart-interaction-overhaul/
+docs/blc/briefs/0017-chart-interaction-overhaul/
   brief.md     ← the spec
   ledger.md    ← added when execution begins
 ```
@@ -151,7 +151,7 @@ Run `/blc-chronicle` when you want:
 
 The codebase speaks in first person. It narrates the eras, the forks, the roads not taken.
 
-*The chronicle is a derived rendering in `docs/chronicles/chronicle.md`. The briefs and ledgers are the record. A later run may refresh the file.*
+*The chronicle is a derived rendering in `docs/blc/chronicles/chronicle.md`. The briefs and ledgers are the record. A later run may refresh the file.*
 
 ---
 
@@ -193,11 +193,11 @@ Two more for setup and history:
     blc-next-brief-phase.md → /blc-next-brief-phase
     blc-init-briefs.md      → /blc-init-briefs
 
-docs/briefs/
+docs/blc/briefs/
   README.md             ← brief convention reference
   _drafts/              ← unnumbered draft holding area
 
-docs/install-log/
+docs/blc/install-log/
   install-log.md        ← append-only record of every install run
 ```
 
@@ -232,13 +232,13 @@ bash /path/to/brief-ledger-chronicle/install.sh --host cursor --target /path/to/
 
 # Project mode (--target) copies into the repo:
 # - checks all dependencies and tells you what's missing
-# - creates docs/briefs/, docs/contracts/, docs/chronicles/, docs/install-log/, tools/,
+# - creates docs/blc/briefs/, docs/blc/contracts/, docs/blc/chronicles/, docs/blc/install-log/, tools/,
 #   and the host skill dirs
 # - replaces every toolkit-owned path each run (skills, commands, process rules, tools,
 #   shipped brief docs) — local edits to them do not survive
-# - removes stale skills/commands named in docs/install-log/install-log.md
+# - removes stale skills/commands named in docs/blc/install-log/install-log.md
 # - writes a CLAUDE.md / AGENTS.md stub only if absent — never overwrites
-# - appends an entry to docs/install-log/install-log.md recording what was installed
+# - appends an entry to docs/blc/install-log/install-log.md recording what was installed
 ```
 
 **Why step 2 is called out:** the commands degrade gracefully when their user-level paths
@@ -304,7 +304,7 @@ and in user-level Cursor rules, not in the project stub.
 bash install.sh --target /path/to/your-project
 # → edit CLAUDE.md / AGENTS.md (fill in the project-specific section)
 # → git add -A && git commit -m "Bootstrap: brief-ledger-chronicle install"
-# → write your first draft in docs/briefs/_drafts/
+# → write your first draft in docs/blc/briefs/_drafts/
 # → run /blc-create-brief to file it
 # → run /blc-start-brief to begin
 ```
@@ -312,7 +312,7 @@ bash install.sh --target /path/to/your-project
 **Source:**
 `github.com/joshstella/brief-ledger-chronicle`
 
-**The install log in every project** (`docs/install-log/install-log.md`) records exactly what was installed, when, and on which machine — appending a new entry each time you re-run the installer to pick up upstream changes. The process documents itself from the first run.
+**The install log in every project** (`docs/blc/install-log/install-log.md`) records exactly what was installed, when, and on which machine — appending a new entry each time you re-run the installer to pick up upstream changes. The process documents itself from the first run.
 
 ---
 

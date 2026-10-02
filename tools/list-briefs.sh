@@ -41,7 +41,7 @@ while [ $# -gt 0 ]; do
     *) break ;;
   esac
 done
-BRIEFS_DIR="${1:-docs/briefs}"
+BRIEFS_DIR="${1:-docs/blc/briefs}"
 # The scan behind --tsv feeds the chronicle, which narrates every brief. A filtered scan
 # would be a second "which briefs" for it to disagree with.
 if [ "$MODE" = tsv ] && [ -n "$OWNER" ]; then
@@ -75,7 +75,7 @@ while [ -L "$BLC_SELF" ]; do
   esac
 done
 BLC_LIB_DIR="$(cd -P "$(dirname "$BLC_SELF")" && pwd)/lib"
-for BLC_LIB in status-line identity-line; do
+for BLC_LIB in status-line identity-line touch-log; do
   if [ ! -r "$BLC_LIB_DIR/$BLC_LIB.sh" ]; then
     printf 'error: cannot read %s\n' "$BLC_LIB_DIR/$BLC_LIB.sh" >&2
     exit 1
@@ -156,15 +156,20 @@ is_closed() {
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
+# Beside the briefs directory, like every other path orient.sh derives from it. See
+# lib/touch-log.sh for what belongs in it.
+SKIP=$(blc_touch_skip "$(dirname "$BRIEFS_DIR")/ignore-revs")
+RENAMES=$(blc_touch_renames)
+
 for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
   [ -d "$d" ] || continue
-  # `git log | head -1` takes SIGPIPE once git writes past the first line, which
-  # under `set -o pipefail` plus `set -e` kills this script mid-loop. tail consumes
-  # its whole input, so nothing is left writing into a closed pipe.
-  fcd=$(git log --format='%aI' -- "$d" 2>/dev/null | tail -1)
+  touches=$(blc_touch_log "$SKIP" "$RENAMES" "$d")
+  # `sed -n` and not `head -1`: head closes the pipe early, and under `set -o pipefail`
+  # plus `set -e` the SIGPIPE kills this script mid-loop. sed and tail read all their input.
   # %at is the sort key. %aI is display. String-sorting %aI mis-orders two
   # last-touches that differ only by timezone offset.
-  touch_line=$(git log -1 --format='%at %aI' -- "$d" 2>/dev/null || true)
+  touch_line=$(printf '%s\n' "$touches" | sed -n '1p')
+  first_line=$(printf '%s\n' "$touches" | tail -1)
   slug=$(basename "$d")
   if [ -n "$touch_line" ]; then
     last_key="${touch_line%% *}"
@@ -173,7 +178,8 @@ for d in "$BRIEFS_DIR"/[0-9][0-9][0-9][0-9]-*/ ; do
     last_key=0
     last_disp=—
   fi
-  first_disp="${fcd:-—}"
+  first_disp="${first_line#* }"
+  first_disp="${first_disp:-—}"
   printf '%s\t%s\t%s\t%s\t%s\n' "$last_key" "$slug" "$d" "$first_disp" "$last_disp" >> "$tmp"
 done
 

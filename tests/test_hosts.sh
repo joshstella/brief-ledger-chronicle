@@ -53,10 +53,10 @@ test_host_cursor_creates_no_claude_directory() {
 test_host_cursor_still_writes_the_shared_docs_scaffold() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/briefs/README.md"
-  assert_file "$TARGET/docs/briefs/_drafts/README.md"
-  assert_file "$TARGET/docs/install-log/install-log.md"
-  assert_dir  "$TARGET/docs/chronicles"
+  assert_file "$TARGET/docs/blc/briefs/README.md"
+  assert_file "$TARGET/docs/blc/briefs/_drafts/README.md"
+  assert_file "$TARGET/docs/blc/install-log/install-log.md"
+  assert_dir  "$TARGET/docs/blc/chronicles"
 }
 
 # ── Claude Code ──────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ test_host_machine_mode_rejects_cursor() {
 
 test_host_is_recorded_in_the_install_log() {
   run_install y --host cursor --target "$TARGET"
-  assert_contains "**Host:** cursor" "$TARGET/docs/install-log/install-log.md"
+  assert_contains "**Host:** cursor" "$TARGET/docs/blc/install-log/install-log.md"
 }
 
 # ── Non-interactive install ──────────────────────────────────────────────────

@@ -69,20 +69,20 @@ test_replace_replaces_claude_process_rules() {
 }
 
 test_replace_overwrites_an_existing_briefs_readme() {
-  mkdir -p "$TARGET/docs/briefs"
-  echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/briefs/README.md"
+  mkdir -p "$TARGET/docs/blc/briefs"
+  echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/blc/briefs/README.md"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_not_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/briefs/README.md"
-  assert_contains "How work is specified" "$TARGET/docs/briefs/README.md"
+  assert_not_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/blc/briefs/README.md"
+  assert_contains "How work is specified" "$TARGET/docs/blc/briefs/README.md"
 }
 
 test_replace_leaves_an_existing_brief_untouched() {
-  mkdir -p "$TARGET/docs/briefs/0007-something"
-  echo "ORIGINAL BRIEF" > "$TARGET/docs/briefs/0007-something/brief.md"
+  mkdir -p "$TARGET/docs/blc/briefs/0007-something"
+  echo "ORIGINAL BRIEF" > "$TARGET/docs/blc/briefs/0007-something/brief.md"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_contains "ORIGINAL BRIEF" "$TARGET/docs/briefs/0007-something/brief.md"
+  assert_contains "ORIGINAL BRIEF" "$TARGET/docs/blc/briefs/0007-something/brief.md"
   assert_count 1 "$(count_numbered_briefs "$TARGET")" "numbered brief folders"
 }
 
@@ -90,7 +90,7 @@ test_replace_does_not_create_a_numbered_brief() {
   run_install y --target "$TARGET"
   assert_status 0
   assert_count 0 "$(count_numbered_briefs "$TARGET")" "numbered brief folders created"
-  assert_no_dir "$TARGET/docs/briefs/0001-bootstrap"
+  assert_no_dir "$TARGET/docs/blc/briefs/0001-bootstrap"
 }
 
 test_replace_appends_the_install_log() {
@@ -98,9 +98,9 @@ test_replace_appends_the_install_log() {
   run_install y --target "$TARGET"
   assert_status 0
   local n
-  n=$(grep -c '^# Install log' "$TARGET/docs/install-log/install-log.md" 2>/dev/null || true)
+  n=$(grep -c '^# Install log' "$TARGET/docs/blc/install-log/install-log.md" 2>/dev/null || true)
   assert_count 1 "$n" "header occurrences"
-  assert_count 2 "$(count_log_entries "$TARGET/docs/install-log/install-log.md")" "log entries"
-  extract_log_entry "$TARGET/docs/install-log/install-log.md" 2 "$TMP/entry2.txt"
+  assert_count 2 "$(count_log_entries "$TARGET/docs/blc/install-log/install-log.md")" "log entries"
+  extract_log_entry "$TARGET/docs/blc/install-log/install-log.md" 2 "$TMP/entry2.txt"
   assert_contains "**Replaced:**" "$TMP/entry2.txt"
 }

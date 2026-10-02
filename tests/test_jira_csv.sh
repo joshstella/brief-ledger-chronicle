@@ -8,13 +8,13 @@ JC_TABLE_HEAD=('| id | label | status | branch |' '|---|---|---|---|')
 
 jc_repo() {
   JC_DIR="$TMP/jc"
-  mkdir -p "$JC_DIR/docs/briefs"
+  mkdir -p "$JC_DIR/docs/blc/briefs"
 }
 
 # usage: jc_brief <folder> <title> <identity line> <status line> [ledger lines...]
 # An empty status line writes no ledger.
 jc_brief() {
-  local dir="$JC_DIR/docs/briefs/$1" status="$4"
+  local dir="$JC_DIR/docs/blc/briefs/$1" status="$4"
   mkdir -p "$dir"
   printf '# %s\n\n%s\n' "$2" "$3" > "$dir/brief.md"
   shift 4
@@ -52,11 +52,11 @@ test_jira_csv_writes_the_epic_then_each_phase() {
   assert_status 0
   diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
 "Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
-"Epic","#0001 — The thing","1","","o@x.org","in-progress","docs/briefs/0001-a/brief.md"
-"Task","#0001/a — the first","2","1","o@x.org","done","docs/briefs/0001-a/ledger.md"
-"Task","#0001/b — the second","3","1","o@x.org","skipped","docs/briefs/0001-a/ledger.md"
-"Task","#0001/c — the third","4","1","o@x.org","in-progress","docs/briefs/0001-a/ledger.md"
-"Task","#0001/d — the fourth","5","1","o@x.org","pending","docs/briefs/0001-a/ledger.md"
+"Epic","#0001 — The thing","1","","o@x.org","in-progress","docs/blc/briefs/0001-a/brief.md"
+"Task","#0001/a — the first","2","1","o@x.org","done","docs/blc/briefs/0001-a/ledger.md"
+"Task","#0001/b — the second","3","1","o@x.org","skipped","docs/blc/briefs/0001-a/ledger.md"
+"Task","#0001/c — the third","4","1","o@x.org","in-progress","docs/blc/briefs/0001-a/ledger.md"
+"Task","#0001/d — the fourth","5","1","o@x.org","pending","docs/blc/briefs/0001-a/ledger.md"
 CSV
 }
 
@@ -117,7 +117,7 @@ test_jira_csv_exports_a_blank_or_dash_jira_field() {
   jc_repo
   local v
   for v in '' '—'; do
-    rm -rf "$JC_DIR/docs/briefs/0001-a"
+    rm -rf "$JC_DIR/docs/blc/briefs/0001-a"
     jc_brief 0001-a 'The thing' "$JC_IDENTITY · **Jira:** $v · **Depends on:** —" \
       'blc/2 #0001 planned a:pending' "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
     run_jc 1
@@ -181,10 +181,10 @@ test_jira_csv_refuses_a_phase_with_no_label_or_two_rows() {
   jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 in-progress a:done b:pending' \
     "${JC_TABLE_HEAD[@]}" '| a | the first | done | — |'
   run_jc 1
-  jc_refused "no row in docs/briefs/0001-a/ledger.md gives phase b a label"
-  printf '%s\n' '| a | again | done | — |' >> "$JC_DIR/docs/briefs/0001-a/ledger.md"
+  jc_refused "no row in docs/blc/briefs/0001-a/ledger.md gives phase b a label"
+  printf '%s\n' '| a | again | done | — |' >> "$JC_DIR/docs/blc/briefs/0001-a/ledger.md"
   run_jc 1
-  jc_refused "more than one row in docs/briefs/0001-a/ledger.md could be phase a"
+  jc_refused "more than one row in docs/blc/briefs/0001-a/ledger.md could be phase a"
 }
 
 test_jira_csv_refuses_a_missing_ledger_or_status_line() {
@@ -192,7 +192,7 @@ test_jira_csv_refuses_a_missing_ledger_or_status_line() {
   jc_brief 0001-a 'The thing' "$JC_IDENTITY" ''
   run_jc 1
   jc_refused "#0001 has no ledger"
-  printf '# Ledger\n\nNo line here.\n' > "$JC_DIR/docs/briefs/0001-a/ledger.md"
+  printf '# Ledger\n\nNo line here.\n' > "$JC_DIR/docs/blc/briefs/0001-a/ledger.md"
   run_jc 1
   jc_refused "has no status line"
 }
@@ -203,16 +203,16 @@ test_jira_csv_refuses_a_brief_with_no_title_or_identity_line() {
     "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
   run_jc 1
   jc_refused "has no identity line"
-  printf '%s\n' "$JC_IDENTITY" > "$JC_DIR/docs/briefs/0001-a/brief.md"
+  printf '%s\n' "$JC_IDENTITY" > "$JC_DIR/docs/blc/briefs/0001-a/brief.md"
   run_jc 1
   jc_refused "has no title line"
 }
 
 test_jira_csv_refuses_a_serial_it_cannot_resolve() {
   jc_repo
-  mkdir -p "$JC_DIR/docs/briefs/0002-a" "$JC_DIR/docs/briefs/0002-b"
+  mkdir -p "$JC_DIR/docs/blc/briefs/0002-a" "$JC_DIR/docs/blc/briefs/0002-b"
   run_jc 1
-  jc_refused "no brief #0001 in docs/briefs"
+  jc_refused "no brief #0001 in docs/blc/briefs"
   run_jc 2
   jc_refused "#0002 names 2 brief folders"
   run_jc PROJ-1

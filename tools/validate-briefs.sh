@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-10.
 #
-# Usage: validate-briefs.sh [briefs-dir]     (default: docs/briefs)
+# Usage: validate-briefs.sh [briefs-dir]     (default: docs/blc/briefs)
+# Run from the repository root. Project checks are read from brief-checks/ there.
 #
 # Exit 0 if no [defect] clause is violated, 1 otherwise. [judgment] findings are
 # printed and never affect the exit status — the Contract says a judgment clause
@@ -14,7 +15,7 @@
 # different responses, and a checker that could not load its clauses must never be
 # read as a clean tree.
 #
-# The clause text lives in docs/contracts/v1.2.md. This script cites clause ids and
+# The clause text lives in docs/blc/contracts/v1.3.md. This script cites clause ids and
 # does not restate them: a paraphrase here would be a fourth copy of the rules,
 # which is the drift this Contract was extracted to end.
 #
@@ -53,7 +54,7 @@ for BLC_LIB in phase-row status-line identity-line; do
   . "$BLC_LIB_DIR/$BLC_LIB.sh"
 done
 
-BRIEFS_DIR="${1:-docs/briefs}"
+BRIEFS_DIR="${1:-docs/blc/briefs}"
 
 # Entries permitted to sit beside the numbered folders (BRIEFS-1).
 KNOWN_NON_NUMBERED="_drafts README.md"
@@ -326,7 +327,11 @@ done
 run_project_checks() {
   local repo_root checks_dir script output status
 
-  repo_root="$(cd "$BRIEFS_DIR/../.." && pwd)"
+  # The root is the working directory, as for every other tool, not a depth above the briefs
+  # directory. A depth is right for one layout only: given any other briefs path it lands
+  # somewhere else, and outside the repository it runs scripts the repository does not hold.
+  # Not git's top level either, because this validator runs without a repository.
+  repo_root="$PWD"
   checks_dir="$repo_root/brief-checks"
   [ -d "$checks_dir" ] || return 0
 

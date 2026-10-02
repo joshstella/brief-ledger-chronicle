@@ -28,7 +28,7 @@ if [ $# -lt 1 ] || [ -z "$1" ]; then
   exit 1
 fi
 SERIAL_ARG="$1"
-BRIEFS_DIR="${2:-docs/briefs}"
+BRIEFS_DIR="${2:-docs/blc/briefs}"
 
 # The bootstrap walk below is kept character-identical to open-briefs.sh's copy; see the
 # comment there and tests/test_clauses.sh.

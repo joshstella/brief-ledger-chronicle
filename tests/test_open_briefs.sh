@@ -6,9 +6,9 @@
 #
 # This tool reports and never gates, so exit 0 is asserted even when findings fire.
 # A test that let a finding fail the run would quietly turn the reporter into a
-# gate, which is the thing docs/briefs/README.md says it must not become.
+# gate, which is the thing docs/blc/briefs/README.md says it must not become.
 #
-# The vocabulary is defined in docs/briefs/README.md and is not restated here.
+# The vocabulary is defined in docs/blc/briefs/README.md and is not restated here.
 
 QUERY() { printf '%s' "$REPO_ROOT/tools/open-briefs.sh"; }
 
@@ -50,7 +50,7 @@ run_query_with_gh() {
 # fake.
 make_repo() {
   REPO="$TMP/repo"
-  BRIEFS="$REPO/docs/briefs"
+  BRIEFS="$REPO/docs/blc/briefs"
   mkdir -p "$BRIEFS/_drafts"
   git -C "$REPO" init -q -b main
   git -C "$REPO" config user.email t@example.com
@@ -128,7 +128,7 @@ test_open_briefs_a_closed_tree_says_nothing_is_open() {
   add_ledger 0001-done '`blc/1 #0001 done(PR#1) 1:done(PR#1)`' \
     '| `phase 1 — a thing` | done (PR#1) | did it |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "1 brief(s), 0 open phase(s), 0 not started, 0 drift, 0 untracked"
   assert_out "Nothing open."
@@ -139,7 +139,7 @@ test_open_briefs_a_closed_tree_says_nothing_is_open() {
 test_open_briefs_an_empty_tree_reports_no_briefs() {
   make_repo
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "0 brief(s), 0 open phase(s)"
 }
@@ -153,7 +153,7 @@ test_open_briefs_reports_an_in_progress_phase_with_its_branch() {
   commit_all
   make_branch feature/x
   advance_main 3
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[in-progress] phase 1: feature/x"
   assert_out "3 commit(s) of main landed since"
@@ -168,7 +168,7 @@ test_open_briefs_reports_a_deferred_phase_too() {
   commit_all
   make_branch feature/parked
   advance_main 5
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   # Asserted apart rather than as one string: the finding label is padded to a
   # fixed column, so a literal match would be testing the column width.
@@ -185,7 +185,7 @@ test_open_briefs_reports_a_branch_that_does_not_exist() {
   add_ledger 0001-ghost '`blc/1 #0001 in-progress 1:in-progress(feature/deleted)`' \
     '| `phase 1 — a thing` | in-progress (`feature/deleted`) | gone |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase 1: 'feature/deleted' is not a PR or MR, and no branch by that name exists"
   assert_not_contains "no branch recorded" "$OUT"
@@ -196,7 +196,7 @@ test_open_briefs_reports_an_open_phase_with_no_branch_recorded() {
   add_ledger 0001-bare '`blc/1 #0001 in-progress 1:in-progress`' \
     '| `phase 1 — a thing` | in-progress | no branch |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "no branch recorded"
 }
@@ -217,7 +217,7 @@ test_open_briefs_an_unknown_field_before_the_branch_does_not_cost_its_measuremen
   ob_open_phase 'PROJ-1234,feature/x'
   make_branch feature/x
   advance_main 2
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: 'PROJ-1234' is not a PR or MR, and no branch by that name exists"
   assert_out "phase a: feature/x — 2 commit(s) of main landed since"
@@ -226,7 +226,7 @@ test_open_briefs_an_unknown_field_before_the_branch_does_not_cost_its_measuremen
 test_open_briefs_an_unknown_field_after_the_branch_is_reported() {
   ob_open_phase 'feature/x,PROJ-1234'
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: feature/x — 0 commit(s) of main landed since"
   assert_out "phase a: 'PROJ-1234' is not a PR or MR, and no branch by that name exists"
@@ -238,7 +238,7 @@ test_open_briefs_does_not_read_a_closed_phase_pointer() {
   add_ledger 0001-ptr '`blc/2 #0001 done a:done(PR#3,PROJ-1234)`' \
     '| a | done (PR#3) | did it |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "PROJ-1234" "$OUT"
   assert_out "Nothing open."
@@ -247,7 +247,7 @@ test_open_briefs_does_not_read_a_closed_phase_pointer() {
 test_open_briefs_a_bang_without_digits_is_not_a_merge_request() {
   ob_open_phase 'feature/x,!abc'
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: '!abc' is not a PR or MR, and no branch by that name exists"
   assert_not_contains "MR !" "$OUT"
@@ -259,7 +259,7 @@ test_open_briefs_does_not_glob_a_pointer_field() {
   ob_open_phase 'feature/x,zz*'
   make_branch feature/x
   touch "$REPO/zzfile1" "$REPO/zzfile2"
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: 'zz*' is not a PR or MR, and no branch by that name exists"
   assert_not_contains "zzfile" "$OUT"
@@ -270,7 +270,7 @@ test_open_briefs_a_pr_without_digits_is_reported_and_not_looked_up() {
   ob_open_phase 'feature/x,PR#abc,PR#'
   make_branch feature/x
   ob_forge github OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "phase a: 'PR#abc' is not a PR or MR, and no branch by that name exists"
   assert_out "phase a: 'PR#' is not a PR or MR, and no branch by that name exists"
@@ -287,7 +287,7 @@ test_open_briefs_looks_up_a_pr_through_gh_on_a_github_remote() {
   ob_open_phase 'feature/x,PR#14'
   make_branch feature/x
   ob_forge github MERGED
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "unmerged, PR #14 merged"
   grep -q '^gh pr view 14 ' "$OB_GH/calls" || fail "gh was not asked about PR 14: $(cat "$OB_GH/calls")"
@@ -297,7 +297,7 @@ test_open_briefs_looks_up_an_mr_through_glab_on_a_gitlab_remote() {
   ob_open_phase 'feature/x,!123'
   make_branch feature/x
   ob_forge gitlab opened
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   # Anchored: glab's own word, `opened`, contains `open`.
   grep -q 'phase a: feature/x — 0 commit(s) of main landed since, 0 unmerged, MR !123 open$' "$OUT" \
@@ -310,7 +310,7 @@ test_open_briefs_a_state_the_forge_does_not_give_reads_unknown() {
   ob_open_phase 'feature/x,PR#14'
   make_branch feature/x
   ob_forge github ''
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   grep -q 'PR #14 unknown$' "$OUT" || fail "an empty state was not reported as unknown: $(cat "$OUT")"
 }
@@ -319,7 +319,7 @@ test_open_briefs_does_not_ask_github_about_a_merge_request() {
   ob_open_phase 'feature/x,!123'
   make_branch feature/x
   ob_forge github OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "MR !123 (state not checked: the remote is on GitHub)"
   assert_not_contains "view" "$OB_GH/calls"
@@ -329,7 +329,7 @@ test_open_briefs_does_not_ask_gitlab_about_a_pr() {
   ob_open_phase 'feature/x,PR#14'
   make_branch feature/x
   ob_forge gitlab opened
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "PR #14 (state not checked: the remote is on GitLab)"
   assert_not_contains "view" "$OB_GH/calls"
@@ -339,7 +339,7 @@ test_open_briefs_says_it_did_not_check_when_no_forge_is_detected() {
   ob_open_phase 'feature/x,PR#14,!123'
   make_branch feature/x
   ob_forge none OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "PR #14 (state not checked: no forge detected), MR !123 (state not checked: no forge detected)"
   assert_not_contains "view" "$OB_GH/calls"
@@ -353,7 +353,7 @@ test_open_briefs_detects_the_forge_once_per_run() {
   commit_all
   make_branch feature/x
   ob_forge github OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "PR #1 open"
   assert_out "PR #2 open"
@@ -365,7 +365,7 @@ test_open_briefs_does_not_detect_a_forge_with_nothing_to_look_up() {
   ob_open_phase 'feature/x'
   make_branch feature/x
   ob_forge github OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "no PR"
   [ ! -s "$OB_GH/calls" ] || fail "a forge was asked with no PR or MR: $(cat "$OB_GH/calls")"
@@ -379,7 +379,7 @@ test_open_briefs_errors_when_the_detector_is_missing() {
   mkdir -p "$tools/lib"
   cp "$REPO_ROOT/tools/open-briefs.sh" "$tools/"
   cp "$REPO_ROOT"/tools/lib/*.sh "$tools/lib/"
-  ( cd "$REPO" && bash "$tools/open-briefs.sh" docs/briefs ) >"$OUT" 2>"$ERR"
+  ( cd "$REPO" && bash "$tools/open-briefs.sh" docs/blc/briefs ) >"$OUT" 2>"$ERR"
   LAST_STATUS=$?
   assert_status 2
   assert_contains "detect-forge.sh" "$ERR"
@@ -390,7 +390,7 @@ test_open_briefs_errors_when_the_detector_is_missing() {
 test_open_briefs_a_pointer_cut_at_a_space_is_reported() {
   ob_open_phase 'feature/x, PR#14'
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: pointer is cut at a space; separate its fields with commas only"
   assert_not_contains "no branch recorded" "$OUT"
@@ -403,7 +403,7 @@ test_open_briefs_a_commit_on_a_closed_phase_is_not_reported() {
   add_ledger 0001-ptr '`blc/1 #0001 done(commit 383ed5b) 1:done(commit 383ed5b)`' \
     '| `phase 1 — a thing` | done (commit 383ed5b) | did it |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "cut at a space" "$OUT"
   assert_out "Nothing open."
@@ -414,7 +414,7 @@ test_open_briefs_measures_every_branch_in_a_pointer() {
   make_branch feature/x
   advance_main 1
   make_branch feature/y
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "phase a: feature/x — 1 commit(s) of main landed since"
   assert_out "phase a: feature/y — 0 commit(s) of main landed since"
@@ -426,7 +426,7 @@ test_open_briefs_measures_every_branch_in_a_pointer() {
 test_open_briefs_says_no_branch_only_when_no_field_could_be_one() {
   ob_open_phase 'PR#14,!7'
   ob_forge github OPEN
-  run_query_with_gh docs/briefs
+  run_query_with_gh docs/blc/briefs
   assert_status 0
   assert_out "phase a: no branch recorded"
   assert_not_contains "no branch by that name" "$OUT"
@@ -441,7 +441,7 @@ test_open_briefs_reports_drift_between_line_and_table() {
   add_ledger 0001-drifted '`blc/1 #0001 in-progress 1:done(PR#1)`' \
     '| `phase 1 — a thing` | in-progress (`feature/y`) | says otherwise |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[drift]"
   assert_out "status line says 'done'"
@@ -452,7 +452,7 @@ test_open_briefs_reports_a_ledger_with_no_status_line() {
   add_ledger 0001-unlined 'Just some prose, not a status line.' \
     '| `phase 1 — a thing` | in-progress | unscannable |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[no-line]"
 }
@@ -464,7 +464,7 @@ test_open_briefs_reports_a_brief_that_is_not_in_git() {
   commit_all
   add_ledger 0001-untracked '`blc/1 #0001 in-progress 1:pending`' \
     '| `phase 1 — a thing` | pending | never committed |'
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[untracked]"
   assert_out "1 untracked"
@@ -478,7 +478,7 @@ test_open_briefs_reports_a_filed_brief_as_not_started() {
   mkdir -p "$BRIEFS/0001-ledgerless"
   echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[not-started]"
   assert_out "1 not started"
@@ -491,7 +491,7 @@ test_open_briefs_does_not_count_a_not_started_brief_as_open() {
   mkdir -p "$BRIEFS/0001-ledgerless"
   echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "0 open phase(s)"
   assert_out "Nothing open. 1 brief(s) filed and waiting"
@@ -504,7 +504,7 @@ test_open_briefs_flags_a_not_started_brief_that_is_not_in_git() {
   commit_all
   mkdir -p "$BRIEFS/0001-ledgerless"
   echo "# x" > "$BRIEFS/0001-ledgerless/brief.md"
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[not-started]"
   assert_out "[untracked]"
@@ -525,7 +525,7 @@ test_open_briefs_resolves_a_letter_index_from_a_blc2_line() {
   commit_all
   make_branch feature/x
   advance_main 2
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[in-progress] phase a: feature/x"
   assert_out "2 commit(s) of main landed since"
@@ -541,7 +541,7 @@ test_open_briefs_reports_drift_on_a_letter_indexed_ledger() {
     '| `a — the thing` | pending | the table and the line disagree |'
   commit_all
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[drift]"
   assert_out "phase a"
@@ -557,7 +557,7 @@ test_open_briefs_reports_drift_when_a_numeric_id_is_not_in_the_first_cell() {
     '| `brief/0001-thing` | phase 1 of the thing | parked |'
   commit_all
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[drift]"
   assert_out "phase 1"
@@ -585,7 +585,7 @@ test_open_briefs_does_not_read_a_second_tables_row_as_a_phase_row() {
     '|---|---|---|' \
     '| 14:02-14:18 | drafting phase 2 notes | 0.40 |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "[drift]" "$OUT"
   assert_out "0 drift"
@@ -600,7 +600,7 @@ test_open_briefs_does_not_let_a_decoy_row_shadow_the_real_one() {
     '| `a — renamed from` | `b — renamed to` |' \
     '| `a — the thing` | done (PR#3) | did it |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "[drift]" "$OUT"
   assert_out "0 drift"
@@ -616,7 +616,7 @@ test_open_briefs_reports_drift_on_a_two_column_letter_row() {
     '| a | the thing | pending |'
   commit_all
   make_branch feature/x
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[drift]"
   assert_out "phase a"
@@ -630,7 +630,7 @@ test_open_briefs_accepts_a_two_column_letter_row_that_agrees() {
   add_ledger 0001-twocol '`blc/2 #0001 done a:done(PR#8)`' \
     '| a | the thing | done(PR#8) |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "[drift]" "$OUT"
   assert_out "0 drift"
@@ -651,7 +651,7 @@ test_open_briefs_reads_a_status_line_under_frontmatter() {
   commit_all
   make_branch feature/x
   advance_main 2
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_not_contains "[no-line]" "$OUT"
   assert_out "[in-progress] phase a: feature/x"
@@ -665,7 +665,7 @@ test_open_briefs_still_reports_no_line_under_frontmatter() {
   add_frontmatter_ledger 0001-fmbare 'Just some prose, not a status line.' \
     '| a | the thing | pending |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[no-line]"
 }
@@ -693,7 +693,7 @@ test_open_briefs_reads_the_line_under_unterminated_frontmatter() {
     > "$BRIEFS/0001-broken/ledger.md"
   echo "# broken" > "$BRIEFS/0001-broken/brief.md"
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   # `done` with every phase done is not an open brief, so the tool has nothing to report.
   # The proof it read the line is that it no longer calls it `[no-line]`.
@@ -708,7 +708,7 @@ test_open_briefs_exits_zero_even_when_everything_is_wrong() {
   add_ledger 0001-bad '`blc/1 #0001 in-progress 1:in-progress(feature/gone)`' \
     '| `phase 1 — a thing` | deferred | drifted and dangling |'
   commit_all
-  run_query docs/briefs
+  run_query docs/blc/briefs
   assert_status 0
   assert_out "[drift]"
   assert_out "no branch by that name exists"
@@ -727,8 +727,8 @@ test_open_briefs_errors_on_a_missing_directory() {
 test_open_briefs_errors_outside_a_git_repository() {
   make_repo
   commit_all
-  mkdir -p "$TMP/bare/docs/briefs"
-  ( cd "$TMP/bare" && PATH="/usr/bin:/bin" bash "$(QUERY)" docs/briefs ) >"$OUT" 2>"$ERR"
+  mkdir -p "$TMP/bare/docs/blc/briefs"
+  ( cd "$TMP/bare" && PATH="/usr/bin:/bin" bash "$(QUERY)" docs/blc/briefs ) >"$OUT" 2>"$ERR"
   LAST_STATUS=$?
   assert_status 2
   assert_err "not inside a git repository"
@@ -737,7 +737,7 @@ test_open_briefs_errors_outside_a_git_repository() {
 # ── This repo, against its own tool ──────────────────────────────────────────
 
 test_open_briefs_this_repo_scans_without_crashing() {
-  bash "$(QUERY)" "$REPO_ROOT/docs/briefs" >"$OUT" 2>"$ERR"
+  bash "$(QUERY)" "$REPO_ROOT/docs/blc/briefs" >"$OUT" 2>"$ERR"
   LAST_STATUS=$?
   assert_status 0
   assert_out "brief(s)"

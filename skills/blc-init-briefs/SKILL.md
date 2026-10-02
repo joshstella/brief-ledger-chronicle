@@ -1,7 +1,7 @@
 ---
 name: blc-init-briefs
 description: >-
-  One-time idempotent setup of docs/briefs/ structure. Use when the user asks to blc-init-briefs.
+  One-time idempotent setup of docs/blc/briefs/ structure. Use when the user asks to blc-init-briefs.
 ---
 
 # blc-init-briefs
@@ -13,12 +13,12 @@ project, a consulting engagement) to the convention.
 
 ## What it creates
 
-- `docs/briefs/` — the briefs root, if absent.
-- `docs/briefs/_drafts/` — the **committed** holding area for unnumbered drafts, with a
+- `docs/blc/briefs/` — the briefs root, if absent.
+- `docs/blc/briefs/_drafts/` — the **committed** holding area for unnumbered drafts, with a
   short `README.md` stating its semantics: drafts are unnumbered and unordered, committed
   so they're available from any workstation, and filing via `blc-create-brief` is the
   one-way door that assigns a serial and moves a draft into a numbered folder.
-- `docs/briefs/README.md` — the convention reference. Copy it from
+- `docs/blc/briefs/README.md` — the convention reference. Copy it from
   `~/.claude/briefs/README.template.md` (installed with this workflow) so there's a single
   source of truth; if that template isn't present, write an equivalent from the conventions
   described here: serial-numbered `NNNN-slug/` folders each holding `brief.md` (and
@@ -37,7 +37,7 @@ project, a consulting engagement) to the convention.
 
 ## Relationship to blc-create-brief
 
-`blc-create-brief` assumes this structure exists. If `docs/briefs/` or `docs/briefs/_drafts/`
+`blc-create-brief` assumes this structure exists. If `docs/blc/briefs/` or `docs/blc/briefs/_drafts/`
 is missing, `blc-create-brief` stops and points here — it does **not** silently scaffold the
 structure itself. Setup is deliberate and lives here; filing is the hot path and stays
 single-purpose.

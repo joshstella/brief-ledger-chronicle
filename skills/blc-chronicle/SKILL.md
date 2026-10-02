@@ -1,6 +1,6 @@
 ---
 name: blc-chronicle
-description: Generate a narrative history — a "chronicle" — of a codebase by interrogating its brief registry (docs/briefs/), execution ledgers, and git history, telling the story of how the system came to be. Use whenever the user wants a project origin story, a "how did we get here" narrative, onboarding context for a new hire, a retrospective or postmortem-of-progress, an engagement summary for a client, or wants to synthesize the docs/briefs record and git timeline into prose. Trigger even on casual phrasings like "tell the story of this repo", "what's the journey of this project", "our story", or "write up how this came together" — and even if the user doesn't say the word "chronicle".
+description: Generate a narrative history — a "chronicle" — of a codebase by interrogating its brief registry (docs/blc/briefs/), execution ledgers, and git history, telling the story of how the system came to be. Use whenever the user wants a project origin story, a "how did we get here" narrative, onboarding context for a new hire, a retrospective or postmortem-of-progress, an engagement summary for a client, or wants to synthesize the docs/blc/briefs record and git timeline into prose. Trigger even on casual phrasings like "tell the story of this repo", "what's the journey of this project", "our story", or "write up how this came together" — and even if the user doesn't say the word "chronicle".
 ---
 
 # Chronicle
@@ -16,7 +16,7 @@ record. The file in the tree is a report run off that record. The next run may r
 the table, the present-tense paragraph, and the closed-through marker. It may prepend
 new era prose. It does not become a source of truth by sitting in git.
 
-**One file, one path:** `docs/chronicles/chronicle.md`. Edit that file in place. Do not
+**One file, one path:** `docs/blc/chronicles/chronicle.md`. Edit that file in place. Do not
 write a sibling. Do not write to a notes vault or a user-named path. The folder stays
 for a later archive feature. This skill does not add one.
 
@@ -25,14 +25,14 @@ tells you to write.
 
 ## What it reads
 
-- `docs/briefs/NNNN-slug/brief.md` — each brief's purpose, design rationale, the work, and
+- `docs/blc/briefs/NNNN-slug/brief.md` — each brief's purpose, design rationale, the work, and
   open decisions. The *why*.
-- `docs/briefs/NNNN-slug/ledger.md` — the execution record (phases, outcomes). The *what
+- `docs/blc/briefs/NNNN-slug/ledger.md` — the execution record (phases, outcomes). The *what
   happened*. A brief with no ledger was planned but not (yet) executed — itself part of
   the story. Its **Big decisions** section is prime narrative material: judgment calls
   resolved during review, where the human–agent interaction carried information that
   exists nowhere else. These are the *forks the codebase navigated* — weight them heavily.
-- `docs/briefs/_drafts/*.md` — parked/deferred drafts: the roads considered and not taken.
+- `docs/blc/briefs/_drafts/*.md` — parked/deferred drafts: the roads considered and not taken.
 - **git history** — last-touch date per brief (row and era order), first-commit date
   (a table column), and squash subjects carrying `[#NNNN]` (which changes belong to which
   brief). The *when*.
@@ -58,7 +58,7 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
 ## Method
 
 1. **Read the one file, if it exists.**
-   - Path is `docs/chronicles/chronicle.md`. No other path. Do not scan siblings.
+   - Path is `docs/blc/chronicles/chronicle.md`. No other path. Do not scan siblings.
    - If the file exists, grep its last 5 lines for
      `<!-- chronicle:closed-through:(\d{4}-\d{2}-\d{2}) -->`.
    - If a date is found, record it as `PRIOR_DATE`. This run is **incremental**.
@@ -87,7 +87,7 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
    from drafts. The forks and the roads-not-taken are the dramatic beats — clean phases are
    connective tissue.
 
-6. **Write `docs/chronicles/chronicle.md`.** Create `docs/chronicles/` if it is missing.
+6. **Write `docs/blc/chronicles/chronicle.md`.** Create `docs/blc/chronicles/` if it is missing.
    The file always has this shape, top to bottom:
 
    1. A title.
@@ -150,7 +150,7 @@ prose; if it is scanned by the next run, the marker is the only machine-readable
 
 ## Output options
 
-- **The one file** — default. Always `docs/chronicles/chronicle.md`.
+- **The one file** — default. Always `docs/blc/chronicles/chronicle.md`.
 - **Inline** — also render to the conversation if the user asks for it in addition to
   the file, or instead of writing the file.
 
@@ -166,5 +166,5 @@ deliverable in itself.)
 ## Renaming
 
 To call this `our-story` instead of `chronicle`: rename the folder and the `name:` field
-in this frontmatter. The output path stays `docs/chronicles/chronicle.md` unless a later
+in this frontmatter. The output path stays `docs/blc/chronicles/chronicle.md` unless a later
 brief changes it. Nothing else depends on the skill name.

@@ -191,7 +191,7 @@ test_ownership_map_agrees_with_the_install_logs_skill_list() {
   for d in "$REPO_ROOT"/skills/*/; do
     name="$(basename "$d")"
     awk '/^### Skills installed/{on=1;next} /^### /{on=0} on' \
-      "$TARGET/docs/install-log/install-log.md" \
+      "$TARGET/docs/blc/install-log/install-log.md" \
       | grep -qx -- "  - $name" || missing="$missing $name"
   done
   [ -z "$missing" ] || fail "install log omits skills the map ships:$missing"
@@ -205,7 +205,7 @@ test_ownership_map_backs_every_path_the_summary_promises() {
   assert_status 0
   local map_text unmatched="" path
   map_text="$(map_file cursor)"
-  for path in "docs/briefs/" "docs/contracts/" "docs/state/" "tools/" ".cursor/skills/" "AGENTS.md"; do
+  for path in "docs/blc/briefs/" "docs/blc/contracts/" "docs/blc/state/" "tools/" ".cursor/skills/" "AGENTS.md"; do
     assert_out "$path"
     grep -qF -- "${path%/}" "$map_text" || unmatched="$unmatched $path"
   done
@@ -225,7 +225,7 @@ test_ownership_map_names_every_path_an_install_writes() {
   run_install "y" --host cursor --target "$TARGET" --yes
   assert_status 0
 
-  local scaffold=".cursor .cursor/rules .cursor/skills docs docs/contracts docs/install-log tools"
+  local scaffold=".cursor .cursor/rules .cursor/skills docs docs/blc/contracts docs/blc/install-log tools"
   local map_dsts unowned="" rel
   map_dsts="$(print_map cursor | awk -F'\t' '{print $4}')"
 
@@ -259,13 +259,13 @@ test_ownership_map_project_owned_files_survive_a_reinstall() {
 test_ownership_map_project_owned_trees_survive_a_reinstall() {
   run_install "y" --host cursor --target "$TARGET" --yes
   assert_status 0
-  mkdir -p "$TARGET/docs/briefs/0001-a-brief"
-  printf '# kept\n' > "$TARGET/docs/briefs/0001-a-brief/brief.md"
-  printf '# mine\n' > "$TARGET/docs/state/someone@example.com.md"
+  mkdir -p "$TARGET/docs/blc/briefs/0001-a-brief"
+  printf '# kept\n' > "$TARGET/docs/blc/briefs/0001-a-brief/brief.md"
+  printf '# mine\n' > "$TARGET/docs/blc/state/someone@example.com.md"
   run_install "y" --host cursor --target "$TARGET" --yes
   assert_status 0
-  assert_contains "kept" "$TARGET/docs/briefs/0001-a-brief/brief.md"
-  assert_contains "mine" "$TARGET/docs/state/someone@example.com.md"
+  assert_contains "kept" "$TARGET/docs/blc/briefs/0001-a-brief/brief.md"
+  assert_contains "mine" "$TARGET/docs/blc/state/someone@example.com.md"
 }
 
 # ── The flag itself ──────────────────────────────────────────────────────────

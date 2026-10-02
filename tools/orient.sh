@@ -16,10 +16,16 @@
 # below are whole days and everything else is an absolute date or a commit count.
 set -euo pipefail
 
-BRIEFS_DIR="${1:-docs/briefs}"
-STATE_DIR="docs/state"
-AUTHORED="docs/orientation.md"
-INSTALL_LOG="docs/install-log/install-log.md"
+BRIEFS_DIR="${1:-docs/blc/briefs}"
+# Every other path is a sibling of the briefs directory, so one argument moves them all. A
+# briefs argument that left these at the default root would be the partial flexibility #0017
+# names as worse than either alternative.
+BLC_ROOT="$(dirname "$BRIEFS_DIR")"
+STATE_DIR="$BLC_ROOT/state"
+AUTHORED="$BLC_ROOT/orientation.md"
+INSTALL_LOG="$BLC_ROOT/install-log/install-log.md"
+CHRONICLE="$BLC_ROOT/chronicles/chronicle.md"
+CONTRACT="$BLC_ROOT/contracts/v1.3.md"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
 ROOT="$(git rev-parse --show-toplevel)"
@@ -52,7 +58,7 @@ echo
 # Two sources, because one of them structurally cannot reach the other's case. A
 # ledger starts at blc-start-brief, which runs after a serial is already chosen,
 # so work picked up but not yet filed is in no record at all. That is what
-# docs/state/ is for. See docs/state/README.md.
+# docs/blc/state/ is for. See docs/blc/state/README.md.
 
 echo "## In flight"
 echo
@@ -75,7 +81,7 @@ if [ -d "$BRIEFS_DIR" ] && [ -x "$ROOT/tools/list-briefs.sh" ]; then
   fi
   # The count is what keeps the omission honest: a reader is told history exists
   # and where it lives, rather than shown a table that silently stops.
-  [ "$closed" -gt 0 ] && { echo; echo "$closed closed — full timeline in \`docs/chronicles/chronicle.md\`."; }
+  [ "$closed" -gt 0 ] && { echo; echo "$closed closed — full timeline in \`$CHRONICLE\`."; }
 else
   echo "No \`$BRIEFS_DIR\` — nothing filed here yet."
 fi
@@ -84,6 +90,16 @@ echo
 echo "### Picked up, not yet filed"
 echo
 declared=0
+# A declaration's age follows renames and skips the ignore list, as the brief dates do. #0017
+# moved this directory, and a plain `git log` would have aged every declaration to the move.
+# Without the lib the age is the plain log's, which is a worse answer and still an answer.
+TOUCH_LIB="$ROOT/tools/lib/touch-log.sh"
+if [ -r "$TOUCH_LIB" ]; then
+  # shellcheck source=/dev/null
+  . "$TOUCH_LIB"
+  SKIP="$(blc_touch_skip "$BLC_ROOT/ignore-revs")"
+  RENAMES="$(blc_touch_renames)"
+fi
 if [ -d "$STATE_DIR" ]; then
   for f in "$STATE_DIR"/*.md; do
     [ -e "$f" ] || continue
@@ -92,7 +108,11 @@ if [ -d "$STATE_DIR" ]; then
     who="$(basename "$f" .md)"
     # Nothing prunes this directory, so age is reported rather than enforced —
     # a declaration someone abandoned shows up as old instead of as truth.
-    touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
+    if [ -r "$TOUCH_LIB" ]; then
+      touched="$(blc_touch_log "$SKIP" "$RENAMES" "$f" | sed -n '1s/^[^ ]* \(.\{10\}\).*/\1/p')"
+    else
+      touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
+    fi
     echo "- **$who** (last written ${touched:-uncommitted})"
     sed -n 's/^## /  · /p' "$f"
     declared=$((declared + 1))
@@ -130,9 +150,9 @@ if [ -f "$INSTALL_LOG" ]; then
 else
   echo "No \`$INSTALL_LOG\` — this repo was not set up by the installer."
 fi
-if [ -f "docs/contracts/v1.2.md" ]; then
+if [ -f "$CONTRACT" ]; then
   echo
-  echo "Contract v1.2 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
+  echo "Contract v1.3 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
 fi
 echo
 

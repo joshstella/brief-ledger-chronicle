@@ -59,7 +59,7 @@ blc_phase_row_find() {
 # row gives a label, and 2 when more than one row could be the phase's.
 #
 # The one column this file reads, because a Jira summary is `#<serial>/<letter> — <label>`
-# (docs/briefs/README.md, "Phase ids") and the label exists nowhere else. Only the two shapes
+# (docs/blc/briefs/README.md, "Phase ids") and the label exists nowhere else. Only the two shapes
 # `blc-start-brief` writes are read: the label in the cell after the id, or after the em dash
 # in the id's own cell. A third shape, or two candidate rows, returns non-zero rather than a
 # guess: a wrong label is a ticket summary that the next export cannot match.
@@ -115,7 +115,7 @@ blc_phase_label() {
 # exists to close, committed inside the phase that closes it — because the *matcher* was
 # shared and nobody noticed the *tokenizer* was a second reader of the same line.
 #
-# `docs/briefs/README.md`, "Phase ids", is the rule: a phase has one id, and the index is a
+# `docs/blc/briefs/README.md`, "Phase ids", is the rule: a phase has one id, and the index is a
 # letter. `blc/1` numbered them instead, and six ledgers here still do.
 # Spelled out rather than `[a-z]` / `[0-9]`. A bracket *range* in a shell `case` follows the
 # locale's collation order, and under many UTF-8 locales `[a-z]` also accepts `B` through

@@ -1,7 +1,7 @@
 # The install log: an append-only record of every run, replacing the numbered
 # bootstrap brief the installer used to write.
 
-LOG_REL="docs/install-log/install-log.md"
+LOG_REL="docs/blc/install-log/install-log.md"
 
 test_log_is_created_on_first_install() {
   run_install y --target "$TARGET"

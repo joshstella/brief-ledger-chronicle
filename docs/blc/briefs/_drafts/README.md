@@ -14,4 +14,4 @@ Rules:
   sequence.
 - When you decide to do the work, run `/blc-create-brief <filename>` from the repo root. That
   is the one-way door: it assigns the serial, moves the draft into
-  `docs/briefs/NNNN-slug/brief.md`, and stamps the identity line.
+  `docs/blc/briefs/NNNN-slug/brief.md`, and stamps the identity line.

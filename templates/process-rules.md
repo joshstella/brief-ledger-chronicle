@@ -15,7 +15,7 @@ bypassing them is the defect.
   before non-trivial work begins (`blc-create-brief`, then `blc-start-brief` /
   `blc-next-brief-phase`). Expect the ledger to correct it. Do not retrofit one after the
   work shipped.
-- Declare work you have picked up but not yet filed in `docs/state/<your git email>.md`,
+- Declare work you have picked up but not yet filed in `docs/blc/state/<your git email>.md`,
   and clear it when it lands. That window is invisible to every ledger, and it is where two
   people pick the same serial.
 - `blc-chronicle` renders the record. `blc-orient` reads it cheaply. `blc-init-briefs` is
@@ -37,7 +37,7 @@ An untestable merge gets an explicit "test-exempt because…" in the PR, not a s
 Every install replaces toolkit-owned paths: `blc-*` skills, everything under `tools/`
 including `tools/lib/`, this rules file, and the shipped brief docs. Local edits to them
 do not survive the next install.
-Stale skills and commands named in `docs/install-log/install-log.md` are removed.
+Stale skills and commands named in `docs/blc/install-log/install-log.md` are removed.
 
 Project-owned paths are never written after creation: `AGENTS.md` / `CLAUDE.md`, numbered
 brief folders, ledgers, declarations, and chronicles.
@@ -45,7 +45,7 @@ brief folders, ledgers, declarations, and chronicles.
 To customize without fighting the installer:
 - **`AGENTS.md` / `CLAUDE.md`** — project architecture, stack, and rules for agents.
 - **`brief-checks/`** — shell scripts the gate runs; project-enforced rules about the
-  record (see `docs/briefs/` for the brief when filed).
+  record (see `docs/blc/briefs/` for the brief when filed).
 
 Do not edit installed skills or tools in place expecting the change to stick. Change the
 toolkit upstream, or use the project-owned paths above.

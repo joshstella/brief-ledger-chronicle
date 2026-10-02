@@ -6,19 +6,19 @@ test_project_creates_the_expected_tree() {
   assert_status 0
   assert_dir  "$TARGET/.claude/skills"
   assert_dir  "$TARGET/.claude/commands"
-  assert_dir  "$TARGET/docs/briefs/_drafts"
-  assert_dir  "$TARGET/docs/chronicles"
-  assert_dir  "$TARGET/docs/install-log"
+  assert_dir  "$TARGET/docs/blc/briefs/_drafts"
+  assert_dir  "$TARGET/docs/blc/chronicles"
+  assert_dir  "$TARGET/docs/blc/install-log"
   assert_file "$TARGET/CLAUDE.md"
   assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_file "$TARGET/.claude/settings.local.json"
   assert_contains "## Project-specific" "$TARGET/CLAUDE.md"
   assert_not_contains "## Writing" "$TARGET/CLAUDE.md"
-  assert_file "$TARGET/docs/briefs/README.md"
-  assert_file "$TARGET/docs/briefs/_drafts/README.md"
+  assert_file "$TARGET/docs/blc/briefs/README.md"
+  assert_file "$TARGET/docs/blc/briefs/_drafts/README.md"
 }
 
-# The installer scaffolds docs/chronicles/. chronicle.md is the one committed file.
+# The installer scaffolds docs/blc/chronicles/. chronicle.md is the one committed file.
 # Other files in that folder stay ignored so a later archive feature has a place.
 # A parent-directory rule would hide the exception, so the written pair is the
 # contents glob plus the one negation.
@@ -26,12 +26,12 @@ test_project_ignores_other_chronicles_but_not_chronicle_md() {
   run_install y --target "$TARGET"
   assert_status 0
   assert_file "$TARGET/.gitignore"
-  grep -qxF 'docs/chronicles/*' "$TARGET/.gitignore" \
-    || fail "expected docs/chronicles/* in .gitignore"
-  grep -qxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore" \
-    || fail "expected !docs/chronicles/chronicle.md in .gitignore"
-  grep -qxF 'docs/chronicles/' "$TARGET/.gitignore" \
-    && fail "did not expect a parent-directory docs/chronicles/ rule"
+  grep -qxF 'docs/blc/chronicles/*' "$TARGET/.gitignore" \
+    || fail "expected docs/blc/chronicles/* in .gitignore"
+  grep -qxF '!docs/blc/chronicles/chronicle.md' "$TARGET/.gitignore" \
+    || fail "expected !docs/blc/chronicles/chronicle.md in .gitignore"
+  grep -qxF 'docs/blc/chronicles/' "$TARGET/.gitignore" \
+    && fail "did not expect a parent-directory docs/blc/chronicles/ rule"
 }
 
 # This is the only file the installer writes that it does not own, so append-never-rewrite
@@ -42,10 +42,10 @@ test_project_appends_to_an_existing_gitignore() {
   assert_status 0
   assert_contains "node_modules/" "$TARGET/.gitignore"
   assert_contains "*.log" "$TARGET/.gitignore"
-  grep -qxF 'docs/chronicles/*' "$TARGET/.gitignore" \
-    || fail "expected docs/chronicles/* appended to existing .gitignore"
-  grep -qxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore" \
-    || fail "expected !docs/chronicles/chronicle.md appended to existing .gitignore"
+  grep -qxF 'docs/blc/chronicles/*' "$TARGET/.gitignore" \
+    || fail "expected docs/blc/chronicles/* appended to existing .gitignore"
+  grep -qxF '!docs/blc/chronicles/chronicle.md' "$TARGET/.gitignore" \
+    || fail "expected !docs/blc/chronicles/chronicle.md appended to existing .gitignore"
 }
 
 # Appending on every run would grow the file without bound. The guard is a match on the
@@ -55,9 +55,9 @@ test_project_gitignore_rule_is_not_duplicated() {
   run_install y --target "$TARGET"
   assert_status 0
   local n
-  n=$(grep -cxF 'docs/chronicles/*' "$TARGET/.gitignore")
-  assert_count 1 "$n" "docs/chronicles/* rules in .gitignore after two installs"
-  n=$(grep -cxF '!docs/chronicles/chronicle.md' "$TARGET/.gitignore")
+  n=$(grep -cxF 'docs/blc/chronicles/*' "$TARGET/.gitignore")
+  assert_count 1 "$n" "docs/blc/chronicles/* rules in .gitignore after two installs"
+  n=$(grep -cxF '!docs/blc/chronicles/chronicle.md' "$TARGET/.gitignore")
   assert_count 1 "$n" "chronicle.md exceptions in .gitignore after two installs"
   assert_out "chronicles ignore rule already present"
 }
@@ -65,7 +65,7 @@ test_project_gitignore_rule_is_not_duplicated() {
 # A project that already ignores the directory its own way is left completely alone —
 # no trailing newline, no comment, no reformatting of a file the installer does not own.
 test_project_leaves_a_gitignore_that_already_ignores_chronicles() {
-  printf 'docs/chronicles/\n' > "$TARGET/.gitignore"
+  printf 'docs/blc/chronicles/\n' > "$TARGET/.gitignore"
   local before
   before=$(cat "$TARGET/.gitignore")
   run_install y --target "$TARGET"
@@ -106,10 +106,10 @@ test_project_replaces_a_tuned_command_on_reinstall() {
 }
 
 test_project_replaces_an_existing_briefs_readme() {
-  mkdir -p "$TARGET/docs/briefs"
-  echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/briefs/README.md"
+  mkdir -p "$TARGET/docs/blc/briefs"
+  echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/blc/briefs/README.md"
   run_install y --target "$TARGET"
-  assert_not_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/briefs/README.md"
+  assert_not_contains "EXISTING REGISTRY DOCS" "$TARGET/docs/blc/briefs/README.md"
 }
 
 test_project_second_run_replaces_toolkit_owned() {
@@ -125,28 +125,28 @@ test_project_second_run_replaces_toolkit_owned() {
 test_project_writes_no_numbered_brief() {
   run_install y --target "$TARGET"
   assert_count 0 "$(count_numbered_briefs "$TARGET")" "numbered brief folders created"
-  assert_no_dir "$TARGET/docs/briefs/0001-bootstrap"
+  assert_no_dir "$TARGET/docs/blc/briefs/0001-bootstrap"
 }
 
 # Regression: install.sh once hardcoded docs/briefs/0001-bootstrap/ and guarded on
 # whether that folder existed rather than whether serial 0001 was free. Installing
 # into a repo that already held briefs wrote a second #0001 every time.
 test_project_install_over_existing_0001_creates_no_duplicate_serial() {
-  mkdir -p "$TARGET/docs/briefs/0001-resonance"
-  printf '# Resonance\n\n**Serial:** #0001\n' > "$TARGET/docs/briefs/0001-resonance/brief.md"
+  mkdir -p "$TARGET/docs/blc/briefs/0001-resonance"
+  printf '# Resonance\n\n**Serial:** #0001\n' > "$TARGET/docs/blc/briefs/0001-resonance/brief.md"
   run_install y --target "$TARGET"
   assert_status 0
   assert_count 0 "$(count_duplicate_serials "$TARGET")" "duplicate serial prefixes"
   assert_count 1 "$(count_numbered_briefs "$TARGET")" "numbered brief folders"
-  assert_dir    "$TARGET/docs/briefs/0001-resonance"
-  assert_no_dir "$TARGET/docs/briefs/0001-bootstrap"
+  assert_dir    "$TARGET/docs/blc/briefs/0001-resonance"
+  assert_no_dir "$TARGET/docs/blc/briefs/0001-bootstrap"
 }
 
 test_project_leaves_an_existing_brief_untouched() {
-  mkdir -p "$TARGET/docs/briefs/0007-something"
-  echo "ORIGINAL BRIEF" > "$TARGET/docs/briefs/0007-something/brief.md"
+  mkdir -p "$TARGET/docs/blc/briefs/0007-something"
+  echo "ORIGINAL BRIEF" > "$TARGET/docs/blc/briefs/0007-something/brief.md"
   run_install y --target "$TARGET"
-  assert_contains "ORIGINAL BRIEF" "$TARGET/docs/briefs/0007-something/brief.md"
+  assert_contains "ORIGINAL BRIEF" "$TARGET/docs/blc/briefs/0007-something/brief.md"
 }
 
 # The dependency check exists so a half-configured machine fails loudly. It must

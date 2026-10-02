@@ -186,12 +186,12 @@ extract_log_entry() {
 
 # Count duplicate four-digit serial prefixes among a target's brief folders.
 count_duplicate_serials() {
-  ls -d "$1"/docs/briefs/[0-9][0-9][0-9][0-9]-*/ 2>/dev/null \
+  ls -d "$1"/docs/blc/briefs/[0-9][0-9][0-9][0-9]-*/ 2>/dev/null \
     | sed 's#.*/\([0-9][0-9][0-9][0-9]\)-.*#\1#' \
     | sort | uniq -d | wc -l | tr -d ' '
 }
 
 # Count numbered brief folders in a target.
 count_numbered_briefs() {
-  ls -d "$1"/docs/briefs/[0-9][0-9][0-9][0-9]-*/ 2>/dev/null | wc -l | tr -d ' '
+  ls -d "$1"/docs/blc/briefs/[0-9][0-9][0-9][0-9]-*/ 2>/dev/null | wc -l | tr -d ' '
 }

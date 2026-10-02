@@ -157,7 +157,7 @@ test_status_line_both_tools_read_the_library() {
 # not inherit it, because the lesson lived in a test named after the first.
 sl_assert_list_briefs_runs_from() {
   local what="$1" script="$2" out status
-  out="$(cd "$REPO_ROOT" && bash "$script" docs/briefs 2>&1)"
+  out="$(cd "$REPO_ROOT" && bash "$script" docs/blc/briefs 2>&1)"
   status=$?
   [ "$status" -eq 0 ] || fail "$what: list-briefs exited $status"
   case "$out" in
@@ -228,14 +228,14 @@ test_status_line_an_installed_list_briefs_finds_its_library() {
 sl_agreement_repo() {
   SL_REPO="$TMP/agree"
   rm -rf "$SL_REPO"
-  mkdir -p "$SL_REPO/docs/briefs/0001-shape/"
+  mkdir -p "$SL_REPO/docs/blc/briefs/0001-shape/"
   git -C "$SL_REPO" init -q -b main
   git -C "$SL_REPO" config user.email t@example.com
   git -C "$SL_REPO" config user.name Test
   fixture_install_tool "$SL_REPO" list-briefs.sh
   fixture_install_tool "$SL_REPO" open-briefs.sh
-  printf '# Brief\n' > "$SL_REPO/docs/briefs/0001-shape/brief.md"
-  printf '%s\n' "$@" > "$SL_REPO/docs/briefs/0001-shape/ledger.md"
+  printf '# Brief\n' > "$SL_REPO/docs/blc/briefs/0001-shape/brief.md"
+  printf '%s\n' "$@" > "$SL_REPO/docs/blc/briefs/0001-shape/ledger.md"
   git -C "$SL_REPO" add -A
   git -C "$SL_REPO" commit -qm fixture >/dev/null 2>&1
 }
@@ -259,8 +259,8 @@ sl_assert_tools_agree() {
   sl_agreement_repo "$@"
 
   local open_out list_out open_rc list_rc
-  open_out="$(cd "$SL_REPO" && bash tools/open-briefs.sh docs/briefs 2>&1)"; open_rc=$?
-  list_out="$(cd "$SL_REPO" && bash tools/list-briefs.sh docs/briefs 2>&1)"; list_rc=$?
+  open_out="$(cd "$SL_REPO" && bash tools/open-briefs.sh docs/blc/briefs 2>&1)"; open_rc=$?
+  list_out="$(cd "$SL_REPO" && bash tools/list-briefs.sh docs/blc/briefs 2>&1)"; list_rc=$?
 
   [ "$open_rc" -eq 0 ] || fail "$label: open-briefs exited $open_rc"
   [ "$list_rc" -eq 0 ] || fail "$label: list-briefs exited $list_rc"
@@ -328,7 +328,7 @@ test_status_line_tools_agree_under_unterminated_frontmatter() {
 }
 
 # The shape review found: an example at column 0 inside a fence, above the real line. This
-# is how docs/briefs/README.md prints the status line, so a ledger documenting its own
+# is how docs/blc/briefs/README.md prints the status line, so a ledger documenting its own
 # format would have handed both readers the example.
 test_status_line_tools_agree_when_a_fence_holds_an_example() {
   sl_assert_tools_agree "fenced example" \

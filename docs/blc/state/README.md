@@ -1,4 +1,4 @@
-# Declarations — `docs/state/`
+# Declarations — `docs/blc/state/`
 
 One file per contributor, holding **only what the record cannot derive**.
 
@@ -15,10 +15,10 @@ work. A declaration is how you become visible during it.
 
 ## The file
 
-`docs/state/<your git email, lowercased>.md`
+`docs/blc/state/<your git email, lowercased>.md`
 
     git config user.email        →  Josh.Stella@Example.com
-    docs/state/josh.stella@example.com.md
+    docs/blc/state/josh.stella@example.com.md
 
 Lowercased, and otherwise verbatim. `@` and `.` are legal in a path, so nothing is
 escaped or slugged. The mapping runs both ways — given the file you know the contributor,
@@ -49,7 +49,7 @@ does not belong here.
   human audience to skim.
 - **Not recurring.** You write when you pick something up and clear it when it lands.
   A declaration nobody has cleared is a bug, not a history.
-- **Not a place to think out loud.** Drafts go in `docs/briefs/_drafts/`.
+- **Not a place to think out loud.** Drafts go in `docs/blc/briefs/_drafts/`.
 
 ## Writing one
 
@@ -78,5 +78,5 @@ nothing unfiled.
 This is not a style preference. The value of this directory is that orientation costs the
 same whether the project has two contributors or twenty, and that property only holds if
 readers go through the tool. Twenty declaration files read directly is twenty files' worth
-of tokens, which is the cost this whole design exists to avoid. `docs/state/` is a
+of tokens, which is the cost this whole design exists to avoid. `docs/blc/state/` is a
 *source*. If anyone is opening it by hand, the thing it was built for has already broken.

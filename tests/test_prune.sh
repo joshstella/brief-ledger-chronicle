@@ -1,6 +1,6 @@
 # Prune stale skills and commands (#0012c). Removal reads the install log only.
 
-LOG_REL="docs/install-log/install-log.md"
+LOG_REL="docs/blc/install-log/install-log.md"
 
 # The log parser reads names only from inside a ### Skills installed or ### Commands
 # installed section. Appending at EOF lands under whatever section was last — usually
