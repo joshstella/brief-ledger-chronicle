@@ -69,6 +69,7 @@ test_replace_replaces_claude_process_rules() {
 }
 
 test_replace_overwrites_an_existing_briefs_readme() {
+  mark_prior_install
   mkdir -p "$TARGET/docs/blc/briefs"
   echo "EXISTING REGISTRY DOCS" > "$TARGET/docs/blc/briefs/README.md"
   run_install y --target "$TARGET"
@@ -78,6 +79,7 @@ test_replace_overwrites_an_existing_briefs_readme() {
 }
 
 test_replace_leaves_an_existing_brief_untouched() {
+  mark_prior_install
   mkdir -p "$TARGET/docs/blc/briefs/0007-something"
   echo "ORIGINAL BRIEF" > "$TARGET/docs/blc/briefs/0007-something/brief.md"
   run_install y --target "$TARGET"

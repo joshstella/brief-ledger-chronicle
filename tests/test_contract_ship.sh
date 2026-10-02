@@ -194,6 +194,7 @@ test_ship_no_second_copy_of_the_briefs_docs_exists() {
 
 # The Contract is toolkit-owned and replaced every run (#0012b).
 test_ship_default_replaces_a_stale_contract() {
+  mark_prior_install
   mkdir -p "$TARGET/docs/blc/contracts"
   echo "OLD CONTRACT" > "$TARGET/docs/blc/contracts/v1.md"
   echo "OLD SUPERSEDED" > "$TARGET/docs/blc/contracts/v1.1.md"
