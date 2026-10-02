@@ -1,6 +1,6 @@
 # Ledger — #0018 The Jira export carries what the brief says, not only where it is
 
-`blc/2 #0018 in-progress a:done(PR#88) b:done(PR#89) c:in-progress(brief/0018-c-the-wiki-markup)`
+`blc/2 #0018 in-progress a:done(PR#88) b:done(PR#89) c:in-progress(PR#90)`
 
 **Brief:** `docs/blc/briefs/0018-enrich-jira-data/brief.md`
 **Started:** 2026-10-02
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the sources | done (PR#88) | — |
 | b | the descriptions | done (PR#89) | — |
-| c | the wiki markup | in-progress | `brief/0018-c-the-wiki-markup` |
+| c | the wiki markup | in-progress (PR#90) | `brief/0018-c-the-wiki-markup` |
 
 The brief has two phases, `a` and `b`. Its `b` is split here into `b` and `c` (decision 3).
 
