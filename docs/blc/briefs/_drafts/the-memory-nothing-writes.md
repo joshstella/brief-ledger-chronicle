@@ -23,7 +23,7 @@ skills and the layer has been skipped every time, by every agent, without commen
 ## Why it went unnoticed for fourteen briefs
 
 Because the primary record is good enough in the session that writes it. The ledger in
-`docs/briefs/<name>/ledger.md` is the source of truth and it is always present, so the
+`docs/blc/briefs/<name>/ledger.md` is the source of truth and it is always present, so the
 fallback path — "if no repo ledger found, read MEMORY.md" — has never been taken. A fallback
 that is never reached cannot be discovered to be missing.
 
@@ -66,4 +66,4 @@ skills, because fourteen briefs are evidence the primary record does not need a 
 
 - Not a general memory or context system.
 - Not a second copy of any ledger.
-- Not changing where the source of truth lives: `docs/briefs/<name>/ledger.md` stays it.
+- Not changing where the source of truth lives: `docs/blc/briefs/<name>/ledger.md` stays it.

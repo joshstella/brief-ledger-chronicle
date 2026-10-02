@@ -1,7 +1,7 @@
 # Ledger — #0011 A project cannot add a gate
 `blc/2 #0011 done a:done(PR#53) b:done(PR#54)`
 
-**Brief:** `docs/briefs/0011-a-project-cannot-add-a-gate/brief.md`
+**Brief:** `docs/blc/briefs/0011-a-project-cannot-add-a-gate/brief.md`
 **Started:** 2026-09-10
 **Status:** done
 **Closed:** 2026-09-10
@@ -15,7 +15,7 @@
 
 **a — the runner.** `validate-briefs.sh` runs `brief-checks/*.sh` after toolkit clauses
 pass, in sorted order, failing on any non-zero exit. Document the directory, argument, exit
-convention, and installer non-touch in `docs/briefs/README.md`. Record `brief-checks/` in the
+convention, and installer non-touch in `docs/blc/briefs/README.md`. Record `brief-checks/` in the
 ownership map as project-owned.
 
 **b — the proof.** Tests: passing, failing, crashing, and ordered scripts; absent and empty
@@ -40,7 +40,7 @@ sorted, failing on non-zero exit with the script's output under its filename.
 
 **Ownership recorded.** `brief-checks/` added to the ownership map as project-owned.
 
-**Documented.** `docs/briefs/README.md` carries the directory, argument, exit convention,
+**Documented.** `docs/blc/briefs/README.md` carries the directory, argument, exit convention,
 installer non-touch, and an example snippet (no example script ships).
 
 ## Phase b — what it does

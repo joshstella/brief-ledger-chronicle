@@ -1,7 +1,7 @@
 # Ledger — #0008 The record outgrew the reader
 `blc/2 #0008 done(PR#45) a:done(PR#41) b:done(PR#42) c:done(PR#43) d:done(PR#44) e:done(PR#45)`
 
-**Brief:** `docs/briefs/0008-record-outgrew-the-reader/brief.md`
+**Brief:** `docs/blc/briefs/0008-record-outgrew-the-reader/brief.md`
 **Status:** done (PR #45)
 **Date:** 2026-09-09
 **Depends on:** #0006 (done, PR #31)
@@ -11,7 +11,7 @@
 | Phase | Status | Notes |
 |---|---|---|
 | `a — the layering` | done (PR#41) | Move the brief-table logic out of the chronicle skill into `tools/`; `gather.sh` calls it. No behaviour change. Blocked by open decision 1. |
-| `b — the declaration` | done (PR#42) | The `docs/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
+| `b — the declaration` | done (PR#42) | The `docs/blc/state/` convention: one file per contributor, `git config user.email` lowercased verbatim. Decisions 2, 3, 6, 7 all resolved. |
 | `c — the verb` | done (PR#43) | The tool itself, plus the thin `blc-orient` skill over it (see decision 2). Emits landed state, intended state, off-limits, and the authored part. Exits zero on absent sources. Blocked by open decisions 4, 5. |
 | `d — the check` | done (PR#44) | Tests: determinism, graceful absence, budget ceiling, no shared paths between contributors, clean run in an empty fixture. |
 | `e — the read` | done (PR#45) | Point `blc-start-brief` step 4, `blc-next-brief-phase` step 5, and `blc-review-pr` step 3 at the verb; have `blc-create-brief` write and clear the declaration. Skill guards, not checks. |
@@ -21,7 +21,7 @@
 Not the strict chain the brief's phase table implies.
 
 - `a` and `b` are **parallel tracks**. The layering move touches `gather.sh` and `tools/`;
-  the declaration convention touches `docs/state/` and documentation. They share no file.
+  the declaration convention touches `docs/blc/state/` and documentation. They share no file.
 - `c` depends on **both** — it consumes the extracted table and aggregates the declarations.
 - `d` and `e` both depend on `c` and are parallel to each other. `d` asserts the script;
   `e` edits four skills.
@@ -62,7 +62,7 @@ Carried from the brief, with the phase each blocks. Resolved before that phase, 
    this repo wraps a repo-level tool — `blc-chronicle` wraps its own `scripts/gather.sh`,
    and nothing invokes `tools/` on an agent's behalf today.
 3. ~~Where the authored file lives.~~ **Resolved 2026-09-09:** its own file,
-   `docs/orientation.md`.
+   `docs/blc/orientation.md`.
 
    The deciding argument is phase `d`, not taste. `d` asserts a size cap, and a cap is
    only enforceable on a file with one purpose and one owner. `AGENTS.md` is the file a
@@ -72,7 +72,7 @@ Carried from the brief, with the phase each blocks. Resolved before that phase, 
 4. The budget number. Blocks `c`, because `d` asserts it.
 5. Whether the verb ships to targets. Blocks `c`.
 6. ~~How a contributor filename is normalized.~~ **Resolved 2026-09-09:** lowercase the
-   address and use it verbatim — `docs/state/josh.stella@gmail.com.md`.
+   address and use it verbatim — `docs/blc/state/josh.stella@gmail.com.md`.
 
    Lowercasing is the whole rule, and it exists for the case-insensitive filesystem the
    brief names. `@` and `.` are legal in a path on every filesystem this runs on, so
@@ -147,7 +147,7 @@ and why, because the moment worth writing at is before this command runs, by a p
 
 **The valuable part of the wiring was not in the brief at all.** `blc-create-brief` now
 checks other contributors' declarations for a claim on the serial it is about to take. That
-is the only warning available for the half of the serial race `docs/briefs/` structurally
+is the only warning available for the half of the serial race `docs/blc/briefs/` structurally
 cannot show — the number is taken and unfiled, so the directory looks free. This is what
 made evidence 7 worth acting on, and the brief's phase `e` did not name it.
 
@@ -155,7 +155,7 @@ made evidence 7 worth acting on, and the brief's phase `e` did not name it.
 holds — nothing can force an agent to run the command. But whether the instruction is
 *present* is mechanical, and a rename could sever the wiring in files no other test reads.
 Four tests now assert that the three skills name `tools/orient.sh`, that `blc-create-brief`
-knows about `docs/state/`, and that both the shipped rules file and the stub `AGENTS.md` a
+knows about `docs/blc/state/`, and that both the shipped rules file and the stub `AGENTS.md` a
 target receives name the command. That does not make the guard a check; it makes the
 plumbing a check and leaves the guard a guard.
 
@@ -165,7 +165,7 @@ comment. First time that guard has fired on work it was not written for.
 **This repository still has no `AGENTS.md`.** The brief's Ground opens with the fact that
 three skills tell an agent to read a file that does not exist here. Phase `e` fixed that for
 every *target* — the stub and rules file both point at `orient` now — and did not fix it
-here, because `docs/orientation.md` carries what this repo would put in one and creating an
+here, because `docs/blc/orientation.md` carries what this repo would put in one and creating an
 `AGENTS.md` was not in scope. Worth a separate brief, not a silent addition.
 
 ## Phase `d` — what executing it changed
@@ -177,7 +177,7 @@ dashes when there are no briefs, and that row has no status to filter on, so run
 it as work in flight. A fresh install — the case the brief cares most about — displayed a
 dash row instead of "Nothing open." The filter now requires a serial in the first cell.
 
-*`docs/orientation.md` was checked for but never placed.* Phase `c` added it to the
+*`docs/blc/orientation.md` was checked for but never placed.* Phase `c` added it to the
 installer's template-existence list and not to the loop that copies files, so the installer
 verified a file it never shipped.
 
@@ -191,7 +191,7 @@ is what asks for it. The test now asserts it is *not* present after an install.
 **Two of the tests are canaries, not checks.** The budget and cap tests measure this
 repository's real output rather than a fixture, so they fail when the record outgrows the
 budget — which is #0008's thesis failing, and should be loud. Both were verified by
-padding `docs/orientation.md` until they broke: the cap at 352 tokens against 250, the
+padding `docs/blc/orientation.md` until they broke: the cap at 352 tokens against 250, the
 budget at 798 against 700. The first attempt at the budget canary did not trip, because
 100 extra tokens still fit; that is the headroom decision 4 was chosen to have.
 
@@ -207,7 +207,7 @@ that creates as a standing tension. Both miss the harder problem: `install.sh` i
 target. Deriving from it would have produced a section that works only in this repository —
 the cobbler's-shoes failure the brief warns about, in the one place it did not look.
 
-`docs/install-log/install-log.md` is the answer. The installer writes it into every target,
+`docs/blc/install-log/install-log.md` is the answer. The installer writes it into every target,
 append-only, listing every path it created. It is the installer's own record rather than a
 restatement of it, so it cannot drift, and it is present exactly where the verb runs. The
 tension is dissolved, not accepted.
@@ -221,7 +221,7 @@ argues against, so the section now says strictly what the log supports: these ar
 install wrote. **Recording ownership class in the install log is the real fix and it is not
 in this brief** — it belongs to `blc-installer-builder`, which owns that file.
 
-**The cap did its job on the first file written against it.** `docs/orientation.md` came in
+**The cap did its job on the first file written against it.** `docs/blc/orientation.md` came in
 at 348 tokens against a 250 cap and went through three rounds of cutting to reach 248. No
 principle was dropped; the prose was. That is the mechanism working as designed — quantity
 forced triage — and it is also the limit of it, since nothing about a cap says the eight
@@ -238,7 +238,7 @@ state section at 68 where the full table is 348. The brief's two unverified esti
 ## Phase `b` — what executing it changed
 
 **Nothing here is enforced by code, and that is the phase's real weakness.** The
-normalization rule is prose in `docs/state/README.md`. Nothing reads it until phase `c`,
+normalization rule is prose in `docs/blc/state/README.md`. Nothing reads it until phase `c`,
 so between these two phases the rule is exactly the kind of hand-maintained convention
 this brief measured at 43%. `tests/test_state.sh` pins the expected answers against a
 local implementation of the rule so that `c` has something to be wrong against, but that
@@ -246,13 +246,13 @@ is a placeholder for enforcement, not enforcement. Scope was left alone delibera
 rather than pulling a helper forward out of `c`.
 
 **No declaration was written for this brief, on purpose.** The obvious dogfooding move is
-to declare #0008 in `docs/state/`. It would have been wrong: #0008 is filed and has a
+to declare #0008 in `docs/blc/state/`. It would have been wrong: #0008 is filed and has a
 ledger, so every fact about it is derivable, and the convention says declarations hold
 only what derivation cannot reach. The correct steady state for a contributor with
 nothing unfiled is no file at all. That the directory ships with only a README is the
 convention working.
 
-**The briefs README claimed a race was open that this phase narrows.** `docs/briefs/`
+**The briefs README claimed a race was open that this phase narrows.** `docs/blc/briefs/`
 says single-point assignment *"is what keeps numbers from colliding"*, and Contract v1.1
 separately records that two checkouts can still pick the same number. Both are true and
 the pair read as a contradiction. A pointer now sits at the serial section. The Contract

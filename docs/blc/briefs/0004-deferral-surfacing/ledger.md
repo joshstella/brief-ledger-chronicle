@@ -1,7 +1,7 @@
 # Ledger — #0004 The ledger is an archive and a bad inbox
 `blc/1 #0004 done(PR#18) 1:done(PR#15) 2:done(PR#17) 3:done(PR#18)`
 
-**Brief:** `docs/briefs/0004-deferral-surfacing/brief.md`
+**Brief:** `docs/blc/briefs/0004-deferral-surfacing/brief.md`
 **Status:** done (PR #18)
 **Date:** 2026-08-24
 
@@ -9,7 +9,7 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — the limitation entry` | done (PR#15) | Add the third entry to Known limitations in `docs/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
+| `phase 1 — the limitation entry` | done (PR#15) | Add the third entry to Known limitations in `docs/blc/briefs/README.md`, as an incident report with the dated case, matching "writers outside the pipeline". State the hole; do not propose the mechanism. |
 | `phase 2 — reconcile ledger status` | done (PR#17) | Not invent a vocabulary — one exists and is ignored. Give the states one home, adopt `pending` / `in-progress` / `deferred` / `done` / `skipped` with durable pointers and reasons, and reconcile the four existing ledgers, top-level status included. Add the compressed `blc/1` status line under each ledger title, and an index atop any Big decisions section that warrants one — #0003's is 246 lines. Prerequisite for any query. |
 | `phase 3 — the open-briefs query` | done (PR#18) | Answer "which briefs are open?". Interrogate each `in-progress` branch — does it exist, is there a PR, how far has `main` moved — and report any ledger whose status line disagrees with its phase table. Reports; gates nothing. Shape depends on phase 2's vocabulary. |
 
@@ -178,7 +178,7 @@ the strongest evidence in this ledger that the hole was real and not merely emba
 
 **Still open, and not quietly dropped.** Nothing invokes the query. It surfaced the incident
 in reality because a human asked, and a query nobody runs buys exactly what no query buys.
-This is stated in `docs/briefs/README.md` rather than left as an implication.
+This is stated in `docs/blc/briefs/README.md` rather than left as an implication.
 
 **The staleness threshold was not answered. It was dissolved.** The open decision asked how
 many commits make a branch stale. The incident's own numbers say the question is malformed:

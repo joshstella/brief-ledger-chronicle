@@ -21,7 +21,7 @@ before the prose.
 
 ## The claim
 
-**Every BLC project has one chronicle, `docs/chronicles/chronicle.md`.** It opens with a
+**Every BLC project has one chronicle, `docs/blc/chronicles/chronicle.md`.** It opens with a
 brief table, then the story, newest last-touch first. Incremental runs prepend new prose
 under a refreshed table. They do not start another file. The folder stays; later work
 may archive into it. This run does not.
@@ -71,8 +71,8 @@ put the file.
 |---|---|
 | 1 — the digest | `gather.sh` emits a Markdown table of every brief, newest last-touch first, on full and incremental runs. Columns: serial, title, status, first, last, depends-on. Title is the first `#` line of `brief.md`. Status is the overall token on the ledger `blc/1` line, or `planned` if there is no ledger. Incremental filtering stays for the commits section and for which briefs are *new to narrate*. The table is not filtered. |
 | 2 — the check | Tests in `tests/test_gather.sh` for the table: last-touch order, title, status, full table under a cutoff, planned when there is no ledger. |
-| 3 — the skill and the path | Rewrite `skills/chronicle/SKILL.md`: write only `docs/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; do not write a sibling. Drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. |
-| 4 — the ignore | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore` rule, and `tests/test_project_mode.sh` change so the one file can sit in git. Other files in `docs/chronicles/` may stay ignored so a later archive feature has a place. README and slides that still say "never committed" get the same pass. |
+| 3 — the skill and the path | Rewrite `skills/chronicle/SKILL.md`: write only `docs/blc/chronicles/chronicle.md`; refresh the table from gather; prepend new era prose under it; update the closed-through marker; do not write a sibling. Drop the notes-vault path. Present-tense paragraph after the table; origin at the bottom. |
+| 4 — the ignore | Stop hiding `chronicle.md`. Keep the folder. Installer, `.gitignore` rule, and `tests/test_project_mode.sh` change so the one file can sit in git. Other files in `docs/blc/chronicles/` may stay ignored so a later archive feature has a place. README and slides that still say "never committed" get the same pass. |
 
 Phase 1 precedes 3 because the skill should paste a table the digest already shaped.
 Phase 2 is the check for phase 1. Phase 4 can land with 3 or just after; landing the
@@ -104,7 +104,7 @@ That is the cost of not retelling.
   mode still emits the *full* table.
 - **Prepend new prose.** Refresh the table and the marker. Do not rewrite prior
   eras on an incremental run.
-- **One file, one path:** `docs/chronicles/chronicle.md`. No siblings. No
+- **One file, one path:** `docs/blc/chronicles/chronicle.md`. No siblings. No
   user-named vault. The folder stays for a later archive feature; this brief does
   not add one. Edit the file in place.
 - **Table columns include title and status.** Serial, title, status, first, last,
@@ -131,8 +131,8 @@ None at filing. The five that blocked the draft were resolved 2026-09-04.
 
 - `gather.sh` prints a complete brief table, newest last-touch first, with title
   and status, including when a cutoff is set. Tests say so.
-- A reader opens `docs/chronicles/chronicle.md` and sees that table, then the
+- A reader opens `docs/blc/chronicles/chronicle.md` and sees that table, then the
   newest work, then older work.
 - A second run edits that file. It does not add a sibling.
-- The file is not gitignored. Other files under `docs/chronicles/` may be.
+- The file is not gitignored. Other files under `docs/blc/chronicles/` may be.
 - Phase 3 does not claim to be a check.

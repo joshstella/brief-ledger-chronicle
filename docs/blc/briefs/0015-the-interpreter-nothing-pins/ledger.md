@@ -2,7 +2,7 @@
 
 `blc/2 #0015 done a:done(PR#66) b:done(PR#67)`
 
-**Brief:** `docs/briefs/0015-the-interpreter-nothing-pins/brief.md`
+**Brief:** `docs/blc/briefs/0015-the-interpreter-nothing-pins/brief.md`
 **Started:** 2026-09-29
 **Status:** done
 **Closed:** 2026-09-30
@@ -28,7 +28,7 @@ than letting silence imply coverage.
 ## Phase b — what it does
 
 **Open decision 1 is settled: the claim is not written in prose anywhere.** The brief offered
-three places to write the list — `tests/README.md`, `docs/contracts/README.md`, or both with
+three places to write the list — `tests/README.md`, `docs/blc/contracts/README.md`, or both with
 one citing the other. All three were rejected for the same reason. The supported set already
 exists as `BLC_AWK_CANDIDATES` in `tests/run.sh`, where a test fails if a name is removed. A
 prose copy would be a second answer to a question that already has one, and the second answer
@@ -77,7 +77,7 @@ No bash 4 construct appears anywhere — no `declare -A`, no `mapfile`, no `${va
 makes 3.2 likely fine. Likely fine is not a claim, so it is not made.
 
 **Review found the pointer dangling in the one place it mattered most.** `install.sh` copies
-`docs/contracts/README.md` into every target, and ships `docs/`, `tools/` and `templates/` —
+`docs/blc/contracts/README.md` into every target, and ships `docs/`, `tools/` and `templates/` —
 never `tests/`. A consumer reading criterion 1 was told to run a command in a directory their
 repository does not have. This project had already met that failure once and written a test
 for it: the shipped briefs README points at the Contract with a relative link that resolves
@@ -247,7 +247,7 @@ inherits.
 ## Open decisions
 
 1. **Where the supported-interpreter claim is written.** `tests/README.md` is where a
-   contributor meets it; `docs/contracts/README.md` beside promotion criterion 1 is where a
+   contributor meets it; `docs/blc/contracts/README.md` beside promotion criterion 1 is where a
    promoter meets it. Both, with one citing the other, is the third option and costs a second
    place to drift. Blocks `b`. Does not block `a`.
 

@@ -1,7 +1,7 @@
 # Ledger — #0003 A fourth artifact: the Contract
 `blc/1 #0003 done(PR#11) 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR#11) 5:skipped`
 
-**Brief:** `docs/briefs/0003-contract-artifact/brief.md`
+**Brief:** `docs/blc/briefs/0003-contract-artifact/brief.md`
 **Status:** done (PR #11)
 **Date:** 2026-08-21
 
@@ -9,10 +9,10 @@
 
 | id | status | what it does |
 |---|---|---|
-| `phase 1 — extract the contract` | done (PR#9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
+| `phase 1 — extract the contract` | done (PR#9) | Create the Contract at the decided path, carrying the eight invariants as clauses with stable ids. Resolve open decisions 1 and 3. Point `docs/blc/briefs/README.md` at it instead of restating. Add the checked-set sentence (which at this point honestly reads *nothing here is checked yet*) and the hand-stamped review date for unchecked clauses. |
 | `phase 2 — validator` | done (PR#10) | `tools/validate-briefs.sh` implementing clauses 1–8, each finding citing its clause id, driven by `tests/test_briefs.sh`. Contract's checked-set sentence now names the path. Standalone script rather than test-only — see Big decisions. |
 | ~~`phase 3 — report unchecked clauses`~~ | skipped | **Demoted from a gate to a report, then folded in.** The Contract lists which clauses have checks and which do not; it never requires one. Originally specified as a meta-check blocking any clause without a test — a cost at the moment of action that would stop you adding a rule until you had written its test. Phase 2 landed the half with work in it: `briefs_every_named_check_path_resolves` fails if the Contract names a check that does not exist. The other half reports over the empty set, because every v1 clause names a check. It returns when v1 grows a clause without one. |
-| `phase 4 — de-duplicate the readmes` | done (PR#11) | End the hand-sync between `docs/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
+| `phase 4 — de-duplicate the readmes` | done (PR#11) | End the hand-sync between `docs/blc/briefs/README.md` and `templates/docs/briefs/README.md`. Resolved by deleting the template copy and shipping this repository's own docs, which required shipping the Contract and its validator — see Big decisions. |
 | ~~`phase 5 — reconcile review-pr tags`~~ | skipped | Removed once open decision 3 resolved in favour of `[judgment]`. `review-pr` already uses the surviving name, so there is nothing to reconcile. See Big decisions. |
 
 ## Dependency structure
@@ -25,7 +25,7 @@
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | ~~Where the Contract lives~~ | **resolved** — `docs/contracts/v1.md` beside an unversioned `docs/contracts/README.md`. See Big decisions. |
+| 1 | ~~Where the Contract lives~~ | **resolved** — `docs/blc/contracts/v1.md` beside an unversioned `docs/blc/contracts/README.md`. See Big decisions. |
 | 2 | ~~What stops a future rule from being published without a check~~ | **resolved** — nothing does, by design. The Contract reports; it never requires. See Big decisions. |
 | 3 | ~~Which tag name survives~~ | **resolved** — `[judgment]`. See Big decisions. |
 | 4 | ~~Whether it gets a skill~~ | **resolved** — not until writing one by hand hurts. |
@@ -53,7 +53,7 @@
 2. **`review-pr`'s tags are read from *other* projects' documents.** It gates on `[defect]`/`[judgment]` in a target project's `docs/design/visual-language.md` §9. A hard rename breaks any project whose design doc uses the old tag. Phase 5 likely needs accept-both with a deprecation, not a rename.
 3. **`templates/process-rules.md` stays unchecked.** The brief names it as the fourth location of present-tense rules but the Change section does not cover it. Its clauses are mostly undecidable ("commit-push-pr is the only path to main"), so this may be a deliberate scope choice — but it is currently a silent one.
 4. **A dangling citation, found while resolving open decision 3.** `skills/review-pr/SKILL.md:106`
-   says the Big decisions "format and rules" live in `docs/briefs/README.md`. They do not. That
+   says the Big decisions "format and rules" live in `docs/blc/briefs/README.md`. They do not. That
    README names `ledger.md` only as "execution record (added on execution)" and never defines the
    section. The definition is instead spread across `skills/init-briefs/SKILL.md:25`,
    `skills/chronicle/SKILL.md:28,82,117`, and `docs/slides-process-overview.md:112`. This is a
@@ -69,7 +69,7 @@
    every clause must say whether it binds this repo, ships to consumers, or both.
 6. **Good news, recorded so nobody re-solves it:** `tests/run.sh` globs `test_*.sh` and CI runs `bash tests/run.sh` on every PR. Phase 2 needs no CI wiring.
 7. **Complication 1 fired during phase 1, and phase 1 made it worse before improving it.**
-   Extracting the invariants out of `docs/briefs/README.md` left
+   Extracting the invariants out of `docs/blc/briefs/README.md` left
    `templates/docs/briefs/README.md` — the copy that ships — still restating all eight, and
    still using `[advisory]`, the tag retired by open decision 3. For a moment this repository
    read its rules from a Contract while every installed project read a hand-maintained
@@ -87,14 +87,14 @@
    the `checked:` string to resolve. The installer therefore creates a top-level `tools/` in
    every project it touches. A project that already uses `tools/` for its own purpose gets a
    process script mixed into it. The alternative is to move the validator beside the Contract
-   it checks, in `docs/contracts/`, and change the `checked:` field to match — which would keep
+   it checks, in `docs/blc/contracts/`, and change the `checked:` field to match — which would keep
    the whole installed footprint under `docs/` apart from the host skill directories. Raised in
    the phase 4 review and deliberately not decided there, because it changes a published clause
    and belongs with the version-2 question rather than with a de-duplication phase.
 9. **The Contract's own internal links are unverified.** `tests/test_contract_ship.sh` proves
-   every relative link in the shipped `docs/briefs/README.md` resolves in the target, but its
-   pattern matches only `../` and `./` forms. The links between `docs/contracts/README.md` and
-   `docs/contracts/v1.md` are same-directory, so no test covers them. They resolve today
+   every relative link in the shipped `docs/blc/briefs/README.md` resolves in the target, but its
+   pattern matches only `../` and `./` forms. The links between `docs/blc/contracts/README.md` and
+   `docs/blc/contracts/v1.md` are same-directory, so no test covers them. They resolve today
    because the installer places both files. The gap is in coverage, not in behaviour, and it
    will bite when a third file joins that directory.
 
@@ -156,7 +156,7 @@ does not work, and finding out why changed the phase.
 
 The link is relative. `install.sh` placed no `docs/contracts/`, so the link resolved here and
 dangled in every target. Worse, `v1.md` carried sentences that are false outside this
-repository: that the rules were extracted from `docs/briefs/README.md`, and that
+repository: that the rules were extracted from `docs/blc/briefs/README.md`, and that
 `tests/test_briefs.sh` runs them on every push. Shipping that file verbatim would ship a
 document making claims about a tree it is not in. That is the overclaim this brief names as
 the defect class, committed by the artifact built to prevent it.
@@ -173,7 +173,7 @@ is the consumer-side mirror of the test that guards this repository.
 
 **Making the prose true anywhere cost three sentences.** The extraction-provenance paragraph
 left `v1.md` — it is a fact about this repository's history, and it already lives in this
-ledger and the brief. Two anecdotes in `docs/contracts/README.md` named paths that do not
+ledger and the brief. Two anecdotes in `docs/blc/contracts/README.md` named paths that do not
 exist in a target (`templates/process-rules.md`, `skills/review-pr/SKILL.md`); both now state
 the lesson without the local path. A document that ships has to be readable from where it
 lands, which is a constraint the phase-1 version never had to meet.
@@ -187,7 +187,7 @@ only the briefs README into `$CLAUDE_HOME`, and `init-briefs` copies that file i
 adopting the convention. That README now links the Contract. A repository set up by
 `init-briefs` alone, with no project-mode install, therefore gets a briefs README whose
 Contract link resolves to nothing. Project mode is unaffected. The fix is either to link
-`docs/contracts/` at machine level and teach `init-briefs` to copy it, or to accept that
+`docs/blc/contracts/` at machine level and teach `init-briefs` to copy it, or to accept that
 `init-briefs` is only ever run inside a project the installer has already touched. Not
 decided here.
 
@@ -215,7 +215,7 @@ Phase 2 built the last of those three because phase 2 is what created the first 
 
 **A validator run only against a compliant tree proves nothing.** 2026-08-21.
 
-`tools/validate-briefs.sh` goes green against `docs/briefs/` and would go green identically
+`tools/validate-briefs.sh` goes green against `docs/blc/briefs/` and would go green identically
 with every check replaced by `return 0`. So the self-check is not the test. Each clause has a
 fixture that violates it, and the suite was verified by neutering the `defect` reporter,
 which failed eleven tests. Recorded because this is the failure `review-pr` calls
@@ -239,7 +239,7 @@ narrow the rule.
 
 **Open decision 1 — where the Contract lives — resolved by drafting it first.** 2026-08-21.
 
-`docs/contracts/v1.md` for the clauses, beside an unversioned `docs/contracts/README.md` for
+`docs/blc/contracts/v1.md` for the clauses, beside an unversioned `docs/blc/contracts/README.md` for
 the legend. Neither of the two options the brief posed survived contact with the artifact.
 
 The brief framed this as side-by-side versions against in-place superseding, and the argument
@@ -309,7 +309,7 @@ That was an error. `process-rules.md` is a template and does not govern this rep
 documents never contradicted — only one of them ever applied.
 
 The real finding is the one underneath: a rule's **scope** is unstated everywhere in this repo.
-`templates/process-rules.md` reads as governance and is not; `docs/briefs/README.md` reads as
+`templates/process-rules.md` reads as governance and is not; `docs/blc/briefs/README.md` reads as
 this repo's own documentation and is *also* shipped as a template, symlinked into targets by
 `install.sh:391`. Neither says which it is. That ambiguity is what produced the misreading.
 
@@ -372,7 +372,7 @@ template.
 new kind of artifact — not at feature boundaries. A brief that adds behaviour to an existing
 category should be short. A brief that adds a category is arguing about what the categories are,
 and that argument is cheap now and expensive to reverse later. Candidate for
-`docs/briefs/README.md`, where a new team member would look for it.
+`docs/blc/briefs/README.md`, where a new team member would look for it.
 
 **Why the economics justify it here.** Brooks's essential-versus-accidental split is the reason.
 AI collapses accidental cost — typing, searching, checking citations, auditing history — and

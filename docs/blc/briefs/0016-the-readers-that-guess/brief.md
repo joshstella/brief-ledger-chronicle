@@ -90,7 +90,7 @@ probably split along that seam, which is what phases are for — but whoever pla
 the seam is there before they start.
 
 **Changing the pointer vocabulary costs less than it looks, but not nothing.** `PR#` appears
-in the record format in `docs/briefs/README.md`, in thirteen of the fifteen ledgers here, and
+in the record format in `docs/blc/briefs/README.md`, in thirteen of the fifteen ledgers here, and
 across `tests/`. The Contract is not among them: no clause reads the pointer. `BRIEFS-9` reads
 phase ids and states and stops at the parenthetical. So a second token is a change to the
 documented format and to `open-briefs.sh`, with tests, and no Contract version.

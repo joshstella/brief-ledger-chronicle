@@ -42,12 +42,12 @@ draft naming, and contiguity. `BRIEFS-4` requires a `brief.md` and says nothing 
 `ledger.md` beside it. A brief can sit in-progress forever and stay fully compliant.
 
 The nearest thing to a staleness cue points the wrong way. `Created` is documented in
-`docs/briefs/README.md:46` as the cue to re-ground a brief before executing it — a signal
+`docs/blc/briefs/README.md:46` as the cue to re-ground a brief before executing it — a signal
 about drafts and unstarted work. There is no equivalent for a brief already in flight.
 `BRIEFS-8` flags a gap in the serial sequence. Nothing flags a gap in time.
 
 **The sharpest part is structural.** A deferred phase parks code on a branch, and
-`docs/briefs/` has no concept of branches at all. The ledger names one in prose. Nothing
+`docs/blc/briefs/` has no concept of branches at all. The ledger names one in prose. Nothing
 resolves it, nothing notices it decaying, and deleting the branch leaves the ledger reading
 "code on branch" while pointing at nothing.
 
@@ -72,7 +72,7 @@ what was actually planned, which destroys the artifact to tidy it.
 
 ## Change
 
-Add a third entry to the Known limitations section of `docs/briefs/README.md`, written as
+Add a third entry to the Known limitations section of `docs/blc/briefs/README.md`, written as
 an incident report with the dated case, matching the two entries already there.
 
 The entry states the hole. It does not propose the mechanism: per the settled sequence, the
@@ -80,7 +80,7 @@ first buildable thing is a query that answers "which briefs are open?", and ever
 open decision 1 sits on top of that.
 
 Note for whoever executes this: that section now holds **one** entry, not two. Concurrent
-filing moved into `docs/contracts/v1.md` beside `BRIEFS-3` during #0003, and the README
+filing moved into `docs/blc/contracts/v1.md` beside `BRIEFS-3` during #0003, and the README
 links to it. "Writers outside the pipeline" is the shape to match.
 
 **Then reconcile ledger status, and build the query.** Amended 2026-08-24; the original
@@ -165,7 +165,7 @@ silence, which is this brief's finding inverted.
    the vocabulary rather than as work of its own.
 
 Both need the distinction above before either can be specified, and both are Contract v2
-work: v1's stated scope is the structure of `docs/briefs/`, and a rule about ledger status
+work: v1's stated scope is the structure of `docs/blc/briefs/`, and a rule about ledger status
 is a different namespace.
 
 ## Open decisions

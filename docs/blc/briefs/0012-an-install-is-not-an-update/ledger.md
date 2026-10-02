@@ -1,7 +1,7 @@
 # Ledger — #0012 An install is not an update
 `blc/2 #0012 done a:done(PR#50) b:done(PR#51) c:done(PR#51) d:done(PR#52)`
 
-**Brief:** `docs/briefs/0012-an-install-is-not-an-update/brief.md`
+**Brief:** `docs/blc/briefs/0012-an-install-is-not-an-update/brief.md`
 **Started:** 2026-09-09
 **Status:** done
 **Closed:** 2026-09-10

@@ -1,7 +1,7 @@
 # Ledger — #0013 A reader that cannot find it reports it missing
 `blc/2 #0013 done a:done(PR#55) b:done(PR#56)`
 
-**Brief:** `docs/briefs/0013-reader-blames-the-record/brief.md`
+**Brief:** `docs/blc/briefs/0013-reader-blames-the-record/brief.md`
 **Started:** 2026-09-16
 **Status:** done
 **Closed:** 2026-09-16
@@ -23,7 +23,7 @@ contract tests stay green.
 
 **b — the line's home.** `open-briefs` skips a leading `---` frontmatter block before reading
 the status line, so a ledger whose first line must be `---` is read by all three readers alike.
-`docs/briefs/README.md` states the placement rule for both shapes. The `[no-line]` text says
+`docs/blc/briefs/README.md` states the placement rule for both shapes. The `[no-line]` text says
 where the reader looked instead of asserting the line is absent. Regression test for a
 frontmatter ledger in `tests/test_open_briefs.sh`, and a matching one in
 `tests/test_list_briefs.sh` pinning that the permissive reader keeps agreeing.
@@ -75,7 +75,7 @@ letter scan cannot match. Until phase `a` lands, `open-briefs` cannot report dri
 file — including drift in the record of the work to fix that.
 
 **No `AGENTS.md` or `CLAUDE.md` at the repo root.** Architecture rules come from
-`docs/briefs/README.md`, `Manifesto.md`, and `.cursor/rules/no-cq-leak.mdc`, which is
+`docs/blc/briefs/README.md`, `Manifesto.md`, and `.cursor/rules/no-cq-leak.mdc`, which is
 `alwaysApply` and governs how both defects may be described: the install target is a
 destination, never a source. Every fixture in both phases is synthetic.
 
@@ -121,7 +121,7 @@ fixture helper, because `add_ledger` is built from the assumption this phase rem
 2026-09-16 at the review gate.
 
 `blc-start-brief` has said a phase id looks like `a — domain types` since the initial commit
-and has never been edited. Nothing in `skills/`, `templates/`, or `docs/briefs/README.md`
+and has never been edited. Nothing in `skills/`, `templates/`, or `docs/blc/briefs/README.md`
 prescribes a phase-table header. On 2026-09-09 a run wrote `| id | label | status | branch |`
 into #0012; the next two runs imitated the newest ledger rather than the instruction. The
 letter matcher shipped 2026-09-08 was therefore dead for the week that followed — across two
