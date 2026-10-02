@@ -132,14 +132,13 @@ test_jira_csv_puts_the_claim_and_each_phase_paragraph_in_the_descriptions() {
   assert_status 0
   diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
 "Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
-"Epic","#0001 — The thing","1","","me@x.org","in-progress","**One line.**
+"Epic","#0001 — The thing","1","","me@x.org","in-progress","*One line.*
 
-### A part
+h3. A part
 More.
 
 docs/blc/briefs/0001-a/brief.md"
-"Task","#0001/a — the first","2","1","me@x.org","in-progress","Do ""this"", then
-that.
+"Task","#0001/a — the first","2","1","me@x.org","in-progress","Do ""this"", then that.
 
 docs/blc/briefs/0001-a/ledger.md"
 "Task","#0001/b — the second","3","1","me@x.org","pending","Its text starts on the next line.
@@ -147,6 +146,48 @@ docs/blc/briefs/0001-a/ledger.md"
 docs/blc/briefs/0001-a/ledger.md"
 CSV
   [ ! -s "$ERR" ] || fail "expected no warning: $(cat "$ERR")"
+}
+
+# Jira's CSV importer reads wiki markup, not markdown. Each construct the record uses is here:
+# italic before bold, because wiki bold is markdown italic; code that holds asterisks and dashes,
+# which wiki would otherwise format; a double-backtick span; a link with italic text; wrapped
+# lines joined; a list item and its continuation; a table with its separator row dropped; a
+# heading; and a lone backtick and a spaced asterisk, which are text.
+test_jira_csv_converts_the_text_to_wiki_markup() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' '' \
+    '**Bold claim.** It has *italic*, `code with **stars**`, and `` `a — x` ``.' \
+    'A wrapped' \
+    'line with [a *link*](https://x.org/a_b) and `--max-age`.' \
+    '' \
+    '- item one' \
+    '  continued' \
+    '- item *two*' \
+    '' \
+    '| Phase | Work |' \
+    '|---|---|' \
+    '| `a — x` | Do **it** |' \
+    '' \
+    '### A part' \
+    '2 * 3 and a lone ` tick.'
+  run_jc 1
+  assert_status 0
+  diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
+"Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
+"Epic","#0001 — The thing","1","","me@x.org","planned","*Bold claim.* It has _italic_, {{code with \*\*stars\*\*}}, and {{`a — x`}}. A wrapped line with [a _link_|https://x.org/a_b] and {{\-\-max\-age}}.
+
+- item one continued
+- item _two_
+
+|| Phase || Work ||
+| {{a — x}} | Do *it* |
+
+h3. A part
+2 * 3 and a lone ` tick.
+
+docs/blc/briefs/0001-a/brief.md"
+CSV
 }
 
 # A missing source is a thinner ticket, not a refusal, and the warning names what is missing.

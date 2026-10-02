@@ -298,6 +298,11 @@ succeeds. Two `## The claim` sections, or two paragraphs for one phase, stop the
 because either could be the one meant. The Description is a copy from the day of the export:
 a later edit to the brief or the ledger does not reach the board.
 
+The importer reads a Description as Jira wiki markup, not markdown, so the export converts the
+text. Bold, italic, code, links, tables and headings become their wiki forms, and the lines of
+a paragraph are joined into one. Anything else passes through as text, and a `{` outside code
+can still start a wiki macro.
+
 **No phase ticket key is written down anywhere.** A phase ticket is found, not recorded: list
 the children of the Epic and match the summary, whose form "Phase ids" above fixes and which
 is therefore computable from the ledger.

@@ -15,7 +15,7 @@
 #   Description  for the Epic, the brief's `## The claim` text, then the brief's path. For a
 #                Task, the ledger paragraph that starts `**<id> — <label>.**`, without that
 #                lead, then the ledger's path. A missing text gives the path alone and a
-#                warning on stderr. The text is copied as written.
+#                warning on stderr. The text is converted from markdown to Jira wiki markup.
 #
 # A one-shot seed, not a sync (#0007, "d becomes a CSV export"). Importing the same file
 # twice makes two Epics, so a brief whose identity line already carries a Jira key is
@@ -68,6 +68,142 @@ die() {
 
 warn() {
   printf 'jira-csv: warning: %s\n' "$1" >&2
+}
+
+# Convert the markdown on stdin to Jira wiki markup. Jira Cloud's CSV importer reads a
+# Description as wiki markup, not markdown, so `**bold**` would show its asterisks.
+#
+# Only what the record uses is converted: bold, italic, code, links, tables, headings, and
+# wrapped lines. Anything else passes through as text.
+#
+# The lines of a paragraph are joined into one, because a wiki renderer shows each newline as a
+# line break. Spans are converted after the join, since a code span or a bold run can wrap.
+md_to_wiki() {
+  awk '
+    # Inside {{...}} the renderer still reads wiki formatting, so a code span that holds
+    # `--max-age` would show struck through. A backslash makes the next character literal.
+    function code_escape(s,   out, i, c) {
+      out = ""
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (index("*_{}[]|-+^~?", c)) out = out "\\"
+        out = out c
+      }
+      return out
+    }
+
+    # Markdown italic is one asterisk, which wiki reads as bold, so italic is converted
+    # first and bold is held aside until it is done.
+    function emphasis(s,   out) {
+      gsub(/\*\*/, "\001", s)
+      out = ""
+      while (match(s, /\*[^* \t][^*]*\*/) && substr(s, RSTART + RLENGTH - 2, 1) !~ /[ \t]/) {
+        out = out substr(s, 1, RSTART - 1) "_" substr(s, RSTART + 1, RLENGTH - 2) "_"
+        s = substr(s, RSTART + RLENGTH)
+      }
+      s = out s
+      gsub("\001", "*", s)
+      return s
+    }
+
+    # RSTART and RLENGTH are global, and the helpers called below run match() of their own,
+    # so each loop copies them before it calls one.
+    function plain(s,   out, t, p, start, len) {
+      out = ""
+      while (match(s, /\[[^]]*\]\([^)]*\)/)) {
+        start = RSTART
+        len = RLENGTH
+        t = substr(s, start, len)
+        p = index(t, "](")
+        out = out emphasis(substr(s, 1, start - 1)) "[" emphasis(substr(t, 2, p - 2)) "|" substr(t, p + 2, length(t) - p - 2) "]"
+        s = substr(s, start + len)
+      }
+      return out emphasis(s)
+    }
+
+    # A code span opens with a run of backticks and closes at the next run of the same
+    # length. A run that never closes is text.
+    function spans(s,   out, run, rest, i, j, code, start, len) {
+      out = ""
+      while (match(s, /`+/)) {
+        start = RSTART
+        len = RLENGTH
+        run = substr(s, start, len)
+        rest = substr(s, start + len)
+        out = out plain(substr(s, 1, start - 1))
+        j = 0
+        for (i = 1; i <= length(rest) - length(run) + 1; i++) {
+          if (substr(rest, i, length(run)) == run && substr(rest, i - 1, 1) != "`" && substr(rest, i + length(run), 1) != "`") { j = i; break }
+        }
+        if (j == 0) { out = out run; s = rest; continue }
+        code = substr(rest, 1, j - 1)
+        if (code ~ /^ .* $/) code = substr(code, 2, length(code) - 2)
+        out = out "{{" code_escape(code) "}}"
+        s = substr(rest, j + length(run))
+      }
+      return out plain(s)
+    }
+
+    function emit(s) { line[++n] = s }
+    function flush() { if (para != "") emit(spans(para)); para = "" }
+
+    # A header row is the first row of a table. Its cell bars double, except an escaped bar
+    # inside code.
+    function row(s, header,   inner, out, i, c) {
+      inner = spans(substr(s, 2, length(s) - 2))
+      if (!header) return "|" inner "|"
+      out = ""
+      for (i = 1; i <= length(inner); i++) {
+        c = substr(inner, i, 1)
+        out = out ((c == "|" && substr(inner, i - 1, 1) != "\\") ? "||" : c)
+      }
+      return "||" out "||"
+    }
+
+    { sub(/\r$/, "") }
+    /^[ \t]*$/ { flush(); in_table = 0; emit(""); next }
+    /^\|/ {
+      flush()
+      sub(/[ \t]+$/, "")
+      if ($0 ~ /^\|[ \t:|-]*-[ \t:|-]*\|$/) next
+      emit(row($0, !in_table))
+      in_table = 1
+      next
+    }
+    /^#+[ \t]/ {
+      flush()
+      in_table = 0
+      match($0, /^#+/)
+      level = RLENGTH
+      text = substr($0, RLENGTH + 1)
+      sub(/^[ \t]+/, "", text)
+      emit("h" level ". " spans(text))
+      next
+    }
+    /^[ \t]*([-*+]|[0-9]+\.)[ \t]/ {
+      flush()
+      in_table = 0
+      para = $0
+      sub(/^[ \t]+/, "", para)
+      next
+    }
+    {
+      in_table = 0
+      text = $0
+      sub(/^[ \t]+/, "", text)
+      para = (para == "" ? text : para " " text)
+    }
+    END {
+      flush()
+      first = 1
+      while (first <= n && line[first] == "") first++
+      last = n
+      while (last >= first && line[last] == "") last--
+      for (i = first; i <= last; i++) {
+        if (line[i] == "" && line[i - 1] == "") continue
+        print line[i]
+      }
+    }'
 }
 
 # Print the text of the brief's `## The claim` section, without the blank lines at either end.
@@ -197,7 +333,7 @@ CLAIM=$(brief_claim "$BRIEF") || rc=$?
 [ "$rc" -eq 2 ] && die "#$SERIAL: $BRIEF has two '## The claim' sections, so its summary is ambiguous"
 EPIC_DESC="$BRIEF"
 if [ -n "$CLAIM" ]; then
-  EPIC_DESC="$CLAIM"$'\n\n'"$BRIEF"
+  EPIC_DESC="$(printf '%s\n' "$CLAIM" | md_to_wiki)"$'\n\n'"$BRIEF"
 else
   warn "#$SERIAL: $BRIEF has no '## The claim' text, so the Epic's Description is its path only"
 fi
@@ -225,7 +361,7 @@ while IFS= read -r entry; do
   case "$rc" in
     0)
       if [ -n "$para" ]; then
-        task_desc="$para"$'\n\n'"$LEDGER"
+        task_desc="$(printf '%s\n' "$para" | md_to_wiki)"$'\n\n'"$LEDGER"
       else
         warn "#$SERIAL/$idx: the paragraph for phase $idx in $LEDGER is empty, so the Task's Description is its path only"
       fi
