@@ -100,6 +100,101 @@ test_upgrade_prompt_is_silent_without_the_old_layout() {
   assert_not_contains "old layout" "$OUT"
 }
 
+up_old_entry() {
+  printf '# Install log\n\n## 2026-01-01T00:00:00Z — oldbox\n\n- **Host:** cursor\n' \
+    > "$TARGET/docs/install-log/install-log.md"
+}
+
+test_upgrade_moves_each_project_file_under_docs_blc() {
+  up_old_layout
+  mkdir -p "$TARGET/docs/state" "$TARGET/docs/chronicles"
+  printf 'declared\n' > "$TARGET/docs/state/me@example.org.md"
+  printf 'story\n' > "$TARGET/docs/chronicles/chronicle.md"
+  printf 'here\n' > "$TARGET/docs/orientation.md"
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_contains "# Brief" "$TARGET/docs/blc/briefs/0001-first/brief.md"
+  assert_contains "# Ledger" "$TARGET/docs/blc/briefs/0001-first/ledger.md"
+  assert_contains "declared" "$TARGET/docs/blc/state/me@example.org.md"
+  assert_contains "story" "$TARGET/docs/blc/chronicles/chronicle.md"
+  assert_contains "here" "$TARGET/docs/blc/orientation.md"
+  assert_out "[→] docs/briefs/0001-first/brief.md → docs/blc/briefs/0001-first/brief.md"
+}
+
+test_upgrade_leaves_one_tree_not_two() {
+  up_old_layout
+  mkdir -p "$TARGET/docs/contracts"
+  printf 'old\n' > "$TARGET/docs/contracts/v1.md"
+  printf 'here\n' > "$TARGET/docs/orientation.md"
+  run_install y --target "$TARGET"
+  assert_status 0
+  for old in briefs contracts chronicles state install-log; do
+    assert_no_dir "$TARGET/docs/$old"
+  done
+  assert_no_file "$TARGET/docs/orientation.md"
+}
+
+test_upgrade_drops_the_old_toolkit_docs_and_installs_current_ones() {
+  up_old_layout
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_out "docs/briefs/README.md (old copy of a toolkit file — dropped, replaced below)"
+  assert_not_contains "old toolkit copy" "$TARGET/docs/blc/briefs/README.md"
+  assert_contains "How work is specified" "$TARGET/docs/blc/briefs/README.md"
+}
+
+test_upgrade_moves_the_install_log_when_there_is_no_new_one() {
+  up_old_layout
+  up_old_entry
+  run_install y --target "$TARGET"
+  assert_status 0
+  local log="$TARGET/docs/blc/install-log/install-log.md"
+  assert_contains "oldbox" "$log"
+  assert_count 2 "$(count_log_entries "$log")" "log entries: the old one and this run"
+  assert_count 1 "$(grep -c '^# Install log' "$log")" "log headers"
+}
+
+test_upgrade_joins_two_install_logs_oldest_first() {
+  up_old_layout
+  up_old_entry
+  up_half_upgraded
+  printf '\n## 2026-09-01T00:00:00Z — midbox\n\n- **Host:** cursor\n' \
+    >> "$TARGET/docs/blc/install-log/install-log.md"
+  run_install y --target "$TARGET"
+  assert_status 0
+  local log="$TARGET/docs/blc/install-log/install-log.md"
+  assert_count 3 "$(count_log_entries "$log")" "log entries: old, half-upgrade, this run"
+  assert_count 1 "$(grep -c '^# Install log' "$log")" "log headers"
+  extract_log_entry "$log" 1 "$TMP/first"
+  extract_log_entry "$log" 2 "$TMP/second"
+  assert_contains "oldbox" "$TMP/first"
+  assert_contains "midbox" "$TMP/second"
+  assert_no_dir "$TARGET/docs/install-log"
+}
+
+# The prune reads the log to find what earlier installs put here. It must run on the
+# joined log, or an upgrade forgets every skill the old installs recorded.
+test_upgrade_prunes_stale_skills_the_old_log_recorded() {
+  up_old_layout
+  printf '# Install log\n\n## 2026-01-01T00:00:00Z — oldbox\n\n### Skills installed\n  - zzz-stale-skill\n' \
+    > "$TARGET/docs/install-log/install-log.md"
+  mkdir -p "$TARGET/.cursor/skills/zzz-stale-skill"
+  printf 'OLD\n' > "$TARGET/.cursor/skills/zzz-stale-skill/SKILL.md"
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_no_dir "$TARGET/.cursor/skills/zzz-stale-skill"
+}
+
+test_upgrade_moves_nothing_on_the_next_run() {
+  up_old_layout
+  run_install y --target "$TARGET"
+  assert_status 0
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_not_contains "old layout" "$OUT"
+  assert_not_contains "[→]" "$OUT"
+}
+
 test_upgrade_refuses_a_symlinked_old_tree() {
   mkdir -p "$TMP/elsewhere/0001-first"
   printf '# Brief\n' > "$TMP/elsewhere/0001-first/brief.md"

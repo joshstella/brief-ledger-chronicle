@@ -130,6 +130,8 @@ SKIPPED=()
 REPLACED=()
 REMOVED=()
 CONFLICTS=()
+MOVED=()
+DROPPED=()
 
 log_created() { CREATED+=("$1"); echo "  [+] $1"; }
 log_skipped() { SKIPPED+=("$1"); echo "  [~] $1 (already exists, skipped)"; }
@@ -139,6 +141,8 @@ log_relinked() { CREATED+=("$1 (replaced dangling symlink)"); echo "  [+] $1 (re
 log_skipped_as() { SKIPPED+=("$1 ($2)"); echo "  [~] $1 ($2)"; }
 log_conflict() { SKIPPED+=("$1"); echo "  [!] $1 ($2 — NOT replaced; see below)"; }
 log_removed() { REMOVED+=("$1"); echo "  [-] $1 (removed — no longer shipped)"; }
+log_moved() { MOVED+=("$1 → $2"); echo "  [→] $1 → $2"; }
+log_dropped() { DROPPED+=("$1"); echo "  [-] $1 (old copy of a toolkit file — dropped, replaced below)"; }
 
 # Toolkit-owned files are replaced every run. Project-owned paths never reach here.
 place_file() {
@@ -877,6 +881,63 @@ fi
 echo ""
 echo "Installing..."
 echo ""
+
+# ── Step 3a: Move the old layout ──────────────────────────────────────────────
+# Step 2b proved every move has a free destination. Runs before the prune, because the
+# prune reads the install log, and only the joined log holds the old installs' entries.
+
+# The old entries come first so the log stays oldest-first. The new log's header is dropped:
+# both logs start with the same header, and one file needs it once.
+join_install_logs() {
+  local old="$TARGET_DIR/$OLD_LOG" new="$TARGET_DIR/docs/blc/install-log/install-log.md"
+  if [[ ! -f "$new" ]]; then
+    mkdir -p "$(dirname "$new")"
+    mv "$old" "$new"
+    log_moved "$OLD_LOG" "docs/blc/install-log/install-log.md"
+    return 0
+  fi
+  {
+    cat "$old"
+    echo ""
+    awk 'found || /^## / { found = 1; print }' "$new"
+  } > "$new.joining"
+  mv "$new.joining" "$new"
+  rm "$old"
+  log_moved "$OLD_LOG" "docs/blc/install-log/install-log.md (joined, old entries first)"
+}
+
+if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
+  echo "Moving the old layout under docs/blc/..."
+  for rel in ${OLD_MOVES[@]+"${OLD_MOVES[@]}"}; do
+    if [[ "$rel" == "$OLD_LOG" ]]; then
+      join_install_logs
+      continue
+    fi
+    dst="$(new_layout_path "$rel")"
+    mkdir -p "$TARGET_DIR/$(dirname "$dst")"
+    mv "$TARGET_DIR/$rel" "$TARGET_DIR/$dst"
+    log_moved "$rel" "$dst"
+  done
+  # What is left is the toolkit's own old docs: Step 2b refused anything else that did
+  # not move. They are dropped, not moved, because this install writes the current copy.
+  # Each one is checked against the list again, because a wrong delete loses project work.
+  for root in "${OLD_ROOTS[@]}"; do
+    [[ -e "$TARGET_DIR/$root" ]] || continue
+    while IFS= read -r rel; do
+      [[ -n "$rel" ]] || continue
+      if ! printf '%s\n' "$OLD_TOOLKIT" | grep -qxF -- "$rel"; then
+        echo "  [!] $rel (not moved and not a toolkit file — left in place)"
+        continue
+      fi
+      rm -f "$TARGET_DIR/$rel"
+      log_dropped "$rel"
+    done < <(cd "$TARGET_DIR" && find "$root" ! -type d | LC_ALL=C sort)
+    if [[ -d "$TARGET_DIR/$root" ]]; then
+      find "$TARGET_DIR/$root" -depth -type d -empty -delete
+    fi
+  done
+  echo ""
+fi
 
 # ── Step 3b: Prune stale skills and commands ─────────────────────────────────
 # Runs before replacement so a project is not left with stale trees beside fresh copies.
