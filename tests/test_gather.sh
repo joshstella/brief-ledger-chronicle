@@ -409,6 +409,27 @@ test_gather_incremental_says_so_when_nothing_is_new() {
   assert_out "(no new briefs since 2026-06-01)"
 }
 
+# A move under docs/blc/ that the ignore list names is not new work. A brief and a draft last
+# written before the cutoff, then moved after it, stay out of an incremental run.
+test_gather_incremental_skips_work_only_an_ignored_move_touched() {
+  gather_repo
+  mkdir -p "$REPO/docs/briefs/0001-old" "$REPO/docs/briefs/_drafts"
+  printf '# old\n' > "$REPO/docs/briefs/0001-old/brief.md"
+  printf '# Ledger — old\n' > "$REPO/docs/briefs/0001-old/ledger.md"
+  printf '# An idea\n' > "$REPO/docs/briefs/_drafts/idea.md"
+  gather_commit "2026-01-01T00:00:00-04:00" "seed #0001 and a draft"
+  git -C "$REPO" mv docs/briefs/0001-old "docs/blc/briefs/0001-old"
+  git -C "$REPO" mv docs/briefs/_drafts/idea.md docs/blc/briefs/_drafts/idea.md
+  gather_commit "2026-06-01T00:00:00-04:00" "move under docs/blc"
+  git -C "$REPO" rev-parse HEAD > "$BRIEFS/../ignore-revs"
+  gather_commit "2026-06-01T00:00:00-04:00" "ignore the move"
+  run_gather "2026-03-01"
+  assert_status 0
+  assert_out "(no new briefs since 2026-03-01)"
+  assert_out "(none since 2026-03-01)"
+  assert_not_contains "idea.md" "$OUT"
+}
+
 # The incremental path is the one that shipped broken, and it broke by ending early
 # rather than by printing anything wrong. Reaching the final section is the check.
 test_gather_incremental_runs_to_the_end() {

@@ -185,6 +185,26 @@ test_orient_reports_a_declaration_with_its_author_and_age() {
   assert_out "last written"
 }
 
+# A declaration moved under docs/blc/ in a commit the ignore list names was last written
+# when its author wrote it, not when it moved.
+test_orient_dates_a_declaration_from_before_an_ignored_move() {
+  orient_repo
+  mkdir -p "$REPO/docs/state"
+  printf '# someone@example.com\n\n## 2026-01-01 — claiming #0002\n' \
+    > "$REPO/docs/state/someone@example.com.md"
+  git -C "$REPO" add -A
+  GIT_AUTHOR_DATE="2026-01-01T12:00:00-04:00" GIT_COMMITTER_DATE="2026-01-01T12:00:00-04:00" \
+    git -C "$REPO" commit -qm "declare" >/dev/null 2>&1
+  mkdir -p "$REPO/docs/blc"
+  git -C "$REPO" mv docs/state docs/blc/state
+  GIT_AUTHOR_DATE="2026-06-01T12:00:00-04:00" GIT_COMMITTER_DATE="2026-06-01T12:00:00-04:00" \
+    git -C "$REPO" commit -qm "move" >/dev/null 2>&1
+  git -C "$REPO" rev-parse HEAD > "$REPO/docs/blc/ignore-revs"
+  run_orient
+  assert_status 0
+  assert_out "(last written 2026-01-01)"
+}
+
 test_orient_ignores_the_state_readme() {
   orient_repo
   mkdir -p "$REPO/docs/blc/state"
