@@ -41,6 +41,9 @@ Stale skills and commands named in `docs/blc/install-log/install-log.md` are rem
 
 Project-owned paths are never written after creation: `AGENTS.md` / `CLAUDE.md`, numbered
 brief folders, ledgers, declarations, and chronicles.
+The one exception is the old layout. If these are directly under `docs/`, an install moves
+them under `docs/blc/` without changing them, and lists each move in
+`docs/blc/install-log/install-log.md`.
 
 To customize without fighting the installer:
 - **`AGENTS.md` / `CLAUDE.md`** — project architecture, stack, and rules for agents.
