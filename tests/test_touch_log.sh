@@ -16,6 +16,8 @@ tl_repo() {
 }
 
 # usage: tl_commit <iso-date> <message>
+# Every date here carries a non-zero offset. git 2.43 prints a UTC author date as `+00:00` and
+# later versions print `Z`, so a UTC fixture asserts the git version, not the reader.
 tl_commit() {
   git -C "$REPO" add -A
   GIT_AUTHOR_DATE="$1" GIT_COMMITTER_DATE="$1" git -C "$REPO" commit -qm "$2" >/dev/null 2>&1
@@ -43,11 +45,11 @@ test_touch_log_follows_a_file_through_a_rename() {
   tl_source_lib
   tl_repo
   tl_ledger old/0001-a/ledger.md a
-  tl_commit 2026-01-01T00:00:00+00:00 "add"
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
   git -C "$REPO" mv old new
-  tl_commit 2026-02-01T00:00:00+00:00 "move"
-  assert_count "2026-02-01T00:00:00+00:00
-2026-01-01T00:00:00+00:00" "$(tl_dates none new/0001-a/)" "dates of a moved folder"
+  tl_commit 2026-02-01T00:00:00-04:00 "move"
+  assert_count "2026-02-01T00:00:00-04:00
+2026-01-01T00:00:00-04:00" "$(tl_dates none new/0001-a/)" "dates of a moved folder"
 }
 
 # `git log --follow` was the first version of this, and it follows copies. A ledger that is a
@@ -57,10 +59,10 @@ test_touch_log_does_not_follow_a_copy() {
   tl_source_lib
   tl_repo
   tl_ledger 0001-a/ledger.md a
-  tl_commit 2026-01-01T00:00:00+00:00 "first brief"
+  tl_commit 2026-01-01T00:00:00-04:00 "first brief"
   tl_ledger 0002-b/ledger.md b
-  tl_commit 2026-02-01T00:00:00+00:00 "second brief"
-  assert_count "2026-02-01T00:00:00+00:00" "$(tl_dates none 0002-b/)" "dates of a near-copy"
+  tl_commit 2026-02-01T00:00:00-04:00 "second brief"
+  assert_count "2026-02-01T00:00:00-04:00" "$(tl_dates none 0002-b/)" "dates of a near-copy"
 }
 
 # A brief is a draft, then filed, then moved: three names. Its first date is the draft's.
@@ -68,14 +70,14 @@ test_touch_log_follows_a_chain_of_renames() {
   tl_source_lib
   tl_repo
   tl_ledger docs/briefs/_drafts/thing.md thing
-  tl_commit 2026-01-01T00:00:00+00:00 "draft"
+  tl_commit 2026-01-01T00:00:00-04:00 "draft"
   mkdir -p "$REPO/docs/briefs/0001-thing"
   git -C "$REPO" mv docs/briefs/_drafts/thing.md docs/briefs/0001-thing/brief.md
-  tl_commit 2026-02-01T00:00:00+00:00 "file"
+  tl_commit 2026-02-01T00:00:00-04:00 "file"
   mkdir -p "$REPO/docs/blc"
   git -C "$REPO" mv docs/briefs docs/blc/briefs
-  tl_commit 2026-03-01T00:00:00+00:00 "move"
-  assert_count "2026-01-01T00:00:00+00:00" "$(tl_dates none docs/blc/briefs/0001-thing/ | tail -1)" \
+  tl_commit 2026-03-01T00:00:00-04:00 "move"
+  assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates none docs/blc/briefs/0001-thing/ | tail -1)" \
     "first date of a draft that was filed and moved"
 }
 
@@ -83,19 +85,19 @@ test_touch_log_drops_an_ignored_commit_named_by_an_abbreviated_hash() {
   tl_source_lib
   tl_repo
   tl_ledger old/0001-a/ledger.md a
-  tl_commit 2026-01-01T00:00:00+00:00 "add"
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
   git -C "$REPO" mv old new
-  tl_commit 2026-02-01T00:00:00+00:00 "move"
+  tl_commit 2026-02-01T00:00:00-04:00 "move"
   printf '# the move\n%s\n' "$(git -C "$REPO" rev-parse --short HEAD)" > "$REPO/ignore-revs"
-  assert_count "2026-01-01T00:00:00+00:00" "$(tl_dates ignore-revs new/0001-a/)" "dates without the move"
+  assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates ignore-revs new/0001-a/)" "dates without the move"
 }
 
 test_touch_log_without_an_ignore_file_ignores_nothing() {
   tl_source_lib
   tl_repo
   tl_ledger 0001-a/ledger.md a
-  tl_commit 2026-01-01T00:00:00+00:00 "add"
-  assert_count "2026-01-01T00:00:00+00:00" "$(tl_dates no-such-file 0001-a/)" "dates"
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
+  assert_count "2026-01-01T00:00:00-04:00" "$(tl_dates no-such-file 0001-a/)" "dates"
   [ ! -s "$ERR" ] || fail "a missing ignore file reported: $(cat "$ERR")"
 }
 
@@ -103,7 +105,7 @@ test_touch_log_an_untracked_path_has_no_dates() {
   tl_source_lib
   tl_repo
   tl_ledger 0001-a/ledger.md a
-  tl_commit 2026-01-01T00:00:00+00:00 "add"
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
   tl_ledger 0002-b/ledger.md b
   assert_count "" "$(tl_dates none 0002-b/)" "dates of an uncommitted brief"
 }
@@ -124,17 +126,17 @@ test_touch_log_list_briefs_keeps_dates_through_an_ignored_move() {
   fixture_install_tool "$REPO" list-briefs.sh
   tl_ledger docs/briefs/0001-a/ledger.md a
   printf '# A\n' > "$REPO/docs/briefs/0001-a/brief.md"
-  tl_commit 2026-01-01T00:00:00+00:00 "first"
+  tl_commit 2026-01-01T00:00:00-04:00 "first"
   tl_ledger docs/briefs/0002-b/ledger.md b
   printf '# B\n' > "$REPO/docs/briefs/0002-b/brief.md"
-  tl_commit 2026-02-01T00:00:00+00:00 "second"
+  tl_commit 2026-02-01T00:00:00-04:00 "second"
   mkdir -p "$REPO/docs/blc"
   git -C "$REPO" mv docs/briefs docs/blc/briefs
-  tl_commit 2026-03-01T00:00:00+00:00 "move"
+  tl_commit 2026-03-01T00:00:00-04:00 "move"
   git -C "$REPO" rev-parse HEAD > "$REPO/docs/blc/ignore-revs"
   ( cd "$REPO" && bash tools/list-briefs.sh ) >"$OUT" 2>"$ERR"
-  assert_out "| #0002 | B | no-line | 2026-02-01T00:00:00+00:00 | 2026-02-01T00:00:00+00:00 | — |"
-  assert_out "| #0001 | A | no-line | 2026-01-01T00:00:00+00:00 | 2026-01-01T00:00:00+00:00 | — |"
+  assert_out "| #0002 | B | no-line | 2026-02-01T00:00:00-04:00 | 2026-02-01T00:00:00-04:00 | — |"
+  assert_out "| #0001 | A | no-line | 2026-01-01T00:00:00-04:00 | 2026-01-01T00:00:00-04:00 | — |"
   assert_not_contains "2026-03-01" "$OUT"
 }
 
@@ -146,7 +148,7 @@ test_touch_log_list_briefs_reports_a_bad_ignore_entry_once() {
   tl_ledger docs/blc/briefs/0001-a/ledger.md a
   tl_ledger docs/blc/briefs/0002-b/ledger.md b
   printf 'notacommit\n' > "$REPO/docs/blc/ignore-revs"
-  tl_commit 2026-01-01T00:00:00+00:00 "add"
+  tl_commit 2026-01-01T00:00:00-04:00 "add"
   ( cd "$REPO" && bash tools/list-briefs.sh ) >"$OUT" 2>"$ERR"
   assert_count 1 "$(grep -c 'notacommit is not a commit here' "$ERR")" "reports of the bad entry"
 }
