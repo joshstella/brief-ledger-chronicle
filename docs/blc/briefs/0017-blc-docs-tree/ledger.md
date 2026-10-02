@@ -1,10 +1,10 @@
 # Ledger — #0017 The BLC docs tree
 
-`blc/2 #0017 in-progress a:done(PR#80) b:done(PR#81) c:in-progress(brief/0017-c-the-installer,PR#82) d:pending`
+`blc/2 #0017 done a:done(PR#80) b:done(PR#81) c:done(PR#82) d:skipped`
 
 **Brief:** `docs/blc/briefs/0017-blc-docs-tree/brief.md`
 **Started:** 2026-10-01
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
@@ -12,8 +12,11 @@
 |---|---|---|---|
 | a | the move | done (PR#80) | — |
 | b | the record | done (PR#81) | — |
-| c | the installer | in-progress | `brief/0017-c-the-installer` |
-| d | the contract | pending | — |
+| c | the installer | done (PR#82) | — |
+| d | the contract | skipped | — |
+
+`d` is skipped. Its Contract v1.3 shipped in `a`, and `c` needed no clause: the upgrade is
+installer behaviour, and the Contract covers the structure of the briefs directory.
 
 The ids and labels are the brief's. What each phase covers changed against the repository, as
 the re-plan below records.
