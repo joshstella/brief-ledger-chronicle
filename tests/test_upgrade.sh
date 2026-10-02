@@ -195,6 +195,51 @@ test_upgrade_moves_nothing_on_the_next_run() {
   assert_not_contains "[→]" "$OUT"
 }
 
+test_upgrade_logs_each_move_and_each_dropped_copy() {
+  up_old_layout
+  run_install y --target "$TARGET"
+  assert_status 0
+  local log="$TARGET/docs/blc/install-log/install-log.md"
+  extract_log_entry "$log" 1 "$TMP/entry"
+  assert_contains "### Moved — old docs/ layout to docs/blc/" "$TMP/entry"
+  assert_contains "  - docs/briefs/0001-first/brief.md → docs/blc/briefs/0001-first/brief.md" "$TMP/entry"
+  assert_contains "  - docs/briefs/README.md (old copy of a toolkit file — dropped)" "$TMP/entry"
+  assert_out "Moved from the old docs/ layout (3):"
+}
+
+test_upgrade_logs_no_moved_section_when_nothing_moved() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_not_contains "### Moved" "$TARGET/docs/blc/install-log/install-log.md"
+  assert_not_contains "Moved from" "$OUT"
+  assert_not_contains "ignore-revs" "$OUT"
+}
+
+# The closing instruction is a command the project runs. Run it, and check that the tools
+# then date the brief by its own work, not by the move.
+test_upgrade_ignore_instruction_keeps_each_brief_dated() {
+  git -C "$TARGET" init -q -b main
+  git -C "$TARGET" config user.email t@example.com
+  git -C "$TARGET" config user.name Test
+  mkdir -p "$TARGET/docs/briefs/0001-first"
+  printf '# First\n' > "$TARGET/docs/briefs/0001-first/brief.md"
+  printf '# Ledger\n\n`blc/2 #0001 in-progress a:pending`\n' > "$TARGET/docs/briefs/0001-first/ledger.md"
+  git -C "$TARGET" add -A
+  GIT_AUTHOR_DATE="2026-03-01T12:00:00-04:00" GIT_COMMITTER_DATE="2026-03-01T12:00:00-04:00" \
+    git -C "$TARGET" commit -qm "brief" >/dev/null
+  run_install y --target "$TARGET"
+  assert_status 0
+  local cmd
+  cmd="$(grep -o 'echo "\$(git rev-parse HEAD).*ignore-revs' "$OUT")"
+  [ -n "$cmd" ] || fail "expected the ignore-revs command in the output"
+  git -C "$TARGET" add -A
+  GIT_AUTHOR_DATE="2026-10-02T12:00:00-04:00" GIT_COMMITTER_DATE="2026-10-02T12:00:00-04:00" \
+    git -C "$TARGET" commit -qm "install" >/dev/null
+  (cd "$TARGET" && eval "$cmd")
+  (cd "$TARGET" && bash tools/list-briefs.sh) > "$TMP/list" 2>&1
+  assert_contains "2026-03-01T12:00:00-04:00 | 2026-03-01T12:00:00-04:00" "$TMP/list"
+}
+
 test_upgrade_refuses_a_symlinked_old_tree() {
   mkdir -p "$TMP/elsewhere/0001-first"
   printf '# Brief\n' > "$TMP/elsewhere/0001-first/brief.md"

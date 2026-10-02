@@ -1138,6 +1138,17 @@ while IFS=$'\t' read -r _owner kind src _dst; do
 done < <(map_rows toolkit)
 [[ -n "$CMD_LIST" ]] || CMD_LIST="  (none — this host takes them all as skills)"$'\n'
 
+# Only an upgrade from the old layout has this section. A move happens once per target, so
+# an empty section on every later entry would say nothing.
+MOVED_SECTION=""
+if [[ $((${#MOVED[@]} + ${#DROPPED[@]})) -gt 0 ]]; then
+  MOVED_SECTION=$'\n\n'"### Moved — old docs/ layout to docs/blc/"$'\n'
+  for m in ${MOVED[@]+"${MOVED[@]}"}; do MOVED_SECTION+=$'\n'"  - $m"; done
+  for d in ${DROPPED[@]+"${DROPPED[@]}"}; do
+    MOVED_SECTION+=$'\n'"  - $d (old copy of a toolkit file — dropped)"
+  done
+fi
+
 cat >> "$LOG_FILE" <<ENTRY_EOF
 ## $TIMESTAMP — $MACHINE
 
@@ -1181,7 +1192,7 @@ $(if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   for s in ${SKIPPED[@]+"${SKIPPED[@]}"}; do echo "  - $s"; done
 else
   echo "  (none)"
-fi)
+fi)$MOVED_SECTION
 
 ENTRY_EOF
 
@@ -1214,6 +1225,12 @@ if [[ ${#SKIPPED[@]} -gt 0 ]]; then
   for item in ${SKIPPED[@]+"${SKIPPED[@]}"}; do echo "  $item"; done
 fi
 
+if [[ ${#MOVED[@]} -gt 0 ]]; then
+  echo ""
+  echo "Moved from the old docs/ layout (${#MOVED[@]}):"
+  for item in ${MOVED[@]+"${MOVED[@]}"}; do echo "  $item"; done
+fi
+
 echo ""
 echo "Next steps:"
 echo "  1. Review and edit $RULES_FILE — fill in the project-specific section."
@@ -1226,5 +1243,12 @@ else
   echo "  3. Skills are under .cursor/skills/ — local edits are replaced on the next install."
   echo "  4. git add -A && git commit -m 'Bootstrap: brief-ledger-chronicle install'"
   echo "  5. Open docs/blc/install-log/install-log.md to see what this run did."
+fi
+# The tools date a brief by its last commit. The commit that holds this move touches every
+# brief, so unless it is ignored, every brief shows the move as its last work.
+if [[ ${#MOVED[@]} -gt 0 ]]; then
+  echo "  6. This run moved the old docs/ layout. After the commit in step 4, add it to the"
+  echo "     ignore list so each brief keeps its own dates, and commit that too:"
+  echo "       echo \"\$(git rev-parse HEAD)  # BLC moved docs/ under docs/blc/\" >> docs/blc/ignore-revs"
 fi
 echo ""
