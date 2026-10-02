@@ -1,6 +1,6 @@
 # Ledger — #0017 The BLC docs tree
 
-`blc/2 #0017 in-progress a:done(PR#80) b:in-progress(brief/0017-b-the-record,PR#81) c:pending d:pending`
+`blc/2 #0017 in-progress a:done(PR#80) b:done(PR#81) c:in-progress(brief/0017-c-the-installer) d:pending`
 
 **Brief:** `docs/blc/briefs/0017-blc-docs-tree/brief.md`
 **Started:** 2026-10-01
@@ -11,8 +11,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the move | done (PR#80) | — |
-| b | the record | in-progress | `brief/0017-b-the-record` |
-| c | the installer | pending | — |
+| b | the record | done (PR#81) | — |
+| c | the installer | in-progress | `brief/0017-c-the-installer` |
 | d | the contract | pending | — |
 
 The ids and labels are the brief's. What each phase covers changed against the repository, as
@@ -38,8 +38,11 @@ so they are not rewritten. A line that tells what an older version did keeps the
 version used. Add `a`'s squash commit to `docs/blc/ignore-revs`. The chronicle is a rendering, so
 the next chronicle run refreshes it and `b` does not edit it.
 
-**c — the installer.** An upgrade of an install that has the old layout does what open
-decisions 1 and 2 settle. Blocked by both. A fresh install is already correct after `a`.
+**c — the installer.** An upgrade of an install that has the old layout moves the old trees
+under `docs/blc/` and writes each move to the install log (decision 1). Before it moves or writes
+anything, it checks `docs/blc/`. If that directory is empty or absent, the install continues. If
+it holds files that are not the toolkit's, the install stops and says why (decision 2). A fresh
+install is already correct after `a`.
 
 **d — the contract.** Contract v1.3 re-scopes `BRIEFS-1` to `BRIEFS-10` to the new root.
 v1.2 stays published. Done in `a` instead. `d` stays `pending` until `c` is settled, because
@@ -92,6 +95,14 @@ text, the tags and the checks are the same. v1.2 is marked superseded and its te
 edited, which keeps the settled "v1.2 stays published". Rejected: mark the old paths as not
 in an installed copy until `d`, which keeps an install inconsistent on purpose for two phases.
 
+**A success criterion is narrowed, settled 2026-10-02.** The brief says "Every path reference
+inside a brief or ledger resolves." After `b`, that is false on purpose. It now reads: every
+reference to a document inside a brief or ledger resolves. A line that records what a tool did
+with a path keeps the path the tool used, and #0017's own brief and ledger keep the paths they
+describe moving. Four rewritten paths do not resolve here and never did: a draft that became
+#0015, the install log that exists only in a target, and a state file that was never committed.
+The brief's text is not edited.
+
 **The brief is retitled.** The draft was "Someone else's docs tree". On filing, its slug became
 `blc-docs-tree`, and on 2026-10-01 the title was changed to match: "The BLC docs tree".
 
@@ -99,8 +110,8 @@ in an installed copy until `d`, which keeps an install inconsistent on purpose f
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | From the brief: does an upgrade migrate an existing install, or refuse and print instructions? #0012 adds a constraint the brief did not name. The ownership map marks `docs/briefs`, `docs/state` and `docs/chronicles` as project trees, which the installer never changes. Moving them is a change to project-owned files. | `c` |
-| 2 | From the brief: what does an install do when `docs/blc/` exists and is not the toolkit's? | `c` |
+| 1 | **Settled 2026-10-02: the install moves them and logs each move.** From the brief: does an upgrade migrate an existing install, or refuse and print instructions? #0012 adds a constraint the brief did not name: the ownership map marks `docs/briefs`, `docs/state` and `docs/chronicles` as project trees, which the installer never changes. This move is the one exception. It changes where project files are, not what they hold, and the install log names each one, so the project can see and reverse it. Rejected: refuse and print instructions, which leaves every upgrade to a hand-run move. | `c` |
+| 2 | **Settled 2026-10-02: an empty `docs/blc/` is used, and one with files stops the install.** From the brief: what does an install do when `docs/blc/` exists and is not the toolkit's? If `docs/blc/` is absent or empty, the install continues. If it holds files, the install stops before it changes anything and says why, so the project moves its own files first. A `docs/blc/` that the toolkit installed is not a stop: a second install and an upgrade both meet one. | `c` |
 | 3 | **Settled 2026-10-01: it moves.** `docs/orientation.md` becomes `docs/blc/orientation.md`. `orient.sh` reads it, and the brief's claim is one root for what the toolkit uses. | `a` |
 | 4 | **Settled 2026-10-01: still one user.** #0013's evidence came from an install in another repository owned by the same person. The condition behind `b` holds. | `b` |
 | 5 | **Settled 2026-10-01: dates follow renames and skip an ignore list.** The move reset every brief's first and last dates to the move commit, because `git log -- <dir>` does not follow a rename. `b` would then reset every last date again, because its rewrite is a real content change. The new `tools/lib/touch-log.sh` follows each tracked file back through its rename records and drops the commits that `docs/blc/ignore-revs` names. It does not use `git log --follow`, the first version, because `--follow` also follows copies: a test found a new ledger taking an older brief's history from a near-identical ledger. `list-briefs.sh`, `gather.sh` and `orient.sh` all read dates through it. Rejected: follow renames only, which loses the timeline at `b`. Accept the reset, which loses it at `a`. Drop `b`, which reverses a settled decision. The cost is a list kept by hand, against "derived beats declared". | `a` |
