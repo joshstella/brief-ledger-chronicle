@@ -1,0 +1,1 @@
+../../skills/blc-create-brief/SKILL.md

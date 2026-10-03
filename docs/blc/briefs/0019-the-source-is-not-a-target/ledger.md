@@ -1,16 +1,16 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 pending a:pending b:pending c:pending d:pending e:pending`
+`blc/2 #0019 in-progress a:in-progress(brief/0019-a-the-claude-links) b:pending c:pending d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the Claude links | pending | — |
+| a | the Claude links | in-progress | `brief/0019-a-the-claude-links` |
 | b | the rules | pending | — |
 | c | the repo rule | pending | — |
 | d | orient names it | pending | — |
@@ -94,4 +94,4 @@ still run one after another, because each phase branch writes this ledger's stat
 
 ## Branches
 
-None yet. `a` branches as `brief/0019-a-the-claude-links`.
+`brief/0019-a-the-claude-links` (phase `a`).
