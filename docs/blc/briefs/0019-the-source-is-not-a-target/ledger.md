@@ -1,6 +1,6 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 in-progress a:done(PR#91) b:in-progress(brief/0019-b-the-repo-rule) c:pending d:pending e:pending`
+`blc/2 #0019 in-progress a:done(PR#91) b:in-progress(brief/0019-b-the-repo-rule,PR#93) c:pending d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the Claude links | done (PR#91) | — |
-| b | the repo rule | in-progress | `brief/0019-b-the-repo-rule` |
+| b | the repo rule | in-progress (PR#93) | `brief/0019-b-the-repo-rule` |
 | c | the rules | pending | — |
 | d | orient names it | pending | — |
 | e | the seeded agent file | pending | — |
