@@ -104,7 +104,8 @@ tests/
                           and that the three readers of a ledger agree. Also holds the one
                           claim in the promotion criteria that can go stale (#0014)
   test_self_host.sh       this repo's own links give each host the skills a target install
-                          gives it, read from --print-ownership (#0019)
+                          gives it, read from --print-ownership, and each repo-only rule
+                          binds both hosts (#0019)
 ```
 
 A test is any shell function named `test_*`. The runner gives each one a fresh
