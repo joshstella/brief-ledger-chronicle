@@ -1,10 +1,11 @@
 # Ledger — #0018 The Jira export carries what the brief says, not only where it is
 
-`blc/2 #0018 in-progress a:done(PR#88) b:done(PR#89) c:in-progress(PR#90)`
+`blc/2 #0018 done a:done(PR#88) b:done(PR#89) c:done(PR#90)`
 
 **Brief:** `docs/blc/briefs/0018-enrich-jira-data/brief.md`
 **Started:** 2026-10-02
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-03
 
 ## Phases
 
@@ -12,7 +13,7 @@
 |---|---|---|---|
 | a | the sources | done (PR#88) | — |
 | b | the descriptions | done (PR#89) | — |
-| c | the wiki markup | in-progress (PR#90) | `brief/0018-c-the-wiki-markup` |
+| c | the wiki markup | done (PR#90) | — |
 
 The brief has two phases, `a` and `b`. Its `b` is split here into `b` and `c` (decision 3).
 
@@ -61,6 +62,25 @@ that state reaches no board.
 | 4 | **Settled 2026-10-02: two paragraphs for one phase stop the export.** The export already refuses a phase with two candidate rows, because it cannot tell which one is meant. Two paragraphs are the same case. Two `## The claim` sections in one brief are too. Rejected: take the first, which exports a guess. | `b` |
 | 5 | **Settled 2026-10-02: the paths stay as they are.** The brief says the Epic gets "the two paths". The export writes the brief path in the Epic and the ledger path in each Task, and the brief misread that. The text goes before the path that is there now, so a brief with no named sources exports exactly as before. | `b` |
 | 6 | **Settled 2026-10-02: headings convert, and code spans escape wiki characters.** Two additions to decision 2, found while building `c`. A `### x` line is a numbered list item in wiki markup, and `b`'s own test showed that a claim can hold one, so it becomes `h3. x`. The renderer is understood to read wiki formatting inside `{{...}}`, so `{{--max-age}}` could show struck through. Inside a code span, each wiki formatting character gets a backslash. The import by hand checks both. | `c` |
+
+## Big decisions
+
+### `c` closes without the import by hand, 2026-10-03
+
+The phase description says `c` "closes only after one import by hand into a Jira Cloud site
+shows the result". That import did not occur. `c` is closed `done` anyway, by the owner's
+decision: the Jira export is an experimental feature under test, and it must not keep the
+repository open while the repository is frozen.
+
+What this leaves unproven. Only the tests prove the conversion. Three points in it rest on
+memory of the wiki format, not on a renderer: a single newline shows as a line break (decision
+2), wiki formatting inside `{{...}}` is read (decision 6), and `### x` is a numbered list item
+(decision 6). The first real import tests all three. If one fails, the fix is a new brief, not
+a reopened `c`.
+
+Rejected: `deferred`. #0007's ledger defines `deferred` as code parked on a branch. `c`'s code
+is merged, so `open-briefs.sh` would report "no branch recorded" on every run. Also rejected:
+leaving `c` `in-progress`, which keeps a frozen repository reporting work in flight.
 
 ## Scope
 
