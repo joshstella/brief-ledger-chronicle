@@ -1,6 +1,6 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 in-progress a:done(PR#91) b:in-progress(brief/0019-b-the-repo-rule,PR#93) c:pending d:pending e:pending`
+`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:pending d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the Claude links | done (PR#91) | — |
-| b | the repo rule | in-progress (PR#93) | `brief/0019-b-the-repo-rule` |
+| b | the repo rule | done (PR#93) | — |
 | c | the rules | pending | — |
 | d | orient names it | pending | — |
 | e | the seeded agent file | pending | — |
@@ -78,6 +78,11 @@ skill directories in `~/.claude/skills/`, and every project on the machine can u
 `~/.claude/commands/blc-orient.md` is deleted after `a`. The three skill directories stay until
 the owner decides whether another project depends on them.
 
+**`b` is marked done on its own branch, `brief/0019-freeze`.** The usual rule is that the next
+phase's branch marks the previous phase `done`. A freeze has no next phase, so without this
+branch `main` would show `b` `in-progress` on a deleted branch, and `open-briefs.sh` would say so
+on every run. When work restarts, the next phase branches from `main` as usual.
+
 ## Dependency structure
 
 `a` goes first. It creates the `.claude/` tree that `b` and `c` add to, and the parity test
@@ -122,4 +127,5 @@ still run one after another, because each phase branch writes this ledger's stat
 ## Branches
 
 `brief/0019-a-the-claude-links` (phase `a`, merged as PR#91, deleted).
-`brief/0019-b-the-repo-rule` (phase `b`).
+`brief/0019-b-the-repo-rule` (phase `b`, merged as PR#93, deleted).
+`brief/0019-freeze` (marks `b` done; no phase of its own).
