@@ -1,16 +1,17 @@
 # Ledger — #0020 The move git cannot see
 
-`blc/2 #0020 in-progress a:in-progress(brief/0020-a-the-tracked-move,PR#95)`
+`blc/2 #0020 done a:done(PR#95)`
 
 **Brief:** `docs/blc/briefs/0020-the-move-git-cannot-see/brief.md`
 **Started:** 2026-10-04
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-04
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the tracked move | in-progress (PR#95) | `brief/0020-a-the-tracked-move` |
+| a | the tracked move | done (PR#95) | — |
 
 **a — the tracked move.** When an upgrade moves a project file from the old `docs/` layout
 under `docs/blc/`, and the target is a git repository and the file is tracked, the installer
@@ -53,6 +54,24 @@ All three resolved 2026-10-04 by the owner, before planning.
   `git mv` that does not matter, because git does not ignore a tracked file. It would have
   mattered for a check before the move, which decision 1 rejected.
 
+## Closeout, 2026-10-04
+
+`a` merged as PR#95. Its three tracked-file tests were seen to fail before the fix. The full
+suite passed 538 tests, and the brief's reproduction showed both chronicles as renames, with
+nothing ignored.
+
+Open after close, from `a`'s review. Neither is tested:
+
+- **A failed `git mv` stops the install partway through the moves.** The installer runs under
+  `set -e`, and `git mv` fails when it cannot write the index, for example while another
+  process holds `.git/index.lock`. Some files have moved and some have not. A re-run is
+  expected to finish, because a moved file is no longer at its old path and so is not a clash.
+- **A target inside a larger repository, or a worktree.** `git -C` is expected to cover both.
+
+Not done here: `tests/README.md` has never listed `tests/test_upgrade.sh`. That gap is from
+#0017.
+
 ## Branches
 
-`brief/0020-a-the-tracked-move` (phase `a`).
+`brief/0020-a-the-tracked-move` (phase `a`, merged as PR#95, deleted).
+`brief/0020-closeout` (closes the brief).
