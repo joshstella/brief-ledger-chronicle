@@ -250,3 +250,72 @@ test_upgrade_refuses_a_symlinked_old_tree() {
   assert_err "docs/briefs is a symlink"
   assert_no_dir "$TARGET/.claude"
 }
+
+# ── What git sees after the move (#0020) ─────────────────────────────────────
+#
+# The move is correct on disk and every test above reads the disk. Git is the other reader,
+# and it can disagree: a tracked file moved with `mv` onto a path an ignore rule matches is,
+# to git, a deletion and nothing else. The next `git add -A` removes it from the repository.
+# These fixtures are git repositories so that the index can be asked.
+
+up_git() {
+  git -C "$TARGET" init -q
+  git -C "$TARGET" config user.email t@example.com
+  git -C "$TARGET" config user.name Test
+  git -C "$TARGET" add -A
+  git -C "$TARGET" commit -qm fixture >/dev/null 2>&1
+}
+
+# Tracked after the install and after `git add -A`, which is what a commit would keep.
+up_assert_tracked() {
+  git -C "$TARGET" add -A
+  git -C "$TARGET" ls-files --error-unmatch -- "$1" >/dev/null 2>&1 \
+    || fail "$1 is not tracked after the upgrade and git add -A"
+}
+
+# The case that occurred: the toolkit's own rule ignores every chronicle but chronicle.md.
+test_upgrade_keeps_a_tracked_chronicle_tracked() {
+  up_old_layout
+  mkdir -p "$TARGET/docs/chronicles"
+  printf 'story\n' > "$TARGET/docs/chronicles/chronicle.md"
+  printf 'older story\n' > "$TARGET/docs/chronicles/2026-09-01.md"
+  up_git
+  run_install y --target "$TARGET"
+  assert_status 0
+  up_assert_tracked docs/blc/chronicles/chronicle.md
+  up_assert_tracked docs/blc/chronicles/2026-09-01.md
+}
+
+# The class: the installer cannot know what the target's own .gitignore holds.
+test_upgrade_keeps_a_tracked_file_tracked_under_the_targets_own_ignore() {
+  up_old_layout
+  mkdir -p "$TARGET/docs/state"
+  printf 'declared\n' > "$TARGET/docs/state/me@example.org.md"
+  printf 'docs/blc/state/\n' > "$TARGET/.gitignore"
+  up_git
+  run_install y --target "$TARGET"
+  assert_status 0
+  up_assert_tracked docs/blc/state/me@example.org.md
+}
+
+# A move is recorded as a rename, so the file's history follows it.
+test_upgrade_records_a_tracked_move_as_a_rename() {
+  up_old_layout
+  up_git
+  run_install y --target "$TARGET"
+  assert_status 0
+  git -C "$TARGET" status --porcelain >"$TMP/status.txt"
+  assert_contains "R  docs/briefs/0001-first/brief.md -> docs/blc/briefs/0001-first/brief.md" "$TMP/status.txt"
+}
+
+# An untracked file is not git's to move, and `git mv` refuses one.
+test_upgrade_moves_an_untracked_file_in_a_git_target() {
+  up_old_layout
+  up_git
+  mkdir -p "$TARGET/docs/state"
+  printf 'not yet added\n' > "$TARGET/docs/state/me@example.org.md"
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_contains "not yet added" "$TARGET/docs/blc/state/me@example.org.md"
+  assert_no_file "$TARGET/docs/state/me@example.org.md"
+}

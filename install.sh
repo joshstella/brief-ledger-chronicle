@@ -915,7 +915,21 @@ if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
     fi
     dst="$(new_layout_path "$rel")"
     mkdir -p "$TARGET_DIR/$(dirname "$dst")"
-    mv "$TARGET_DIR/$rel" "$TARGET_DIR/$dst"
+    # A tracked file moves with `git mv`, because `mv` is invisible to git. To git, a tracked
+    # file moved with `mv` onto a path an ignore rule matches is a deletion and nothing else,
+    # and the next `git add -A` removes it from the repository. The toolkit's own chronicles
+    # rule is one such rule; a target's own .gitignore can hold others this installer cannot
+    # know about. Git keeps tracking a file it moved, whatever the ignore rules say (#0020).
+    #
+    # This stages a rename in the target's index, which the installer did not do before.
+    # Accepted on purpose: it lands beside anything the person had staged, and the person
+    # sees both in `git status` before committing. An untracked file is not git's to move,
+    # and `git mv` refuses one, so it keeps `mv`, as does a target that is not a repository.
+    if git -C "$TARGET_DIR" ls-files --error-unmatch -- "$rel" >/dev/null 2>&1; then
+      git -C "$TARGET_DIR" mv -- "$rel" "$dst"
+    else
+      mv "$TARGET_DIR/$rel" "$TARGET_DIR/$dst"
+    fi
     log_moved "$rel" "$dst"
   done
   # What is left is the toolkit's own old docs: Step 2b refused anything else that did
