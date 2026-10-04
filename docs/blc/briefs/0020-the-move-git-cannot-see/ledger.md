@@ -1,16 +1,16 @@
 # Ledger — #0020 The move git cannot see
 
-`blc/2 #0020 pending a:pending`
+`blc/2 #0020 in-progress a:in-progress(brief/0020-a-the-tracked-move)`
 
 **Brief:** `docs/blc/briefs/0020-the-move-git-cannot-see/brief.md`
 **Started:** 2026-10-04
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the tracked move | pending | — |
+| a | the tracked move | in-progress | `brief/0020-a-the-tracked-move` |
 
 **a — the tracked move.** When an upgrade moves a project file from the old `docs/` layout
 under `docs/blc/`, and the target is a git repository and the file is tracked, the installer
@@ -55,4 +55,4 @@ All three resolved 2026-10-04 by the owner, before planning.
 
 ## Branches
 
-None yet. `a` branches as `brief/0020-a-the-tracked-move`.
+`brief/0020-a-the-tracked-move` (phase `a`).
