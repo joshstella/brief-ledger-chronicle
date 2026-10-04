@@ -1,7 +1,6 @@
 # Orient answers confidently, and wrong
 
-**Created:** 2026-10-04T09:04:36Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0017
+**Serial:** #0021 · **Created:** 2026-10-04T09:04:36Z · **Author:** josh.stella@gmail.com · **Depends on:** #0017
 
 ## The finding
 
@@ -41,6 +40,13 @@ footer, looked for the file, and found nothing.
 merged reports `0 behind / 0 ahead` and prints no warning. That answer is true and it is
 not the question. The question the section header asks is "how much to trust any of
 this", and the record the rest of the output describes lives on `main`.
+
+A branch with no upstream fares worse. Line 51 prints "no upstream — this is a local-only
+view" and makes no comparison at all. On 2026-10-03, in this repository, orient ran on
+`brief/orient-is-a-process-skill`, a local branch cut from a `main` that was 43 commits
+behind `origin/main`. It printed that line. The open briefs it listed had closed upstream
+days before, and the agent offered to start a phase that had already merged. A fetch found
+the gap. Both cases have one cause: the count never looks at the trunk.
 
 ## Why they went unnoticed
 
