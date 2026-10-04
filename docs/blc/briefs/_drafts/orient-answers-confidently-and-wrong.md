@@ -105,5 +105,5 @@ whole chronicle history from the repository. It was caught by hand, not by a tes
 that git can still see what moved.
 
 That is `install.sh`, not `orient.sh`, and it is more severe than all three defects above.
-It needs its own brief, and has a draft: `the-move-git-cannot-see.md`. The missing
+It needs its own brief, and is filed as #0020. The missing
 assertion is one line: after an upgrade, every moved project file is addable.

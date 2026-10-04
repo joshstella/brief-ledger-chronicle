@@ -1,7 +1,6 @@
 # The move git cannot see
 
-**Created:** 2026-10-04T12:28:20Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0017
+**Serial:** #0020 · **Created:** 2026-10-04T12:28:20Z · **Author:** josh.stella@gmail.com · **Depends on:** #0017
 
 ## The finding
 
