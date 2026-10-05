@@ -238,6 +238,75 @@ test_orient_reports_two_contributors_separately() {
 
 # ── Off-limits, derived from the install log ─────────────────────────────────
 
+# Two repositories have no install log: one nobody has installed into, and the toolkit's own
+# checkout, which reaches its skills through committed links. Telling the second it "was not
+# set up by the installer" reads as a missing step, and the installer refuses to run there.
+test_orient_names_the_toolkit_source_instead_of_a_missing_install() {
+  orient_repo
+  mkdir -p "$REPO/skills/blc-orient" "$REPO/.cursor"
+  ln -s ../skills "$REPO/.cursor/skills"
+  run_orient
+  assert_status 0
+  assert_out "this is the toolkit source, not a target"
+  assert_not_contains "was not set up by the installer" "$OUT"
+}
+
+# The same answer through Claude Code's shape: one link per skill, not one for the directory.
+test_orient_names_the_toolkit_source_from_a_per_skill_link() {
+  orient_repo
+  mkdir -p "$REPO/skills/blc-orient" "$REPO/.claude/skills"
+  ln -s ../../skills/blc-orient "$REPO/.claude/skills/blc-orient"
+  run_orient
+  assert_status 0
+  assert_out "this is the toolkit source, not a target"
+}
+
+# A repository with no install and no links keeps the old answer. A link that leaves the
+# repository is somebody else's checkout, not self-hosting.
+test_orient_still_reports_a_repo_no_install_has_touched() {
+  orient_repo
+  mkdir -p "$REPO/.cursor" "$TMP/elsewhere/skills"
+  ln -s "$TMP/elsewhere/skills" "$REPO/.cursor/skills"
+  run_orient
+  assert_status 0
+  assert_out "was not set up by the installer"
+  assert_not_contains "toolkit source" "$OUT"
+}
+
+# A checkout reached through a symlink. `git rev-parse --show-toplevel` resolves it and a
+# followed link resolves too, so the comparison holds — but only against `$ROOT`. `$PWD` keeps
+# the symlink the caller walked in through, and nothing would match.
+test_orient_names_the_toolkit_source_through_a_symlinked_checkout() {
+  orient_repo
+  mkdir -p "$REPO/skills/blc-orient" "$REPO/.cursor"
+  ln -s ../skills "$REPO/.cursor/skills"
+  ln -s "$REPO" "$TMP/linked"
+  ( cd "$TMP/linked" && bash "$(ORIENT)" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_out "this is the toolkit source, not a target"
+}
+
+# A target has a log, so it never reaches either message.
+test_orient_prefers_the_install_log_over_the_source_message() {
+  orient_repo
+  mkdir -p "$REPO/skills/blc-orient" "$REPO/.cursor"
+  ln -s ../skills "$REPO/.cursor/skills"
+  orient_log <<'LOG'
+# Install log
+
+## 2026-09-09T00:00:00Z — HOST
+
+### Created
+
+  - tools
+LOG
+  run_orient
+  assert_status 0
+  assert_out "tools"
+  assert_not_contains "toolkit source" "$OUT"
+}
+
 test_orient_derives_off_limits_from_the_install_log() {
   orient_repo
   mkdir -p "$REPO/docs/blc/install-log"

@@ -1,6 +1,6 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:in-progress(brief/0019-c-the-rules,PR#102) d:pending e:pending`
+`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:done(PR#102) d:in-progress(brief/0019-d-orient-names-it,PR#103) e:pending`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
@@ -12,8 +12,8 @@
 |---|---|---|---|
 | a | the Claude links | done (PR#91) | — |
 | b | the repo rule | done (PR#93) | — |
-| c | the rules | in-progress (PR#102) | `brief/0019-c-the-rules` |
-| d | orient names it | pending | — |
+| c | the rules | done (PR#102) | — |
+| d | orient names it | in-progress (PR#103) | `brief/0019-d-orient-names-it` |
 | e | the seeded agent file | pending | — |
 
 The brief letters "orient names it" `e` and "the seeded agent file" `d`. They are swapped here
@@ -46,10 +46,12 @@ Cursor needs `alwaysApply: true` frontmatter and a link cannot add it (decision 
 committed file against it, so an edit to the template without a regeneration fails the suite.
 Both destinations come from the rules rows of `--print-ownership`, as `a`'s parity test does.
 
-**d — orient names it.** `tools/orient.sh` says "self-hosted toolkit source" when a host's
-skills path in the repository is a link into `skills/`, instead of "not set up by the
-installer". A real target, and a repository with no install, keep the current messages. Tests
-in `tests/test_orient.sh` for all three cases.
+**d — orient names it.** `tools/orient.sh` says "this is the toolkit source, not a target"
+when a host's skills path in the repository is a link into `skills/`, instead of "not set up by
+the installer". A real target never reaches either message, because an install writes the log,
+so the branch has only those two cases to separate. Both host shapes count: Cursor's one
+directory link and Claude Code's one link per skill. A link that leaves the repository does
+not. Tests in `tests/test_orient.sh` for all four cases.
 
 **e — the seeded agent file.** `install.sh` seeds `CLAUDE.md` / `AGENTS.md` from the Manifesto
 instead of the current stub. This repository gets the same seed once and commits it, and from
@@ -130,4 +132,6 @@ still run one after another, because each phase branch writes this ledger's stat
 
 `brief/0019-a-the-claude-links` (phase `a`, merged as PR#91, deleted).
 `brief/0019-b-the-repo-rule` (phase `b`, merged as PR#93, deleted).
+`brief/0019-c-the-rules` (phase `c`, merged as PR#102, deleted).
+`brief/0019-d-orient-names-it` (phase `d`).
 `brief/0019-freeze` (marks `b` done; no phase of its own).
