@@ -1,10 +1,11 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:done(PR#102) d:in-progress(brief/0019-d-orient-names-it,PR#103) e:pending`
+`blc/2 #0019 done a:done(PR#91) b:done(PR#93) c:done(PR#102) d:done(PR#103) e:skipped`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-05
 
 ## Phases
 
@@ -13,8 +14,8 @@
 | a | the Claude links | done (PR#91) | — |
 | b | the repo rule | done (PR#93) | — |
 | c | the rules | done (PR#102) | — |
-| d | orient names it | in-progress (PR#103) | `brief/0019-d-orient-names-it` |
-| e | the seeded agent file | pending | — |
+| d | orient names it | done (PR#103) | — |
+| e | the seeded agent file | skipped | — |
 
 The brief letters "orient names it" `e` and "the seeded agent file" `d`. They are swapped here
 because letters run in execution order, and the agent file is the phase most likely to wait on
@@ -60,6 +61,9 @@ on decisions 2, 3 and 4.
 
 ## Freeze, 2026-10-03
 
+**Lifted 2026-10-05 for this brief.** `c` and `d` then ran in order. `e` is skipped, and the
+reason is its blast radius, not the freeze. The rest of this section is the record as written.
+
 The owner wants this repository stable for a while, because every other project on this machine
 uses it. So after `a`, only one more phase runs now: the repo rule, now `b`. It is the one gap
 with a real risk. A hard rule binds Cursor sessions in this repository and not Claude Code
@@ -87,6 +91,30 @@ phase's branch marks the previous phase `done`. A freeze has no next phase, so w
 branch `main` would show `b` `in-progress` on a deleted branch, and `open-briefs.sh` would say so
 on every run. When work restarts, the next phase branches from `main` as usual.
 
+## Closeout, 2026-10-05
+
+The source now runs its own process on both hosts. `a` (PR#91) committed the skill and command
+links and the parity test that reads `--print-ownership`. `b` (PR#93) bound the no-CQ-leak rule
+to Claude Code. `c` (PR#102) gave both hosts the shipped process rules. `d` (PR#103) made orient
+name this checkout as the source instead of reporting a missing install. `c` added 3 tests and
+`d` added 5, which took the suite from 548 after #0021 to 556. Each phase's tests were seen to
+fail without its fix.
+
+**`e` is skipped, and its work is #0022.** Decision 3 is settled: it leaves this brief. `e` is
+the only phase that changes what every target install writes, and every other phase changes
+nothing outside this checkout. Its two open decisions, 2 and 4, are carried into #0022 as that
+brief's decisions 1 and 2. Skipped rather than deferred: #0007's ledger defines `deferred` as
+code parked on a branch, and `e` has none.
+
+Open after close. Neither is tested:
+
+- **Which scope wins for a Claude Code command is still unknown.** The six process commands
+  exist in `~/.claude/commands` and in `.claude/commands`. In this checkout both resolve to the
+  same file, so nothing here can tell them apart.
+- **The Cursor process rules file is a generated copy.** An edit to `templates/process-rules.md`
+  needs `bash install.sh --print-process-rules --host cursor > .cursor/rules/brief-ledger-chronicle.mdc`.
+  The drift test says so when it fails, and nothing regenerates it.
+
 ## Dependency structure
 
 `a` goes first. It creates the `.claude/` tree that `b` and `c` add to, and the parity test
@@ -101,9 +129,9 @@ still run one after another, because each phase branch writes this ledger's stat
 | # | decision | blocks |
 |---|---|---|
 | 1 | **Settled 2026-10-05: option (b), a generated file with a drift test.** From the brief. Evidence 2026-10-03: the Claude Code docs say `paths` is the only frontmatter field it reads from a rule, so option (a) would work for it. (a) was rejected anyway: the installer prepends the same frontmatter for a Cursor target, so (a) also changes what every target gets, and the freeze is over for this brief only. Under (b) nothing a target receives changes. This repository commits `.cursor/rules/brief-ledger-chronicle.mdc` and links `.claude/rules/brief-ledger-chronicle.md` to the template. Rejected: (c), a `tools/self-host.sh` that regenerates it, which is a second program to keep current. | `c` |
-| 2 | **What part of the Manifesto seeds a target's agent file**, how that agrees with the reason `tests/test_orient.sh:370` gives for not shipping `orientation.md`, and whether it repeats `templates/process-rules.md`. From the brief. | `e` |
-| 3 | **Whether `e` stays in this brief.** From the brief. | `e` |
-| 4 | **One agent file or two.** From the brief. New evidence 2026-10-03: the Claude Code docs say it reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. | `e` |
+| 2 | **Moved to #0022, 2026-10-05, with `e`.** What part of the Manifesto seeds a target's agent file, how that agrees with the reason `tests/test_orient.sh:370` gives for not shipping `orientation.md`, and whether it repeats `templates/process-rules.md`. From the brief. | `e` |
+| 3 | **Settled 2026-10-05: it leaves.** From the brief. `e` becomes #0022, because it is the only phase that changes what every target install writes. See the closeout above. | `e` |
+| 4 | **Moved to #0022, 2026-10-05, with `e`.** One agent file or two. From the brief. New evidence 2026-10-03: the Claude Code docs say it reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. | `e` |
 
 ## Complications
 
@@ -133,5 +161,5 @@ still run one after another, because each phase branch writes this ledger's stat
 `brief/0019-a-the-claude-links` (phase `a`, merged as PR#91, deleted).
 `brief/0019-b-the-repo-rule` (phase `b`, merged as PR#93, deleted).
 `brief/0019-c-the-rules` (phase `c`, merged as PR#102, deleted).
-`brief/0019-d-orient-names-it` (phase `d`).
+`brief/0019-d-orient-names-it` (phase `d`, merged as PR#103, deleted).
 `brief/0019-freeze` (marks `b` done; no phase of its own).
