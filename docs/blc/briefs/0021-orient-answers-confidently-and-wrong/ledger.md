@@ -1,6 +1,6 @@
 # Ledger — #0021 Orient answers confidently, and wrong
 
-`blc/2 #0021 in-progress a:done(PR#97) b:in-progress(brief/0021-b-the-log-replay) c:pending`
+`blc/2 #0021 in-progress a:done(PR#97) b:in-progress(brief/0021-b-the-log-replay,PR#99) c:pending`
 
 **Brief:** `docs/blc/briefs/0021-orient-answers-confidently-and-wrong/brief.md`
 **Started:** 2026-10-04
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the trunk count | done (PR#97) | — |
-| b | the log replay | in-progress | `brief/0021-b-the-log-replay` |
+| b | the log replay | in-progress (PR#99) | `brief/0021-b-the-log-replay` |
 | c | the footer | pending | — |
 
 The brief numbers the defects 1 Off-limits, 2 footer, 3 freshness. The phases run in a different
