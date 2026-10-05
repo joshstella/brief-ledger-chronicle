@@ -191,6 +191,19 @@ Two tests, one per host. Cursor receives a generated copy with frontmatter prepe
 Code receives the template itself, so a sentence proved on one path is not proved on the other.
 Both were seen to fail without the change.
 
+**Corrected 2026-10-05, after the merge.** The paragraph below says CI did not run. It did. The
+third attempt acquired a runner and passed in 6m14s, run `37369065928`, job `111972248460`. It
+finished during the merge and was not seen before the merge completed. So the phase is covered
+by CI on all four interpreters after all, and the warrant written below was never needed.
+
+The paragraph stays as filed. Two things in it still hold: the first two attempts did fail to
+acquire a runner, and the reasoning about which interpreters a local-only run leaves unproven is
+correct and will be needed again. What was wrong was the count — three failures reported when
+there were two, because the third was still pending when it was written.
+
+The lesson is narrower than it looks. A pending check was read as a failed one, and the merge
+went ahead on a warrant instead of on a result that was about to arrive.
+
 **CI did not run for PR#106, and the phase merged anyway.** Three attempts ended the same way:
 "The job was not acquired by Runner of type hosted even after multiple attempts", zero steps
 executed, 15 minutes each. Nothing ran, so there is no log. The repository is public, where
