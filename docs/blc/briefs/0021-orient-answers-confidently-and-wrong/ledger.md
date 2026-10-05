@@ -1,16 +1,16 @@
 # Ledger — #0021 Orient answers confidently, and wrong
 
-`blc/2 #0021 pending a:pending b:pending c:pending`
+`blc/2 #0021 in-progress a:in-progress(brief/0021-a-the-trunk-count) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0021-orient-answers-confidently-and-wrong/brief.md`
 **Started:** 2026-10-04
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the trunk count | pending | — |
+| a | the trunk count | in-progress | `brief/0021-a-the-trunk-count` |
 | b | the log replay | pending | — |
 | c | the footer | pending | — |
 
@@ -72,4 +72,4 @@ All three resolved 2026-10-04 by the owner, before planning.
 
 ## Branches
 
-None yet. `a` branches as `brief/0021-a-the-trunk-count`.
+`brief/0021-a-the-trunk-count` (phase `a`).

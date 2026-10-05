@@ -36,6 +36,13 @@ ROOT="$(git rev-parse --show-toplevel)"
 # confidently wrong. #0003 has the concrete case on the record: three merged PRs
 # and two deleted branches stayed invisible to a second machine until it fetched.
 # Counting against the remote is the honest measure and costs one line.
+#
+# The branch's own upstream is not enough. It answers "is this branch current", and the
+# record the rest of this output reads lives on the trunk. A pushed branch on a stale base
+# reads `0 behind / 0 ahead`, and a branch with no upstream makes no comparison at all; #0021
+# has both cases, one of which cost a whole branch. So the checkout is also counted against
+# the trunk, read offline from `origin/HEAD`, which a clone sets. Still local refs: the trunk
+# count is as fresh as the last fetch, and the line claims nothing more.
 
 echo "# Orientation"
 echo
@@ -49,6 +56,18 @@ if [ -n "$upstream" ]; then
   [ "$behind" -gt 0 ] && line="$line — **fetch before trusting this**"
 else
   line="$line · no upstream — this is a local-only view"
+fi
+trunk="$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+if [ -n "$trunk" ] && [ "$trunk" != "$upstream" ]; then
+  # Only "behind" is printed. Commits ahead of the trunk are this branch's own work, which
+  # says nothing about whether the record below is current.
+  trunk_behind="$(git rev-list --count "HEAD..$trunk" 2>/dev/null || echo 0)"
+  line="$line · $trunk_behind behind \`$trunk\`"
+  [ "$trunk_behind" -gt 0 ] && line="$line — **the record on \`$trunk\` is newer**"
+elif [ -z "$trunk" ] && git remote get-url origin >/dev/null 2>&1; then
+  # A repository made with `git init` and a remote added later has no `origin/HEAD`. Saying
+  # nothing would read as "nothing to compare", which is not the same thing.
+  line="$line · trunk unknown (set it with \`git remote set-head origin --auto\`)"
 fi
 echo "$line"
 echo
