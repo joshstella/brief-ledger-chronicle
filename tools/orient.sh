@@ -216,7 +216,30 @@ if [ -f "$INSTALL_LOG" ]; then
     echo "The install log records no created paths."
   fi
 else
-  echo "No \`$INSTALL_LOG\` — this repo was not set up by the installer."
+  # Two repositories have no install log, and they are not the same thing. One has never
+  # been installed into. The other is the toolkit's own checkout, which reaches its skills
+  # through committed links instead of an install, because the source is not a target
+  # (#0019). Saying "not set up by the installer" there reads as a missing step and sends a
+  # reader to run one, which the installer refuses.
+  #
+  # A real target never arrives here: an install writes the log. So the only question this
+  # branch has to answer is which of those two it is.
+  self_hosted=false
+  for host_skills in .cursor/skills .claude/skills/*; do
+    [ -L "$host_skills" ] || continue
+    # The link is followed rather than read, because its text is relative and a reader of
+    # `../skills` cannot tell which directory that lands in.
+    resolved="$(cd -P "$host_skills" 2>/dev/null && pwd)" || continue
+    case "$resolved" in
+      "$ROOT/skills"|"$ROOT/skills/"*) self_hosted=true; break ;;
+    esac
+  done
+  if [ "$self_hosted" = true ]; then
+    echo "No \`$INSTALL_LOG\` — this is the toolkit source, not a target."
+    echo "It runs its own skills through committed links into \`skills/\`."
+  else
+    echo "No \`$INSTALL_LOG\` — this repo was not set up by the installer."
+  fi
 fi
 if [ -f "$CONTRACT" ]; then
   echo
