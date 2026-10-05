@@ -129,6 +129,30 @@ test_project_stub_points_at_the_file_the_project_authors() {
   assert_no_file  "$TARGET/docs/blc/orientation.md"
 }
 
+# ── The gates say they are gates, and they are not (#0022 b) ─────────────────
+#
+# "A skill guard is not a check" is in this repository's docs/blc/orientation.md, which a
+# target authors for itself and an install never writes. So nothing a target received said
+# the gates it was reading about are unenforced, and an agent that believes blc-review-pr
+# blocks mechanically reasons from a false premise. One sentence, in the one file an
+# install owns and rewrites, so an upgrade can still correct it.
+#
+# Both hosts, because the Cursor copy is generated through print_process_rules with
+# frontmatter prepended and the Claude Code copy is the template itself. A sentence added
+# to the template reaches one of those paths without proving it reaches the other.
+
+test_project_claude_rules_say_the_skills_are_unenforced() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_contains "Nothing enforces them" "$TARGET/.claude/rules/brief-ledger-chronicle.md"
+}
+
+test_project_cursor_rules_say_the_skills_are_unenforced() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_contains "Nothing enforces them" "$TARGET/.cursor/rules/brief-ledger-chronicle.mdc"
+}
+
 test_project_replaces_a_tuned_command_on_reinstall() {
   mkdir -p "$TARGET/.claude/commands"
   echo "LOCALLY TUNED" > "$TARGET/.claude/commands/blc-review-pr.md"
