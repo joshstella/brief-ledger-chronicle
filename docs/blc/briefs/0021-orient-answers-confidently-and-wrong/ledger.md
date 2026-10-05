@@ -1,6 +1,6 @@
 # Ledger — #0021 Orient answers confidently, and wrong
 
-`blc/2 #0021 in-progress a:done(PR#97) b:done(PR#99) c:in-progress(brief/0021-c-the-footer)`
+`blc/2 #0021 in-progress a:done(PR#97) b:done(PR#99) c:in-progress(brief/0021-c-the-footer,PR#100)`
 
 **Brief:** `docs/blc/briefs/0021-orient-answers-confidently-and-wrong/brief.md`
 **Started:** 2026-10-04
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the trunk count | done (PR#97) | — |
 | b | the log replay | done (PR#99) | — |
-| c | the footer | in-progress | `brief/0021-c-the-footer` |
+| c | the footer | in-progress (PR#100) | `brief/0021-c-the-footer` |
 
 The brief numbers the defects 1 Off-limits, 2 footer, 3 freshness. The phases run in a different
 order, by cost on record: the freshness defect wasted a whole branch in an adopting repository
