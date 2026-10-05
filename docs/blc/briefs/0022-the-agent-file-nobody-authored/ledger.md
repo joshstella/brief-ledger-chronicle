@@ -1,6 +1,6 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 in-progress a:in-progress(brief/0022-a-the-seed) b:pending c:pending`
+`blc/2 #0022 in-progress a:in-progress(brief/0022-a-the-seed,PR#105) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
@@ -10,7 +10,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the seed | in-progress | `brief/0022-a-the-seed` |
+| a | the seed | in-progress (PR#105) | `brief/0022-a-the-seed` |
 | b | one file or two | pending | — |
 | c | this repository | pending | — |
 
