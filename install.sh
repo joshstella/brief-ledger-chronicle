@@ -179,8 +179,15 @@ place_dir() {
 }
 
 # AGENTS.md / CLAUDE.md are project-owned. Write a stub only when the file is
-# absent. Never replace. Process policy lives in the
-# host rules file, not here.
+# absent. Never replace.
+#
+# The stub seeds no prose, because three files share this job and only one of them
+# belongs to a project's agents. Process rules are $PROCESS_RULES_REL, which the
+# installer owns and rewrites. What a project values is docs/blc/orientation.md,
+# which the project authors and an install must never write — see
+# test_orient_authored_file_does_not_ship_to_a_target. That leaves architecture,
+# stack, build commands and the test-coverage definition, which are facts about one
+# project that no installer can know. So the stub asks instead of answering (#0022).
 write_project_stub() {
   local dst="$TARGET_DIR/$RULES_FILE"
   if [[ -f "$dst" ]]; then
@@ -190,16 +197,27 @@ write_project_stub() {
   cat > "$dst" <<EOF
 # $RULES_FILE
 
-This repo uses brief-ledger-chronicle. The installed skills are the gates; bypassing
-them is the defect. Process rules live in \`$PROCESS_RULES_REL\` and are updated by
-the installer. Architecture and stack live in the section below.
+This file belongs to this project. brief-ledger-chronicle wrote it once, because it was
+absent, and will not write it again.
 
-Start with \`bash tools/orient.sh\` if you have not read this repo today: it reports what
-is in flight, what the installer wrote, and what this project values, in ~700 tokens.
+The installer could not answer the questions below. It does not know this project.
 
-## Project-specific
+## The rest of the record
 
-<!-- Add stack, build commands, architecture notes, and project-specific rules here. -->
+Two other files carry what this one does not, and neither is a place for architecture.
+
+- \`$PROCESS_RULES_REL\` — how work reaches \`main\`. The installer owns it and rewrites
+  it on every run. Do not edit it here.
+- \`docs/blc/orientation.md\` — what this project values, in its own words. Nothing seeds
+  it. Until somebody writes it, \`tools/orient.sh\` reports that it is missing.
+
+## Answer these, then delete the questions
+
+- What is this project? What does it produce, and for whom?
+- How is it built, run, and tested? Give the commands, not a description of them.
+- What does "covered" mean here? Name what a test must exercise before a change is done.
+- What must not break? Name the behaviour, not the file.
+- What is generated, vendored, or otherwise not edited by hand?
 EOF
   log_created "$RULES_FILE"
 }
@@ -866,7 +884,7 @@ else
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"
   echo "  $TARGET_DIR/.claude/settings.local.json  (permission allowlist)"
 fi
-echo "  $TARGET_DIR/$RULES_FILE           (project architecture stub — if absent, never replaced)"
+echo "  $TARGET_DIR/$RULES_FILE           (questions for the project to answer — if absent, never replaced)"
 echo ""
 echo "Toolkit-owned paths above are replaced every run. Local edits to them do not survive."
 echo "Project-owned files ($RULES_FILE, numbered briefs, ledgers, declarations, chronicles)"
@@ -1277,7 +1295,7 @@ fi
 
 echo ""
 echo "Next steps:"
-echo "  1. Review and edit $RULES_FILE — fill in the project-specific section."
+echo "  1. Answer the questions in $RULES_FILE — the installer could not."
 echo "  2. Process rules are in $PROCESS_RULES_REL — the installer owns that file."
 if [[ "$HOST" == "claude" ]]; then
   echo "  3. Review .claude/settings.local.json — add any project-specific permissions."

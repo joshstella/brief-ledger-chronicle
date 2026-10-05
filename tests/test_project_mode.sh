@@ -12,7 +12,7 @@ test_project_creates_the_expected_tree() {
   assert_file "$TARGET/CLAUDE.md"
   assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
   assert_file "$TARGET/.claude/settings.local.json"
-  assert_contains "## Project-specific" "$TARGET/CLAUDE.md"
+  assert_contains "Answer these, then delete the questions" "$TARGET/CLAUDE.md"
   assert_not_contains "## Writing" "$TARGET/CLAUDE.md"
   assert_file "$TARGET/docs/blc/briefs/README.md"
   assert_file "$TARGET/docs/blc/briefs/_drafts/README.md"
@@ -95,6 +95,38 @@ test_project_never_overwrites_an_existing_claude_md() {
   assert_status 0
   assert_contains "PROJECT-OWNED CONTENT" "$TARGET/CLAUDE.md"
   assert_out "CLAUDE.md (already exists, skipped)"
+}
+
+# ── The stub asks, it does not answer (#0022 a) ──────────────────────────────
+#
+# Three files share this job and only one of them is the project's. The stub used to
+# restate the process rules, so a new target's agent file said nothing the install had
+# not already written next to it. These two tests pin the half that is mechanical:
+# that the stub states no process rule, and that it points at the file it is not.
+
+# A line-by-line comparison against the rules file was tried first and passed against the
+# old stub, because the duplication was never line-identical: the stub wrote "The installed
+# skills are the gates" where the rules write "Installed skills are the gates". No textual
+# diff catches a restatement. Named phrases do, and the second loop is what keeps them
+# honest — a phrase the rules file stops using is a phrase this test can no longer police.
+test_project_stub_states_no_process_rule() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  local rules="$TARGET/.claude/rules/brief-ledger-chronicle.md" phrase
+  for phrase in "skills are the gates" "bypassing them is the defect"; do
+    assert_not_contains "$phrase" "$TARGET/CLAUDE.md"
+    assert_contains     "$phrase" "$rules"
+  done
+}
+
+# orientation.md is the file an install must never write, and nothing else tells a
+# project it exists. If the stub stops naming it, the absence message in orient is the
+# only hint left, and that only appears once somebody runs orient.
+test_project_stub_points_at_the_file_the_project_authors() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_contains "docs/blc/orientation.md" "$TARGET/CLAUDE.md"
+  assert_no_file  "$TARGET/docs/blc/orientation.md"
 }
 
 test_project_replaces_a_tuned_command_on_reinstall() {

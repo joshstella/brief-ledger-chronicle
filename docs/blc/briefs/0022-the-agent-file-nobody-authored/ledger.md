@@ -1,16 +1,16 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 pending a:pending b:pending c:pending`
+`blc/2 #0022 in-progress a:in-progress(brief/0022-a-the-seed) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the seed | pending | — |
+| a | the seed | in-progress | `brief/0022-a-the-seed` |
 | b | one file or two | pending | — |
 | c | this repository | pending | — |
 
@@ -53,6 +53,42 @@ is called and how many there are. Run them one after another anyway, because bot
 Nothing here is provisional. Decision 1 is settled before `a`, so no phase can reorder the ones
 after it.
 
+## Phase `a`, as executed
+
+The stub now opens by saying the file belongs to the project, names the two files that hold
+the rest, and asks five questions. One of them is what "covered" means for tests. The closing
+instruction the installer prints changed with it: it said "fill in the project-specific
+section", and that section no longer exists.
+
+**The first test was unproven, and it is gone.** This ledger planned a test that the stub
+repeats no line of the process rules file. It was written, and it passed against the old stub,
+which is the defect this phase fixes. The duplication was never line-identical: the stub wrote
+"The installed skills are the gates" where the rules write "Installed skills are the gates". No
+textual comparison catches a restatement. It is replaced by a test for two named phrases that
+belong to the process rules, which asserts each is absent from the stub and present in the rules
+file. The second half is what stops the test rotting: a phrase the rules file drops is a phrase
+the test can no longer police.
+
+A third phrase, `bash tools/orient.sh`, was in that list and is dropped. The review found it
+passed by accident: the stub names `tools/orient.sh` and omits the word `bash`, so the
+assertion held on a space rather than on the thing it claimed to police. The two phrases that
+remain fail honestly against the old stub.
+
+**The stub restated a process rule, and the review caught it.** The first draft asked what
+"covered" means and explained it with "a merge to `main` needs tests covering the change",
+which is `templates/process-rules.md` line 32 in other words. That is the defect this phase
+exists to remove, written into the fix. The question now stands alone and names no rule. The
+test for named phrases did not catch this, and could not: the phrase was not on its list, and
+no list is complete. The guard here is the review, not the suite.
+
+Two tests, not four. "An existing file is still skipped and still logged as skipped" was already
+covered by `test_project_never_overwrites_an_existing_claude_md` and by two tests in
+`tests/test_replace.sh`, one per host name. A third copy would have proved nothing new.
+
+`test_project_creates_the_expected_tree` asserted the old `## Project-specific` heading, so it
+moved with the change. All three tests were seen to fail with the old `install.sh` in place.
+The suite is 558, from 556.
+
 ## Open decisions
 
 | # | decision | blocks |
@@ -83,4 +119,4 @@ Found while reading the code. None is in the brief.
 
 ## Branches
 
-None yet.
+`brief/0022-a-the-seed` (phase `a`).
