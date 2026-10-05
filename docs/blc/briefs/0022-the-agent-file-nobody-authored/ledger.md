@@ -1,6 +1,6 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 in-progress a:done(PR#105) b:in-progress(brief/0022-b-skills-are-prompts) c:pending d:pending`
+`blc/2 #0022 in-progress a:done(PR#105) b:in-progress(brief/0022-b-skills-are-prompts,PR#106) c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the seed | done (PR#105) | — |
-| b | skills are prompts | in-progress | `brief/0022-b-skills-are-prompts` |
+| b | skills are prompts | in-progress (PR#106) | `brief/0022-b-skills-are-prompts` |
 | c | one file or two | pending | — |
 | d | this repository | pending | — |
 
