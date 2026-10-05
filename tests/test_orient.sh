@@ -330,6 +330,83 @@ test_orient_says_so_when_there_is_no_upstream() {
   assert_out "no upstream"
 }
 
+# ── Against the trunk (#0021) ────────────────────────────────────────────────
+#
+# A branch's own upstream answers "is this branch current", which is not the question. The
+# record the rest of the output reads lives on the trunk. Two cases are on the record: a
+# pushed branch on a stale base read `0 behind / 0 ahead`, and a local branch with no upstream
+# read "local-only view" while main was 43 commits behind. Both had a trunk that had moved.
+
+# A clone of a bare origin, so `origin/HEAD` is set the way a real clone sets it, with the
+# trunk then moved on by a second clone and fetched into the first.
+orient_clone_with_moved_trunk() {
+  local origin="$TMP/origin"
+  git init -q --bare -b main "$origin"
+  orient_repo
+  git -C "$REPO" remote add origin "$origin"
+  git -C "$REPO" push -q -u origin main
+  rm -rf "$REPO"
+  git clone -q "$origin" "$REPO"
+  git -C "$REPO" config user.email t@example.com
+  git -C "$REPO" config user.name Test
+  git clone -q "$origin" "$TMP/other"
+  git -C "$TMP/other" config user.email o@example.com
+  git -C "$TMP/other" config user.name Other
+  echo y > "$TMP/other/g"
+  git -C "$TMP/other" add -A
+  git -C "$TMP/other" commit -qm second >/dev/null 2>&1
+  git -C "$TMP/other" push -q origin main
+}
+
+test_orient_counts_a_pushed_branch_against_the_trunk() {
+  orient_clone_with_moved_trunk
+  git -C "$REPO" switch -q -c feature
+  git -C "$REPO" push -q -u origin feature
+  git -C "$REPO" fetch -q origin
+  run_orient
+  assert_status 0
+  assert_out "0 behind / 0 ahead of \`origin/feature\`"
+  assert_out "1 behind \`origin/main\`"
+  assert_out "the record on \`origin/main\` is newer"
+}
+
+test_orient_counts_a_branch_with_no_upstream_against_the_trunk() {
+  orient_clone_with_moved_trunk
+  git -C "$REPO" switch -q -c local-only
+  git -C "$REPO" fetch -q origin
+  run_orient
+  assert_status 0
+  assert_out "no upstream"
+  assert_out "1 behind \`origin/main\`"
+  assert_out "the record on \`origin/main\` is newer"
+}
+
+# On the trunk itself the upstream count already is the trunk count. Printing both says one
+# thing twice.
+test_orient_does_not_repeat_the_trunk_on_the_trunk() {
+  orient_clone_with_moved_trunk
+  git -C "$REPO" fetch -q origin
+  run_orient
+  assert_status 0
+  assert_out "1 behind / 0 ahead of \`origin/main\`"
+  assert_not_contains "behind \`origin/main\` —" "$OUT"
+}
+
+# `git init` and a remote added later give no `origin/HEAD`. Say what is missing and how to set
+# it, rather than print no trunk and let the reader assume there is nothing to compare.
+test_orient_says_the_trunk_is_unknown_without_origin_head() {
+  local origin="$TMP/origin"
+  git init -q --bare -b main "$origin"
+  orient_repo
+  git -C "$REPO" remote add origin "$origin"
+  git -C "$REPO" push -q origin main
+  git -C "$REPO" switch -q -c feature
+  run_orient
+  assert_status 0
+  assert_out "trunk unknown"
+  assert_out "git remote set-head origin --auto"
+}
+
 # ── It writes nothing ────────────────────────────────────────────────────────
 
 # "Not a committed artifact. If it ends up committed, the design has failed."
