@@ -150,7 +150,56 @@ echo
 echo "## Off-limits"
 echo
 if [ -f "$INSTALL_LOG" ]; then
-  created="$(awk '/^### Created/{f=1;next} /^###|^## /{f=0} f && /^ *- /{sub(/^ *- /,"");print}' "$INSTALL_LOG" | sort -u)"
+  # The log is replayed, not skimmed. Each run has three sections that change what exists:
+  # Created, Removed, and Moved. Reading only Created listed paths a later run had pruned or
+  # moved, which an adopting repository was then told to keep off (#0021). Within one run,
+  # the installer moves the old layout first (Step 3a), then prunes, then places, so a run is
+  # applied in that order and not in the order its sections are written.
+  #
+  # The disk is never read. A path the install wrote and a person deleted by hand stays on
+  # the list, because that is the one a reader most needs to see (#0021 decision 1).
+  #
+  # A move or a drop in a run takes the whole old tree off the list, not only the file. The
+  # old layout put each tree directly under docs/, so the tree is the path's first two
+  # segments, and the upgrade deletes every tree it moves from. Old runs listed the trees
+  # themselves (`docs/contracts`), and no file entry would ever remove those. A path that was
+  # on the list and moved comes back at its new place. The text after a path in parentheses
+  # is the log's note, not part of the path.
+  created="$(awk -v arrow=' → ' '
+    function flush(   i, n, seg, root, k, gone, back) {
+      for (i = 1; i <= nm; i++) {
+        if (mdst[i] != "" && (msrc[i] in live)) back[mdst[i]] = 1
+        n = split(msrc[i], seg, "/")
+        root = (n >= 2) ? seg[1] "/" seg[2] : msrc[i]
+        for (k in live) if (k == root || index(k, root "/") == 1) gone[k] = 1
+      }
+      for (k in gone) delete live[k]
+      for (k in back) live[k] = 1
+      for (i = 1; i <= nr; i++) delete live[rem[i]]
+      for (i = 1; i <= nc; i++) live[cre[i]] = 1
+      nm = 0; nr = 0; nc = 0
+    }
+    /^## /            { flush(); sect = ""; next }
+    /^### Created/    { sect = "c"; next }
+    /^### Removed/    { sect = "r"; next }
+    /^### Moved/      { sect = "m"; next }
+    /^###/            { sect = ""; next }
+    sect != "" && /^ *- / {
+      line = $0; sub(/^ *- /, "", line)
+      if (sect == "c") { cre[++nc] = line; next }
+      if (sect == "r") { rem[++nr] = line; next }
+      a = index(line, arrow)
+      if (a > 0) {
+        src = substr(line, 1, a - 1)
+        dst = substr(line, a + length(arrow))
+      } else {
+        src = line; dst = ""
+      }
+      sub(/ \([^)]*\)$/, "", src); sub(/ \([^)]*\)$/, "", dst)
+      ++nm; msrc[nm] = src; mdst[nm] = dst
+    }
+    END { flush(); for (k in live) print k }
+  ' "$INSTALL_LOG" | LC_ALL=C sort -u)"
   # Drop anything whose parent directory is already listed: the log records both the
   # scaffolded directory and the files placed inside it, and naming both spends tokens
   # to say one thing.
