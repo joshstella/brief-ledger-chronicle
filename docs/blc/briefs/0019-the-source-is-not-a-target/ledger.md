@@ -1,6 +1,6 @@
 # Ledger — #0019 The source is not a target, and still has to run itself
 
-`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:pending d:pending e:pending`
+`blc/2 #0019 in-progress a:done(PR#91) b:done(PR#93) c:in-progress(brief/0019-c-the-rules,PR#102) d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0019-the-source-is-not-a-target/brief.md`
 **Started:** 2026-10-03
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the Claude links | done (PR#91) | — |
 | b | the repo rule | done (PR#93) | — |
-| c | the rules | pending | — |
+| c | the rules | in-progress (PR#102) | `brief/0019-c-the-rules` |
 | d | orient names it | pending | — |
 | e | the seeded agent file | pending | — |
 
@@ -39,10 +39,12 @@ repository binds Claude Code as well as Cursor. Today only Cursor loads it, from
 that both resolve to the same file.
 
 **c — the rules.** `templates/process-rules.md` binds both hosts in this repository, as it
-binds every target. Claude Code gets `.claude/rules/brief-ledger-chronicle.md` and Cursor gets
-`.cursor/rules/brief-ledger-chronicle.mdc`. Cursor's file needs `alwaysApply: true` frontmatter,
-and a link cannot add it, so the method waits on decision 1. The parity test from `a` extends
-to the rules rows of `--print-ownership`.
+binds every target. Claude Code gets `.claude/rules/brief-ledger-chronicle.md`, a link to the
+template. Cursor gets `.cursor/rules/brief-ledger-chronicle.mdc`, a committed file, because
+Cursor needs `alwaysApply: true` frontmatter and a link cannot add it (decision 1, option b).
+`install.sh --print-process-rules` prints the bytes an install writes, and a test compares the
+committed file against it, so an edit to the template without a regeneration fails the suite.
+Both destinations come from the rules rows of `--print-ownership`, as `a`'s parity test does.
 
 **d — orient names it.** `tools/orient.sh` says "self-hosted toolkit source" when a host's
 skills path in the repository is a link into `skills/`, instead of "not set up by the
@@ -96,7 +98,7 @@ still run one after another, because each phase branch writes this ledger's stat
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | **How the Cursor rules file gets its frontmatter.** From the brief. New evidence 2026-10-03: the Claude Code docs say `paths` is the only frontmatter field it reads from a rule, and any other field is ignored without an error. So option (a), frontmatter in `templates/process-rules.md` with both hosts linked to it, works for Claude Code. Its cost: `install.sh:205` prepends the same frontmatter for a Cursor target, so (a) also has to change the installer, or a Cursor target gets two blocks. | `c` |
+| 1 | **Settled 2026-10-05: option (b), a generated file with a drift test.** From the brief. Evidence 2026-10-03: the Claude Code docs say `paths` is the only frontmatter field it reads from a rule, so option (a) would work for it. (a) was rejected anyway: the installer prepends the same frontmatter for a Cursor target, so (a) also changes what every target gets, and the freeze is over for this brief only. Under (b) nothing a target receives changes. This repository commits `.cursor/rules/brief-ledger-chronicle.mdc` and links `.claude/rules/brief-ledger-chronicle.md` to the template. Rejected: (c), a `tools/self-host.sh` that regenerates it, which is a second program to keep current. | `c` |
 | 2 | **What part of the Manifesto seeds a target's agent file**, how that agrees with the reason `tests/test_orient.sh:370` gives for not shipping `orientation.md`, and whether it repeats `templates/process-rules.md`. From the brief. | `e` |
 | 3 | **Whether `e` stays in this brief.** From the brief. | `e` |
 | 4 | **One agent file or two.** From the brief. New evidence 2026-10-03: the Claude Code docs say it reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. | `e` |

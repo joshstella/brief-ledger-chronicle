@@ -14,7 +14,9 @@
 #   - `.claude/settings.local.json` is per user, and global ignores exclude it.
 #   - `CLAUDE.md` / `AGENTS.md` are project-owned. #0019 phase `e` decides what this
 #     repository's say.
-#   - the process rules file is #0019 phase `c`.
+#
+# The process rules row has its own tests at the end of this file, because the two hosts get
+# it two ways: Cursor needs frontmatter a link cannot add.
 
 SELF_HOST_HOSTS="claude cursor"
 
@@ -137,4 +139,51 @@ test_self_host_every_repo_claude_rule_binds_cursor() {
     done
     [ "$found" -eq 1 ] || fail "$rel binds Claude Code and no file under .cursor/rules/ is the same rule"
   done
+}
+
+# ── The shipped process rules ────────────────────────────────────────────────
+#
+# Both hosts get `templates/process-rules.md`, and only one of them can have it as a link.
+# Cursor loads a rule on every request only with `alwaysApply: true` frontmatter, which the
+# installer prepends and a link cannot. So this repository commits the generated file for
+# Cursor and links the plain template for Claude Code (#0019 decision 1, option b).
+#
+# The generated file is a copy, so it can drift from the template it was built from. The test
+# below is what makes the copy safe: it compares against `--print-process-rules`, the same
+# bytes an install writes, so an edit to the template without a regeneration fails the suite.
+
+# usage: self_host_rules_dest <host> — the rules destination an install for <host> writes,
+# excluding rules that belong to this repository alone.
+self_host_rules_dest() {
+  self_host_shipped_rules "$1" | grep -v '/no-cq-leak\.' | head -1
+}
+
+test_self_host_cursor_rules_file_matches_the_installer() {
+  local rel
+  rel="$(self_host_rules_dest cursor)"
+  [ -n "$rel" ] || { fail "--print-ownership --host cursor printed no rules row"; return; }
+  [ -f "$REPO_ROOT/$rel" ] || { fail "a target gets $rel and this repository does not"; return; }
+  [ ! -L "$REPO_ROOT/$rel" ] || fail "$rel is a link, and a link cannot carry the frontmatter Cursor needs"
+  run_install y --print-process-rules --host cursor
+  diff -u "$OUT" "$REPO_ROOT/$rel" > "$TMP/rules.diff" 2>&1 \
+    || fail "$rel is not what an install writes; regenerate it with 'bash install.sh --print-process-rules --host cursor > $rel': $(cat "$TMP/rules.diff")"
+}
+
+# Machine mode places no rules file, so printing one there answers about a project install.
+# The same refusal as `--print-ownership --machine`.
+test_self_host_printing_the_rules_refuses_machine_mode() {
+  run_install y --machine --print-process-rules
+  assert_status 1
+  assert_err "writes no rules file"
+}
+
+# Claude Code reads no frontmatter field but `paths`, so its copy is the template itself. A
+# link cannot drift, which is why only Cursor's file needs the comparison above.
+test_self_host_claude_rules_file_is_the_template() {
+  local rel
+  rel="$(self_host_rules_dest claude)"
+  [ -n "$rel" ] || { fail "--print-ownership --host claude printed no rules row"; return; }
+  [ -e "$REPO_ROOT/$rel" ] || { fail "a target gets $rel and this repository does not"; return; }
+  [ "$REPO_ROOT/$rel" -ef "$REPO_ROOT/templates/process-rules.md" ] \
+    || fail "$rel is not the same file as templates/process-rules.md"
 }

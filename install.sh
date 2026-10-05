@@ -22,6 +22,7 @@ ASSUME_YES=false
 # would be settable from the caller's environment, which turns an install into a
 # silent no-op that exits 0 and skips the self-install guard.
 PRINT_OWNERSHIP=false
+PRINT_PROCESS_RULES=false
 
 # The six skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
@@ -65,6 +66,10 @@ while [[ $# -gt 0 ]]; do
       PRINT_OWNERSHIP=true
       shift
       ;;
+    --print-process-rules)
+      PRINT_PROCESS_RULES=true
+      shift
+      ;;
     --help|-h)
       echo "Usage: bash install.sh [--host claude|cursor] [--target <path>] [--yes]"
       echo "       bash install.sh --machine"
@@ -79,6 +84,9 @@ while [[ $# -gt 0 ]]; do
       echo "                    before or after any project install. Claude Code only."
       echo "  --print-ownership Print what this installer owns and what it will never"
       echo "                    write, for the chosen host, and exit. Touches nothing."
+      echo "  --print-process-rules"
+      echo "                    Print the process rules file this installer would write"
+      echo "                    for the chosen host, and exit. Touches nothing."
       exit 0
       ;;
     *)
@@ -113,10 +121,10 @@ fi
 
 # Guard: refuse to install into the repo itself — it's the source, not a target.
 # Machine mode is exempt: it writes to $CLAUDE_HOME, never into a project. So is
-# --print-ownership, which has no target at all: it reports what the installer owns for a
-# given host and writes nothing, and refusing it here would make the map unreadable from
-# the one checkout that always has it.
-if [[ "$MODE" == "project" && "$PRINT_OWNERSHIP" != true && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
+# --print-ownership and --print-process-rules, which have no target at all: each reports what
+# the installer would write for a given host and writes nothing, and refusing them here would
+# make both unreadable from the one checkout that always has them.
+if [[ "$MODE" == "project" && "$PRINT_OWNERSHIP" != true && "$PRINT_PROCESS_RULES" != true && "$TARGET_DIR" -ef "$SCRIPT_DIR" ]]; then
   echo "error: cannot install into brief-ledger-chronicle itself." >&2
   echo "  This repo is the source of the process, not a target for it." >&2
   echo "  Use --target <path> to install into another project." >&2
@@ -199,6 +207,22 @@ EOF
 # One process-rules.md body, two destinations. Cursor needs YAML frontmatter so
 # the rule always applies; Claude Code loads .claude/rules/*.md with no paths
 # field the same way.
+#
+# The body is printed rather than written straight to the destination, so that
+# `--print-process-rules` can hand the same bytes to a caller. This repository's own
+# committed Cursor file is checked against those bytes instead of against a second copy of
+# the frontmatter (#0019 phase `c`).
+print_process_rules() {
+  if [[ "$HOST" == "cursor" ]]; then
+    printf '%s\n' '---'
+    printf '%s\n' 'description: brief-ledger-chronicle process — skills are the gates, STE writing, tests gate main'
+    printf '%s\n' 'alwaysApply: true'
+    printf '%s\n' '---'
+    printf '\n'
+  fi
+  cat "$SCRIPT_DIR/templates/process-rules.md"
+}
+
 place_process_rules() {
   local dst label tmp
   mkdir -p "$(dirname "$TARGET_DIR/$PROCESS_RULES_REL")"
@@ -206,14 +230,7 @@ place_process_rules() {
     dst="$TARGET_DIR/$PROCESS_RULES_REL"
     label="$PROCESS_RULES_REL"
     tmp="$(mktemp)"
-    {
-      printf '%s\n' '---'
-      printf '%s\n' 'description: brief-ledger-chronicle process — skills are the gates, STE writing, tests gate main'
-      printf '%s\n' 'alwaysApply: true'
-      printf '%s\n' '---'
-      printf '\n'
-      cat "$SCRIPT_DIR/templates/process-rules.md"
-    } > "$tmp"
+    print_process_rules > "$tmp"
     place_file "$tmp" "$dst" "$label"
     rm -f "$tmp"
   else
@@ -502,6 +519,19 @@ if [[ "$PRINT_OWNERSHIP" == true ]]; then
     exit 1
   fi
   ownership_map
+  exit 0
+fi
+
+# Same contract as --print-ownership: no target, nothing written, answerable before any
+# install exists. Machine mode is refused for the same reason as there — it places no rules
+# file, so printing one would answer about a project install instead.
+if [[ "$PRINT_PROCESS_RULES" == true ]]; then
+  if [[ "$MODE" == "machine" ]]; then
+    echo "error: --print-process-rules describes a project install; --machine writes no rules file." >&2
+    echo "  Drop --machine to see the rules file an install into a target would write." >&2
+    exit 1
+  fi
+  print_process_rules
   exit 0
 fi
 
