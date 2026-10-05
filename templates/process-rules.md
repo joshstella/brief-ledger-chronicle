@@ -3,6 +3,9 @@
 This repo uses the brief-ledger-chronicle workflow. Installed skills are the gates;
 bypassing them is the defect.
 
+The skills instruct an agent. Nothing enforces them, so a skipped gate and one that
+ran look the same afterwards. Say where you relied on a skill rather than a check.
+
 ## Process
 
 - Start with `bash tools/orient.sh` in a repo you have not read today. It answers what is

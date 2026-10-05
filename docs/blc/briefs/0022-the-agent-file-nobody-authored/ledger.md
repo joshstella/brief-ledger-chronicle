@@ -1,6 +1,6 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 in-progress a:in-progress(brief/0022-a-the-seed,PR#105) b:pending c:pending`
+`blc/2 #0022 in-progress a:done(PR#105) b:in-progress(brief/0022-b-skills-are-prompts,PR#106) c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
@@ -10,9 +10,10 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the seed | in-progress (PR#105) | `brief/0022-a-the-seed` |
-| b | one file or two | pending | — |
-| c | this repository | pending | — |
+| a | the seed | done (PR#105) | — |
+| b | skills are prompts | in-progress (PR#106) | `brief/0022-b-skills-are-prompts` |
+| c | one file or two | pending | — |
+| d | this repository | pending | — |
 
 The brief plans four phases. `a — what the file is for` was docs and the ledger only, and it
 existed to settle decision 1. Decision 1 is settled below, before any phase runs, so the phase
@@ -31,24 +32,39 @@ is the gap #0019 found here. Tests: a new target gets the file, an existing file
 skipped and still logged as skipped, the text repeats no line of the process rules file, and it
 names `orientation.md`.
 
-**b — one file or two.** A target gets one agent file, not one per host. `AGENTS.md` holds the
+**b — skills are prompts.** `templates/process-rules.md` says the skills are the gates. It
+does not say that nothing enforces them. One sentence puts that next to the claim it
+qualifies, so a target's agent does not read "gate" as a mechanical block. It goes in the
+rules file, which an install owns and rewrites, and not in the agent file, which an install
+writes once and never corrects. Tests for both hosts, because Cursor gets a generated copy
+with frontmatter and Claude Code gets the template itself.
+
+**c — one file or two.** A target gets one agent file, not one per host. `AGENTS.md` holds the
 text and `CLAUDE.md` is a link to it, so both hosts read the same bytes however the project is
 installed. Today `install.sh` picks the name from `$HOST`, so a project installed for both
 hosts gets two files with the same text and no relation between them. Tests: a Cursor install
 and a Claude Code install, a target that already has one of the two, and a target that has
 both. Waits on decision 2.
 
-**c — this repository.** This repository gets the agent file an install would write, once, and
+**d — this repository.** This repository gets the agent file an install would write, once, and
 commits it. From then on it owns it, as any target does. It answers the questions `a` seeds,
 including what "covered" means for tests here. Tests: the committed file exists and answers
 them. Waits on decision 3.
 
 ## Dependency structure
 
-`a` and `b` are independent in substance. `a` changes what the file says; `b` changes what it
-is called and how many there are. Run them one after another anyway, because both edit
-`write_project_stub` and the second would land on a conflict. `c` comes last: it uses the text
-`a` writes and the name `b` settles.
+`a` and `c` are independent in substance. `a` changes what the agent file says; `c` changes what
+it is called and how many there are. Run them one after another anyway, because both edit
+`write_project_stub` and the second would land on a conflict. `d` comes last: it uses the text
+`a` writes and the name `c` settles.
+
+`b` touches none of that. It edits `templates/process-rules.md`, which no other phase reads, so
+it could run at any point. It runs second because it is the only phase with no open decision in
+front of it.
+
+Re-lettered on 2026-10-05, after `a`: "skills are prompts" is new and takes `b`, "one file or
+two" was `b` and is now `c`, and "this repository" was `c` and is now `d`. No merged PR cites
+either letter.
 
 Nothing here is provisional. Decision 1 is settled before `a`, so no phase can reorder the ones
 after it.
@@ -89,13 +105,49 @@ covered by `test_project_never_overwrites_an_existing_claude_md` and by two test
 moved with the change. All three tests were seen to fail with the old `install.sh` in place.
 The suite is 558, from 556.
 
+## Big decisions
+
+**The Manifesto does not ship to targets, and one sentence of it does. 2026-10-05, after `a`.**
+
+Decision 1 was reopened after `a` merged. The question put was an excerpt of `Manifesto.md`
+that is appropriate for an agent, rather than the whole file or nothing.
+
+Reading the Manifesto for that excerpt is what closed the question. Most of it argues: against
+spec-first process, against ceremony, for play. None of that instructs an agent. Six statements
+do, and one more was already in `templates/process-rules.md` in other words. So an excerpt
+exists. It is small.
+
+Then the destination failed. Every one of those six is a statement about the toolkit's process,
+which puts it in the same class as `templates/process-rules.md` — a file an install owns and
+rewrites every run. The agent file is written once and never again. An excerpt placed there
+freezes on install day and no upgrade can correct it. The Manifesto names that failure itself:
+"a contract that has drifted is worse than no contract, because it is believed."
+
+Dropping the Manifesto for targets also dissolves evidence 2 of the brief, instead of answering
+it. There is no exception to `test_orient_authored_file_does_not_ship_to_a_target` to justify,
+because nothing authored here is shipped. The Manifesto's own rules say the same: keep the
+provided surface small, treat everything external as optional. It stays in this repository, and
+`tools/orient.sh` names it in the footer for anybody who wants the argument.
+
+One statement survived on its own merits, and it is `b`. Nothing a target receives says the
+skills are unenforced. In this repository that comes from `docs/blc/orientation.md`, which a
+target authors for itself, so a target never gets it. An agent reading "the skills are the
+gates" with nothing beside it will take "gate" to mean a mechanical block. That is a fact about
+the tools, not an argument about programming, and it belongs in the rules file.
+
+**This overturns a non-goal of the brief.** The brief says "Not changing
+`templates/process-rules.md`. That file is the installer's, and it works." It does work, for
+everything it says. The gap is a thing it does not say, and no other file an install writes can
+carry it. The non-goal held against adding process prose to a file that already covers process.
+It does not hold against the one sentence that makes the rest of the file honest.
+
 ## Open decisions
 
 | # | decision | blocks |
 |---|---|---|
 | 1 | **Settled 2026-10-05: nothing.** From the brief, carried from #0019 decision 2. The installer seeds no prose. The stub becomes a pointer plus the questions a project must answer. Evidence found while planning: `tools/orient.sh` already reads `docs/blc/orientation.md` for what a project values, and prints "nobody has written down what matters here" when it is absent. So principles already have a home, and process has one in `templates/process-rules.md`. That leaves the agent file with architecture, stack, build commands and the test-coverage definition — facts about one project that no installer can know. This also answers evidence 2 of the brief: the installer is not shipping this repository's principles into a target, because it ships no principles at all. Rejected: the whole Manifesto, a derived excerpt, and a test-coverage prompt alone. | `a` |
-| 2 | **One agent file or two.** From the brief, carried from #0019 decision 4. Claude Code reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. That version claim is from the Claude Code documentation, not from a run here. | `b` |
-| 3 | **Whether `c` is this brief's job.** From the brief, where it is decision 3 and blocks `d`. This repository's agent file could be written by hand now, with no installer change. | `c` |
+| 2 | **One agent file or two.** From the brief, carried from #0019 decision 4. Claude Code reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. That version claim is from the Claude Code documentation, not from a run here. | `c` |
+| 3 | **Whether `d` is this brief's job.** From the brief, where it is decision 3. This repository's agent file could be written by hand now, with no installer change. | `d` |
 
 ## Complications
 
@@ -119,4 +171,36 @@ Found while reading the code. None is in the brief.
 
 ## Branches
 
-`brief/0022-a-the-seed` (phase `a`).
+`brief/0022-a-the-seed` (phase `a`, merged as PR#105, deleted).
+`brief/0022-b-skills-are-prompts` (phase `b`).
+
+## Phase `b`, as executed
+
+The sentence sits directly under "Installed skills are the gates; bypassing them is the defect",
+because that is the claim it qualifies. It says the skills instruct an agent, that a skipped gate
+and one that ran look the same afterwards, and to say where a skill was relied on instead of a
+check.
+
+**The drift test from #0019 `c` fired on the first real edit to the template, which is what it
+was built for.** `.cursor/rules/brief-ledger-chronicle.mdc` is a generated copy, and
+`self_host_cursor_rules_file_matches_the_installer` failed until it was regenerated with `bash
+install.sh --print-process-rules --host cursor`. #0019 closed with that trap recorded and
+nothing to regenerate it. The record was read and the test caught the rest.
+
+Two tests, one per host. Cursor receives a generated copy with frontmatter prepended and Claude
+Code receives the template itself, so a sentence proved on one path is not proved on the other.
+Both were seen to fail without the change.
+
+**CI did not run for PR#106, and the phase merged anyway.** Three attempts ended the same way:
+"The job was not acquired by Runner of type hosted even after multiple attempts", zero steps
+executed, 15 minutes each. Nothing ran, so there is no log. The repository is public, where
+GitHub-hosted runners have no minutes quota, and an exhausted quota reports a billing error
+rather than this one. PR#105 passed on the same workflow two hours before. The cause is runner
+allocation on GitHub's side.
+
+What that costs is `original-awk` and `busybox`. Neither is installed on the machine that ran
+the suite, so CI is the only place they execute, and the local matrix covers `gawk` and `mawk`
+only. For this diff the gap is empty: it changes markdown in a template, the generated copy of
+that template, two tests that call `assert_contains`, and this ledger. No awk is touched. That
+reasoning is the warrant for the merge, and it is written here because the next change to this
+file may not be able to say the same.
