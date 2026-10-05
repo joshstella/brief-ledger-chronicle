@@ -530,6 +530,25 @@ test_orient_says_the_trunk_is_unknown_without_origin_head() {
 # ── It writes nothing ────────────────────────────────────────────────────────
 
 # "Not a committed artifact. If it ends up committed, the design has failed."
+# The installer does not ship Manifesto.md. A footer that names it anyway sent an agent in an
+# adopting repository looking for a file that was never there.
+test_orient_footer_names_the_manifesto_only_when_it_exists() {
+  orient_repo
+  run_orient
+  assert_status 0
+  assert_out 'Deeper: `README.md` · `docs/blc/briefs/README.md`'
+  assert_not_contains 'Manifesto.md' "$OUT"
+  echo '# Manifesto' > "$REPO/Manifesto.md"
+  run_orient
+  assert_status 0
+  assert_out 'Deeper: `README.md` · `Manifesto.md` · `docs/blc/briefs/README.md`'
+}
+
+test_orient_footer_names_the_manifesto_in_this_repo() {
+  ( cd "$REPO_ROOT" && bash "$(ORIENT)" ) >"$OUT" 2>"$ERR"
+  assert_out '· `Manifesto.md` ·'
+}
+
 test_orient_leaves_the_repository_untouched() {
   orient_repo
   orient_brief 0001-thing "The thing"

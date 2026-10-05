@@ -241,4 +241,8 @@ else
 fi
 echo
 echo "---"
-echo "Deeper: \`README.md\` · \`Manifesto.md\` · \`$BRIEFS_DIR/README.md\` · one brief · one ledger."
+# The installer does not ship Manifesto.md, so a target has one only if it wrote its own. A
+# pointer to a missing file sends the reader looking for nothing.
+MANIFESTO=""
+[ -f Manifesto.md ] && MANIFESTO=" · \`Manifesto.md\`"
+echo "Deeper: \`README.md\`$MANIFESTO · \`$BRIEFS_DIR/README.md\` · one brief · one ledger."
