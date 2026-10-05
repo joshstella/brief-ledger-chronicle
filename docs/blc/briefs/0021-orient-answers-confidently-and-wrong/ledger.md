@@ -1,10 +1,11 @@
 # Ledger — #0021 Orient answers confidently, and wrong
 
-`blc/2 #0021 in-progress a:done(PR#97) b:done(PR#99) c:in-progress(brief/0021-c-the-footer,PR#100)`
+`blc/2 #0021 done a:done(PR#97) b:done(PR#99) c:done(PR#100)`
 
 **Brief:** `docs/blc/briefs/0021-orient-answers-confidently-and-wrong/brief.md`
 **Started:** 2026-10-04
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-05
 
 ## Phases
 
@@ -12,7 +13,7 @@
 |---|---|---|---|
 | a | the trunk count | done (PR#97) | — |
 | b | the log replay | done (PR#99) | — |
-| c | the footer | in-progress (PR#100) | `brief/0021-c-the-footer` |
+| c | the footer | done (PR#100) | — |
 
 The brief numbers the defects 1 Off-limits, 2 footer, 3 freshness. The phases run in a different
 order, by cost on record: the freshness defect wasted a whole branch in an adopting repository
@@ -77,8 +78,24 @@ All three resolved 2026-10-04 by the owner, before planning.
 - **The trunk count reads local refs.** Like the upstream count, it is only as fresh as the last
   fetch. The line must keep saying so, and must not claim more.
 
+## Closeout, 2026-10-05
+
+The three defects of the brief are fixed. `a` (PR#97) counts the checkout against the trunk as
+well as against its own upstream. `b` (PR#99) replays the whole install log for Off-limits. `c`
+(PR#100) names `Manifesto.md` in the footer only when it exists. Each phase's new tests were
+seen to fail without its fix. The full suite passed 548 tests after `c`.
+
+Open after close. Neither is tested:
+
+- **The footer still names `README.md` without a check.** Decision 2 covers `Manifesto.md`
+  only. A project almost always has a README, so the pointer is rarely wrong.
+- **A clone with no `origin/HEAD` gets no trunk count.** The freshness line says the trunk is
+  unknown and gives `git remote set-head origin --auto`. A clone made with `git clone` sets it.
+  The clone that ran `c` had none, so the line said "trunk unknown" there until someone runs that
+  command.
+
 ## Branches
 
 `brief/0021-a-the-trunk-count` (phase `a`, merged as PR#97, deleted).
 `brief/0021-b-the-log-replay` (phase `b`, merged as PR#99, deleted).
-`brief/0021-c-the-footer` (phase `c`).
+`brief/0021-c-the-footer` (phase `c`, merged as PR#100, deleted).
