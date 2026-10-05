@@ -1,6 +1,6 @@
 # Ledger — #0021 Orient answers confidently, and wrong
 
-`blc/2 #0021 in-progress a:in-progress(brief/0021-a-the-trunk-count,PR#97) b:pending c:pending`
+`blc/2 #0021 in-progress a:done(PR#97) b:in-progress(brief/0021-b-the-log-replay) c:pending`
 
 **Brief:** `docs/blc/briefs/0021-orient-answers-confidently-and-wrong/brief.md`
 **Started:** 2026-10-04
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the trunk count | in-progress (PR#97) | `brief/0021-a-the-trunk-count` |
-| b | the log replay | pending | — |
+| a | the trunk count | done (PR#97) | — |
+| b | the log replay | in-progress | `brief/0021-b-the-log-replay` |
 | c | the footer | pending | — |
 
 The brief numbers the defects 1 Off-limits, 2 footer, 3 freshness. The phases run in a different
@@ -55,11 +55,18 @@ All three resolved 2026-10-04 by the owner, before planning.
 
 - **A `### Moved` section holds two kinds of entry.** `old → new` is a project file that moved.
   `x (old copy of a toolkit file — dropped)` is a toolkit file that was deleted. `b` must read
-  both, and must not take the parenthesis as part of a path.
+  both, and must not take the parenthesis as part of a path. **Settled in `b`:** a trailing
+  ` (...)` is stripped from both sides of a move and from a dropped entry. A move's destination
+  can carry one too: the joined install log is written `… (joined, old entries first)`.
 - **Old runs list directories, and the upgrade drops only files.** An old `### Created` names
   `docs/contracts` and `docs/state`. The upgrade logs each file it drops, then deletes the empty
   directories without logging them (`install.sh:950`). Replaying file entries alone would leave
-  the old directories on the list. `b` has to decide how a directory entry leaves the set.
+  the old directories on the list. **Settled in `b`:** a move or a drop in a run takes the
+  whole old tree off the list. The old layout put each tree directly under `docs/`, so the tree
+  is the path's first two segments, and the upgrade deletes every tree it moves from
+  (`test_upgrade_leaves_one_tree_not_two`). A path that was on the list and moved comes back at
+  its new place. Rejected: drop a directory entry once no listed path is left under it. An old
+  run can list a tree with no file under it, such as `docs/state`, and that rule never drops it.
 - **`### Created` entries can carry a label.** For example `.gitignore (appended chronicles
   ignore)`. The current reader prints these as they are, and `b` must not mistake one for a path
   that moved.
@@ -72,4 +79,5 @@ All three resolved 2026-10-04 by the owner, before planning.
 
 ## Branches
 
-`brief/0021-a-the-trunk-count` (phase `a`).
+`brief/0021-a-the-trunk-count` (phase `a`, merged as PR#97, deleted).
+`brief/0021-b-the-log-replay` (phase `b`).

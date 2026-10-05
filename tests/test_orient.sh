@@ -295,6 +295,126 @@ LOG
   assert_not_contains "tools/open-briefs.sh" "$OUT"
 }
 
+# ── The whole log, replayed (#0021) ──────────────────────────────────────────
+#
+# Each run in the log has three sections that change what exists: Created, Removed, and
+# Moved. Reading only Created told an adopting repository to keep off six pruned commands
+# and two directories an upgrade had just moved. Every test above wrote only Created, so
+# none of them could fail on that.
+
+orient_log() {
+  mkdir -p "$REPO/docs/blc/install-log"
+  cat > "$REPO/docs/blc/install-log/install-log.md"
+  git -C "$REPO" add -A && git -C "$REPO" commit -qm log >/dev/null 2>&1
+}
+
+test_orient_drops_a_path_a_later_run_removed() {
+  orient_repo
+  orient_log <<'LOG'
+# Install log
+
+## 2026-09-01T00:00:00Z — HOST
+
+### Created
+
+  - .claude/commands/blc-old.md
+  - .claude/commands/blc-kept.md
+
+## 2026-09-02T00:00:00Z — HOST
+
+### Created
+
+  (none)
+
+### Removed
+
+  - .claude/commands/blc-old.md
+LOG
+  run_orient
+  assert_status 0
+  assert_not_contains "blc-old.md" "$OUT"
+  assert_out "blc-kept.md"
+}
+
+# The upgrade moves the project's files and drops the toolkit's old copies, then deletes
+# each old tree. An old run listed the trees themselves, so they have to leave as trees.
+test_orient_drops_the_old_trees_an_upgrade_moved() {
+  orient_repo
+  orient_log <<'LOG'
+# Install log
+
+## 2026-09-01T00:00:00Z — HOST
+
+### Created
+
+  - docs/contracts
+  - docs/contracts/v1.md
+  - docs/state
+  - docs/install-log/install-log.md
+
+## 2026-10-03T00:00:00Z — HOST
+
+### Created
+
+  - docs/blc/contracts
+  - docs/blc/state
+
+### Moved — old docs/ layout to docs/blc/
+
+  - docs/state/me@example.org.md → docs/blc/state/me@example.org.md
+  - docs/install-log/install-log.md → docs/blc/install-log/install-log.md (joined, old entries first)
+  - docs/contracts/v1.md (old copy of a toolkit file — dropped)
+LOG
+  run_orient
+  assert_status 0
+  assert_not_contains "\`docs/contracts" "$OUT"
+  assert_not_contains "\`docs/state" "$OUT"
+  assert_not_contains "\`docs/install-log" "$OUT"
+  assert_out "docs/blc/contracts"
+  assert_out "docs/blc/state"
+}
+
+# A path an install wrote and an upgrade moved is still a path an install wrote, at its new
+# place. The label after the arrow is the log's note, not part of the path.
+test_orient_follows_a_logged_path_that_moved() {
+  orient_repo
+  orient_log <<'LOG'
+# Install log
+
+## 2026-09-01T00:00:00Z — HOST
+
+### Created
+
+  - docs/install-log/install-log.md
+
+## 2026-10-03T00:00:00Z — HOST
+
+### Moved — old docs/ layout to docs/blc/
+
+  - docs/install-log/install-log.md → docs/blc/install-log/install-log.md (joined, old entries first)
+LOG
+  run_orient
+  assert_status 0
+  assert_out "- \`docs/blc/install-log/install-log.md\`"
+  assert_not_contains "joined" "$OUT"
+}
+
+# Never the disk (decision 1). A path the install wrote and a person deleted by hand is the
+# one a reader most needs to see.
+test_orient_still_lists_a_logged_path_deleted_by_hand() {
+  orient_repo
+  orient_log <<'LOG'
+# Install log
+
+### Created
+
+  - tools/gone-by-hand.sh
+LOG
+  run_orient
+  assert_status 0
+  assert_out "tools/gone-by-hand.sh"
+}
+
 # ── Staleness ────────────────────────────────────────────────────────────────
 
 # Everything orient prints is derived from local refs, so on a stale clone it is
