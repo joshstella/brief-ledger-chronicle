@@ -190,3 +190,17 @@ nothing to regenerate it. The record was read and the test caught the rest.
 Two tests, one per host. Cursor receives a generated copy with frontmatter prepended and Claude
 Code receives the template itself, so a sentence proved on one path is not proved on the other.
 Both were seen to fail without the change.
+
+**CI did not run for PR#106, and the phase merged anyway.** Three attempts ended the same way:
+"The job was not acquired by Runner of type hosted even after multiple attempts", zero steps
+executed, 15 minutes each. Nothing ran, so there is no log. The repository is public, where
+GitHub-hosted runners have no minutes quota, and an exhausted quota reports a billing error
+rather than this one. PR#105 passed on the same workflow two hours before. The cause is runner
+allocation on GitHub's side.
+
+What that costs is `original-awk` and `busybox`. Neither is installed on the machine that ran
+the suite, so CI is the only place they execute, and the local matrix covers `gawk` and `mawk`
+only. For this diff the gap is empty: it changes markdown in a template, the generated copy of
+that template, two tests that call `assert_contains`, and this ledger. No awk is touched. That
+reasoning is the warrant for the merge, and it is written here because the next change to this
+file may not be able to say the same.
