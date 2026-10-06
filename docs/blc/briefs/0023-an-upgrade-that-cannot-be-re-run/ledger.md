@@ -1,6 +1,6 @@
 # Ledger — #0023 An upgrade that cannot be re-run, and a version nobody can name
 
-`blc/2 #0023 in-progress a:done(PR#111) b:in-progress(brief/0023-b-what-a-version-is) c:pending`
+`blc/2 #0023 in-progress a:done(PR#111) b:in-progress(brief/0023-b-what-a-version-is,PR#112) c:pending`
 
 **Brief:** `docs/blc/briefs/0023-an-upgrade-that-cannot-be-re-run/brief.md`
 **Started:** 2026-10-05
@@ -11,7 +11,7 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the log moves first | done (PR#111) | `brief/0023-a-the-log-moves-first` |
-| b | what a version is | in-progress | `brief/0023-b-what-a-version-is` |
+| b | what a version is | in-progress (PR#112) | `brief/0023-b-what-a-version-is` |
 | c | a target that is behind | pending | — |
 
 The brief's three phases stand. `a` is a defect and `b` and `c` are gaps, so `a` goes first.
