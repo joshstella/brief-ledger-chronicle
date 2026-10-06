@@ -12,8 +12,11 @@ test_replace_does_not_overwrite_an_existing_claude_md() {
   run_install y --target "$TARGET"
   assert_status 0
   assert_contains "PROJECT-OWNED CONTENT" "$TARGET/CLAUDE.md"
-  assert_out "CLAUDE.md (already exists, skipped)"
+  assert_out "CLAUDE.md (the project's agent file, kept in place of AGENTS.md)"
   assert_not_contains "CLAUDE.md (replaced)" "$OUT"
+  # Not merely unreplaced: no second agent file appears beside it. An AGENTS.md here would
+  # leave the project owning two, which is what #0022 `c` removes.
+  assert_no_file "$TARGET/AGENTS.md"
   assert_file "$TARGET/.claude/rules/brief-ledger-chronicle.md"
 }
 

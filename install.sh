@@ -190,8 +190,19 @@ place_dir() {
 # project that no installer can know. So the stub asks instead of answering (#0022).
 write_project_stub() {
   local dst="$TARGET_DIR/$RULES_FILE"
+
+  # An adopter who ran an older install, or who wrote one by hand, has a real CLAUDE.md and
+  # no AGENTS.md. Writing AGENTS.md beside it would create the second agent file this phase
+  # exists to remove, and the project would own both. Their file is the agent file. Leave it.
+  if [[ -n "$RULES_COMPAT_FILE" && ! -e "$dst" && -f "$TARGET_DIR/$RULES_COMPAT_FILE" \
+        && ! -L "$TARGET_DIR/$RULES_COMPAT_FILE" ]]; then
+    log_skipped_as "$RULES_COMPAT_FILE" "the project's agent file, kept in place of $RULES_FILE"
+    return
+  fi
+
   if [[ -f "$dst" ]]; then
     log_skipped "$RULES_FILE"
+    link_rules_compat
     return
   fi
   cat > "$dst" <<EOF
@@ -206,8 +217,11 @@ The installer could not answer the questions below. It does not know this projec
 
 Two other files carry what this one does not, and neither is a place for architecture.
 
-- \`$PROCESS_RULES_REL\` — how work reaches \`main\`. The installer owns it and rewrites
-  it on every run. Do not edit it here.
+- The process rules — how work reaches \`main\`. The installer owns them and rewrites them
+  on every run. Do not edit them here. Cursor reads
+  \`.cursor/rules/brief-ledger-chronicle.mdc\`; Claude Code reads
+  \`.claude/rules/brief-ledger-chronicle.md\`. Both are named because this file is written
+  once, and a project may add the second host later.
 - \`docs/blc/orientation.md\` — what this project values, in its own words. Nothing seeds
   it. Until somebody writes it, \`tools/orient.sh\` reports that it is missing.
 
@@ -220,6 +234,23 @@ Two other files carry what this one does not, and neither is a place for archite
 - What is generated, vendored, or otherwise not edited by hand?
 EOF
   log_created "$RULES_FILE"
+  link_rules_compat
+}
+
+# Claude Code reads AGENTS.md natively only from v2.1.277, and only when no CLAUDE.md is
+# present. A relative link keeps one text for both hosts on every version. It is relative,
+# not absolute, so the pair survives a clone to any path.
+link_rules_compat() {
+  [[ -n "$RULES_COMPAT_FILE" ]] || return 0
+  local compat="$TARGET_DIR/$RULES_COMPAT_FILE"
+  # -L as well as -e, because -e is false for a dangling link and a dangling CLAUDE.md is
+  # still the project's to fix. This installer does not replace what a project owns.
+  if [[ -L "$compat" || -e "$compat" ]]; then
+    log_skipped "$RULES_COMPAT_FILE"
+    return
+  fi
+  ln -s "$RULES_FILE" "$compat"
+  log_created "$RULES_COMPAT_FILE"
 }
 
 # One process-rules.md body, two destinations. Cursor needs YAML frontmatter so
@@ -317,14 +348,20 @@ install_hint() {
 # the same source file becomes a skill directory on one host and a flat command file
 # on the other.
 
+# The agent file is AGENTS.md on both hosts. Claude Code gets CLAUDE.md beside it as a
+# link, because it reads AGENTS.md natively only from v2.1.277 and only when no CLAUDE.md
+# exists. A project installed for both hosts used to get two files with the same text and
+# nothing relating them, so an edit to one left the other stale (#0022 c).
+RULES_FILE="AGENTS.md"
+RULES_COMPAT_FILE=""
+
 if [[ "$HOST" == "cursor" ]]; then
   SKILLS_DST_REL=".cursor/skills"
-  RULES_FILE="AGENTS.md"
   PROCESS_RULES_REL=".cursor/rules/brief-ledger-chronicle.mdc"
 else
   SKILLS_DST_REL=".claude/skills"
   COMMANDS_DST_REL=".claude/commands"
-  RULES_FILE="CLAUDE.md"
+  RULES_COMPAT_FILE="CLAUDE.md"
   PROCESS_RULES_REL=".claude/rules/brief-ledger-chronicle.md"
 fi
 
@@ -425,6 +462,7 @@ ownership_map() {
   # thing this file says, not a thing it fails to say — #0011's brief-checks/ attaches
   # here, and an absent entry would be indistinguishable from an oversight.
   printf 'project\tfile\t-\t%s\n' "$RULES_FILE"
+  [[ -n "$RULES_COMPAT_FILE" ]] && printf 'project\tfile\t-\t%s\n' "$RULES_COMPAT_FILE"
   printf 'project\ttree\t-\tdocs/blc/briefs\n'
   printf 'project\ttree\t-\tdocs/blc/state\n'
   printf 'project\ttree\t-\tdocs/blc/chronicles\n'

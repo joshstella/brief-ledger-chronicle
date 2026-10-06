@@ -94,7 +94,8 @@ test_project_never_overwrites_an_existing_claude_md() {
   run_install y --target "$TARGET"
   assert_status 0
   assert_contains "PROJECT-OWNED CONTENT" "$TARGET/CLAUDE.md"
-  assert_out "CLAUDE.md (already exists, skipped)"
+  assert_out "CLAUDE.md (the project's agent file, kept in place of AGENTS.md)"
+  assert_no_file "$TARGET/AGENTS.md"
 }
 
 # ── The stub asks, it does not answer (#0022 a) ──────────────────────────────
