@@ -1,6 +1,6 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 in-progress a:in-progress(brief/0025-a-the-proof) b:pending c:pending d:pending`
+`blc/2 #0025 in-progress a:in-progress(brief/0025-a-the-proof,PR#116) b:pending c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
@@ -10,7 +10,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the proof | in-progress | `brief/0025-a-the-proof` |
+| a | the proof | in-progress (PR#116) | `brief/0025-a-the-proof` |
 | b | the deletion | pending | — |
 | c | the skill | pending | — |
 | d | orient points at it | pending | — |
