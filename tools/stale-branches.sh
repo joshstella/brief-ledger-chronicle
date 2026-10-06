@@ -35,7 +35,27 @@
 set -euo pipefail
 
 TSV=false
-[ "${1:-}" = "--tsv" ] && TSV=true
+DELETE=false
+TARGETS=()
+case "${1:-}" in
+  --tsv) TSV=true ;;
+  --delete)
+    DELETE=true
+    shift
+    TARGETS=("$@")
+    # No names means no deletion. A bare `--delete` that removed everything currently proven
+    # would make the dangerous reading of this program the shortest one to type, and would
+    # delete against a classification nobody had read.
+    if [ "${#TARGETS[@]}" -eq 0 ]; then
+      echo "stale-branches: --delete needs at least one branch name." >&2
+      echo "  Run with no arguments to see what is proven stale, then name what to delete." >&2
+      exit 2
+    fi ;;
+  "") ;;
+  *)
+    echo "stale-branches: unknown argument \`$1\`." >&2
+    exit 2 ;;
+esac
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 2; }
 cd "$(git rev-parse --show-toplevel)"
@@ -160,6 +180,64 @@ while read -r branch tip; do
 done <<EOF
 $(git for-each-ref --format='%(refname:short) %(objectname)' refs/heads/)
 EOF
+
+# ── Deletion ─────────────────────────────────────────────────────────────────
+#
+# Every named branch is proven again here, against the classification this run just built,
+# rather than trusted from whatever the caller read. The report and the deletion are two
+# commands with a person between them, and a branch can gain a commit in that gap — which is
+# exactly the case a branch-name match got wrong on 2026-10-05.
+#
+# A test that could not run shrinks what is proven; it cannot make a proof wrong. So an absent
+# forge deletes fewer branches and never the wrong one, and there is no reason to refuse.
+if $DELETE; then
+  # The saved tip goes under refs/blc/pruned/ before the branch goes away. A proven-stale
+  # branch is in the trunk by definition, so this catches a bug in the prover rather than lost
+  # work — which is a weaker thing to insure against, and worth one ref rather than a file.
+  save_tip() {
+    local name="$1" tip="$2" ref="refs/blc/pruned/$name" n=2
+    while git rev-parse --verify --quiet "$ref" >/dev/null; do
+      # A name can be pruned twice, with a different tip each time. Overwriting would discard
+      # the only copy of the earlier one.
+      ref="refs/blc/pruned/$name-$n"
+      n=$((n + 1))
+    done
+    git update-ref "$ref" "$tip"
+    printf '%s' "$ref"
+  }
+
+  status=0
+  for name in "${TARGETS[@]}"; do
+    if [ "$name" = "$TRUNK_LOCAL" ]; then
+      echo "refused $name: it is the trunk." >&2
+      status=1
+      continue
+    fi
+    # Not redundant with git's own refusal. The tip is saved before the branch is removed, so
+    # letting `git branch -D` do the refusing would leave a ref behind for a branch that is
+    # still here. Checked by mutation: removing this fails the test.
+    if [ "$name" = "$CURRENT" ]; then
+      echo "refused $name: it is checked out." >&2
+      status=1
+      continue
+    fi
+    if ! tip="$(git rev-parse --verify --quiet "refs/heads/$name")"; then
+      echo "refused $name: no such branch." >&2
+      status=1
+      continue
+    fi
+    proof="$(proof_for "$tip")"
+    if [ -z "$proof" ]; then
+      echo "refused $name: no test proves the trunk has this work." >&2
+      status=1
+      continue
+    fi
+    ref="$(save_tip "$name" "$tip")"
+    git branch -D "$name" >/dev/null
+    echo "deleted $name ($proof), tip kept at $ref"
+  done
+  exit $status
+fi
 
 if $TSV; then
   printf '%s' "$STALE" | while IFS=$'\t' read -r b p t; do

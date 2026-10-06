@@ -246,3 +246,126 @@ test_stale_keeps_the_remote_trunk_when_the_local_one_diverged() {
   assert_status 0
   assert_out "trunk \`main\`"
 }
+
+# ── Deletion (#0025b) ────────────────────────────────────────────────────────
+#
+# The deletion is the only irreversible thing this toolkit does. It lives in a script rather
+# than in a skill so that these assertions can exist at all: an instruction to an agent is a
+# rule nothing checks, and that is the whole argument of decision 1.
+
+saved_tip() { git -C "$REPO" rev-parse --verify --quiet "refs/blc/pruned/$1"; }
+
+test_stale_deletes_a_proven_branch_and_keeps_its_tip() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  local tip; tip="$(tip_of behind)"
+  run_stale --delete behind
+  assert_status 0
+  assert_out "deleted behind (ancestor)"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/behind >/dev/null \
+    && fail "the branch survived the deletion"
+  [ "$(saved_tip behind)" = "$tip" ] || fail "the tip was not kept at refs/blc/pruned/behind"
+}
+
+test_stale_refuses_to_delete_an_unproven_branch() {
+  stale_repo
+  stale_branch wip w "work nobody has merged"
+  run_stale --delete wip
+  [ "$LAST_STATUS" -eq 0 ] && fail "refusing a branch must not exit 0"
+  assert_err "refused wip: no test proves"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/wip >/dev/null \
+    || fail "a refused branch was deleted anyway"
+  saved_tip wip >/dev/null && fail "a refused branch left a saved tip"
+}
+
+test_stale_refuses_to_delete_the_trunk() {
+  stale_repo
+  run_stale --delete main
+  [ "$LAST_STATUS" -eq 0 ] && fail "deleting the trunk must not exit 0"
+  assert_err "refused main: it is the trunk"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/main >/dev/null || fail "the trunk went"
+}
+
+test_stale_refuses_to_delete_the_checked_out_branch() {
+  stale_repo
+  git -C "$REPO" checkout -q -b here main
+  run_stale --delete here
+  [ "$LAST_STATUS" -eq 0 ] && fail "deleting the checked-out branch must not exit 0"
+  assert_err "refused here: it is checked out"
+}
+
+test_stale_refuses_a_branch_that_does_not_exist() {
+  stale_repo
+  run_stale --delete ghost
+  [ "$LAST_STATUS" -eq 0 ] && fail "naming a missing branch must not exit 0"
+  assert_err "refused ghost: no such branch"
+}
+
+# A bare --delete would make the dangerous reading the shortest one to type, and would act on a
+# classification nobody had read.
+test_stale_delete_needs_a_name() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  run_stale --delete
+  [ "$LAST_STATUS" -eq 2 ] || fail "expected exit 2 for --delete with no names, got $LAST_STATUS"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/behind >/dev/null \
+    || fail "a bare --delete deleted a branch"
+}
+
+# Refusing one name must not stop the others. Each branch is its own decision.
+test_stale_deletes_what_it_can_and_refuses_the_rest() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  stale_branch wip w "work nobody has merged"
+  run_stale --delete behind wip
+  [ "$LAST_STATUS" -eq 0 ] && fail "a run with a refusal must not exit 0"
+  assert_out "deleted behind"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/wip >/dev/null \
+    || fail "the unproven branch was deleted"
+}
+
+# The report and the deletion are two commands with a person between them. A branch can gain a
+# commit in that gap, which is the 2026-10-05 case: a tip that no longer matches its merged
+# pull request.
+test_stale_reproves_a_branch_at_deletion_rather_than_trusting_the_report() {
+  stale_repo
+  stale_branch feature g one
+  local tip; tip="$(tip_of feature)"
+  stale_squash_into_trunk feature
+  stale_record_pr "$tip" main
+  run_stale --tsv
+  assert_out "stale	feature	pr"
+  git -C "$REPO" checkout -q feature
+  echo later > "$REPO/afterwards"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -qm "after the person read the report"
+  git -C "$REPO" checkout -q main
+  run_stale --delete feature
+  [ "$LAST_STATUS" -eq 0 ] && fail "a branch that moved since the report was deleted"
+  assert_err "refused feature: no test proves"
+}
+
+# A branch name can be pruned twice with a different tip each time. Overwriting would discard
+# the only copy of the earlier one.
+test_stale_keeps_both_tips_when_a_name_is_pruned_twice() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  local first; first="$(tip_of behind)"
+  run_stale --delete behind
+  assert_status 0
+  echo second > "$REPO/s"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -qm "a second base"
+  git -C "$REPO" branch behind main
+  local second; second="$(tip_of behind)"
+  run_stale --delete behind
+  assert_status 0
+  [ "$(saved_tip behind)" = "$first" ] || fail "the first saved tip was overwritten"
+  [ "$(saved_tip behind-2)" = "$second" ] || fail "the second tip was not kept beside it"
+}
+
+test_stale_rejects_an_unknown_argument() {
+  stale_repo
+  run_stale --wipe
+  [ "$LAST_STATUS" -eq 2 ] || fail "expected exit 2 for an unknown argument, got $LAST_STATUS"
+}
