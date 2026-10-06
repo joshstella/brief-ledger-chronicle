@@ -1,6 +1,6 @@
 # Ledger — #0023 An upgrade that cannot be re-run, and a version nobody can name
 
-`blc/2 #0023 in-progress a:in-progress(brief/0023-a-the-log-moves-first,PR#111) b:pending c:pending`
+`blc/2 #0023 in-progress a:done(PR#111) b:in-progress(brief/0023-b-what-a-version-is,PR#112) c:pending`
 
 **Brief:** `docs/blc/briefs/0023-an-upgrade-that-cannot-be-re-run/brief.md`
 **Started:** 2026-10-05
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the log moves first | in-progress (PR#111) | `brief/0023-a-the-log-moves-first` |
-| b | what a version is | pending | — |
+| a | the log moves first | done (PR#111) | `brief/0023-a-the-log-moves-first` |
+| b | what a version is | in-progress (PR#112) | `brief/0023-b-what-a-version-is` |
 | c | a target that is behind | pending | — |
 
 The brief's three phases stand. `a` is a defect and `b` and `c` are gaps, so `a` goes first.
@@ -33,6 +33,9 @@ phase tags a version and writes down what the number promises. It promises no mo
 Contract does, which today binds the briefs directory only. Tests: a tagged checkout stamps the
 tag rather than a hash, and an untagged one still installs. Waits on decision 1.
 
+Decision 1 overturned the tag. The plan above stands as written, and "Phase `b`, as executed"
+says what replaced it.
+
 **c — a target that is behind.** `tools/orient.sh` reports the installed version and whether
 the source is newer. Runs only if `b` shows the comparison is cheap and needs no network call.
 Waits on decisions 1 and 3.
@@ -52,7 +55,7 @@ offline, `c` does not run.
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | **What a version number means here.** From the brief. Semantic versioning against what promise? The Contract is versioned separately and binds the briefs directory only. The installer's ownership rules are what an adopter relies on, and they are uncontracted. A version that implies more than the Contract says would be the specification-first move the Manifesto argues against. | `b`, `c` |
+| 1 | **Settled 2026-10-06: the version is derived, not chosen.** `git rev-list --count HEAD` and a short hash, as `<count>+<sha>`. It identifies a build and promises nothing; the Contract carries every promise this toolkit makes. The question in the brief — semantic versioning against what promise? — has no answer, because no promise is written down to version against. A number chosen by hand would be a declared second copy of what git already knows, and would invite the compatibility reading the Contract has not earned. Rejected: tags, which need a release step nobody runs and would read as that promise; and a CI-stamped number, which needs a network call the installer has never made. | `b`, `c` |
 | 2 | **Settled 2026-10-05: `a` detects and resumes.** From the brief. A target half-moved by the current installer is not fixed by changing the order, because its log is still at the old path. The signature is unambiguous — a populated `docs/blc/` with no log in it, while `docs/install-log/install-log.md` exists — so detection is not a guess. Rejected: a documented hand recovery, which asks an adopter to undo a move the installer made, from a run that wrote no record of what it moved. | `a` |
 | 3 | **Whether `c` belongs in this brief** or waits until an adopter asks what they have. From the brief. | `c` |
 
@@ -72,6 +75,7 @@ Found while reading the code for the brief. None is in the brief itself.
 ## Branches
 
 `brief/0023-a-the-log-moves-first` (phase `a`).
+`brief/0023-b-what-a-version-is` (phase `b`).
 
 ## Phase `a`, as executed
 
@@ -98,3 +102,41 @@ The run that left that state wrote no log, so this message is the only account t
 a half-moved tree was accepted where a project's own is refused. Asserted by the resume test.
 
 The suite is 567, from 564.
+
+## Phase `b`, as executed
+
+`install.sh` built its version from `git describe --tags --always`, which in a repository with
+no tags is a bare hash. A hash says which build without saying which is newer, so `c` had
+nothing to subtract.
+
+The version is now `<count>+<sha>`: the count orders and the hash identifies. Neither is
+chosen by a person, which is the point. `main` takes one commit per merge under squash merge,
+so the count rises by one each time and two targets can be ordered by subtraction alone. No
+tag to fetch, no release step, no network call.
+
+**A shallow source reports no version at all.** A shallow clone counts only what it fetched,
+so a count read from one is wrong and nothing downstream can tell. `--depth` is how CI checks
+out by default, which is the likeliest way this is hit, so it stamps `unknown (shallow clone)`
+instead. Tested by creating `.git/shallow`, which is exactly what git itself tests for and is
+cheaper than a clone.
+
+**Two guards were written and removed, both by the same test.** The first checked
+`rev-parse --git-dir` before anything else. The second checked that the count and the hash
+were non-empty. The suite passed with and without each, because `rev-list` already fails into
+the same `unknown` in a source that is not a repository, and it cannot succeed while printing
+nothing. Both are gone, and one line at the site says why, so they are not written again. The
+second was caught in review, after the first had already been removed for the same reason.
+
+Three tests, two of which fail without the change. The third — a non-git source stamps
+`unknown` — passes either way; it guards behaviour the old line already had, and is kept
+because this rewrite could have lost it.
+
+The suite is 570, from 567.
+
+## Constraint for `c`
+
+**A branch install stamps a count above `main`'s for the same work.** A feature branch carries
+its own commits on top of the merge base, so a target installed from one is numbered ahead of a
+target installed from `main` at the same content. Subtraction answers "am I behind" only
+between installs from `main`. `c` must say so, or detect it, rather than report a target as
+ahead when it is not.

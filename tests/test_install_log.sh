@@ -31,6 +31,61 @@ test_log_header_is_written_only_once() {
   assert_count 1 "$n" "header occurrences"
 }
 
+# ── The version (#0023 b) ────────────────────────────────────────────────────
+#
+# The version identifies a build and promises nothing. The Contract carries every promise
+# this toolkit makes, is versioned separately, and binds the briefs directory only. So the
+# number is derived rather than chosen: the count orders, the hash identifies, and no human
+# picks either. It is read from the source checkout with no network call, because the
+# installer has never made one.
+
+# A complete source tree the installer can run from, in a git repo the test controls.
+log_source_repo() {
+  local dest="$TMP/vsrc" d
+  mkdir -p "$dest"
+  cp "$REPO_ROOT/install.sh" "$dest/"
+  for d in commands skills templates personal docs tools; do
+    [ -e "$REPO_ROOT/$d" ] && cp -R "$REPO_ROOT/$d" "$dest/"
+  done
+  git -C "$dest" init -q .
+  git -C "$dest" add -A >/dev/null 2>&1
+  git -C "$dest" -c user.email=t@t -c user.name=t commit -qm one >/dev/null 2>&1
+  echo "$dest"
+}
+
+test_log_version_is_the_commit_count_and_hash() {
+  local src count sha
+  src="$(log_source_repo)"
+  run_install_from "$src" y --target "$TARGET"
+  assert_status 0
+  count="$(git -C "$src" rev-list --count HEAD)"
+  sha="$(git -C "$src" rev-parse --short HEAD)"
+  assert_contains "**Installer version:** $count+$sha" "$TARGET/$LOG_REL"
+}
+
+# A shallow clone counts only what it fetched, so a count read from one is wrong. Reporting
+# it anyway would put a number in a target's log that orders against other targets and is
+# believed. `--depth` is how CI checks out by default, so this is the likeliest way to hit it.
+test_log_version_refuses_to_count_a_shallow_source() {
+  local src
+  src="$(log_source_repo)"
+  # A repository is shallow exactly when .git/shallow exists, which is cheaper to arrange
+  # than a clone and is the same thing git tests for.
+  touch "$src/.git/shallow"
+  run_install_from "$src" y --target "$TARGET"
+  assert_status 0
+  assert_contains "**Installer version:** unknown (shallow clone)" "$TARGET/$LOG_REL"
+}
+
+test_log_version_is_unknown_without_a_git_source() {
+  local src
+  src="$(log_source_repo)"
+  rm -rf "$src/.git"
+  run_install_from "$src" y --target "$TARGET"
+  assert_status 0
+  assert_contains "**Installer version:** unknown" "$TARGET/$LOG_REL"
+}
+
 test_log_entry_records_version_skills_and_commands() {
   run_install y --target "$TARGET"
   assert_contains "**Installer version:**" "$TARGET/$LOG_REL"

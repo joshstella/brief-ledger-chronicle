@@ -1228,7 +1228,23 @@ fi
 LOG_FILE="$TARGET_DIR/docs/blc/install-log/install-log.md"
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 MACHINE="$(hostname)"
-VERSION="$(git -C "$SCRIPT_DIR" describe --tags --always 2>/dev/null || git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
+# The version identifies a build and promises nothing. Nothing is chosen by hand, because a
+# chosen number would be a second copy of what git already knows and would read as a
+# compatibility promise the Contract has not made. The count orders and the hash identifies,
+# so a target tells it is behind by subtracting two counts, offline.
+installer_version() {
+  local count sha
+  # A shallow clone counts only what it fetched, so its count is wrong and nothing downstream
+  # can tell. `--depth` is how CI checks out by default.
+  [[ "$(git -C "$SCRIPT_DIR" rev-parse --is-shallow-repository 2>/dev/null)" == "true" ]] \
+    && { echo "unknown (shallow clone)"; return; }
+  # No separate "is this a repository" check: these fail there, into the same unknown.
+  count="$(git -C "$SCRIPT_DIR" rev-list --count HEAD 2>/dev/null)" || { echo "unknown"; return; }
+  sha="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null)" || { echo "unknown"; return; }
+  echo "$count+$sha"
+}
+
+VERSION="$(installer_version)"
 
 # Header written once; entries appended under it forever after.
 if [[ ! -f "$LOG_FILE" ]]; then
