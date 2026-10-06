@@ -1,6 +1,6 @@
 # Ledger — #0023 An upgrade that cannot be re-run, and a version nobody can name
 
-`blc/2 #0023 in-progress a:in-progress(brief/0023-a-the-log-moves-first) b:pending c:pending`
+`blc/2 #0023 in-progress a:in-progress(brief/0023-a-the-log-moves-first,PR#111) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0023-an-upgrade-that-cannot-be-re-run/brief.md`
 **Started:** 2026-10-05
@@ -10,7 +10,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the log moves first | in-progress | `brief/0023-a-the-log-moves-first` |
+| a | the log moves first | in-progress (PR#111) | `brief/0023-a-the-log-moves-first` |
 | b | what a version is | pending | — |
 | c | a target that is behind | pending | — |
 
