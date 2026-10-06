@@ -1,6 +1,6 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 in-progress a:done(PR#116) b:done(PR#117) c:in-progress(brief/0025-c-the-skill) d:pending`
+`blc/2 #0025 in-progress a:done(PR#116) b:done(PR#117) c:in-progress(brief/0025-c-the-skill,PR#118) d:pending`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the proof | done (PR#116) | `brief/0025-a-the-proof` |
 | b | the deletion | done (PR#117) | `brief/0025-b-the-deletion` |
-| c | the skill | in-progress | `brief/0025-c-the-skill` |
+| c | the skill | in-progress (PR#118) | `brief/0025-c-the-skill` |
 | d | orient points at it | pending | — |
 
 **a — the proof.** A new `tools/stale-branches.sh` classifies every local branch and writes
