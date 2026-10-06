@@ -1,0 +1,92 @@
+# Ledger — #0025 Stale branches nothing prunes
+
+`blc/2 #0025 pending a:pending b:pending c:pending d:pending`
+
+**Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
+**Started:** 2026-10-06
+**Status:** pending
+
+## Phases
+
+| id | label | status | branch |
+|---|---|---|---|
+| a | the proof | pending | — |
+| b | the deletion | pending | — |
+| c | the skill | pending | — |
+| d | orient points at it | pending | — |
+
+**a — the proof.** A new `tools/stale-branches.sh` classifies every local branch and writes
+nothing. A branch is proven stale only when one of three tests passes: its tip is an ancestor
+of the trunk, its tip equals the head of a pull request that merged into the trunk, or merging
+it into the trunk changes the trunk's tree. The script names which test proved each branch, and
+for every branch it could not prove it reports the commits that are not in the trunk and says
+so plainly. It never prints "merged" for a branch no test proved. Test 2 needs a forge, through
+`tools/detect-forge.sh`, and the script says when that test did not run rather than silently
+reporting on two tests. Test 3 needs git 2.38 for `merge-tree --write-tree`, and the same rule
+applies.
+
+**b — the deletion.** The same script gains `--delete`. It deletes only branches the proof
+covers, and refuses every other branch whatever is asked of it. Before each deletion it writes
+`refs/blc/pruned/<name>` at the tip, which keeps the objects reachable past `git gc`. This is
+the phase that makes decision 1 worth anything: the dangerous verb is in a file the suite can
+assert, not in a paragraph an agent reads.
+
+**c — the skill.** `blc-prune-stale-branches` fetches, runs the script, shows the
+classification, asks a person, and then calls `--delete`. The skill owns the conversation and
+owns no logic. The phase also covers whatever the installer needs to ship a twelfth skill.
+
+**d — orient points at it.** One line in `tools/orient.sh` naming the count of prunable
+branches, printed only when the count is not zero. Waits on decision 5, and runs only if that
+line can be produced without a forge call and inside the existing budget.
+
+## Dependency structure
+
+`a` then `b` then `c` is a strict chain. `b` deletes what `a` proved, and `c` drives `b`.
+
+`d` is independent of `c` and depends on `a`, because the count it would print comes from the
+classifier. It is last because it is the only optional phase, and it is provisional on decision
+5.
+
+## Settled decisions
+
+| # | decision | blocks |
+|---|---|---|
+| 1 | **Settled 2026-10-06: the script deletes, behind `--delete`.** The deletion is the step that must not be wrong, and this repository already holds that a script can be asserted by the test suite and an instruction to an agent cannot. Putting the deletion in the skill would place the only irreversible verb in the toolkit in the one artifact nothing checks. The flag adds no risk that is not already present: an agent that can be told to delete can run `git branch -D` directly. It adds a test. | `b`, `c` |
+| 3 | **Settled 2026-10-06: `refs/blc/pruned/<name>` at the tip, before each deletion.** One `git update-ref`, and the objects stay reachable past `gc.pruneExpire`. The question in the brief assumed the net catches lost work. It does not: decision 2 offers only proven-stale branches, and the proof is that the work is already in the trunk. The net catches a bug in the prover. That is a weaker thing to buy, and it is worth one line rather than a bundle file somebody has to find and remove. Rejected: no net at all, which is correct if the prover is correct and gives nothing to examine when it is not; and `git bundle`, which keeps the objects in a file outside the repository that nobody will ever clean up. | `b` |
+| 4 | **Settled 2026-10-06: local branches only.** A remote deletion reaches every clone and needs the forge for both the proof and the act. The 82-branch cleanup that produced this brief's evidence was remote, so this is the smaller half of the problem by deliberate choice — the prover is the hard part and it is shared. Remote branches get their own brief once the prover has been used. | `a`, `b`, `c` |
+| 2 | **Settled 2026-10-06: only proven branches are offered.** The brief's own proposal stands. Every other branch is reported with its commits that are not in the trunk, for a person to read. The output must never say "merged" for a branch that no test proved, because that sentence is what made the 2026-10-05 name match look safe. | `a`, `b` |
+| 6 | **Settled 2026-10-06: the skill fetches first, and not for the reason the brief gives.** The brief ties the fetch to `[gone]` freshness, but `[gone]` is not one of the three tests. Tests 1 and 3 compare against the local trunk ref, so a stale trunk under-reports — it proves fewer branches than it should, which is the safe direction but still wrong. The fetch is for the trunk. It belongs to the skill, because a person started that run and a fetch is a network call. | `c` |
+
+## Open decisions
+
+| # | decision | blocks |
+|---|---|---|
+| 5 | **Whether orient prints a line about prunable branches.** From the brief. It costs tokens in every run of a 700-token budget, and orient must not call a forge, so the line could rest on tests 1 and 3 only — which under-counts against a rule whose strongest test is 2. A count that is quietly partial is the failure mode #0024 just closed. Decide after `a`, when the cost of the two offline tests is known. | `d` |
+
+## Complications
+
+Found while reading the code for this plan. None is in the brief.
+
+- **`tests/test_prune.sh` already exists.** It covers pruning stale skills and commands from the
+  install log (#0012c), and every function in it is named `test_prune_*`. The suite filters on
+  that prefix, so `bash tests/run.sh test_prune` would run both sets. The new file takes a
+  different prefix, `test_stale_*`.
+- **The self-host skill links are untracked hardlinks.** `.cursor/skills/blc-orient/SKILL.md`
+  shares an inode with `skills/blc-orient/SKILL.md` and `git ls-files` does not report it. So a
+  twelfth skill needs no committed link; it needs the installer run against this repository
+  before the skill is usable here. `tools/orient.sh` describes these as "committed links", which
+  is not what they are, and that is not this brief's to fix.
+- **`PROCESS_SKILLS` is a roster of six, not of all skills.** `install.sh:30` names the six that
+  each host is promised, and `install.sh:800` asserts against it. `blc-orient`, `blc-chronicle`,
+  `blc-my-briefs`, `blc-installer-builder` and `blc-ste-writing` are not in it. A prune skill is
+  not a process skill by that standard, so `c` most likely leaves line 30 alone — which is a
+  thing to check rather than assume, because the count at `install.sh:932` is derived from it.
+- **Test 3 is useless across a large rename.** The brief records that `merge-tree` failed for all
+  five branches it was asked about, because those branches carry paths from before the #0017
+  move to `docs/blc/`. Merging any of them adds the old paths back, so the tree differs. Tests 1
+  and 2 do the work; test 3 earns its place on recent branches only, and `a` should say so where
+  it implements it rather than leave a reader to discover it.
+
+## Branches
+
+To be cut for phase `a`.

@@ -1,7 +1,6 @@
 # Stale branches nothing prunes
 
-**Created:** 2026-10-06T03:46:44Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0016
+**Serial:** #0025 · **Created:** 2026-10-06T03:46:44Z · **Author:** josh.stella@gmail.com · **Depends on:** #0016
 
 ## The request
 
@@ -64,11 +63,14 @@ order:
 
 1. **The tip is an ancestor of the trunk** (`git merge-base --is-ancestor`). This is proof
    for a merge commit or a fast-forward.
-2. **The tip is the head of a merged PR.** The tip SHA is equal to the `headRefOid` of a PR
-   that has the state merged. This is the test that proves a squash merge. The PR head must
-   be equal to the tip. A match on the branch name is not sufficient. A commit pushed after
-   the merge makes the SHAs different, and that is correct, because that commit is not in
-   the trunk.
+2. **The tip is the head of a PR that merged into the trunk.** The tip SHA is equal to the
+   `headRefOid` of a PR whose state is merged **and whose `baseRefName` is the trunk**. This
+   is the test that proves a squash merge. Both halves are needed. The PR head must equal the
+   tip: a match on the branch name is not sufficient, and a commit pushed after the merge
+   makes the SHAs different, which is correct because that commit is not in the trunk. The
+   base must be the trunk: a PR merged into a release branch, or into another feature branch,
+   has the state merged while its work is not in the trunk at all. A rule that reads the state
+   alone proves that a merge happened somewhere, which is not what this skill claims.
 3. **A merge into the trunk changes nothing.** `git merge-tree --write-tree <trunk> <tip>`
    gives the trunk's own tree. This test needs no forge and replaces `git cherry`. It can
    fail for a branch that is stale. It cannot pass for a branch that is not stale.
@@ -96,6 +98,10 @@ had their paths under `docs/briefs/`. After the #0017 move to `docs/blc/`, a mer
 old branch adds those old paths back, so the trunk's tree changes. Test 3 is useful for
 recent branches. It is not useful for branches older than a large rename. Tests 1 and 2
 must do most of the work.
+
+**Test 3 needs git 2.38.** `git merge-tree --write-tree` was added in that release. This
+repository tests four awk interpreters, so a script that silently does nothing on an older git
+is out of character. Test 3 needs a version check and a stated fallback, or it must be dropped.
 
 **Test 2 needs the forge.** It needs `gh` or `glab`, through `tools/detect-forge.sh`
 (#0016). Without a forge, the script can run tests 1 and 3 only, and must say that test 2
