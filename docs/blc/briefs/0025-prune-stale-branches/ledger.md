@@ -1,16 +1,16 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 pending a:pending b:pending c:pending d:pending`
+`blc/2 #0025 in-progress a:in-progress(brief/0025-a-the-proof) b:pending c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the proof | pending | — |
+| a | the proof | in-progress | `brief/0025-a-the-proof` |
 | b | the deletion | pending | — |
 | c | the skill | pending | — |
 | d | orient points at it | pending | — |
@@ -89,4 +89,59 @@ Found while reading the code for this plan. None is in the brief.
 
 ## Branches
 
-To be cut for phase `a`.
+`brief/0025-a-the-proof` (phase `a`).
+
+## Decision added during `a`
+
+| # | decision | blocks |
+|---|---|---|
+| 7 | **Settled 2026-10-06: the trunk is whichever of `origin/main` and local `main` is further along, and the program says which.** Not in the brief, and found by running the prover for the first time: an unpushed commit on local `main` made it report a branch as carrying work the trunk already had. Decision 6 says a stale trunk under-reports, which is the safe direction. This is the same mechanism pointing the other way, and the report is what a person acts on. A local trunk wins only when it is a descendant of the remote; diverged trunks keep `origin/main`, because that is the conservative answer and divergence is a different problem. | `a`, `b`, `d` |
+
+## Phase `a`, as executed
+
+`tools/stale-branches.sh` classifies every local branch against the trunk and writes nothing —
+not a ref, not a file. Default output is for a person; `--tsv` is for `b` and `d`.
+
+The three tests run in order of strength and the first to pass wins. `ancestor` proves a merge
+commit or a fast-forward. `pr` proves a squash merge, which is the merge this toolkit performs
+and the only one the other two cannot see. `tree` proves content that reached the trunk by
+some other route and needs no forge.
+
+**The `pr` test requires the base, not only the state.** A pull request merged into a release
+branch, or into another feature branch, has the state merged while its work is not in the
+trunk. The brief's rule read the state alone, which proves that a merge happened somewhere.
+The filter is applied in the program rather than in the forge query, so the rule is in the
+file the suite can assert.
+
+**A fixture has no forge, so `BLC_MERGED_PRS` names a file to read instead.** `pr` is the only
+test that proves the merge this toolkit actually performs, and a prover whose strongest test is
+never exercised is the defect this brief was filed about. The override carries the base as well
+as the head, so the rule above is exercised rather than bypassed.
+
+**Two rules proven by mutation.** Removing the base filter fails
+`stale_rejects_a_pull_request_merged_into_another_base` and nothing else. Forcing the remote
+trunk fails all three trunk tests. Both rules came from findings rather than from the brief,
+which is why each was mutated rather than trusted.
+
+**The tool did not ship, and the suite passed anyway.** `install.sh` names every tool it
+places, and `tools/stale-branches.sh` was written, tested and mutation-proven while absent from
+that list. 588 tests passed for a file no target could ever receive. `install.sh` now names it,
+and `test_ownership_every_tool_in_the_source_is_declared` compares the source tree against the
+ownership map, so the next omission fails rather than passes. This is the shape
+`tests/test_source_tree.sh` was written for: the suite watching the copy, on the far side of
+the step that produces it. Here there was no copy to watch, because the file was never named.
+
+**A hollow assertion hid a real defect, and the review found it.** The test for the commit
+listing asserted the branch name. The name is printed whatever the listing does, so the test
+passed while the listing printed nothing at all. Strengthened to assert a commit subject, it
+failed immediately. The cause: `IFS=$'\t'` collapses runs of tabs, because tab is IFS
+whitespace. A line written as `branch<TAB><TAB>tip` read back as two fields, so the tip landed
+in the wrong variable, `git log` ran on an empty range, and `2>/dev/null` swallowed the
+complaint. The `--tsv` tip was empty for every unproven branch for the same reason, and the
+test there asserted only the status and the name.
+
+Both are now asserted at full width, and the mutation that reproduces the defect is on the
+reader rather than the writer — a two-field reader tolerates the extra tab, so mutating the
+written line proves nothing. That took two attempts to get right.
+
+The suite is 589, from 574.

@@ -316,3 +316,20 @@ test_ownership_map_printing_is_documented_in_help() {
   PATH="$STUB_BIN:$PATH" bash "$REPO_ROOT/install.sh" --help > "$f" 2>&1
   assert_contains "--print-ownership" "$f"
 }
+
+# A tool added to tools/ and not added to the installer's list is a tool no target ever gets,
+# and until this test existed nothing noticed. tools/stale-branches.sh was written, tested and
+# reviewed in that state, and the suite passed 588 while it could not reach an adopter (#0025a).
+#
+# This is the shape test_source_tree.sh was written for: the suite watching the copy, on the
+# far side of the step that produces it. Here there is no copy to watch, because the file is
+# never named.
+test_ownership_every_tool_in_the_source_is_declared() {
+  local declared tool
+  declared="$(bash "$REPO_ROOT/install.sh" --print-ownership --host cursor 2>/dev/null \
+              | awk -F'\t' '{print $3}')"
+  for tool in $(cd "$REPO_ROOT" && ls tools/*.sh tools/lib/*.sh); do
+    printf '%s\n' "$declared" | grep -qxF "$tool" \
+      || fail "$tool is in the source tree and not in the ownership map, so no target gets it"
+  done
+}
