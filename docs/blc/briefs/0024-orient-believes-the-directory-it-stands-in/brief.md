@@ -1,7 +1,6 @@
 # Orient believes the directory it stands in
 
-**Created:** 2026-10-06T03:33:59Z · **Author:** josh.stella@gmail.com
-**Depends on:** #0021
+**Serial:** #0024 · **Created:** 2026-10-06T03:33:59Z · **Author:** josh.stella@gmail.com · **Depends on:** #0021
 
 ## The finding
 
@@ -29,6 +28,21 @@ command `bash ../tools/orient.sh` from `src/` printed these lines:
 The freshness line was correct, because git commands do not depend on the current
 directory. So the output had one correct line about git and three incorrect lines about
 the record.
+
+**Two of the three are not statements about a path.** "No `docs/blc/briefs`" is a statement a
+reader can discount, because it names the thing orient looked for. The other two do not:
+"this repo was not set up by the installer" and "nobody has written down what matters here"
+are claims about the project and about what people did. Orient has no warrant for either. A
+reader who sees a missing directory can check it. A reader who is told nobody wrote the
+orientation file has been given a conclusion, and the file it is about is 60 lines long.
+
+The same run in this repository, from `tools/`, gives the same three lines. 24 briefs are
+filed, the install log exists, and `docs/blc/orientation.md` exists.
+
+**The defect is in the shipped artifact.** `tools/orient.sh` is toolkit-owned, so an install
+replaces it in every target. Every project that has run the installer has this, and nothing in
+a target can correct it. The 2026-10-05 case above is an adopting repository rather than this
+checkout, which is why it was seen at all.
 
 ## Why this is worse in orient than in its siblings
 
@@ -75,6 +89,13 @@ root. A caller in a subdirectory that passes a relative path that is correct for
 directory gets a different directory, or no directory. The fix must make the argument
 absolute before the `cd`, or must say in a comment that the argument is relative to the
 root.
+
+**A `cd` also moves a caller who walked in through a symlink.** `tests/test_orient.sh` already
+records the asymmetry: `git rev-parse --show-toplevel` resolves a symlink and `$PWD` keeps the
+link the caller used. So `cd "$ROOT"` puts the caller in the resolved tree, under a path they
+did not type. The existing test should still pass, because it asserts against `$ROOT`. The
+interaction is with question 2 below: "relative to the caller" has two answers when the
+caller's directory and the root are one tree under two names.
 
 ## What is actually undecided
 
