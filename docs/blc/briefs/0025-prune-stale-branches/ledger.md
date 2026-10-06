@@ -1,6 +1,6 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 in-progress a:in-progress(brief/0025-a-the-proof,PR#116) b:pending c:pending d:pending`
+`blc/2 #0025 in-progress a:done(PR#116) b:in-progress(brief/0025-b-the-deletion,PR#117) c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the proof | in-progress (PR#116) | `brief/0025-a-the-proof` |
-| b | the deletion | pending | — |
+| a | the proof | done (PR#116) | `brief/0025-a-the-proof` |
+| b | the deletion | in-progress (PR#117) | `brief/0025-b-the-deletion` |
 | c | the skill | pending | — |
 | d | orient points at it | pending | — |
 
@@ -90,12 +90,15 @@ Found while reading the code for this plan. None is in the brief.
 ## Branches
 
 `brief/0025-a-the-proof` (phase `a`).
+`brief/0025-b-the-deletion` (phase `b`).
 
-## Decision added during `a`
+## Decisions added during execution
 
 | # | decision | blocks |
 |---|---|---|
-| 7 | **Settled 2026-10-06: the trunk is whichever of `origin/main` and local `main` is further along, and the program says which.** Not in the brief, and found by running the prover for the first time: an unpushed commit on local `main` made it report a branch as carrying work the trunk already had. Decision 6 says a stale trunk under-reports, which is the safe direction. This is the same mechanism pointing the other way, and the report is what a person acts on. A local trunk wins only when it is a descendant of the remote; diverged trunks keep `origin/main`, because that is the conservative answer and divergence is a different problem. | `a`, `b`, `d` |
+| 7 | **Settled 2026-10-06 (`a`): the trunk is whichever of `origin/main` and local `main` is further along, and the program says which.** Not in the brief, and found by running the prover for the first time: an unpushed commit on local `main` made it report a branch as carrying work the trunk already had. Decision 6 says a stale trunk under-reports, which is the safe direction. This is the same mechanism pointing the other way, and the report is what a person acts on. A local trunk wins only when it is a descendant of the remote; diverged trunks keep `origin/main`, because that is the conservative answer and divergence is a different problem. | `a`, `b`, `d` |
+| 8 | **Settled 2026-10-06 (`b`): `--delete` takes branch names and nothing else.** A bare `--delete` that removed everything currently proven would make the dangerous reading of this program the shortest one to type, and would act on a classification nobody had read. With no names it exits 2 and deletes nothing. Rejected: one flag with no arguments, which is fewer keystrokes for the skill and gives a person no way to keep one branch out of the set. | `b`, `c` |
+| 9 | **Settled 2026-10-06 (`b`): a second prune of the same name keeps both tips.** `refs/blc/pruned/<name>`, then `-2`, `-3` as needed. A name can be pruned twice with a different tip each time, and overwriting would discard the only copy of the earlier one. Rejected: overwrite, which is simpler and loses a tip; and refusing the name, which is safest and permanently blocks re-pruning a recreated branch. | `b` |
 
 ## Phase `a`, as executed
 
@@ -145,3 +148,33 @@ reader rather than the writer — a two-field reader tolerates the extra tab, so
 written line proves nothing. That took two attempts to get right.
 
 The suite is 589, from 574.
+
+## Phase `b`, as executed
+
+`--delete` on the same script. It takes branch names, proves each one again, writes the tip to
+`refs/blc/pruned/` and then removes the branch.
+
+**Every named branch is proven again at deletion.** The report and the deletion are two
+commands with a person in between, and a branch can gain a commit in that gap. That is the
+2026-10-05 case exactly: a tip that no longer matches the merged pull request it was credited
+to. A test drives the whole sequence — report, commit, delete — and asserts the refusal.
+
+**Four refusals, each its own exit.** The trunk, the checked-out branch, a name that is not a
+branch, and a branch no test proves. A refusal does not stop the other names: each branch is
+its own decision, and the run exits non-zero if anything was refused.
+
+**An absent forge does not block deletion.** A test that could not run shrinks what is proven;
+it cannot make a proof wrong. So a missing `gh`, or a GitLab target, deletes fewer branches and
+never the wrong one. Stated here because the opposite rule looks more careful and is not.
+
+**Five guards, all proven by mutation.** Removing the re-proof fails three tests. Overwriting
+the saved tip fails the two-prunes test. Dropping the trunk refusal, the no-names guard, or the
+checked-out refusal each fails exactly its own test.
+
+**The checked-out refusal is not redundant with git's.** `git branch -D` refuses the current
+branch on its own, so the guard looked like the dead code removed from `install.sh` in #0023.
+It is not: the tip is saved before the branch is removed, so letting git do the refusing leaves
+a ref behind for a branch that is still there. The mutation showed it, and the reason is now a
+comment at the site.
+
+The suite is 599, from 589.
