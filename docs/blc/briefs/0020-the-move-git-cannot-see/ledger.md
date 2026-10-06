@@ -60,6 +60,18 @@ All three resolved 2026-10-04 by the owner, before planning.
 suite passed 538 tests, and the brief's reproduction showed both chronicles as renames, with
 nothing ignored.
 
+**Corrected 2026-10-06. The first item below is wrong, and it is now #0023.** A re-run does
+not finish. It refuses, and every later run refuses the same way. Reproduced by moving
+`docs/briefs/` to `docs/blc/briefs/` in an old-layout target and re-running the installer.
+
+The reasoning below is right about the clash check, and the clash check never runs.
+`install.sh:846` refuses any `docs/blc/` that holds files and has no install log in it,
+and the install log is the fourth path to move in sort order. A failure before its turn
+leaves a populated `docs/blc/` with no log, which is the state that guard rejects.
+
+The paragraph stays as filed. What it got wrong was looking at one guard and not the one
+that runs earlier.
+
 Open after close, from `a`'s review. Neither is tested:
 
 - **A failed `git mv` stops the install partway through the moves.** The installer runs under
