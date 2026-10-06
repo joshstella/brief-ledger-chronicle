@@ -1,6 +1,6 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 in-progress a:done(PR#105) b:done(PR#106) c:in-progress(brief/0022-c-one-file-or-two) d:pending`
+`blc/2 #0022 in-progress a:done(PR#105) b:done(PR#106) c:in-progress(brief/0022-c-one-file-or-two,PR#108) d:pending`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the seed | done (PR#105) | — |
 | b | skills are prompts | done (PR#106) | — |
-| c | one file or two | in-progress | `brief/0022-c-one-file-or-two` |
+| c | one file or two | in-progress (PR#108) | `brief/0022-c-one-file-or-two` |
 | d | this repository | pending | — |
 
 The brief plans four phases. `a — what the file is for` was docs and the ledger only, and it
