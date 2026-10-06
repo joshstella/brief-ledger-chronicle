@@ -4,7 +4,8 @@
 # what is in flight, what must not be broken, what this project values — in
 # roughly 700 tokens, and points at the more expensive rungs for the rest.
 #
-# Run from the repository root. Writes to stdout. Never writes a tracked file:
+# Runs from anywhere inside the work tree: it changes to the root before it reads anything
+# (#0024). Writes to stdout. Never writes a tracked file:
 # if this output is ever committed, the design has failed.
 #
 # Every section degrades to a stated absence rather than an error, because the
@@ -17,6 +18,14 @@
 set -euo pipefail
 
 BRIEFS_DIR="${1:-docs/blc/briefs}"
+# An explicit path is relative to the caller, as it is for every other shell tool, so it is
+# made absolute here — before the `cd` below moves this script to the root (#0024). The
+# default is deliberately not: it is relative to the root by definition, and anchoring it to
+# the caller's directory is the defect this fixes. No `realpath`, which is not dependable on
+# macOS, and no canonicalising, which nothing below needs.
+if [ -n "${1:-}" ]; then
+  case "$1" in /*) ;; *) BRIEFS_DIR="$PWD/$1" ;; esac
+fi
 # Every other path is a sibling of the briefs directory, so one argument moves them all. A
 # briefs argument that left these at the default root would be the partial flexibility #0017
 # names as worse than either alternative.
@@ -29,6 +38,13 @@ CONTRACT="$BLC_ROOT/contracts/v1.3.md"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
 ROOT="$(git rev-parse --show-toplevel)"
+# Every path this script reads is relative, and until now it resolved them against whatever
+# directory the caller stood in. From a subdirectory that made orient report a filed record as
+# absent — and say so as a claim about the project, not about a path — while still exiting 0.
+# Its siblings fail loudly in the same place; orient degrades absences into statements by
+# design (#0021), so it had no way to fail at all. One `cd` corrects the record paths, the
+# self-host check and the footer (#0024).
+cd "$ROOT"
 
 # ── How much to trust any of this ────────────────────────────────────────────
 #

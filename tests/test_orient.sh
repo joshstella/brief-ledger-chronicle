@@ -698,3 +698,66 @@ test_orient_is_named_in_the_stub_agents_file() {
   assert_status 0
   assert_contains "tools/orient.sh" "$TARGET/AGENTS.md"
 }
+
+# ── Where orient reads from (#0024) ──────────────────────────────────────────
+#
+# Orient found the repository root and then read every record path from the caller's
+# directory. From a subdirectory it reported a filed record as absent and exited 0, so the
+# reader had nothing to distrust. These assert the byte-identity that replaces that: one
+# repository has one orientation, whatever directory the question is asked from.
+
+# A fixture with a record worth missing — a brief, an install log and an authored file —
+# so an absent-reading run differs from a correct one in all three sections.
+orient_populated_repo() {
+  orient_repo
+  orient_brief 0001-a-thing "A thing" 'blc/2 #0001 in-progress a:in-progress(brief/0001-a-x)'
+  mkdir -p "$REPO/docs/blc/install-log" "$REPO/sub/deeper"
+  printf '# Install log\n\n## 2026-09-09T00:00:00Z — cursor\n\n### Created\n\n- `tools/orient.sh`\n' \
+    > "$REPO/docs/blc/install-log/install-log.md"
+  printf '# Orientation\n\nThe record is the work.\n' > "$REPO/docs/blc/orientation.md"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -qm populate >/dev/null 2>&1
+}
+
+test_orient_reads_the_same_record_from_a_subdirectory() {
+  orient_populated_repo
+  ( cd "$REPO" && bash "$(ORIENT)" ) >"$TMP/from-root" 2>"$ERR"
+  ( cd "$REPO/sub/deeper" && bash "$(ORIENT)" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  diff -u "$TMP/from-root" "$OUT" >/dev/null \
+    || fail "orient from a subdirectory differs from orient at the root:
+$(diff -u "$TMP/from-root" "$OUT" | head -20)"
+}
+
+# The identity test alone would pass if orient reported everything absent from both places.
+# These name the three sections that were wrong, so the test cannot pass by being uniformly
+# useless.
+test_orient_from_a_subdirectory_finds_the_filed_record() {
+  orient_populated_repo
+  ( cd "$REPO/sub/deeper" && bash "$(ORIENT)" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_out "A thing"
+  assert_not_contains "nothing filed here yet" "$OUT"
+  assert_not_contains "was not set up by the installer" "$OUT"
+  assert_not_contains "nobody has written down what matters here" "$OUT"
+}
+
+# An explicit path is the caller's, like any other shell tool's argument. The default is the
+# root's. Absolutising both would have reintroduced the defect under a new name.
+test_orient_resolves_an_explicit_path_against_the_caller() {
+  orient_populated_repo
+  ( cd "$REPO/sub/deeper" && bash "$(ORIENT)" ../../docs/blc/briefs ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_out "A thing"
+}
+
+test_orient_takes_an_absolute_path_from_a_subdirectory() {
+  orient_populated_repo
+  ( cd "$REPO/sub/deeper" && bash "$(ORIENT)" "$REPO/docs/blc/briefs" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+  assert_status 0
+  assert_out "A thing"
+}

@@ -1,16 +1,16 @@
 # Ledger — #0024 Orient believes the directory it stands in
 
-`blc/2 #0024 pending a:pending`
+`blc/2 #0024 in-progress a:in-progress(brief/0024-a-orient-reads-from-the-root,PR#114)`
 
 **Brief:** `docs/blc/briefs/0024-orient-believes-the-directory-it-stands-in/brief.md`
 **Started:** 2026-10-06
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | orient reads from the root | pending | — |
+| a | orient reads from the root | in-progress (PR#114) | `brief/0024-a-orient-reads-from-the-root` |
 
 **a — orient reads from the root.** `tools/orient.sh` finds the repository root and then reads
 every data path from the current directory instead. Run from a subdirectory it reports the
@@ -51,4 +51,33 @@ Found while reading the code for this plan. None is in the brief.
 
 ## Branches
 
-To be cut for phase `a`.
+`brief/0024-a-orient-reads-from-the-root` (phase `a`).
+
+## Phase `a`, as executed
+
+Two lines of behaviour, in the order they have to happen.
+
+An explicit briefs path is made absolute against the caller's directory, and the default is
+left alone. That asymmetry is the whole of decision 2 and is easy to lose: absolutising both
+would anchor the default to the caller too, which is the defect under a new name.
+
+Then `cd "$ROOT"`, after the root is known and before anything is read. One `cd` corrects the
+three record paths, the self-host check at line 228 and the `Manifesto.md` footer at line 270,
+because all of them were relative and none of them was wrong for any other reason.
+
+**The symlink complication did not bite.** The existing test that enters through `$TMP/linked`
+passes unchanged. Its assertion is against `$ROOT`, which the `cd` does not move.
+
+**Four tests, three of them proven by a failing run.** The identity test and the
+finds-the-filed-record test both fail against the unfixed script. The two argument tests pass
+either way, because caller-relative resolution is what orient already did — so they were
+mutated instead: removing the absolutising block fails
+`orient_resolves_an_explicit_path_against_the_caller`, which is decision 2 being enforced
+rather than assumed. The fourth, an absolute path from a subdirectory, passes under every
+mutation tried and is kept as a plain regression guard.
+
+The identity test on its own would pass if orient reported everything absent from both
+directories, so a second test names the three sections that were wrong. A byte-identity
+assertion is only as strong as the fixture it compares.
+
+The suite is 574, from 570.
