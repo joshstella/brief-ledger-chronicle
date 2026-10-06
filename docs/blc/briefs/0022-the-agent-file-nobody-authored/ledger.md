@@ -1,10 +1,11 @@
 # Ledger — #0022 The agent file an install writes, and nobody authored
 
-`blc/2 #0022 in-progress a:done(PR#105) b:done(PR#106) c:in-progress(brief/0022-c-one-file-or-two,PR#108) d:pending`
+`blc/2 #0022 done a:done(PR#105) b:done(PR#106) c:done(PR#108) d:skipped`
 
 **Brief:** `docs/blc/briefs/0022-the-agent-file-nobody-authored/brief.md`
 **Started:** 2026-10-05
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-05
 
 ## Phases
 
@@ -12,8 +13,8 @@
 |---|---|---|---|
 | a | the seed | done (PR#105) | — |
 | b | skills are prompts | done (PR#106) | — |
-| c | one file or two | in-progress (PR#108) | `brief/0022-c-one-file-or-two` |
-| d | this repository | pending | — |
+| c | one file or two | done (PR#108) | — |
+| d | this repository | skipped | — |
 
 The brief plans four phases. `a — what the file is for` was docs and the ledger only, and it
 existed to settle decision 1. Decision 1 is settled below, before any phase runs, so the phase
@@ -147,7 +148,7 @@ It does not hold against the one sentence that makes the rest of the file honest
 |---|---|---|
 | 1 | **Settled 2026-10-05: nothing.** From the brief, carried from #0019 decision 2. The installer seeds no prose. The stub becomes a pointer plus the questions a project must answer. Evidence found while planning: `tools/orient.sh` already reads `docs/blc/orientation.md` for what a project values, and prints "nobody has written down what matters here" when it is absent. So principles already have a home, and process has one in `templates/process-rules.md`. That leaves the agent file with architecture, stack, build commands and the test-coverage definition — facts about one project that no installer can know. This also answers evidence 2 of the brief: the installer is not shipping this repository's principles into a target, because it ships no principles at all. Rejected: the whole Manifesto, a derived excerpt, and a test-coverage prompt alone. | `a` |
 | 2 | **Settled 2026-10-05: one file.** `AGENTS.md` holds the text on both hosts, and Claude Code gets `CLAUDE.md` as a relative symlink to it. Rejected: `AGENTS.md` alone, which strands every Claude Code before v2.1.277; and `CLAUDE.md` holding an `@AGENTS.md` import, which trades a verified mechanism for syntax nothing here has run. A symlink degrades on a checkout with no symlink support into a one-line file reading `AGENTS.md`, and it fails quietly rather than loudly. The owner settled that as out of scope: this toolkit is \*nix only. From the brief, carried from #0019 decision 4. Claude Code reads `AGENTS.md` natively from v2.1.277, but only when no `CLAUDE.md` exists. Older versions need `CLAUDE.md`. A real `AGENTS.md` with `CLAUDE.md` as a link to it gives one text to both hosts on every version. That version claim is from the Claude Code documentation, not from a run here. | `c` |
-| 3 | **Whether `d` is this brief's job.** From the brief, where it is decision 3. This repository's agent file could be written by hand now, with no installer change. | `d` |
+| 3 | **Settled 2026-10-05: it is not.** From the brief, where it is decision 3. This repository's agent file could be written by hand now, with no installer change. | `d` |
 
 ## Complications
 
@@ -173,7 +174,7 @@ Found while reading the code. None is in the brief.
 
 `brief/0022-a-the-seed` (phase `a`, merged as PR#105, deleted).
 `brief/0022-b-skills-are-prompts` (phase `b`, merged as PR#106, deleted).
-`brief/0022-c-one-file-or-two` (phase `c`).
+`brief/0022-c-one-file-or-two` (phase `c`, merged as PR#108, deleted).
 `brief/0022-ledger-ci-correction` (corrects the record of `b`; no phase of its own, merged as PR#107, deleted).
 
 ## Phase `b`, as executed
@@ -266,3 +267,52 @@ Two things stay unproven. Nothing here runs Claude Code, so nothing confirms it 
 symlink; the tests confirm the link resolves and that both names read the same bytes. And the
 v2.1.277 claim is from documentation, not from a run. The symlink is correct either way, which
 is why it was chosen over `AGENTS.md` alone.
+
+## Closeout, 2026-10-05
+
+A new target's agent file no longer restates the install that wrote it, and a target gets one
+agent file rather than one per host.
+
+`a` (PR#105) replaced the stub's prose with five questions and the two files that hold the rest.
+`b` (PR#106) put one sentence in `templates/process-rules.md` saying the skills are unenforced.
+`c` (PR#108) made `AGENTS.md` the agent file on both hosts, with `CLAUDE.md` as a relative
+symlink for Claude Code. The suite went 556 to 564, and each phase's tests were seen to fail
+without its fix.
+
+The brief planned four phases and asked three questions. All three are answered, and the answers
+moved work rather than confirming the plan:
+
+- **Decision 1 was answered twice.** Settled first as "nothing": the installer seeds no prose,
+  because `templates/process-rules.md` holds the process and `docs/blc/orientation.md` holds
+  what a project values, leaving the agent file only facts no installer can know. Reopened after
+  `a` merged, for an excerpt of `Manifesto.md` that suits an agent. The excerpt existed and was
+  small, and its destination failed: every statement in it is about the toolkit's process, so
+  placing it in a file an install writes once would freeze it where no upgrade could reach. One
+  sentence survived on its own merits and became `b`.
+- **Decision 2 settled as one file**, and closed a defect nothing had reported: a project
+  installed for both hosts held two agent files with the same text and no relation between them.
+- **Decision 3 settled as "not this brief's job"**, which skips `d`.
+
+**`d` is skipped, and the work is not filed.** This repository still has no agent file. #0019
+found that gap and skipped it here; this brief skips it again. It is being written by hand as
+ordinary work, outside any brief, because the installer change it would have needed does not
+exist: `a` and `c` already settled what the file says and what it is called. What remains is
+answering five questions about one project, and this repository is that project. Skipped rather
+than deferred: there is no code on a branch.
+
+**The brief's evidence 2 was dissolved, not answered.** It asked why seeding an agent file is
+not the thing `test_orient_authored_file_does_not_ship_to_a_target` forbids. Nothing authored
+here now ships to a target, so there is no exception to justify. That test is unchanged and
+still holds.
+
+**One non-goal was overturned**, and `b` is the whole of it. The brief said not to change
+`templates/process-rules.md`. That file works for everything it says; the gap was a thing it did
+not say, and no other file an install writes could carry it.
+
+Open after close. Neither is tested:
+
+- **Nothing here runs Claude Code.** The tests confirm `CLAUDE.md` resolves to `AGENTS.md` and
+  that both names read the same bytes. That Claude Code follows the link, and the v2.1.277 claim
+  the decision rests on, are both from documentation.
+- **Existing adopters never move.** A target with a real `CLAUDE.md` keeps it and receives no
+  `AGENTS.md` and no hint. The one-file outcome reaches new targets only.
