@@ -26,6 +26,64 @@ test_host_cursor_writes_agents_md_not_claude_md() {
   assert_no_file "$TARGET/CLAUDE.md"
 }
 
+# ── One agent file, two hosts (#0022 c) ──────────────────────────────────────
+#
+# AGENTS.md used to be the Cursor name and CLAUDE.md the Claude Code name, so a project
+# installed for both got two files with the same text and nothing relating them. An edit to
+# one left the other stale and nothing could tell. Now AGENTS.md holds the text on both
+# hosts, and Claude Code gets CLAUDE.md as a link, because it reads AGENTS.md natively only
+# from v2.1.277 and only when no CLAUDE.md is present.
+
+test_host_claude_links_claude_md_to_agents_md() {
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/AGENTS.md"
+  [ -L "$TARGET/CLAUDE.md" ] || fail "expected CLAUDE.md to be a symlink"
+  # Relative, not absolute: an absolute link breaks the moment the repo is cloned anywhere
+  # else, and this pair is committed.
+  [ "$(readlink "$TARGET/CLAUDE.md")" = "AGENTS.md" ] \
+    || fail "expected CLAUDE.md -> AGENTS.md, got $(readlink "$TARGET/CLAUDE.md")"
+  assert_contains "Answer these, then delete the questions" "$TARGET/CLAUDE.md"
+}
+
+# The point of the link is one text, so the test that matters is reading the same bytes
+# through both names after installing for both hosts into one project.
+test_host_both_hosts_leave_one_agent_file() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/AGENTS.md"
+  [ -L "$TARGET/CLAUDE.md" ] || fail "expected CLAUDE.md to be a symlink after the second host"
+  printf 'EDITED BY THE PROJECT\n' >> "$TARGET/AGENTS.md"
+  assert_contains "EDITED BY THE PROJECT" "$TARGET/CLAUDE.md"
+}
+
+# A project that already answered the questions must not have its link reported as new work
+# on every run, and must not have the file rewritten under it.
+test_host_claude_reinstall_keeps_the_pair() {
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  printf 'ANSWERED BY THE PROJECT\n' >> "$TARGET/AGENTS.md"
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_contains "ANSWERED BY THE PROJECT" "$TARGET/AGENTS.md"
+  assert_out "AGENTS.md (already exists, skipped)"
+  assert_out "CLAUDE.md (already exists, skipped)"
+  [ -L "$TARGET/CLAUDE.md" ] || fail "expected CLAUDE.md to stay a symlink"
+}
+
+# A project that has AGENTS.md from a Cursor install and adds Claude Code later gets the
+# link without the file being touched.
+test_host_claude_links_beside_an_existing_agents_md() {
+  printf 'ANSWERED ALREADY\n' > "$TARGET/AGENTS.md"
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_contains "ANSWERED ALREADY" "$TARGET/AGENTS.md"
+  assert_contains "ANSWERED ALREADY" "$TARGET/CLAUDE.md"
+  [ -L "$TARGET/CLAUDE.md" ] || fail "expected CLAUDE.md to be a symlink"
+}
+
 test_host_cursor_writes_process_rules_under_cursor_rules() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
@@ -79,7 +137,6 @@ test_host_claude_creates_no_cursor_directory() {
   run_install y --host claude --target "$TARGET"
   assert_status 0
   assert_no_dir  "$TARGET/.cursor"
-  assert_no_file "$TARGET/AGENTS.md"
 }
 
 test_host_claude_writes_process_rules_under_claude_rules() {
