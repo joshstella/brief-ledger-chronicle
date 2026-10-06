@@ -843,7 +843,24 @@ done
 
 # A docs/blc/ the toolkit installed carries its install log. Without the log, anything in
 # it is the project's own, and installing into it would mix two owners in one tree.
+# One exception, and it is a move this installer did not finish. A populated docs/blc/ with no
+# log in it, while the old-layout log is still at docs/install-log/install-log.md, can only come
+# from an interrupted upgrade: a project's own docs/blc/ does not arrive with an old-layout
+# install log beside it. Resuming is safe because every path below is checked again — a file
+# that already moved is no longer at its old path, so it is neither moved twice nor a clash
+# (#0023).
 if [[ -d "$TARGET_DIR/docs/blc" && ! -f "$TARGET_DIR/docs/blc/install-log/install-log.md" ]] \
+   && [[ -f "$TARGET_DIR/$OLD_LOG" ]] \
+   && [[ -n "$(find "$TARGET_DIR/docs/blc" -mindepth 1 ! -type d -print -quit)" ]]; then
+  # Said out loud because the run that left this state wrote no log, so this message is the
+  # only account the person gets of why their half-moved tree was accepted.
+  echo ""
+  echo "Note: $TARGET_DIR/docs/blc/ holds files and no install log, and $OLD_LOG is still"
+  echo "  in place. That is a move an earlier run started and did not finish. Resuming it."
+fi
+
+if [[ -d "$TARGET_DIR/docs/blc" && ! -f "$TARGET_DIR/docs/blc/install-log/install-log.md" ]] \
+   && [[ ! -f "$TARGET_DIR/$OLD_LOG" ]] \
    && [[ -n "$(find "$TARGET_DIR/docs/blc" -mindepth 1 ! -type d -print -quit)" ]]; then
   echo ""
   echo "error: $TARGET_DIR/docs/blc/ holds files this toolkit did not install." >&2
@@ -881,6 +898,19 @@ if [[ ${#OLD_ROOTS[@]} -gt 0 ]]; then
   done < <(for root in "${OLD_ROOTS[@]}"; do
              (cd "$TARGET_DIR" && find "$root" ! -type d)
            done | LC_ALL=C sort)
+
+  # The log moves first, not fourth where sort order puts it. Everything above decides whether
+  # a move can run; this decides what survives one that dies halfway. The log is the file that
+  # marks docs/blc/ as the toolkit's, so a move that fails after it has to leave it in place or
+  # the guard above refuses every later run and the upgrade is stuck for good (#0023).
+  OLD_MOVES_ORDERED=()
+  for rel in ${OLD_MOVES[@]+"${OLD_MOVES[@]}"}; do
+    [[ "$rel" == "$OLD_LOG" ]] && OLD_MOVES_ORDERED+=("$rel")
+  done
+  for rel in ${OLD_MOVES[@]+"${OLD_MOVES[@]}"}; do
+    [[ "$rel" == "$OLD_LOG" ]] || OLD_MOVES_ORDERED+=("$rel")
+  done
+  OLD_MOVES=(${OLD_MOVES_ORDERED[@]+"${OLD_MOVES_ORDERED[@]}"})
 fi
 
 if [[ ${#OLD_CLASHES[@]} -gt 0 ]]; then
