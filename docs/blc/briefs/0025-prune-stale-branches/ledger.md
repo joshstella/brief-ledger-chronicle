@@ -1,10 +1,10 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 in-progress a:done(PR#116) b:done(PR#117) c:in-progress(brief/0025-c-the-skill,PR#118) d:pending`
+`blc/2 #0025 done a:done(PR#116) b:done(PR#117) c:done(PR#118) d:skipped`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
@@ -12,8 +12,8 @@
 |---|---|---|---|
 | a | the proof | done (PR#116) | `brief/0025-a-the-proof` |
 | b | the deletion | done (PR#117) | `brief/0025-b-the-deletion` |
-| c | the skill | in-progress (PR#118) | `brief/0025-c-the-skill` |
-| d | orient points at it | pending | — |
+| c | the skill | done (PR#118) | `brief/0025-c-the-skill` |
+| d | orient points at it | skipped | — |
 
 **a — the proof.** A new `tools/stale-branches.sh` classifies every local branch and writes
 nothing. A branch is proven stale only when one of three tests passes: its tip is an ancestor
@@ -57,11 +57,11 @@ classifier. It is last because it is the only optional phase, and it is provisio
 | 2 | **Settled 2026-10-06: only proven branches are offered.** The brief's own proposal stands. Every other branch is reported with its commits that are not in the trunk, for a person to read. The output must never say "merged" for a branch that no test proved, because that sentence is what made the 2026-10-05 name match look safe. | `a`, `b` |
 | 6 | **Settled 2026-10-06: the skill fetches first, and not for the reason the brief gives.** The brief ties the fetch to `[gone]` freshness, but `[gone]` is not one of the three tests. Tests 1 and 3 compare against the local trunk ref, so a stale trunk under-reports — it proves fewer branches than it should, which is the safe direction but still wrong. The fetch is for the trunk. It belongs to the skill, because a person started that run and a fetch is a network call. | `c` |
 
-## Open decisions
+## Decision 5, settled at close
 
 | # | decision | blocks |
 |---|---|---|
-| 5 | **Whether orient prints a line about prunable branches.** From the brief. It costs tokens in every run of a 700-token budget, and orient must not call a forge, so the line could rest on tests 1 and 3 only — which under-counts against a rule whose strongest test is 2. A count that is quietly partial is the failure mode #0024 just closed. Decide after `a`, when the cost of the two offline tests is known. | `d` |
+| 5 | **Settled 2026-10-06: no line, and `d` is skipped.** Decided after `a`, as planned, and `a` answered it. Orient must not call a forge, so the line would rest on `ancestor` and `tree`. In a repository that merges by squash — which this one does, and which the toolkit prescribes — those two prove almost nothing: the brief's own audit has `tree` proving none of the five branches it was asked about. The line would read 0 and never fire, which teaches a reader there is nothing to prune. That is the quietly-partial answer #0024 closed, pointing at silence instead of at a wrong number. Rejected: a static pointer with no count, which costs a line of a 700-token budget to say what `/blc-` completion already shows; and building `d` with a caveat naming which tests ran, which spends two lines explaining why the first one is not to be trusted. | `d` |
 
 ## Complications
 
@@ -94,6 +94,7 @@ Found while reading the code for this plan. None is in the brief.
 `brief/0025-a-the-proof` (phase `a`).
 `brief/0025-b-the-deletion` (phase `b`).
 `brief/0025-c-the-skill` (phase `c`).
+`brief/0025-closeout`.
 
 ## Decisions added during execution
 
@@ -210,3 +211,69 @@ source; `.claude/skills/<name>` is a tracked symlink per skill. Cursor needed no
 needed a link, and the correction is above the original rather than in place of it.
 
 The suite is 605, from 599.
+
+## Closeout, 2026-10-06
+
+A person can find the local branches whose work the trunk already has, and delete the ones they
+name. `a` (PR#116) proved them, `b` (PR#117) deleted them, `c` (PR#118) asked. `d` is skipped.
+The suite went 574 to 605.
+
+The brief asked six questions and execution added three more. The three added ones are the
+interesting record, because each came from running the thing rather than from planning it.
+
+- **Decision 7, from `a`:** the trunk is whichever of `origin/main` and local `main` is further
+  along. Found on the first run, by an unpushed commit on local `main` making the program report
+  a branch as carrying work the trunk already had.
+- **Decisions 8 and 9, from `b`:** `--delete` takes names and refuses a bare invocation, and a
+  second prune of the same name keeps both tips.
+- **Decision 5, settled at the close** rather than in `d`, which is what skips `d`.
+
+**`d` is skipped, and the reason is the opposite of cost.** `b` made the comparison cheap.
+Orient cannot call a forge, so an orient line would rest on `ancestor` and `tree`, and in a
+squash-merge repository those two prove almost nothing — the brief's own audit has `tree`
+proving none of the five branches it was asked. The line would read 0 and never fire. A reader
+would learn there is nothing to prune. Skipped rather than deferred: no code is on a branch.
+
+**The brief's weakest rule was its `pr` test, and the fix was one word.** The brief asked for a
+pull request whose state is merged. A pull request merged into a release branch, or into
+another feature branch, satisfies that and its work is not in the trunk. The rule needs the
+base as well, and the filter is in the program rather than in the forge query so the suite can
+assert it.
+
+**Fourteen guards proven by mutation across three phases.** That is the standard this
+repository sets, and it earned its keep twice. The checked-out refusal looked like the dead
+code removed in #0023 and turned out to be load-bearing for a different reason: the tip is
+saved before the branch is removed, so letting git do the refusing leaves a ref behind for a
+branch that is still there. And the tab-collapse defect was reproducible only by mutating the
+reader, never the writer, which took two attempts.
+
+**Two failures of the suite itself, both in this brief.** `tools/stale-branches.sh` was
+written, tested and mutation-proven while absent from the installer's list, and 588 tests
+passed for a file no target could receive; `a` added the guard that now compares the source
+tree against the ownership map. And a filtered run of 30 tests passed in `c` while the Claude
+self-host link was missing — only the full matrix found it. Both are the same shape: the suite
+watching one side of a step.
+
+**A complication recorded in `a` was wrong**, and `c` corrected it above the original rather
+than in place of it. The self-host links are not untracked hardlinks. `.cursor/skills` is one
+tracked symlink to `skills/`, and `.claude/skills/<name>` is a tracked symlink per skill.
+
+Open after close. None is tested:
+
+- **Nothing proves the saved tips survive `git gc`.** The whole argument for
+  `refs/blc/pruned/<name>` rests on reachability, and the tests assert the ref exists and points
+  at the right commit, not that `gc --prune=now` leaves it readable.
+- **The `pr` test never reaches a real forge.** Every test uses the `BLC_MERGED_PRS` override.
+  What is proven is the base rule and the match, not that `gh pr list --json
+  headRefOid,baseRefName` returns what the program assumes. One run against this repository was
+  done by hand.
+- **GitLab is unimplemented.** A GitLab adopter gets two tests, and `pr` is the only one that
+  can prove the merge this toolkit performs. The program says so and proves nothing it cannot.
+- **`refs/blc/pruned/` accumulates and nothing removes it.** The skill reports this and gives
+  the two commands. No `--forget` exists.
+- **Remote branches are untouched.** Decision 4 scoped them out, and the 82-branch cleanup that
+  produced this brief's evidence was remote. This is the smaller half of the real problem, by
+  choice, because the prover is the shared part and it now exists.
+- **The skill's tests assert prose.** Six of them check that strings appear in a markdown file.
+  Nothing can show an agent follows a skill, which is the reason the classification and the
+  deletion are both in the script.
