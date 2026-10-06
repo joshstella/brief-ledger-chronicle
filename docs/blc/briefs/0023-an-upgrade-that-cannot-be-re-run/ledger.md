@@ -1,16 +1,16 @@
 # Ledger — #0023 An upgrade that cannot be re-run, and a version nobody can name
 
-`blc/2 #0023 pending a:pending b:pending c:pending`
+`blc/2 #0023 in-progress a:in-progress(brief/0023-a-the-log-moves-first) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0023-an-upgrade-that-cannot-be-re-run/brief.md`
 **Started:** 2026-10-05
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the log moves first | pending | — |
+| a | the log moves first | in-progress | `brief/0023-a-the-log-moves-first` |
 | b | what a version is | pending | — |
 | c | a target that is behind | pending | — |
 
@@ -71,4 +71,30 @@ Found while reading the code for the brief. None is in the brief itself.
 
 ## Branches
 
-None yet.
+`brief/0023-a-the-log-moves-first` (phase `a`).
+
+## Phase `a`, as executed
+
+Two changes, and the second is what makes the first reach a target that is already stuck.
+
+The install log moves before every other old-layout path, instead of fourth where sort order
+put it. The reorder sits after the array is built, so everything that decides whether a move
+may run is unchanged. Only what survives a move that dies halfway is different.
+
+The ownership guard gains one exception. A populated `docs/blc/` with no log in it, while
+`docs/install-log/install-log.md` still exists, is an interrupted move and not a project tree.
+Resuming is safe because every path is checked again: a file that already moved is no longer at
+its old path, so it is neither moved twice nor counted as a clash.
+
+**The third test was unproven, and a mutation fixed that.** `still_refuses_a_docs_blc_with_no_old_log`
+passed with and without the change, because it guards the narrowing rather than the fix. The
+first mutation written for it was wrong and proved nothing: it made the guard fire always, which
+is the behaviour before this phase, so it failed the resume test instead. The second made the
+exception apply always. That failed both refusal tests, which is the result the guard is for.
+
+**The resume is said out loud, from the review.** The exception used to fire silently, so an
+adopter whose first run died would see what looked like an ordinary install the second time.
+The run that left that state wrote no log, so this message is the only account they get of why
+a half-moved tree was accepted where a project's own is refused. Asserted by the resume test.
+
+The suite is 567, from 564.

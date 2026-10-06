@@ -19,6 +19,68 @@ up_half_upgraded() {
   printf '# Install log\n' > "$TARGET/docs/blc/install-log/install-log.md"
 }
 
+# ── A move that died halfway (#0023 a) ───────────────────────────────────────
+#
+# The moves used to run in sort order, which put the install log fourth, behind briefs. A
+# `git mv` that failed before the log's turn — the index locked by another process, say —
+# left a populated docs/blc/ with no log in it. That is the exact state the ownership guard
+# refuses, so the upgrade could never be re-run, and the error told the person to undo a
+# move the installer had made. The aborted run wrote no log, so they had no list of what.
+#
+# Two changes, and these tests hold each. The log moves first, so a failure after any other
+# path still leaves docs/blc/ marked as the toolkit's. And the guard treats the old pair —
+# a populated docs/blc/ with no log, while docs/install-log/install-log.md still exists —
+# as an interrupted move rather than a project tree, which makes the fix reach a target
+# already stuck.
+
+# A move that died after the briefs moved and before the log did.
+up_move_died_after_briefs() {
+  up_old_layout
+  mkdir -p "$TARGET/docs/blc/briefs"
+  mv "$TARGET/docs/briefs/0001-first" "$TARGET/docs/blc/briefs/0001-first"
+}
+
+test_upgrade_resumes_a_move_that_died_partway() {
+  up_move_died_after_briefs
+  run_install y --target "$TARGET"
+  assert_status 0
+  # The project's work survives, in its new home, once.
+  assert_file    "$TARGET/docs/blc/briefs/0001-first/brief.md"
+  assert_file    "$TARGET/docs/blc/briefs/0001-first/ledger.md"
+  assert_no_file "$TARGET/docs/briefs/0001-first/brief.md"
+  assert_file    "$TARGET/docs/blc/install-log/install-log.md"
+  assert_no_file "$TARGET/docs/install-log/install-log.md"
+  # The run that left this state wrote no log, so this message is the only account the person
+  # gets of why a half-moved tree was accepted where a project's own would be refused.
+  assert_out "did not finish. Resuming it."
+}
+
+# The log is what marks docs/blc/ as the toolkit's, so it has to be the first thing in the
+# new tree. Asserting the order directly, rather than the state after a clean run, is what
+# makes this a test about surviving a failure.
+test_upgrade_moves_the_install_log_before_anything_else() {
+  up_old_layout
+  run_install y --target "$TARGET"
+  assert_status 0
+  local first
+  first="$(grep -oE 'docs/[^ ]+ → docs/blc/[^ ]+' "$OUT" | head -1)"
+  case "$first" in
+    "docs/install-log/install-log.md → docs/blc/install-log/install-log.md"*) ;;
+    *) fail "expected the install log to move first, got: $first" ;;
+  esac
+}
+
+# The exception is narrow. Without the old log beside it, a populated docs/blc/ is still the
+# project's, and nothing about this change may weaken that.
+test_upgrade_still_refuses_a_docs_blc_with_no_old_log() {
+  mkdir -p "$TARGET/docs/blc/briefs/0001-first"
+  printf '# Brief\n' > "$TARGET/docs/blc/briefs/0001-first/brief.md"
+  run_install y --target "$TARGET"
+  assert_status 1
+  assert_err "holds files this toolkit did not install"
+  assert_file "$TARGET/docs/blc/briefs/0001-first/brief.md"
+}
+
 test_upgrade_refuses_a_docs_blc_the_toolkit_did_not_install() {
   mkdir -p "$TARGET/docs/blc/notes"
   printf 'mine\n' > "$TARGET/docs/blc/notes/plan.md"
