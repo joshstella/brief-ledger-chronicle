@@ -1,6 +1,6 @@
 # Ledger — #0024 Orient believes the directory it stands in
 
-`blc/2 #0024 in-progress a:in-progress(brief/0024-a-orient-reads-from-the-root)`
+`blc/2 #0024 in-progress a:in-progress(brief/0024-a-orient-reads-from-the-root,PR#114)`
 
 **Brief:** `docs/blc/briefs/0024-orient-believes-the-directory-it-stands-in/brief.md`
 **Started:** 2026-10-06
@@ -10,7 +10,7 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | orient reads from the root | in-progress | `brief/0024-a-orient-reads-from-the-root` |
+| a | orient reads from the root | in-progress (PR#114) | `brief/0024-a-orient-reads-from-the-root` |
 
 **a — orient reads from the root.** `tools/orient.sh` finds the repository root and then reads
 every data path from the current directory instead. Run from a subdirectory it reports the
