@@ -1,18 +1,18 @@
 # Ledger — #0023 An upgrade that cannot be re-run, and a version nobody can name
 
-`blc/2 #0023 in-progress a:done(PR#111) b:in-progress(brief/0023-b-what-a-version-is,PR#112) c:pending`
+`blc/2 #0023 done a:done(PR#111) b:done(PR#112) c:skipped`
 
 **Brief:** `docs/blc/briefs/0023-an-upgrade-that-cannot-be-re-run/brief.md`
 **Started:** 2026-10-05
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the log moves first | done (PR#111) | `brief/0023-a-the-log-moves-first` |
-| b | what a version is | in-progress (PR#112) | `brief/0023-b-what-a-version-is` |
-| c | a target that is behind | pending | — |
+| b | what a version is | done (PR#112) | `brief/0023-b-what-a-version-is` |
+| c | a target that is behind | skipped | — |
 
 The brief's three phases stand. `a` is a defect and `b` and `c` are gaps, so `a` goes first.
 
@@ -57,7 +57,7 @@ offline, `c` does not run.
 |---|---|---|
 | 1 | **Settled 2026-10-06: the version is derived, not chosen.** `git rev-list --count HEAD` and a short hash, as `<count>+<sha>`. It identifies a build and promises nothing; the Contract carries every promise this toolkit makes. The question in the brief — semantic versioning against what promise? — has no answer, because no promise is written down to version against. A number chosen by hand would be a declared second copy of what git already knows, and would invite the compatibility reading the Contract has not earned. Rejected: tags, which need a release step nobody runs and would read as that promise; and a CI-stamped number, which needs a network call the installer has never made. | `b`, `c` |
 | 2 | **Settled 2026-10-05: `a` detects and resumes.** From the brief. A target half-moved by the current installer is not fixed by changing the order, because its log is still at the old path. The signature is unambiguous — a populated `docs/blc/` with no log in it, while `docs/install-log/install-log.md` exists — so detection is not a guess. Rejected: a documented hand recovery, which asks an adopter to undo a move the installer made, from a run that wrote no record of what it moved. | `a` |
-| 3 | **Whether `c` belongs in this brief** or waits until an adopter asks what they have. From the brief. | `c` |
+| 3 | **Settled 2026-10-06: it waits, and `c` is skipped.** An adopter asks what they have, and today the answer is given by hand — there are few adopters, and the owner tells them. A reporter built before anyone has asked would guess at the question. A package manager may take this job later, and that would replace the reporter rather than use it. | `c` |
 
 ## Complications
 
@@ -140,3 +140,60 @@ its own commits on top of the merge base, so a target installed from one is numb
 target installed from `main` at the same content. Subtraction answers "am I behind" only
 between installs from `main`. `c` must say so, or detect it, rather than report a target as
 ahead when it is not.
+
+## Closeout, 2026-10-06
+
+An old-layout upgrade can be re-run after it dies partway, and a target's install log now
+records a version that can be ordered.
+
+`a` (PR#111) moved the install log ahead of every other old-layout path, so an interrupted move
+always leaves the log where the ownership guard expects it. The same phase made the fix
+retroactive: a populated `docs/blc/` with no log in it, while the old log still exists, is an
+interrupted move, and the installer says so and resumes. `b` (PR#112) replaced
+`git describe --tags --always` with `<count>+<sha>`. The suite went 564 to 570, and each phase's
+tests were seen to fail without its fix.
+
+The brief planned three phases and asked three questions. All three are answered, and two of the
+three moved work rather than confirming the plan:
+
+- **Decision 1 was answered by refusing the question.** The brief asked what a version number
+  should mean here — semantic versioning against what promise? There is no written promise to
+  version against, so no honest answer exists. The version is derived instead: it identifies a
+  build and promises nothing, and the Contract carries every promise this toolkit makes.
+  Rejected: tags, which need a release step nobody runs and would read as that promise, and a
+  CI-stamped number, which needs a network call the installer has never made.
+- **Decision 2 settled as detect-and-resume**, which is what made `a` reach a target that was
+  already stuck. Order alone fixes the next run, not the one that already failed.
+- **Decision 3 settled as "it waits"**, which skips `c`.
+
+**`c` is skipped, and nothing replaces it.** `tools/orient.sh` does not report whether a target
+is behind. The version `b` produced makes the comparison a subtraction with no network call, so
+`c` is cheap — and that is the reason to leave it. Nobody has asked. The adopters are few and
+the owner tells them directly, so a reporter would answer a question in a form nobody has
+stated. A package manager may take this job later, and it would replace a reporter rather than
+use one. Skipped rather than deferred: there is no code on a branch.
+
+**Two dead guards were removed in `b`, and the second was the lesson.** A `rev-parse --git-dir`
+check and a non-empty check on the count and hash each passed the whole suite when mutated away.
+The first was found while writing the tests. The second was written anyway, in the same
+function, and was caught only in review. Writing an unprovable guard is not a slip that
+knowing about prevents.
+
+**One non-goal and one success criterion assumed a tag, and decision 1 removed it.** The brief
+said "a tag is the whole of `b`", and asked that a target's install log name a version that
+exists in this repository's tags. No tag was cut, so that criterion is not met and will not be.
+What replaced it is stricter in the way that matters: the version is derived, so it cannot drift
+from the build it names, and no release step has to run for a target to record one. The other
+three criteria are met. A half-moved target re-runs to completion and ends in a clean upgrade's
+tree, a test fails for that case against the installer before `a`, and what the version promises
+is written down — it promises nothing, which is no more than the Contract.
+
+Open after close. Neither is tested:
+
+- **A branch install is numbered ahead of `main`.** A feature branch carries its own commits on
+  top of the merge base, so a target installed from one stamps a count above a target installed
+  from `main` at the same content. Subtraction orders installs from `main` and nothing else.
+  `c` would have had to say this; with `c` skipped, only this paragraph does.
+- **The shallow case is arranged, not reproduced.** The test creates `.git/shallow`, which is
+  what git itself tests for, so `rev-parse --is-shallow-repository` cannot tell the difference.
+  A real `--depth 1` CI checkout is not exercised end to end.
