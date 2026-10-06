@@ -1,16 +1,16 @@
 # Ledger — #0024 Orient believes the directory it stands in
 
-`blc/2 #0024 in-progress a:in-progress(brief/0024-a-orient-reads-from-the-root,PR#114)`
+`blc/2 #0024 done a:done(PR#114)`
 
 **Brief:** `docs/blc/briefs/0024-orient-believes-the-directory-it-stands-in/brief.md`
 **Started:** 2026-10-06
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | orient reads from the root | in-progress (PR#114) | `brief/0024-a-orient-reads-from-the-root` |
+| a | orient reads from the root | done (PR#114) | `brief/0024-a-orient-reads-from-the-root` |
 
 **a — orient reads from the root.** `tools/orient.sh` finds the repository root and then reads
 every data path from the current directory instead. Run from a subdirectory it reports the
@@ -52,6 +52,7 @@ Found while reading the code for this plan. None is in the brief.
 ## Branches
 
 `brief/0024-a-orient-reads-from-the-root` (phase `a`).
+`brief/0024-closeout`.
 
 ## Phase `a`, as executed
 
@@ -81,3 +82,50 @@ directories, so a second test names the three sections that were wrong. A byte-i
 assertion is only as strong as the fixture it compares.
 
 The suite is 574, from 570.
+
+## Closeout, 2026-10-06
+
+`tools/orient.sh` reads the record from the repository root, whatever directory it was called
+from. `a` (PR#114) is the whole brief. The suite went 570 to 574.
+
+The brief asked three questions and every answer removed work. That is why this is one phase
+and not three: the siblings are not touched, the argument rule needed two lines rather than a
+convention, and the note that would have explained the behaviour was the one thing the test
+forbids. A brief that asks good questions can get smaller when they are answered.
+
+- **Decision 1 — orient only.** The four siblings take the same relative default and fail
+  loudly from a subdirectory, so none of them answers wrongly. Orient was the only one that
+  could not fail, because #0021 made it turn a missing input into a stated absence. Rejected:
+  one rule across all five, which is tidier and would have carried four files of unrelated
+  change into a defect fix.
+- **Decision 2 — the argument is the caller's.** An explicit path is made absolute before the
+  `cd`; the default is left alone. Absolutising both would have anchored the default to the
+  caller, which is this defect under a new name, and that is the trap in this phase.
+- **Decision 3 — orient says nothing about where it ran.** The note and the byte-identity
+  assertion cannot both exist. The assertion is worth more.
+
+**The complication about symlinks did not bite.** The existing test that enters through a
+symlinked checkout passes unchanged, because its assertion is against `$ROOT` and the `cd` does
+not move that. It was checked rather than assumed, which is why it was written down.
+
+**One stale comment was found by the review, not by a test.** The script's header said "Run
+from the repository root" — true as advice and false as a requirement, once the `cd` existed.
+No test reads a comment. This is the second phase in a row where the review caught something
+the suite could not, and both were statements rather than behaviour.
+
+Open after close. Neither is tested:
+
+- **No installed target is corrected until it is reinstalled.** `tools/orient.sh` is
+  toolkit-owned, so the fix reaches a target on its next install and not before. Every project
+  installed at `177+2f6aa89` or earlier still answers wrongly from a subdirectory. Nothing here
+  exercises the reinstall path, and nothing tells an adopter they are affected.
+- **The identity test is only as strong as its fixture.** It compares two runs over one brief,
+  a six-line install log and a three-line orientation file. A section that reads wrong from
+  both directories in a richer repository passes both new tests. The second test names the
+  three sections that were wrong, which is what stops the pair from passing vacuously.
+
+**The skills were left alone, as the brief required.** `skills/blc-orient/SKILL.md` still says
+to run from the repository root. That instruction is now unnecessary rather than wrong, and a
+reader cannot tell from the skill which tools still need it. The non-goal is correct — the
+script must be right whether or not a caller obeys — but the wording is now a second question,
+and it is not this brief's.
