@@ -369,3 +369,49 @@ test_stale_rejects_an_unknown_argument() {
   run_stale --wipe
   [ "$LAST_STATUS" -eq 2 ] || fail "expected exit 2 for an unknown argument, got $LAST_STATUS"
 }
+
+# ── The skill (#0025c) ───────────────────────────────────────────────────────
+#
+# These assert prose, which is the weakest thing in this file. They cannot show that an agent
+# follows the skill — nothing can, which is the reason the classification and the deletion are
+# both in the script. What they stop is the wiring rotting: a skill that stops naming its tool,
+# or stops carrying the one instruction a reader cannot derive.
+
+SKILL_MD="skills/blc-prune-stale-branches/SKILL.md"
+
+test_stale_skill_names_the_script_it_drives() {
+  assert_contains "tools/stale-branches.sh" "$REPO_ROOT/$SKILL_MD"
+  assert_contains "stale-branches.sh --delete" "$REPO_ROOT/$SKILL_MD"
+}
+
+# The script makes no network call, so a trunk that is behind proves fewer branches than it
+# should. Nothing in the script can tell the reader this; only the skill runs before it.
+test_stale_skill_says_to_fetch_first() {
+  assert_contains "git fetch" "$REPO_ROOT/$SKILL_MD"
+}
+
+# A refusal exits non-zero even when other branches were deleted, so the exit status cannot
+# tell "nothing happened" from "three deleted, one refused". An agent that checks `$?` and
+# stops would report the deletions as a failure.
+test_stale_skill_warns_that_the_exit_code_is_not_the_result() {
+  assert_contains "not the exit code" "$REPO_ROOT/$SKILL_MD"
+}
+
+# Nothing removes the saved tips. A person should learn that from the run that creates them.
+test_stale_skill_says_where_the_saved_tips_go() {
+  assert_contains "refs/blc/pruned" "$REPO_ROOT/$SKILL_MD"
+}
+
+test_stale_skill_ships_to_a_cursor_target() {
+  run_install y --host cursor --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/.cursor/skills/blc-prune-stale-branches/SKILL.md"
+  assert_file "$TARGET/tools/stale-branches.sh"
+}
+
+test_stale_skill_ships_to_a_claude_target() {
+  run_install y --host claude --target "$TARGET"
+  assert_status 0
+  assert_file "$TARGET/.claude/skills/blc-prune-stale-branches/SKILL.md"
+  assert_file "$TARGET/tools/stale-branches.sh"
+}

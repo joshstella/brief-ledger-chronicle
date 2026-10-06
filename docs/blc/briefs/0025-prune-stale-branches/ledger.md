@@ -1,6 +1,6 @@
 # Ledger — #0025 Stale branches nothing prunes
 
-`blc/2 #0025 in-progress a:done(PR#116) b:in-progress(brief/0025-b-the-deletion,PR#117) c:pending d:pending`
+`blc/2 #0025 in-progress a:done(PR#116) b:done(PR#117) c:in-progress(brief/0025-c-the-skill) d:pending`
 
 **Brief:** `docs/blc/briefs/0025-prune-stale-branches/brief.md`
 **Started:** 2026-10-06
@@ -11,8 +11,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the proof | done (PR#116) | `brief/0025-a-the-proof` |
-| b | the deletion | in-progress (PR#117) | `brief/0025-b-the-deletion` |
-| c | the skill | pending | — |
+| b | the deletion | done (PR#117) | `brief/0025-b-the-deletion` |
+| c | the skill | in-progress | `brief/0025-c-the-skill` |
 | d | orient points at it | pending | — |
 
 **a — the proof.** A new `tools/stale-branches.sh` classifies every local branch and writes
@@ -71,11 +71,13 @@ Found while reading the code for this plan. None is in the brief.
   install log (#0012c), and every function in it is named `test_prune_*`. The suite filters on
   that prefix, so `bash tests/run.sh test_prune` would run both sets. The new file takes a
   different prefix, `test_stale_*`.
-- **The self-host skill links are untracked hardlinks.** `.cursor/skills/blc-orient/SKILL.md`
-  shares an inode with `skills/blc-orient/SKILL.md` and `git ls-files` does not report it. So a
-  twelfth skill needs no committed link; it needs the installer run against this repository
-  before the skill is usable here. `tools/orient.sh` describes these as "committed links", which
-  is not what they are, and that is not this brief's to fix.
+- **The self-host skill links.** ~~Untracked hardlinks.~~ **Corrected in `c`: this was wrong.**
+  `.cursor/skills` is itself one tracked symlink to `skills/`, which is why a file under it
+  shares an inode with its source and why `git ls-files` reports no path beneath it. The Claude
+  side is different: `.claude/skills/<name>` is a tracked relative symlink per skill. So Cursor
+  needs nothing for a twelfth skill and Claude needs one committed link. `tools/orient.sh` calls
+  these "committed links", which is right — the error was mine. Found by
+  `self_host_every_row_a_target_gets_resolves_here` failing in `c`.
 - **`PROCESS_SKILLS` is a roster of six, not of all skills.** `install.sh:30` names the six that
   each host is promised, and `install.sh:800` asserts against it. `blc-orient`, `blc-chronicle`,
   `blc-my-briefs`, `blc-installer-builder` and `blc-ste-writing` are not in it. A prune skill is
@@ -91,6 +93,7 @@ Found while reading the code for this plan. None is in the brief.
 
 `brief/0025-a-the-proof` (phase `a`).
 `brief/0025-b-the-deletion` (phase `b`).
+`brief/0025-c-the-skill` (phase `c`).
 
 ## Decisions added during execution
 
@@ -178,3 +181,32 @@ a ref behind for a branch that is still there. The mutation showed it, and the r
 comment at the site.
 
 The suite is 599, from 589.
+
+## Phase `c`, as executed
+
+`skills/blc-prune-stale-branches` fetches, runs the script, shows what it proved, asks, and
+calls `--delete` with the names a person gave. It owns the conversation and owns no logic.
+
+The skill carries three things a reader cannot derive from the script. It says to fetch first,
+because the script makes no network call and a trunk that is behind proves fewer branches than
+it should. It says to read the output rather than the exit code, because a refusal makes the
+run exit non-zero even when other branches were deleted. And it says where the saved tips go
+and that nothing removes them, so a person learns from the run that creates them that the
+repository is accumulating something.
+
+It also says not to offer a branch under "Not proven". A person who wants one gone can run
+`git branch -D` themselves; that should be their own act rather than the agent's.
+
+**The tests here assert prose, and that is the weakest thing in this brief.** Nothing can show
+that an agent follows a skill — which is the reason the classification and the deletion are
+both in the script. What these stop is the wiring rotting: a skill that stops naming its tool,
+or loses the one instruction only it can carry.
+
+**A complication recorded in `a` was wrong, and `c` found it.** `a` said the self-host skill
+links are untracked hardlinks and that a twelfth skill needs no committed link. Adding the
+skill failed `self_host_every_row_a_target_gets_resolves_here` for Claude. `.cursor/skills` is
+one tracked symlink to `skills/`, which is why a file beneath it shares an inode with its
+source; `.claude/skills/<name>` is a tracked symlink per skill. Cursor needed nothing, Claude
+needed a link, and the correction is above the original rather than in place of it.
+
+The suite is 605, from 599.
