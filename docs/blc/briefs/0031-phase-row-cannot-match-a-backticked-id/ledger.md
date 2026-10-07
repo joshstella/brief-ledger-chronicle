@@ -1,16 +1,17 @@
 # Ledger — #0031 phase-row.sh cannot match a backticked phase id
 
-`blc/2 #0031 in-progress a:in-progress(brief/0031-a-read-the-id-without-its-backticks)`
+`blc/2 #0031 done a:done(PR#137)`
 
 **Brief:** `docs/blc/briefs/0031-phase-row-cannot-match-a-backticked-id/brief.md`
 **Started:** 2026-10-07
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-07
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | read the id without its backticks | in-progress | `brief/0031-a-read-the-id-without-its-backticks` |
+| a | read the id without its backticks | done | PR#137 |
 
 **a — read the id without its backticks.** Make `blc_phase_row_pattern` find the row for phase
 `a` whether the ledger writes the id bare, backticked, struck, or struck and backticked. The
@@ -81,6 +82,50 @@ failed twice now and been corrected both times.
 side of the id could have let `` | `ab` | `` read as phase `a`. Relaxing the boundary to `.*`
 fails `phase_row_still_refuses_a_longer_id` and nothing else, which is the mutation that says
 the guard is real.
+
+## What shipped
+
+One phase, one PR, one line of pattern. `blc_phase_row_pattern` skips backticks and tildes on
+both sides of the id, so `` | `a` | ``, `| ~~a~~ |`, `` | ~~`a`~~ | `` and `` | ``a`` | `` all
+find their row. `BRIEFS-9` no longer calls a legible ledger unfindable.
+
+Both of the brief's open decisions closed as planned: the decoration is skipped rather than
+enumerated, and a struck and backticked id matches. The mechanism changed during the work —
+the decision said "strip before matching", and `blc_phase_row_find` returns the raw line rather
+than a parsed value, so stripping would have changed what callers receive. One character class
+on both sides of the id reaches the same place without touching the contract.
+
+## What the record shows that the brief did not predict
+
+**The brief read this as an unnoticed asymmetry. It was a known gap with two tests holding it
+open.** That is the finding worth keeping. `test_phase_row.sh` pinned the shapes as unmatched
+and named #0014 phase `b` as where the gap closes, adding that the test flipping is how that
+would be visible. Phase `b` did not close it. The test then did its job perfectly and reported
+nothing, because what it asserts is that the defect is still there.
+
+**A characterization test needs an expiry, not a sentence.** The comment carried the intent and
+nothing read the comment. Two years of green on "the gap is still open" looks exactly like two
+years of green on "the gap is closed". No mechanism for that is proposed here; naming it is
+what this ledger can do.
+
+**It was a policy reversal.** #0014 phase `c` added `BRIEFS-9` to report these rows rather than
+support them, which was correct while no reader could find them. The reporter did not hit a
+bug; they hit a decision. Reading their report as a defect report was right anyway, because the
+decision stopped being correct the moment the rows could be read.
+
+## Open after close
+
+**This repository still writes its phase tables bare,** so nothing here exercises the shapes
+this brief added. The fixtures are written from the report. A shape neither the reporter nor
+this brief thought of stays unreported for the same reason the first one did.
+
+**The other characterization tests in this suite were not surveyed.** One was found holding a
+gap open past the phase meant to close it. Whether others do is not known, and this brief did
+not look.
+
+**`docs/blc/briefs/README.md` still does not say what a phase table may decorate.** It defines
+the id and is silent on the cell. The readers now accept more than the document describes,
+which is the safe direction and is not written down.
 
 ## What this cannot prove
 
