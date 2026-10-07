@@ -51,6 +51,37 @@ Every other backtick there is either a strip, which is right, or a character cla
 `identity-line.sh`, which is a different job. This is one site, not a class, which is why it is
 one phase.
 
+## Settled while building `a`
+
+**The gap was known, pinned, and left.** Two characterization tests already held these shapes
+as unmatched. `test_phase_row.sh` said so of the matcher and named #0014 phase `b` as where the
+gap closes, adding that the test flipping is how that would be visible. Phase `b` did not close
+it, and the test went on guarding the gap rather than reporting that it was still open. A test
+that pins a defect needs something that expires; this one had only a sentence.
+
+**It is a policy reversal, not only a repair.** `test_clauses.sh` held that `BRIEFS-9` *reports*
+these three rows, and that was right while they were unmatched: a row no reader can find is a
+row that may as well not be there. #0014 phase `c` added the clause to report the shapes rather
+than support them. So the gate telling the reporter their phases were missing was the behaviour
+somebody chose. This brief changes the choice — the readers find the rows, so there is nothing
+left to report — and both tests are inverted rather than deleted, because the rows they pin are
+the same rows.
+
+**Three shapes, not one.** The brief was filed on `` | `a` | ``. `| ~~a~~ |` fails for the same
+reason in the other decoration: `~*` took a leading `~~` and made no provision for the trailing
+one. One class on both sides of the id closes all three, and `` | ``a`` | `` with it.
+
+**The fingerprint guard fired, which is the guard working.** `tests/test_phase_row.sh` keeps a
+literal fragment of the pattern to catch anyone re-deriving the matcher outside the library.
+Changing the pattern broke it, exactly as intended, and it was updated with the reason. Its own
+comment records that an earlier version of it matched nothing at all, so it is a guard that has
+failed twice now and been corrected both times.
+
+**The boundary is what the change risked, and a test holds it.** Allowing decoration either
+side of the id could have let `` | `ab` | `` read as phase `a`. Relaxing the boundary to `.*`
+fails `phase_row_still_refuses_a_longer_id` and nothing else, which is the mutation that says
+the guard is real.
+
 ## What this cannot prove
 
 The defect was found by a person installing into a real project, twice, and that project
