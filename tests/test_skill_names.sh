@@ -269,3 +269,36 @@ test_skill_names_commit_skill_reads_the_merge_method_it_uses() {
   assert_contains "Never write a merge method into this file" \
     "$REPO_ROOT/skills/blc-commit-push-pr/SKILL.md"
 }
+
+# ── The mentions that remain, pinned (#0030 c) ───────────────────────────────
+
+# Guard 1 catches the flag. It cannot catch a sentence, and a sentence is what started this:
+# "Because main is squash-merged" was prose, not a command. Sweeping for the word instead would
+# forbid the fix, because six of these mentions are correct — the mapping table that reads the
+# method, and the comments describing how git detects a rename across a squash.
+#
+# So the count per file is pinned. Adding a mention means editing a number here, and that edit
+# is what a reviewer sees. It is a report, not a decision: it cannot tell whether the new
+# sentence is true, and a person who raises the number without reading the sentence defeats it
+# completely. That limit was named when the guard was proposed and is accepted (#0030).
+#
+# Counts are lines containing the word, case-insensitive, so `SQUASH` in the mapping table
+# counts with the rest.
+test_skill_names_the_squash_mentions_are_the_pinned_ones() {
+  local expected actual
+  expected="$(printf '%s\n' \
+    'skills/blc-chronicle/SKILL.md 1' \
+    'skills/blc-chronicle/scripts/gather.sh 1' \
+    'skills/blc-commit-push-pr/SKILL.md 5' \
+    'skills/blc-prune-stale-branches/SKILL.md 1' \
+    'tools/lib/touch-log.sh 3' \
+    'tools/stale-branches.sh 2')"
+  actual="$(cd "$REPO_ROOT" \
+    && LC_ALL=C grep -rci -- squash skills/ tools/ 2>/dev/null \
+    | grep -v ':0$' | tr ':' ' ' | LC_ALL=C sort)"
+  [ "$actual" = "$expected" ] || fail "the squash mentions moved — read the lines, then pin the new counts.
+pinned:
+$expected
+found:
+$actual"
+}

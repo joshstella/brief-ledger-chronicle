@@ -1,6 +1,6 @@
 # Ledger — #0030 The merge method the toolkit assumes
 
-`blc/2 #0030 in-progress a:done(PR#131) b:in-progress(brief/0030-b-the-merge-row-reads-the-merge-methods-row) c:pending`
+`blc/2 #0030 in-progress a:done(PR#131) b:done(PR#133) c:in-progress(PR#135)`
 
 **Brief:** `docs/blc/briefs/0030-the-merge-method-the-toolkit-assumes/brief.md`
 **Started:** 2026-10-07
@@ -11,8 +11,8 @@
 | id | label | status | branch |
 |---|---|---|---|
 | a | the move split across two commits | done | PR#131 |
-| b | the merge row reads the merge-methods row | in-progress | `brief/0030-b-the-merge-row-reads-the-merge-methods-row` |
-| c | the prose, and the count that holds it | pending | — |
+| b | the merge row reads the merge-methods row | done | PR#133 |
+| c | the prose, and the count that holds it | in-progress | PR#135 |
 
 **a — the move split across two commits.** Make `blc_touch_renames` read a move that was made as
 an add in one commit and a delete in the next, so a brief keeps its first date on a merge-commit
@@ -108,6 +108,67 @@ and `--auto-merge` sit on neighbouring rows and do not trip it, which a mutation
 `viewerDefaultMergeMethod` appeared somewhere in the skill. Removing it from the merge-methods
 command left it in the mapping table, and the test stayed green over a skill that no longer
 fetched the field it picks from. The assertion is now on the line that asks.
+
+## Settled while building `c`
+
+**Half the mentions are correct and must stay.** A survey of the shipped files found 13 uses of
+the word. Seven are right: four in `blc-commit-push-pr` are the mapping table and the
+merge-methods command that phase `b` added, where naming the flag is the opposite of assuming
+it, and three in `tools/lib/touch-log.sh` describe how git reads a rename, with the one claim
+about trunk shape already scoped to this repository. This is why decision 4 pins a count per
+file rather than forbidding the word.
+
+**`blc-chronicle` was code, not prose.** It reads "squash subjects carrying `[#NNNN]`", which on
+a merge-commit trunk finds nothing: the subject is `Merge branch ...` and the serial sits in the
+body. The expectation was a sentence to reword and a skill guard to go with it. The sentence was
+only the visible half — `gather.sh` greps `%s`, so the digest the chronicle is written from
+returned no brief work at all and reported an empty history rather than failing. That made it a
+tested fix rather than an unenforced instruction, which is the better outcome and was not
+planned for.
+
+It now matches with `--grep`, which reads the whole message, and folds the body's serials onto
+the subject's line. Only the serials, not the body: the section has a 60-line ceiling that is
+meant to count commits, and a folded-in body would make it count paragraphs instead.
+
+**Reading the whole message meant tightening what a serial is.** A PR number is written exactly
+like a serial, and the old match took three digits as well as four, so the forge numbers `#100`
+to `#134` already counted. Reading bodies as well as subjects would have widened that from 166
+commits to 181 on this repository. The match is now exactly four digits, which is not a guess:
+`docs/blc/briefs/README.md` defines a serial as a zero-padded four-digit handle. That drops
+every PR number here and takes the count to 177, all of them serials.
+
+A rule written on the leading zero would also work today, and was considered. It was rejected
+because it stops at brief #1000, and it stops by dropping serials in silence. Four digits fails
+the other way when this forge reaches PR #1000: it over-reports, and an over-report is visible
+in the digest. Silence is the failure this brief exists for.
+
+**The first version of the de-duplication was wrong, and a mutation said so.** It tested whether
+the subject already showed a serial by searching for the serial followed by a space. Subjects
+write it as `[#0001]`, so the check never matched and every ordinary commit would have carried a
+duplicate. The serials are now collected as comma-terminated tokens, which also stops `#001`
+reading as already shown by `#0012`. Four mutations hold it.
+
+**An apostrophe in a comment broke the whole script.** The awk program is held in single quotes,
+so the word `commit's` in one of its comments ended the quoting and the shell read the rest as
+code. Every test in the file failed at once, which is the loud way for it to go wrong, and the
+constraint is now written at the top of the program rather than left for the next person to
+rediscover.
+
+**`blc-start-brief` kept its advice and lost its reason.** It argued the opening ledger must
+reach `main` because an unpushed commit "disappears into that branch's squash". On a merge trunk
+it would not disappear. The instruction is right for a reason that holds on any trunk — the
+owner sees it on every machine that pulls — so the reason was corrected and the instruction left
+alone.
+
+**`stale-branches.sh` is prose only.** Two comments there claim this toolkit merges by squash.
+The code is correct on a merge trunk regardless: `ancestor` is the stronger test and is tried
+first, so a merge-commit branch is proved without reaching `pr`. Only the explanation was wrong.
+
+**Guard 2 pins six counts, and six of the thirteen mentions are correct.** The final counts are
+`blc-commit-push-pr` 5, `touch-log.sh` 3, `stale-branches.sh` 2, and one each in
+`blc-chronicle/SKILL.md`, `gather.sh` and `blc-prune-stale-branches`. `blc-start-brief` fell to
+zero and leaves the list. Both directions are proved: a new mention in any shipped file fails
+it, and deleting a pinned line fails it.
 
 ## What this brief owes the reporter
 

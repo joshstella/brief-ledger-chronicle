@@ -34,8 +34,10 @@ tells you to write.
   exists nowhere else. These are the *forks the codebase navigated* — weight them heavily.
 - `docs/blc/briefs/_drafts/*.md` — parked/deferred drafts: the roads considered and not taken.
 - **git history** — last-touch date per brief (row and era order), first-commit date
-  (a table column), and squash subjects carrying `[#NNNN]` (which changes belong to which
-  brief). The *when*.
+  (a table column), and commit messages carrying `[#NNNN]` (which changes belong to which
+  brief). The *when*. Read the whole message, not the subject: where the trunk merges rather
+  than squashes, git writes `Merge branch ...` as the subject and the serial is in the body.
+  `gather.sh` already does this.
 - Optionally `docs/design/` for context on what a change produced — but see the grounding
   rule: a chronicle is the story of *becoming*, not a statement of current state.
 

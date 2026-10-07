@@ -66,11 +66,11 @@ If no argument is given, list candidate brief files (search `docs/blc/briefs/`, 
    - Open decisions (with the phase each blocks) and any complications found in step 4.
    - Commit **and push** this file to `main` immediately — before any feature branch is
      cut — so the owner sees it on every machine that pulls. A commit left unpushed achieves
-     none of that: it rides into the first phase branch and disappears into that branch's
-     squash. This is the only ledger write that goes straight to `main`. Every later change
-     to the ledger happens on a phase branch and returns by merge. One person owns the
-     serial. That is a convention in `docs/blc/briefs/README.md`, "Ledger status", not a
-     Contract clause.
+     none of that: it rides into the first phase branch, and nobody sees the plan until
+     that phase merges. This is the only ledger write that goes straight to `main`. Every
+     later change to the ledger happens on a phase branch and returns by merge. One person
+     owns the serial. That is a convention in `docs/blc/briefs/README.md`, "Ledger status",
+     not a Contract clause.
 
    **Secondary: `project` memory file `brief-<kebab>.md`** in the memory directory. Same content. Keeps MEMORY.md pointing at it for fast in-session lookup. Add/update the entry in MEMORY.md — update in place if it already existed, don't duplicate.
 
