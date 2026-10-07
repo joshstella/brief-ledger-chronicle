@@ -481,6 +481,75 @@ test_gather_lists_commits_that_name_a_serial() {
   assert_out "work #0001 something"
 }
 
+# A trunk that merges rather than squashes never puts the serial in a subject: git writes
+# "Merge branch ..." there and the title the skill composed lands in the body. Grepping the
+# subject alone found nothing on such a trunk, so the digest reported a history with no brief
+# work in it rather than failing, and the chronicle written from it was silently empty (#0030).
+test_gather_finds_a_serial_in_a_merge_commits_body() {
+  gather_repo
+  gather_brief "0001-alpha"
+  git -C "$REPO" checkout -q -b feature
+  echo "work" >> "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-01-01T00:00:00" "no serial on this one"
+  git -C "$REPO" checkout -q main
+  GIT_AUTHOR_DATE="2026-01-02T00:00:00" GIT_COMMITTER_DATE="2026-01-02T00:00:00" \
+    git -C "$REPO" merge -q --no-ff feature -m "Merge branch 'feature'
+
+[#0001] the work" >/dev/null 2>&1
+  run_gather
+  assert_status 0
+  # The subject with the body's serial folded onto it, so the line stays greppable and the
+  # 60-line ceiling keeps counting commits rather than lines of message.
+  assert_out "Merge branch 'feature' #0001"
+}
+
+# The ordinary commit names its brief in the subject and again in the body, and a body often
+# names the same serial more than once. Folding every match in would put a duplicate on almost
+# every line of the digest.
+test_gather_shows_a_serial_once_however_often_the_message_names_it() {
+  gather_repo
+  gather_brief "0001-alpha"
+  echo "work" >> "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-01-01T00:00:00" "[#0001] the work
+
+Explained here (#0001), and again further down (#0001)."
+  run_gather
+  assert_status 0
+  assert_out "[#0001] the work"
+  assert_not_contains "the work #0001" "$OUT"
+}
+
+# A PR number is written exactly like a serial. The forge appends "(#134)" to a subject, and a
+# merge commit's body names the PRs it closes, so reading the whole message lists commits that
+# reference no brief unless the match is tight. A serial is four digits; three is a PR.
+test_gather_does_not_read_a_pr_number_as_a_serial() {
+  gather_repo
+  gather_brief "0001-alpha"
+  echo "work" >> "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-01-01T00:00:00" "chore: tidy the readme (#134)
+
+Closes #134 and #99."
+  run_gather
+  assert_status 0
+  assert_out "(none found)"
+}
+
+# The ordinary commit names both: its brief in the subject, the PR it closes in the body. The
+# serial lets the commit through, so the length check in the fold is the only thing keeping the
+# PR number off the line.
+test_gather_does_not_fold_a_pr_number_onto_a_serials_line() {
+  gather_repo
+  gather_brief "0001-alpha"
+  echo "work" >> "$BRIEFS/0001-alpha/brief.md"
+  gather_commit "2026-01-01T00:00:00" "[#0001] the work
+
+Closes #134."
+  run_gather
+  assert_status 0
+  assert_out "[#0001] the work"
+  assert_not_contains "the work #134" "$OUT"
+}
+
 test_gather_says_none_found_when_no_commit_names_a_serial() {
   gather_repo
   gather_brief "0001-alpha"

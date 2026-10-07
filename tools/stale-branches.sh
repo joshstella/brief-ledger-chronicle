@@ -12,7 +12,8 @@
 # strength, and the first to pass wins:
 #
 #   ancestor   `git merge-base --is-ancestor` — proof for a merge commit or a fast-forward.
-#              A squash merge never passes it, and this toolkit merges by squash.
+#              A squash merge never passes it, so on a trunk that squashes every branch
+#              falls through to the tests below.
 #   pr         the tip equals the head of a pull request that merged INTO THE TRUNK. Both
 #              halves matter. A branch-name match is not proof: on 2026-10-05 a name match
 #              passed three branches it had not proved, each with a commit pushed after its
@@ -118,8 +119,8 @@ git merge-tree --write-tree HEAD HEAD >/dev/null 2>&1 || HAVE_TREE_TEST=false
 #
 # BLC_MERGED_PRS names a file to read instead of asking the forge. It exists because a test
 # fixture has no forge, and `pr` is the only test that proves a squash merge — the merge this
-# toolkit actually performs. A prover whose strongest test is never exercised is the defect
-# this brief was filed about.
+# repository performs, and the one a trunk that merges never needs. A prover whose strongest
+# test is never exercised is the defect this brief was filed about.
 PR_RAW=""
 PR_TEST="ran"
 if [ -n "${BLC_MERGED_PRS:-}" ]; then

@@ -27,8 +27,9 @@ owns the conversation and owns no logic.
    do not call an unproven branch "merged": a weaker rule once passed three branches it had not
    proved, and the deletion came before anybody looked.
 4. **Say which tests did not run, before asking.** The script prints this. The `pr` test needs
-   a forge and is the only one that can prove a squash merge, which is how this toolkit merges.
-   Without it a person is deciding on two tests, and they should know that when they decide.
+   a forge and is the only one that can prove a squash merge. On a trunk that squashes it is
+   therefore the test that does the work, and without it a person is deciding on two tests.
+   They should know that when they decide.
 5. **Ask which branches to delete.** Offer the proven ones. Never offer a branch under "Not
    proven" — if the person wants one gone anyway, they can run `git branch -D` themselves, and
    that should be their own act rather than yours.
