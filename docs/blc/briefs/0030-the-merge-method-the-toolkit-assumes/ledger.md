@@ -1,10 +1,11 @@
 # Ledger — #0030 The merge method the toolkit assumes
 
-`blc/2 #0030 in-progress a:done(PR#131) b:done(PR#133) c:in-progress(PR#135)`
+`blc/2 #0030 done a:done(PR#131) b:done(PR#133) c:done(PR#135)`
 
 **Brief:** `docs/blc/briefs/0030-the-merge-method-the-toolkit-assumes/brief.md`
 **Started:** 2026-10-07
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-07
 
 ## Phases
 
@@ -12,7 +13,7 @@
 |---|---|---|---|
 | a | the move split across two commits | done | PR#131 |
 | b | the merge row reads the merge-methods row | done | PR#133 |
-| c | the prose, and the count that holds it | in-progress | PR#135 |
+| c | the prose, and the count that holds it | done | PR#135 |
 
 **a — the move split across two commits.** Make `blc_touch_renames` read a move that was made as
 an add in one commit and a delete in the next, so a brief keeps its first date on a merge-commit
@@ -191,3 +192,62 @@ Guard 2 is a review signal and not a check. It reports that a count changed. It 
 whether the sentence that changed it is right, and a person who updates the number without
 reading the sentence defeats it completely. The reporter said this plainly when proposing it,
 and it is recorded here rather than softened.
+
+## What shipped
+
+Three phases, three PRs, eleven tests. `blc_touch_renames` reads a move split across two
+commits, so a brief keeps its first date on a trunk that merges (PR#131). `blc-commit-push-pr`
+reads the merge method from the forge instead of naming one, and stops where two repository
+settings disagree (PR#133). The sites that stated a merge method as a fact are corrected, and
+guard 2 pins what remains (PR#135).
+
+All three open questions closed. Question 1 — where detection runs — is at step 9, where the
+method is used, because preflight would pay a forge call on every run of the skill and most
+runs never merge. Question 2 — what to do when a repository permits more than one method — is
+`viewerDefaultMergeMethod` on GitHub, and `squash_option` with `merge_method` on GitLab, which
+takes two fields rather than one. Question 3 — how the touch log reads a split move — is a
+second walk with `git log --first-parent`, matching identical content only.
+
+## What the record shows that the brief did not predict
+
+**The brief under-scoped phase `c`.** It was planned as a wording pass with a counting guard.
+One of its six sites was `gather.sh` grepping `%s` for a serial, which is code, and the
+chronicle written from that digest on a merge trunk would have been empty rather than wrong.
+A prose pass found a defect because correcting a sentence meant reading what the sentence
+described.
+
+**Correcting it widened a second defect, which had to be fixed in the same phase.** Matching
+the whole message rather than the subject let PR numbers in, because the old match took three
+digits and a PR number is written like a serial. Tightening to exactly four digits is read
+from the contract, and it removes a conflation that was already there: on this repository the
+section was counting 35 PR numbers as serials before this brief touched it.
+
+**Three of this brief's own claims were wrong and were caught by a mutation or a reader.** The
+hardcoded flag was reported as failing and does not fail; the touch log was read as losing
+renames made in a merge commit and does not; and a de-duplication check written here never
+matched, because subjects write the serial as `[#0001]` and the check looked for a trailing
+space. Each correction made the defect worse than the reading it replaced.
+
+## Open after close
+
+**Guard 2 is a report, not a check,** as recorded above. Nothing changes that.
+
+**The four-digit serial match will over-report when this forge reaches PR #1000.** It was
+chosen over a leading-zero rule for that reason: it fails by listing a commit that names no
+brief, which a reader sees, rather than by dropping one, which nobody sees. Telling a serial
+from a PR number properly needs a syntax that distinguishes them, and that is not this brief.
+
+**The split-move walk still misses a move whose content changed between the add and the
+delete.** Recorded under phase `a` and unchanged: a missed rename gives a first date that is
+too recent, which is the safe direction.
+
+**`-m` on the second walk is unproven.** `--first-parent` has implied it since git 2.36, so no
+test here fails without it. It is kept for an older git and said plainly rather than left as a
+confident comment.
+
+## What the next brief inherited
+
+A toolkit that no longer assumes how the repository it was installed into merges, and two
+guards that make the next such assumption visible to somebody who cannot see the trunk it
+would be wrong on. Every finding in this brief came from a person running the toolkit rather
+than writing it.
