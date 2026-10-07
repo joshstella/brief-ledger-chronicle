@@ -4,14 +4,24 @@
 #
 # One Epic row for the brief, then one Task row per phase, in status-line order:
 #
-#   Work type    Epic, then Task
 #   Summary      `#<serial> — <title>`, then `#<serial>/<letter> — <label>`
+#   Work type    Epic, then Task
 #   Work item ID 1 for the Epic, 2 onward for the phases. Jira uses it only to link rows
 #                within this file; Parent names it.
 #   Parent       empty for the Epic, 1 for each phase
+#   Priority     always empty — see below
 #   Assignee     the brief's `Owner`, or `Author` when there is no `Owner`
+#   Reporter     the brief's `Author`. The same email as Assignee on a brief with no `Owner`.
+#   Due Date     always empty — see below
+#   Labels       `blc-<serial>`, the same on every row, so one JQL term finds the import
+#   Components   always empty — see below
 #   Status       the BLC state with its pointer dropped: `in-progress`, `done`, `skipped`.
 #                Map them to the project's workflow on the importer's value-mapping screen.
+#
+# Priority, Due Date and Components are emitted empty because the record holds nothing for them:
+# a brief has no priority, no due date and no component. The column is there so Jira shows the
+# field and a person fills it in after the import. A default would put declared data in a file
+# whose every other column is derived, and nothing in Jira would tell the two apart (#0027).
 #   Description  for the Epic, the brief's `## The claim` text, then the brief's path. For a
 #                Task, the ledger paragraph that starts `**<id> — <label>.**`, without that
 #                lead, then the ledger's path. A missing text gives the path alone and a
@@ -297,6 +307,30 @@ case "$rc" in
   *) die "#$SERIAL: the identity line has no Owner or Author" ;;
 esac
 
+# The person who filed the brief, which is not always the person who owns it. On a brief with no
+# `Owner` this is the same email as the assignee, and that is the truth about such a brief rather
+# than a duplicate to suppress.
+#
+# A bad `Author` warns and leaves the column empty, where a bad assignee dies. Jira requires an
+# assignee to be resolvable and fills an empty `Reporter` with the importing user, so the two
+# failures do not cost the same. Where there is no `Owner` the assignee check above has already
+# read this field and refused, so this path is only reachable with an `Owner` present.
+REPORTER=""
+if AUTHOR=$(blc_identity_field "$IDENTITY" Author); then
+  if printf '%s' "$AUTHOR" | grep -qE "$BLC_EMAIL_RE"; then
+    REPORTER="$AUTHOR"
+  else
+    warn "#$SERIAL: Author '$AUTHOR' is not one email, so the Reporter column is empty"
+  fi
+else
+  warn "#$SERIAL: the identity line has no Author, so the Reporter column is empty"
+fi
+
+# One label on the Epic and on every phase Task, so a single JQL term finds the whole import
+# afterwards. The phase letter is deliberately not in it: a label per phase would fragment the
+# one search this exists to make possible (#0027).
+LABEL="blc-$SERIAL"
+
 # The locator prints nothing and still succeeds when there is no line.
 STATUS_LINE=$(blc_status_line "$LEDGER" || true)
 [ -n "$STATUS_LINE" ] || die "#$SERIAL: $LEDGER has no status line"
@@ -326,7 +360,8 @@ csv_row() {
 
 # Built whole before any of it is printed: a refusal at the last phase must not leave the
 # first rows in the caller's file looking like an export.
-OUT=$(csv_row "Work type" "Summary" "Work item ID" "Parent" "Assignee" "Status" "Description")
+OUT=$(csv_row "Summary" "Work type" "Work item ID" "Parent" "Description" "Priority" \
+              "Assignee" "Reporter" "Due Date" "Labels" "Components" "Status")
 # A missing source is a thinner ticket, not a refusal: the path still says where the text is.
 rc=0
 CLAIM=$(brief_claim "$BRIEF") || rc=$?
@@ -337,7 +372,8 @@ if [ -n "$CLAIM" ]; then
 else
   warn "#$SERIAL: $BRIEF has no '## The claim' text, so the Epic's Description is its path only"
 fi
-OUT+=$'\n'$(csv_row Epic "#$SERIAL — $TITLE" 1 "" "$ASSIGNEE" "$BRIEF_STATE" "$EPIC_DESC")
+OUT+=$'\n'$(csv_row "#$SERIAL — $TITLE" Epic 1 "" "$EPIC_DESC" "" \
+                    "$ASSIGNEE" "$REPORTER" "" "$LABEL" "" "$BRIEF_STATE")
 
 id=1
 while IFS= read -r entry; do
@@ -372,7 +408,8 @@ while IFS= read -r entry; do
     *) die "#$SERIAL: could not read the paragraph for phase $idx in $LEDGER" ;;
   esac
   id=$((id + 1))
-  OUT+=$'\n'$(csv_row Task "#$SERIAL/$idx — $label" "$id" 1 "$ASSIGNEE" "$state" "$task_desc")
+  OUT+=$'\n'$(csv_row "#$SERIAL/$idx — $label" Task "$id" 1 "$task_desc" "" \
+                      "$ASSIGNEE" "$REPORTER" "" "$LABEL" "" "$state")
 done < <(blc_status_phase_entries "$STATUS_LINE")
 
 printf '%s\n' "$OUT"
