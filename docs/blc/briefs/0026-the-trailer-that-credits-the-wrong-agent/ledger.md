@@ -1,16 +1,16 @@
 # Ledger — #0026 The trailer that credits the wrong agent
 
-`blc/2 #0026 in-progress a:in-progress`
+`blc/2 #0026 done a:done(PR#120)`
 
 **Brief:** `docs/blc/briefs/0026-the-trailer-that-credits-the-wrong-agent/brief.md`
 **Started:** 2026-10-06
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the skill names no agent | in-progress | `brief/0026-a-the-skill-names-no-agent` |
+| a | the skill names no agent | done (PR#120) | `brief/0026-a-the-skill-names-no-agent` |
 
 **a — the skill names no agent.** `skills/blc-commit-push-pr/SKILL.md` told the agent to end
 every commit message with a trailer naming one host. That file ships to every host unchanged, so
@@ -68,3 +68,21 @@ ledger to `main` before the first branch is cut, so the plan is visible before t
 governing question was settled in one exchange and the fix was a deletion, and the branch was cut
 before the ledger existed. The ledger is therefore in the phase commit, not on `main` ahead of
 it. Recorded because a skipped gate and one that ran look the same afterwards.
+
+**An unrelated file was swept into the phase commit.** `docs/slides-tutorial.md`, 396 lines and
+nothing to do with this brief, was untracked in the work tree when the phase was staged with
+`git add -A`. It merged to `main` in PR#120 under a commit message about commit attribution, and
+the squash gave it no commit of its own. This closeout removes it from tracking and leaves the
+file in place, so it can land on its own terms. The cause is staging by sweep instead of by path;
+the same habit had already pushed a commit without asking earlier in the same session.
+
+## Open after close
+
+**No host is enumerated anywhere, by design, and that is also the untested part.** The fix asks
+the agent to check what the commit will carry and to name itself if nothing else has. Nothing in
+the suite can prove an agent does that — the guards prove only that the file names no agent. This
+is the usual limit: a skill guard is not a check. It is recorded here rather than closed over.
+
+**Claude Code's self-attribution is declared, not derived.** It is the owner's report from use.
+It was not measured, and the measurement that was attempted for the other host was wrong in a way
+that is written above. Treat it as a claim with a known provenance.
