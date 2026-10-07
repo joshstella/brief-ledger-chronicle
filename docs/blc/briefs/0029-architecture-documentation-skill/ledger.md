@@ -1,17 +1,18 @@
 # Ledger — #0029 The architecture nothing draws
 
-`blc/2 #0029 in-progress a:done(PR#128) b:in-progress(brief/0029-b-the-skill-that-writes-the-document)`
+`blc/2 #0029 done a:done(PR#128) b:done(PR#129)`
 
 **Brief:** `docs/blc/briefs/0029-architecture-documentation-skill/brief.md`
 **Started:** 2026-10-07
-**Status:** in-progress
+**Closed:** 2026-10-07
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the citation format and its verifier | done | PR#128 |
-| b | the skill that writes the document | in-progress | `brief/0029-b-the-skill-that-writes-the-document` |
+| b | the skill that writes the document | done | PR#129 |
 
 **a — the citation format and its verifier.** Define how a claim in the architecture document
 names the code that proves it, and write `tools/check-architecture.sh` to check every one. The
@@ -142,3 +143,45 @@ verifier does not care which it reads.
 Nothing can assert the diagram is *right*. The verifier proves that every claim still points at
 code that exists and still contains what was cited. A document can pass every citation check and
 still describe the system badly, and no test here closes that gap.
+
+## What shipped
+
+`tools/check-architecture.sh`, `skills/blc-architecture/`, and `docs/architecture/README.md` —
+this repository's own document, 23 citations into real code. The suite grew from 624 to 647.
+
+The brief said the verifier was the load-bearing half and the skill was an afternoon. That held.
+The verifier took two commits because the review gate rejected the first one, and the skill took
+one.
+
+## What the record shows that the brief did not predict
+
+**A Mermaid fence cannot hold a citation.** A fence is parsed, not rendered as Markdown, so an
+HTML comment inside one is text the diagram tries to read. The diagram now carries no citations
+and every edge it draws is restated beneath it as a cited line. The diagram may simplify,
+because the list may not.
+
+**The toolkit documents itself, which decision 2 excluded.** The skill still targets any project
+that installs it; this repository became its first target because a format proven only against
+fixtures written to match it agrees with its own defects. The value showed up immediately: hand
+checking one claim found it false — `templates/` was described as installer-placed but not
+toolkit-owned, and the ownership map says the opposite. Every citation resolved. **A resolving
+citation proves the code was read, not that the sentence beside it is true.**
+
+## Open after close
+
+**A citation may name a path outside the repository.** `<!-- cite: /etc/hostname -->` reports a
+clean resolve. The skill tells an agent to keep paths inside the work tree and nothing enforces
+it. Raised twice by the review gate, deferred twice, and never settled. It is a report-only
+check, so the cost is a citation a reader cannot open, not a wrong one.
+
+**"Cite only what you opened" is unenforceable by construction.** It is the rule that matters
+most and the one nothing can check. The skill says so at the site.
+
+**22 of 23 claims in this repository's own document were never hand-checked.** One was checked
+and was wrong. The rest have the same provenance.
+
+## What the next brief inherited
+
+#0030 corrected `tools/lib/touch-log.sh`, which this document cites. The anchor survived, and
+the dogfood gate on `main` confirmed it after both merged. That is the first time the verifier
+earned its keep against a change it did not anticipate.
