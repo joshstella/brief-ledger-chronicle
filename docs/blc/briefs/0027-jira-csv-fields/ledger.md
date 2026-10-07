@@ -1,16 +1,16 @@
 # Ledger — #0027 The export that omits the fields Jira expects
 
-`blc/2 #0027 in-progress a:in-progress(brief/0027-a-the-columns-jira-expects)`
+`blc/2 #0027 done a:done(PR#123)`
 
 **Brief:** `docs/blc/briefs/0027-jira-csv-fields/brief.md`
 **Started:** 2026-10-07
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the columns Jira expects | in-progress | `brief/0027-a-the-columns-jira-expects` |
+| a | the columns Jira expects | done (PR#123) | `brief/0027-a-the-columns-jira-expects` |
 
 **a — the columns Jira expects.** `tools/jira-csv.sh` emits seven columns. Feedback from use
 names five more. This phase adds `Priority`, `Reporter`, `Due Date`, `Labels` and `Components`,
@@ -81,3 +81,25 @@ Description. Every brief since #0024 is in that set, because they were filed fro
 the draft format has no such heading. The fix is in how a brief is written or filed, not in
 `tools/jira-csv.sh`. It needs its own serial. Adding columns here does not improve those rows and
 is not meant to.
+
+## Open after close
+
+**Three columns ship empty and nothing proves a person fills them.** The export writes `Priority`,
+`Due Date` and `Components` as empty fields. The tests prove the columns are present and empty.
+Whether an imported item ever gets a priority is a question about the importing team, not about
+this tool, and no test here can reach it. If those fields stay empty in practice, the honest
+answer is to drop the columns, not to default them.
+
+**The order was chosen against a known cost.** `Description` sits fifth and holds paragraphs, so
+a row is harder to read by eye than when it sat last. This was stated before the choice and is
+recorded in case it turns out to matter more than it looked.
+
+**`## The claim` is still missing from 10 of 26 briefs.** Their Epics import with a file path as
+the whole Description, and this brief did not change that.
+
+> *Corrected.* This was called a defect while #0027 was being written, here and in the brief.
+> It is not one. `docs/blc/briefs/README.md` says of the claim and the phase paragraph: "Neither
+> is required: a brief without them is valid, and `validate-briefs.sh` does not look for them."
+> The export degrades by design. What is real is that nothing writes the claim, while
+> `blc-start-brief` writes every phase paragraph — one half of the feature has a writer and the
+> other does not. That is the draft: `docs/blc/briefs/_drafts/the-summary-with-no-writer.md`.
