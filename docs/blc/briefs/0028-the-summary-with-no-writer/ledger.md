@@ -1,17 +1,17 @@
 # Ledger — #0028 The summary with no writer
 
-`blc/2 #0028 in-progress a:done(PR#125) b:in-progress(brief/0028-b-the-skill-that-writes-one)`
+`blc/2 #0028 done a:done(PR#125) b:done(PR#126)`
 
 **Brief:** `docs/blc/briefs/0028-the-summary-with-no-writer/brief.md`
 **Started:** 2026-10-07
-**Status:** in-progress
+**Status:** done
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the tool takes a summary | done (PR#125) | `brief/0028-a-the-tool-takes-a-summary` |
-| b | the skill that writes one | in-progress | `brief/0028-b-the-skill-that-writes-one` |
+| b | the skill that writes one | done (PR#126) | `brief/0028-b-the-skill-that-writes-one` |
 
 **a — the tool takes a summary.** `tools/jira-csv.sh` reads `## The claim` for the Epic's
 Description and nothing else. This phase gives it a way to be told the text instead:
@@ -99,3 +99,51 @@ skill, and a skill guard is not a check. What the suite can prove is the whole o
 side: that a supplied file reaches the Epic's Description, that the claim is used when no file is
 given, that the path and the warning survive when there is neither, and that an unreadable or
 empty file is refused rather than silently ignored.
+
+## Run against the record, after both phases merged
+
+`blc-export-to-jira` was run on #0026, chosen because it is the worst case the brief describes:
+it has no `## The claim`, so before this work its Epic imported with a file path as the whole
+description, and its ledger reverses the brief's own central claim.
+
+The export produced two records with no warnings. The Epic carries a five-sentence summary whose
+last sentence says the brief was wrong and what the ledger found instead. The Task carries its
+ledger paragraph unchanged. Both carry `blc-0026`, `done`, and the Epic-to-Task link.
+
+That last sentence is the whole argument for exporting rather than storing. A summary written
+when #0026 was filed would have stated the brief's position, which the work then disproved. A
+reader of the board would have been told the opposite of what happened.
+
+## A defect the run found in the skill itself
+
+Phase `b` shipped a skill that told an agent to write the CSV to `<serial>-jira.csv` — a relative
+path, so the repository root, and no `.gitignore` entry covers it.
+
+The run above did not do that. It wrote to a temporary directory, by instinct, and the mismatch
+between what was done and what was documented is what exposed the defect. Had the skill been
+followed, every export would have left an untracked file in the root of a repository where a
+sweep of everything untracked has already put an unrelated 396-line document into a commit.
+
+The skill now writes both the summary and the CSV outside the work tree. They are couriers: they
+carry the record to a board and have no use afterwards, which is the same reason nothing is
+written back. A second export regenerates both from the record.
+
+The test extracts the redirect target from the skill and fails unless it is a temporary path. It
+fails against the line as shipped.
+
+## Open after close
+
+**Nothing proves the skill writes a good summary, or any summary.** The tests prove the tool's
+whole side, and on the skill they prove only what is mechanical: that every long option it names
+is one the tool accepts, and that the rule against writing the summary back is still in the file.
+A skill guard is not a check. This was known when the phase was planned and is not a defect
+found afterwards.
+
+**The claim is now a fallback nothing will exercise once the skill is used.** Sixteen briefs have
+one and it still works for a person running `jira-csv.sh` by hand. If nobody does that, the
+`## The claim` path becomes code kept alive by its tests alone. Worth revisiting, not worth
+pre-empting.
+
+**`## The claim` is still absent from ten briefs.** This brief made that stop mattering for the
+export rather than fixing it. The section remains optional, documented, and unwritten by
+anything.
