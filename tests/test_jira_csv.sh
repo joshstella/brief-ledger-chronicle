@@ -366,7 +366,7 @@ test_jira_csv_refuses_a_serial_it_cannot_resolve() {
   run_jc PROJ-1
   jc_refused "'PROJ-1' is not a serial"
   run_jc
-  jc_refused "usage: tools/jira-csv.sh SERIAL"
+  jc_refused "usage: tools/jira-csv.sh [--summary-file PATH] SERIAL"
 }
 
 # ── Standing on its own ──────────────────────────────────────────────────────
@@ -453,4 +453,88 @@ test_jira_csv_labels_every_row_with_the_serial_alone() {
   assert_count 3 "$(grep -c '"blc-0008",""' "$OUT")" 'rows labelled blc-0008'
   grep -q 'blc-0008-a\|blc-0008/a' "$OUT" && fail "a phase label would fragment the search: $(cat "$OUT")"
   return 0
+}
+
+# ── The summary a caller supplies (#0028) ────────────────────────────────────
+
+# usage: jc_summary <lines...> — write a summary file and print its path.
+jc_summary() {
+  printf '%s\n' "$@" > "$TMP/summary.md"
+  printf '%s' "$TMP/summary.md"
+}
+
+# The supplied text wins over the claim, and goes through the same markdown-to-wiki conversion.
+# Both are present here so the precedence is proven, not inferred from a brief that has neither.
+test_jira_csv_prefers_the_supplied_summary_over_the_claim() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' '' 'The claim text.'
+  run_jc --summary-file "$(jc_summary 'A **supplied** summary.')" 1
+  assert_status 0
+  assert_out 'A *supplied* summary.'
+  grep -q 'The claim text' "$OUT" && fail "the claim was used despite a summary file: $(cat "$OUT")"
+  return 0
+}
+
+# Without the flag nothing changes, which is what lets a person keep running this by hand.
+test_jira_csv_falls_back_to_the_claim_with_no_summary_file() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' '' 'The claim text.'
+  run_jc 1
+  assert_status 0
+  assert_out 'The claim text.'
+}
+
+# A caller that named a file meant to use it. Falling back would put the wrong text on the Epic
+# and say nothing about it.
+test_jira_csv_refuses_a_summary_file_it_cannot_read() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' '' 'The claim text.'
+  run_jc --summary-file "$TMP/no-such-file.md" 1
+  jc_refused 'cannot read the summary file'
+}
+
+# Whitespace is not a summary. An empty file is the shape a failed generation leaves behind.
+test_jira_csv_refuses_an_empty_summary_file() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  run_jc --summary-file "$(jc_summary '' '   ')" 1
+  jc_refused 'is empty'
+}
+
+# Two claims are ambiguous only when the claim is what gets exported. Once the caller has said
+# which text to use, the ambiguity is gone and the brief exports.
+test_jira_csv_exports_two_claims_when_a_summary_is_supplied() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  jc_append_brief 0001-a '' '## The claim' '' 'One.' '' '## The claim' '' 'Two.'
+  run_jc 1
+  jc_refused 'two '\''## The claim'\'' sections'
+  run_jc --summary-file "$(jc_summary 'The supplied one.')" 1
+  assert_status 0
+  assert_out 'The supplied one.'
+}
+
+test_jira_csv_takes_the_summary_flag_in_either_spelling_and_any_position() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  local f; f="$(jc_summary 'Supplied.')"
+  run_jc 1 --summary-file "$f"
+  assert_status 0
+  assert_out 'Supplied.'
+  run_jc "--summary-file=$f" 1
+  assert_status 0
+  assert_out 'Supplied.'
+}
+
+test_jira_csv_refuses_an_unknown_option_and_a_flag_with_no_path() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+  run_jc --bogus 1
+  jc_refused 'unknown option'
+  run_jc 1 --summary-file
+  assert_status 1
+  assert_err 'usage: tools/jira-csv.sh'
 }
