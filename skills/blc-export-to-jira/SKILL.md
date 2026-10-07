@@ -43,8 +43,13 @@ summary can say what the work *is*, not only what it was proposed to be.
      wiki markup yourself.
    - Do not restate the title. It is already the Epic's `Summary` field.
 3. **Write it to a file** and run the script:
-   `bash tools/jira-csv.sh --summary-file <file> <serial> > <serial>-jira.csv`
+   `bash tools/jira-csv.sh --summary-file "$f" <serial> > "$(mktemp -d)/<serial>-jira.csv"`
    - A file, not an argument: your text has newlines in it.
+   - **Write both files outside the repository.** The summary and the CSV are couriers: they
+     carry the record to a board and have no use afterwards, which is the same reason nothing is
+     written back. Left in the work tree they are untracked files in a repository where a sweep
+     of everything untracked has already put an unrelated file into a commit. Nothing is gained
+     by keeping them — a second export regenerates both from the record (#0028).
    - If the script is missing, this project has the skill without the toolkit's tools. Say so and
      stop.
 4. **Show the summary you wrote, verbatim, in your report.** Not a description of it. This is the

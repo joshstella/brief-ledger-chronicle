@@ -563,6 +563,20 @@ test_jira_csv_the_skill_runs_the_tool_it_documents() {
   assert_contains 'bash tools/jira-csv.sh --summary-file' "$JC_SKILL"
 }
 
+# The CSV and the summary are couriers, and the work tree is not where couriers wait. An
+# untracked file in the root is how an unrelated 396-line document reached a commit in this
+# repository once already, so the skill must not tell an agent to make one.
+test_jira_csv_the_skill_writes_its_files_outside_the_repo() {
+  local redirect
+  redirect="$(grep -o '> *"\?[^"]*\.csv' "$JC_SKILL")"
+  [ -n "$redirect" ] || fail "the skill no longer shows where the CSV goes"
+  case "$redirect" in
+    *mktemp*|*TMPDIR*|*/tmp/*) ;;
+    *) fail "the skill writes the CSV into the work tree: $redirect" ;;
+  esac
+  assert_contains 'Write both files outside the repository' "$JC_SKILL"
+}
+
 # The decision that makes the summary safe to generate per export: it is not kept. A skill that
 # lost this line would have an agent editing the record to match a board.
 test_jira_csv_the_skill_says_the_summary_is_not_written_back() {
