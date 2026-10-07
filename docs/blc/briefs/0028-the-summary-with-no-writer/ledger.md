@@ -10,65 +10,85 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the export reads a summary | pending | — |
-| b | filing writes one | pending | — |
+| a | the tool takes a summary | pending | — |
+| b | the skill that writes one | pending | — |
 
-**a — the export reads a summary.** `tools/jira-csv.sh` reads `## The claim` for the Epic's
-Description and nothing else. This phase makes it read `## Summary` first and fall back to the
-claim, keeping the path-and-warning behaviour when neither is there. The warning names both
-sections, so a person who sees it knows what to add. `docs/blc/briefs/README.md` gains the new
-section in its export description. No brief is edited and no existing export changes.
+**a — the tool takes a summary.** `tools/jira-csv.sh` reads `## The claim` for the Epic's
+Description and nothing else. This phase gives it a way to be told the text instead:
+`--summary-file <path>`, read whole. The precedence is the flag, then `## The claim`, then the
+brief's path with a warning. A person running the script by hand sees exactly today's behaviour.
+`docs/blc/briefs/README.md` gains the flag in its export description.
 
-**b — filing writes one.** `blc-create-brief` gains a step: write a `## Summary` of two to five
-sentences into the brief it files. This is the whole point of the brief — the section the export
-reads has had no writer, which is why ten briefs lack its predecessor. The skill carries the rule
-that a draft's own `## Summary` is left alone. `docs/blc/briefs/README.md` and
-`docs/blc/briefs/_drafts/README.md` state the convention where an author reads, not only where an
-exporter does.
+**b — the skill that writes one.** A new skill reads the brief and its ledger, writes a summary
+of two to five sentences, and runs the tool with it. This is the writer the Epic description has
+never had. The skill ships like every other: the ownership map, the `.claude/` symlink, and the
+guard in `tests/test_ownership_map.sh` that a tool or skill in the source tree reaches a target.
 
 ## Dependency structure
 
-A chain, and the order matters in one direction only. Phase `a` alone is a no-op: the export
-looks for a section nothing writes and falls back exactly as it does today. Phase `b` alone would
-write a section the export ignores. Shipping `a` first means the tree is never in a state where
-the record holds something no reader uses.
+A chain. Phase `a` alone is complete and useful on its own: the flag exists, the fallback is
+unchanged, and nothing in the repository has to use it. Phase `b` cannot ship first, because the
+skill would call a flag that does not exist.
+
+## Re-planned before execution
+
+> *The plan below replaced an earlier one, recorded here rather than overwritten.*
+>
+> This ledger first planned the summary to be written **into the brief** at filing time, by
+> `blc-create-brief`, with the export preferring a new `## Summary` section and falling back to
+> the claim. Phase `b` was "filing writes one".
+>
+> The argument for it was reproducibility: an agent summarizing at export time gives a different
+> description on every run. **That argument was mostly hollow.** `jira-csv.sh` refuses a brief
+> that already carries a `Jira:` key, because a second import makes a second Epic. The export is
+> a one-shot seed (#0007). A brief is exported once, so "two runs disagree" is a state the tool
+> already prevents.
+>
+> Two things then favour the export: a summary written at filing describes the hypothesis, while
+> one written at export describes what the brief became — and the brief is explicitly the
+> hypothesis, which the ledger is expected to correct. And no agent prose lands in the permanent
+> record under a person's `Author` field.
+>
+> The remaining objection was that the record would not hold the text sent to Jira. The owner
+> answered it directly: **BLC is the system of record and Jira is for understanding state at a
+> moment in time.** A view does not need to be archived. Nothing is written back.
 
 ## Settled decisions
 
 | # | decision | blocks |
 |---|---|---|
-| 1 | Who writes the summary → **`blc-create-brief`, at filing time** | b |
-| 2 | What happens to `## The claim` → **kept; the export prefers `## Summary` and falls back** | a |
-| 3 | The section name → **`## Summary`** | a, b |
-| 4 | Agent writes the prose, or asks → **writes, without asking** | b |
-| 5 | Does `validate-briefs.sh` count sentences → **no** | — |
+| 1 | Where the summary is generated → **at export time, by a skill wrapping the tool** | a, b |
+| 2 | What happens to `## The claim` → **kept as the fallback when no summary is supplied** | a |
+| 3 | Whether the text sent to Jira is recorded → **no** | a, b |
+| 4 | How the skill passes the text → **`--summary-file`, not an argument** | a |
+| 5 | Whether a `## Summary` section is added to briefs → **no; superseded, see above** | — |
+| 6 | Does `validate-briefs.sh` count sentences → **no** | — |
 
-**1 — written once, not per export.** The alternative was an agent summarizing at export time.
-That gives a different Epic description on every run, nothing in the suite can assert the output,
-and the record never holds the text that reached Jira. Writing it once into the brief keeps the
-script doing what it already does: read a section, convert it, emit it.
+**1 — the skill is the writer.** The tool is a shell script and cannot summarize. A skill reads
+the brief and the ledger, writes the prose, and runs the tool. The export is the one moment when
+the whole record for a brief is in hand, which is the moment a summary is worth writing.
 
-**2 — the claim stays.** Sixteen briefs have a claim that reads well. A fallback costs one branch
-in one function and means no brief is edited and no existing export changes. Replacing the claim
-would have left those sixteen worse off to fix the ten.
+**2 — the claim stays, as the fallback.** Sixteen briefs have one that reads well, and a person
+running `jira-csv.sh` by hand gets exactly today's behaviour. The fallback costs one branch in
+one function.
 
-**3 — `## Summary`.** It reads as what it is, and it is the heading this repository already puts
-at the top of every PR body.
+**3 — nothing is written back.** Jira holds a view of a moment. BLC holds the record. A
+write-back would put a second copy of the brief's meaning in the brief, which is the stale second
+copy this process exists to avoid.
 
-**4 — the agent writes, and does not stop to ask.** Filing is a one-run step and a question in
-the middle of it costs a turn on every brief. The cost accepted is that agent prose lands in the
-record under the person's `Author` field. It is a section in a file, so a person who dislikes it
-edits it.
+**4 — a file, not an argument.** A summary is several sentences of free prose. Passed as an
+argument it meets the shell's quoting rules, and a newline or a quote in it becomes a defect in
+the caller rather than in the tool. A file has none of those failure modes, and the tool already
+refuses rather than half-writes.
 
-**5 — no sentence counting.** Two to five is guidance for the writer, not a shape to check. A
+**6 — no sentence counting.** Two to five is guidance for the writer, not a shape to check. A
 sentence counter in a shell script is a parser for something with no grammar, and an abbreviation
 ends a sentence in it.
 
 ## What this cannot prove
 
-Nothing in the suite can assert that `blc-create-brief` ever writes the section. It is a skill,
-and a skill guard is not a check. That is not a gap this brief can close, and it is the same
-footing as the half that works: `blc-start-brief` writes every phase's ledger paragraph and
-nothing enforces that either. The reason that half is reliable is that writing the ledger is a
-step that has to happen anyway, and filing a brief is the same kind of step. Parity, not a
-guarantee.
+Nothing in the suite can assert that the skill writes a good summary, or any summary. It is a
+skill, and a skill guard is not a check. What the suite can prove is the whole of the tool's
+side: that a supplied file reaches the Epic's Description, that the claim is used when no file is
+given, that the path and the warning survive when there is neither, and that an unreadable or
+empty file is refused rather than silently ignored.
