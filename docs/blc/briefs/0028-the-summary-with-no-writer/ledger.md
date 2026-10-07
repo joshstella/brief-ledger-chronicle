@@ -1,6 +1,6 @@
 # Ledger — #0028 The summary with no writer
 
-`blc/2 #0028 in-progress a:in-progress(brief/0028-a-the-tool-takes-a-summary) b:pending`
+`blc/2 #0028 in-progress a:done(PR#125) b:in-progress(brief/0028-b-the-skill-that-writes-one)`
 
 **Brief:** `docs/blc/briefs/0028-the-summary-with-no-writer/brief.md`
 **Started:** 2026-10-07
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the tool takes a summary | in-progress | `brief/0028-a-the-tool-takes-a-summary` |
-| b | the skill that writes one | pending | — |
+| a | the tool takes a summary | done (PR#125) | `brief/0028-a-the-tool-takes-a-summary` |
+| b | the skill that writes one | in-progress | `brief/0028-b-the-skill-that-writes-one` |
 
 **a — the tool takes a summary.** `tools/jira-csv.sh` reads `## The claim` for the Epic's
 Description and nothing else. This phase gives it a way to be told the text instead:
@@ -19,10 +19,17 @@ Description and nothing else. This phase gives it a way to be told the text inst
 brief's path with a warning. A person running the script by hand sees exactly today's behaviour.
 `docs/blc/briefs/README.md` gains the flag in its export description.
 
-**b — the skill that writes one.** A new skill reads the brief and its ledger, writes a summary
-of two to five sentences, and runs the tool with it. This is the writer the Epic description has
-never had. The skill ships like every other: the ownership map, the `.claude/` symlink, and the
-guard in `tests/test_ownership_map.sh` that a tool or skill in the source tree reaches a target.
+**b — the skill that writes one.** `blc-export-to-jira` reads the brief and its ledger, writes a
+summary of two to five sentences, and runs the tool with it. This is the writer the Epic
+description has never had. Only the six process skills are named in `install.sh`; everything else
+in `skills/` installs on both hosts by glob, so the skill needed no installer change — just the
+tracked `.claude/skills/` symlink, which `test_ownership_map_covers_every_skill_in_the_repo`
+already guards.
+
+The tests go further than the brief asked. A skill is prose and a test cannot read it for sense,
+but it can check the half that is mechanical: every long option the skill tells an agent to run
+is fed to the tool, and the test fails if the tool answers "unknown option". That catches the
+drift this pairing is most likely to suffer — a flag renamed in the tool and not in the skill.
 
 ## Dependency structure
 
