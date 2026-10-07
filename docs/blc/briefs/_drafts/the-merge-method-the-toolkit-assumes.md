@@ -50,15 +50,42 @@ The reporter found five of these and this repository's own review found a sixth.
 rows were found by counting the word rather than reading for the claim, which is itself an
 argument for the guard below.
 
-## The one that may not be prose
+## The one that is not prose — settled, and it is a defect
 
-`tools/lib/touch-log.sh:57` is the only site that states a *consequence* rather than a fact. It
-says a merge commit records no renames, and that this is acceptable because the history is
-squash-merged. On a merge-commit trunk that premise is gone, and a rename made in a merge commit
-would be missed — which would age a brief wrongly wherever the touch log is read.
+`tools/lib/touch-log.sh:57` states a *consequence* rather than a fact, and the consequence is
+real. The premise is load-bearing.
 
-Unverified. It needs a merge-commit fixture to settle, and it is the difference between this
-being a wording pass with one mechanism and this being a correctness brief.
+The first guess here was wrong about the mechanism. It supposed a rename made *in* a merge
+commit would be lost. The reporter checked their own trunk and showed that does not happen: a
+merge commit carries no renames of its own, and `blc_touch_renames` walks the branch commits a
+merge brings in, so a `git mv` on a branch is read on either trunk shape.
+
+The real case is a move split across two commits — add the new path in one, delete the old path
+in the next:
+
+- `-M` detects a rename **within one commit's diff**. Squashing the branch puts the add and the
+  delete in one commit, so git reports `R100` and the old name's history is followed.
+- A merge commit keeps them as two commits. Neither diff contains both halves, so
+  `--diff-filter=R` reports nothing and the old name's history is cut off.
+
+The reporter proved the mechanism against a real move on their trunk — merge `6667b41`, a config
+file, net rename with no rename record in any commit — and said plainly that they had inferred
+the effect on a brief's dates without building the fixture.
+
+**The fixture is built and the inference holds.** One branch that adds a copy of a brief in one
+commit and deletes the original in the next, merged two ways:
+
+| trunk | first date reported for the brief |
+|---|---|
+| `--no-ff` merge | 2026-06-20 — the day of the move |
+| squash | 2026-01-10 — the day the brief was written |
+
+The brief was created on 2026-01-10. On a merge-commit trunk it loses five months and reads as
+new work. Every date the toolkit shows comes from this function, so the error reaches
+`list-briefs.sh`, the chronicle's era ordering, and `orient.sh`.
+
+No brief in this repository's record has that shape, which is why every date here is right.
+The comment's author never saw it because on a squash trunk it cannot happen.
 
 ## What is not broken
 
@@ -138,12 +165,15 @@ and they were right.
 
 ## Why this is a draft and not a brief
 
-#0029 is in flight. Question 4 is answered, so the remaining shape is clear and small: two
-guards, a merge row that reads the merge-methods row, and a prose pass.
+It should not be a draft any longer. Both questions that held it here are answered: the guard
+has a checkable rule, and the touch log has a proven defect with a fixture that reproduces it.
 
-What is not answered is `tools/lib/touch-log.sh:57`. If a merge commit's renames are in fact
-dropped, this is a correctness brief with a fixture, not a wording pass with a guard. That
-question should be settled before a serial is assigned, because it decides the phase count.
+What remains is a serial and a phase plan, roughly:
 
-The condition that makes this urgent has already happened — somebody is running it, and the
-failure mode is silent — so it should not sit here long.
+- the touch log reads a split move on any trunk shape — the correctness defect, with the
+  fixture above as its test
+- the merge row takes its flag from the merge-methods row, with rule 1 as its guard
+- the prose pass over the remaining sites, with rule 2's pinned counts as its guard
+
+The condition that makes this urgent has already happened. Somebody is running it, both failure
+modes are silent, and one of them rewrites their history while the other misdates their record.
