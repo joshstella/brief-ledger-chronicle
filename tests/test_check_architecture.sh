@@ -87,6 +87,31 @@ test_arch_counts_two_citations_on_one_line() {
   assert_out '2 citation(s), all resolve.'
 }
 
+# An anchor quoting an arrow function or a comparison carries a `>`. A citation the extractor
+# cannot see is worse than an uncited claim: the author cited, and the report says all resolve.
+test_arch_reads_an_anchor_that_contains_a_right_angle_bracket() {
+  arch_repo
+  printf 'const handler = () => {}\n' > "$ARCH_DIR/src/handler.ts"
+  arch_doc '# Architecture' \
+    'A lambda. <!-- cite: src/handler.ts :: () => {} -->' \
+    'Not there. <!-- cite: src/handler.ts :: (n > 0) -->'
+  run_arch
+  assert_status 0
+  assert_out '2 citation(s), 1 resolve, 1 rotted.'
+  assert_out 'line 3  src/handler.ts :: (n > 0) — anchor not found'
+}
+
+# `--` inside an anchor must not read as the citation's terminator.
+test_arch_reads_an_anchor_that_contains_a_double_dash() {
+  arch_repo
+  printf 'case --summary-file) SUMMARY=1 ;;\n' > "$ARCH_DIR/src/flags.sh"
+  arch_doc '# Architecture' \
+    'The flag. <!-- cite: src/flags.sh :: --summary-file -->'
+  run_arch
+  assert_status 0
+  assert_out '1 citation(s), all resolve.'
+}
+
 # ── Report, do not gate (#0029 decision 8) ───────────────────────────────────
 
 # The decision this tool turns on. A rotted citation says the document is behind the code, which

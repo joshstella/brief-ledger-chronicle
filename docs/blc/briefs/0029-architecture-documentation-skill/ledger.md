@@ -88,6 +88,23 @@ well as `bash`.
 nothing can be checked. Reporting "all resolve" over zero citations would announce success for
 the exact case this tool exists to prevent — a document whose claims nothing supports.
 
+## Found by the review gate, before the merge
+
+The first extractor matched a citation body with `[^>]*`. That cannot cross a `>`, so an anchor
+quoting `() => {}` or `if (n > 0)` matched nothing and the citation became invisible. A document
+with two such citations and one plain one reported "1 citation(s), all resolve."
+
+This is a worse failure than the one the tool is built to catch. An uncited claim is at least
+silent. Here the author did cite, and the report said the evidence holds over two claims the
+tool never read. `=>` is common in the code these documents will mostly describe.
+
+The body now matches "anything up to the first `-->`", spelled out because POSIX grep has no
+lazy quantifier. A greedy `.*` is wrong the other way: it swallows two citations on one line
+into one match. Three mutations hold the shape — `[^>]*`, `.*`, and `[^-]*` each fail a test.
+
+The gate is the reason this was caught. The eleven tests that shipped with the first commit all
+passed over it.
+
 ## An assumption to challenge on first use
 
 The citation syntax is not settled by anything above, and it is the detail most likely to want

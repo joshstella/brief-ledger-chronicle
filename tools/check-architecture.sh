@@ -57,7 +57,13 @@ ROTTED=0
 
 # `grep -n -o` gives `LINE:<!-- cite: … -->`, one per citation, so a line making two claims is
 # two findings and keeps its line number for both.
-CITES="$(grep -n -o '<!-- *cite:[^>]*-->' "$DOC" || true)"
+#
+# The body is "anything up to the first `-->`", spelled the long way because POSIX grep has no
+# lazy quantifier. The obvious `[^>]*` is wrong: an anchor quoting `() => {}` or `if (n > 0)`
+# then matches nothing, and the citation becomes invisible — the document reports a clean pass
+# over a claim the tool never read. A greedy `.*` is wrong the other way, swallowing two
+# citations on one line into one match.
+CITES="$(grep -n -oE '<!-- *cite:([^-]|-[^-]|--[^>])*-->' "$DOC" || true)"
 
 if [ -z "$CITES" ]; then
   echo "architecture check — ${DOC#"$ROOT"/}"
