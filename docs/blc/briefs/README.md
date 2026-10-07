@@ -291,6 +291,10 @@ and runs to the next blank line. `blc-start-brief` writes one for each phase it 
 named so that a report quotes the record and does not guess which part of it to quote. Neither
 is required: a brief without them is valid, and `validate-briefs.sh` does not look for them.
 
+`blc-export-to-jira` is the skill that does this. It reads the brief and the ledger, writes the
+summary, and runs the tool with it. Running `jira-csv.sh` by hand is still supported and still
+exports the claim.
+
 `--summary-file <path>` gives the Epic a Description the record does not hold. The file is used
 whole, and the claim is not read at all, so a brief with two claims still exports. A file that
 cannot be read, or that holds only whitespace, is a refusal: a caller that named a file meant to

@@ -538,3 +538,33 @@ test_jira_csv_refuses_an_unknown_option_and_a_flag_with_no_path() {
   assert_status 1
   assert_err 'usage: tools/jira-csv.sh'
 }
+
+# ── The skill that drives the tool (#0028) ───────────────────────────────────
+
+JC_SKILL="$REPO_ROOT/skills/blc-export-to-jira/SKILL.md"
+
+# The skill tells an agent to run the tool with a flag. Nothing makes the two agree, so a rename
+# of the flag would leave the skill instructing a command that refuses. This runs every long
+# option the skill names and asserts the tool knows it — the one half of a skill a test can check.
+test_jira_csv_the_skill_names_only_flags_the_tool_accepts() {
+  local flag found=0
+  for flag in $(grep -o -- '--[a-z][a-z-]*' "$JC_SKILL" | sort -u); do
+    found=1
+    jc_repo
+    jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned'
+    run_jc "$flag" /dev/null 1
+    grep -q "unknown option \`$flag\`" "$ERR" \
+      && fail "the skill tells an agent to run $flag and the tool rejects it"
+  done
+  assert_count 1 "$found" 'long options named in the skill'
+}
+
+test_jira_csv_the_skill_runs_the_tool_it_documents() {
+  assert_contains 'bash tools/jira-csv.sh --summary-file' "$JC_SKILL"
+}
+
+# The decision that makes the summary safe to generate per export: it is not kept. A skill that
+# lost this line would have an agent editing the record to match a board.
+test_jira_csv_the_skill_says_the_summary_is_not_written_back() {
+  assert_contains 'is not written back to the brief' "$JC_SKILL"
+}
