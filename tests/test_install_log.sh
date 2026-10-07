@@ -67,12 +67,28 @@ test_log_version_is_the_commit_count_and_hash() {
 # it anyway would put a number in a target's log that orders against other targets and is
 # believed. `--depth` is how CI checks out by default, so this is the likeliest way to hit it.
 test_log_version_refuses_to_count_a_shallow_source() {
-  local src
+  local src shallow
   src="$(log_source_repo)"
-  # A repository is shallow exactly when .git/shallow exists, which is cheaper to arrange
-  # than a clone and is the same thing git tests for.
-  touch "$src/.git/shallow"
-  run_install_from "$src" y --target "$TARGET"
+  # A real clone, not a file touched to look like one. The fixture used to `touch .git/shallow`
+  # and call that the same thing git tests for. It was not the same thing, and the difference
+  # was only visible on one machine: the test passed everywhere developers run it and failed on
+  # a newer CI runner image. A clone makes the condition by the mechanism the installer meets in
+  # the field, so no claim about how git reads that file has to stay true.
+  #
+  # `--depth` needs a transport that can truncate history, so the source is named as a file://
+  # URL rather than a path.
+  shallow="$TMP/vsrc-shallow"
+  if ! git clone -q --depth 1 "file://$src" "$shallow" 2>/dev/null; then
+    fail "could not make a shallow clone of the fixture source"
+    return
+  fi
+  # The fixture is checked, or a clone that quietly came back complete would let this test pass
+  # while proving nothing — which is the failure being repaired.
+  if [ "$(git -C "$shallow" rev-parse --is-shallow-repository)" != "true" ]; then
+    fail "the fixture clone is not shallow, so this test would prove nothing"
+    return
+  fi
+  run_install_from "$shallow" y --target "$TARGET"
   assert_status 0
   assert_contains "**Installer version:** unknown (shallow clone)" "$TARGET/$LOG_REL"
 }
