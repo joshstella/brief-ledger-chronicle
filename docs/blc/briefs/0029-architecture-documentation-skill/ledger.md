@@ -1,6 +1,6 @@
 # Ledger — #0029 The architecture nothing draws
 
-`blc/2 #0029 in-progress a:in-progress(brief/0029-a-the-citation-format-and-its-verifier) b:pending`
+`blc/2 #0029 in-progress a:done(PR#128) b:in-progress(brief/0029-b-the-skill-that-writes-the-document)`
 
 **Brief:** `docs/blc/briefs/0029-architecture-documentation-skill/brief.md`
 **Started:** 2026-10-07
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the citation format and its verifier | in-progress | `brief/0029-a-the-citation-format-and-its-verifier` |
-| b | the skill that writes the document | pending | — |
+| a | the citation format and its verifier | done | PR#128 |
+| b | the skill that writes the document | in-progress | `brief/0029-b-the-skill-that-writes-the-document` |
 
 **a — the citation format and its verifier.** Define how a claim in the architecture document
 names the code that proves it, and write `tools/check-architecture.sh` to check every one. The
@@ -104,6 +104,26 @@ into one match. Three mutations hold the shape — `[^>]*`, `.*`, and `[^-]*` ea
 
 The gate is the reason this was caught. The eleven tests that shipped with the first commit all
 passed over it.
+
+## Settled while building `b`
+
+**The diagram carries no citations; the list beneath it does.** A Mermaid fence is parsed, not
+rendered as Markdown, so an HTML comment inside one is text the diagram tries to read. Every
+edge the diagram draws is restated below it as a line carrying its citation. The diagram is
+allowed to be a simplification, because the list is the thing a reader and the verifier both
+check.
+
+**The toolkit writes its own architecture document, which decision 2 did not call for.** The
+skill still targets any project that installs the toolkit; this repository is simply its first
+target. The reason is phase `a`: a format proven only against fixtures written to match it is a
+format that agrees with its own defects. `docs/architecture/README.md` now carries 22 citations
+into real code, and renaming a cited function makes the verifier name the line.
+
+**This repository gates its own document, where the tool only reports.** Decision 8 is not
+reversed — `check-architecture.sh` still exits 0 for every project. A test here asserts that
+this repository's document has no rotted citation, because a wrong document about how the
+toolkit is built is worse than none, and because every other test in that file runs against a
+fixture whose other end is not real code.
 
 ## An assumption to challenge on first use
 

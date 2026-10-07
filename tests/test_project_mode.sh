@@ -73,6 +73,32 @@ test_project_leaves_a_gitignore_that_already_ignores_chronicles() {
   assert_count "$before" "$(cat "$TARGET/.gitignore")" ".gitignore contents unchanged"
 }
 
+# docs/architecture/ is project-owned: the agent writes it and no install may rewrite it
+# (#0029). The hazard is specific — it sits under docs/, beside docs/blc/, which every
+# install replaces wholesale. A rule that stopped at the docs/ boundary would take it.
+test_project_reinstall_does_not_touch_the_architecture_document() {
+  mkdir -p "$TARGET/docs/architecture"
+  printf '# Architecture\n\nThe router dispatches. <!-- cite: src/router.ts :: Router -->\n' \
+    > "$TARGET/docs/architecture/README.md"
+  local before
+  before=$(cat "$TARGET/docs/architecture/README.md")
+  run_install y --target "$TARGET"
+  run_install y --target "$TARGET"
+  assert_status 0
+  assert_count "$before" "$(cat "$TARGET/docs/architecture/README.md")" \
+    "docs/architecture/README.md unchanged after two installs"
+}
+
+# The installer must not create the document either. An empty or scaffolded architecture
+# document is a claim about the project that nobody made, and the skill rewrites rather
+# than appends, so a placeholder would only ever be noise.
+test_project_install_does_not_create_an_architecture_document() {
+  run_install y --target "$TARGET"
+  assert_status 0
+  [ ! -e "$TARGET/docs/architecture" ] \
+    || fail "the installer created docs/architecture/, which the project owns"
+}
+
 # Every skill in the source must land somewhere. On Claude Code the six process skills
 # become commands and the rest stay skills, so the two destinations together must account
 # for the whole source tree — a skill silently dropped by the host split would otherwise

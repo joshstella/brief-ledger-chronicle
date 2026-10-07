@@ -169,3 +169,52 @@ test_arch_takes_an_explicit_document_relative_to_the_caller() {
   assert_count 0 "$?" 'check-architecture exit status with an explicit path'
   assert_out '1 citation(s), all resolve.'
 }
+
+# ── The skill that writes the document (#0029 b) ─────────────────────────────
+
+ARCH_SKILL='skills/blc-architecture/SKILL.md'
+
+# The skill teaches a citation format, and the tool reads one. Nothing but this makes the two
+# agree. Rather than restate the pattern here — a third copy, free to drift from both — this
+# runs the tool over the skill file and checks it sees every example the skill shows. An
+# example the extractor cannot read is an example that teaches a citation nothing will check.
+test_arch_the_skill_examples_all_parse_with_the_tools_own_extractor() {
+  local shown seen
+  shown=$(grep -o -- '<!-- cite:' "$REPO_ROOT/$ARCH_SKILL" | wc -l | tr -d ' ')
+  [ "$shown" -gt 0 ] || fail "the skill shows no citation examples at all"
+  ( cd "$REPO_ROOT" && sh tools/check-architecture.sh "$ARCH_SKILL" ) >"$OUT" 2>"$ERR"
+  seen=$(sed -n 's/.*  \([0-9][0-9]*\) citation(s).*/\1/p' "$OUT")
+  assert_count "$shown" "$seen" "citation examples in $ARCH_SKILL the tool can extract"
+}
+
+# Phase a's defect, carried into the skill as a rule. `-->` ends a citation, so an anchor
+# containing one truncates it silently and what survives may still resolve. The verifier
+# cannot catch that, which is exactly why the agent has to be told.
+test_arch_the_skill_forbids_an_anchor_that_closes_the_citation() {
+  grep -qF -- '-->` inside an anchor' "$REPO_ROOT/$ARCH_SKILL" \
+    || fail "the skill does not warn that an anchor must not contain the citation terminator"
+}
+
+# A document written and never checked is the uncited document with extra steps. The skill
+# has to send the agent to the verifier while the citations are minutes old.
+test_arch_the_skill_sends_the_agent_to_the_verifier() {
+  grep -qF 'tools/check-architecture.sh' "$REPO_ROOT/$ARCH_SKILL" \
+    || fail "the skill never tells the agent to run the verifier"
+}
+
+# This repository's own architecture document, checked for real (#0029 b). Every test above
+# runs against a fixture written to match the format, which is how the extractor shipped with a
+# defect that eleven of them walked past. This one is the only test here with real code on the
+# other end of the citation.
+#
+# It gates, where the tool only reports. That is not decision 8 reversed: the tool still reports
+# for every project, and this is this repository choosing to hold its own document to the
+# standard it ships. A rotted citation here means the document is wrong, and a wrong document
+# about how the toolkit is built is worse than none.
+test_arch_this_repositorys_own_document_has_no_rotted_citations() {
+  ( cd "$REPO_ROOT" && sh tools/check-architecture.sh ) >"$OUT" 2>"$ERR"
+  assert_count 0 "$?" 'check-architecture exit status on this repository'
+  grep -q 'rotted' "$OUT" && fail "this repository's architecture document has rotted: $(cat "$OUT")"
+  grep -qE '[0-9]+ citation\(s\), all resolve\.' "$OUT" \
+    || fail "expected every citation to resolve, got: $(cat "$OUT")"
+}
