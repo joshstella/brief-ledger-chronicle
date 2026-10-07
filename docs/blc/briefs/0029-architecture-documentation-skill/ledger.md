@@ -1,16 +1,16 @@
 # Ledger — #0029 The architecture nothing draws
 
-`blc/2 #0029 pending a:pending b:pending`
+`blc/2 #0029 in-progress a:in-progress(brief/0029-a-the-citation-format-and-its-verifier) b:pending`
 
 **Brief:** `docs/blc/briefs/0029-architecture-documentation-skill/brief.md`
 **Started:** 2026-10-07
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the citation format and its verifier | pending | — |
+| a | the citation format and its verifier | in-progress | `brief/0029-a-the-citation-format-and-its-verifier` |
 | b | the skill that writes the document | pending | — |
 
 **a — the citation format and its verifier.** Define how a claim in the architecture document
@@ -73,6 +73,37 @@ says which is current.
 **8 — report, not fail.** "Report, don't gate" is a stated value. A rotted citation means the
 document is behind the code, which is a thing to know and not a reason to stop a merge. If it
 later proves to be ignored, gating is a one-line change and its own decision.
+
+## Settled while building `a`
+
+**The citation syntax is `<!-- cite: <path> :: <anchor> -->`**, as the assumption below proposed.
+The anchor is optional; with none, the citation claims only that the file exists. Two citations
+on one line are two findings and both keep that line number.
+
+**`sh`, not `bash`.** The verifier reads a document and greps files, and needs nothing bash
+provides. It is the first tool here written for POSIX `sh`, and it is checked under `dash` as
+well as `bash`.
+
+**A document with no citations is not a passing document.** It reports "No citations" and says
+nothing can be checked. Reporting "all resolve" over zero citations would announce success for
+the exact case this tool exists to prevent — a document whose claims nothing supports.
+
+## Found by the review gate, before the merge
+
+The first extractor matched a citation body with `[^>]*`. That cannot cross a `>`, so an anchor
+quoting `() => {}` or `if (n > 0)` matched nothing and the citation became invisible. A document
+with two such citations and one plain one reported "1 citation(s), all resolve."
+
+This is a worse failure than the one the tool is built to catch. An uncited claim is at least
+silent. Here the author did cite, and the report said the evidence holds over two claims the
+tool never read. `=>` is common in the code these documents will mostly describe.
+
+The body now matches "anything up to the first `-->`", spelled out because POSIX grep has no
+lazy quantifier. A greedy `.*` is wrong the other way: it swallows two citations on one line
+into one match. Three mutations hold the shape — `[^>]*`, `.*`, and `[^-]*` each fail a test.
+
+The gate is the reason this was caught. The eleven tests that shipped with the first commit all
+passed over it.
 
 ## An assumption to challenge on first use
 
