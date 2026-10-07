@@ -1,7 +1,6 @@
 # The trailer that credits the wrong agent
 
-**Created:** 2026-10-06T04:37:06Z · **Author:** josh.stella@gmail.com
-**Depends on:** —
+**Serial:** #0026 · **Created:** 2026-10-06T04:37:06Z · **Author:** josh.stella@gmail.com · **Depends on:** —
 
 ## The finding
 
@@ -23,6 +22,27 @@ Found on 2026-10-06 while installing `2f6aa89` into a real project. That reposit
 with `--host cursor` and its 197 commits all carry
 `Co-authored-by: Cursor <cursoragent@cursor.com>`. The skill would have contradicted the
 history it was about to join, on its first run.
+
+## The host already attributes itself, which makes this larger
+
+Measured on this repository's `main`, 2026-10-07, at `187+f33ac5c`.
+
+| what | count |
+|---|---|
+| commits carrying `Co-authored-by: Claude` | 228 |
+| commits carrying `Co-authored-by: Cursor` | 312 |
+
+Two commits were made here by a person, with the skill not involved: `7c2c716` and `6102bba`.
+Each carries exactly one Cursor trailer and no Claude trailer. Nobody wrote those lines.
+
+Every squash-merged commit on `main` carries **three** Cursor trailers.
+
+So the host adds its own attribution with no instruction. On Cursor the skill's line is not
+only wrong, it is unnecessary, and it lands beside the one the host already wrote. The defect
+is a duplicate and a misattribution, not a misattribution alone.
+
+This is one host. Whether Claude Code does the same is not measured here, and it decides
+between the two fixes below.
 
 ## Why it has not been a problem
 
@@ -46,7 +66,7 @@ A skill reaches a host three ways, and they do not share a mechanism:
 A template token such as `{{COAUTHOR}}` works for 1 and 2 and leaks raw through 3. You cannot
 substitute into a symlink, and machine mode is the path where the source file is read directly.
 
-## The shape of a fix
+## The shape of a fix — two of them, and the evidence favours the second
 
 Keep the literal Claude trailer in the source file. Machine mode is Claude by definition, so
 the symlinked path is then already right and stays untouched. Have the installer rewrite that
@@ -58,6 +78,15 @@ source stays readable prose rather than a template.
 Tests assert that each host gets its own trailer, and that machine mode still resolves to the
 Claude line through the symlink.
 
+**Or: the skill names no agent at all.** If every host attributes itself, as Cursor does here,
+then the bug is that the skill writes a trailer rather than which one it writes. Deleting the
+line is a smaller change than substituting into it, it needs no token, no post-install pass and
+no special case, and it dissolves the symlink constraint above entirely — there is nothing left
+to substitute. It also answers question 3 before a third host exists.
+
+What it costs: on a host that does not self-attribute, the commit loses its attribution and
+nothing replaces it. That is the measurement this draft does not have.
+
 ## Open questions a brief would have to settle
 
 1. **Does the substitution belong in the copy helpers or in a post-install pass?** Putting it
@@ -67,8 +96,10 @@ Claude line through the symlink.
 2. **Is one line special-cased, or is there a host-string mechanism?** Today there is exactly
    one such string. A mechanism for one instance is a speculative abstraction. A special case
    is a thing the next host-specific string will not find.
-3. **What does a third host do?** The trailer has no neutral value. "No trailer" is a real
-   answer and changes what the skill writes on every host.
+3. **Does every host attribute itself?** Cursor does, measured above. If Claude Code does too,
+   "no trailer" is the fix and questions 1 and 2 disappear with it. If it does not, the
+   substitution is needed and this question returns as "what does a third host do?". This is
+   the first question to answer, because it decides whether the others are asked at all.
 4. **Does the installed copy get corrected on upgrade?** A project installed before this fix
    carries the wrong line until someone re-installs. The toolkit replaces skills
    unconditionally on every run, so the answer is probably yes and free, but it should be
@@ -77,29 +108,15 @@ Claude line through the symlink.
 ## Why this is a draft and not a brief
 
 The fix is decided in shape and the defect is real and located, so this is closer to a brief
-than most drafts here. It stays a draft because question 2 changes what gets built, and
-because `#0025` is open and holds the current serial. Filing it takes one run of
+than most drafts here. It stays a draft because question 3 changes what gets built — and since this
+draft was written, the evidence above moved it from a loose end to the first question. Filing it takes one run of
 `blc-create-brief`.
 
-## Two findings from the same run, each needing its own serial
+## Two findings from the same run, each with its own draft
 
-Recorded here so they are not lost. Neither belongs in this brief — different defects,
-different fixes.
+Found here, fixed elsewhere. Neither belongs in this brief — different defects, different fixes.
 
-**`tools/lib/phase-row.sh` cannot match a backticked phase id.** Line 42 reads
-
-```
-pattern="^\|[[:space:]]*~*\`?${idx}[[:space:]]*(\||—)"
-```
-
-It allows an opening backtick and provides for no closing one. `` | `a — label` | `` matches.
-`` | `a` | label | `` does not, and every phase in such a ledger then reports as missing from
-its own table under `BRIEFS-9`. Seen twice in one project, which rewrote its ledgers into the
-accepted shape both times. Still present at `2f6aa89`.
-
-**The install log does not survive the `docs/blc/` move as a rename.** `#0020` moves tracked
-files with `git mv` and it works: 88 of 93 renames in a real upgrade were byte-identical, and
-7 of the 8 rewritten files still pair as renames. `docs/install-log/install-log.md` is the
-one that does not, and it still does not at a 40% rename threshold. No content is lost — 335
-lines are preserved and 171 appended — but `git log` on the new path starts at the move
-commit. The install log is the one file whose whole purpose is continuity.
+- **`tools/lib/phase-row.sh` cannot match a backticked phase id** —
+  `docs/blc/briefs/_drafts/phase-row-cannot-match-a-backticked-id.md`
+- **The install log does not pair as a rename across the `docs/blc/` move** —
+  `docs/blc/briefs/_drafts/the-install-log-that-does-not-pair-as-a-rename.md`
