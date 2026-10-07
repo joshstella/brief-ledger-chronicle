@@ -1,16 +1,16 @@
 # Ledger — #0028 The summary with no writer
 
-`blc/2 #0028 pending a:pending b:pending`
+`blc/2 #0028 in-progress a:in-progress(brief/0028-a-the-tool-takes-a-summary) b:pending`
 
 **Brief:** `docs/blc/briefs/0028-the-summary-with-no-writer/brief.md`
 **Started:** 2026-10-07
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the tool takes a summary | pending | — |
+| a | the tool takes a summary | in-progress | `brief/0028-a-the-tool-takes-a-summary` |
 | b | the skill that writes one | pending | — |
 
 **a — the tool takes a summary.** `tools/jira-csv.sh` reads `## The claim` for the Epic's

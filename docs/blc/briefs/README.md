@@ -291,6 +291,13 @@ and runs to the next blank line. `blc-start-brief` writes one for each phase it 
 named so that a report quotes the record and does not guess which part of it to quote. Neither
 is required: a brief without them is valid, and `validate-briefs.sh` does not look for them.
 
+`--summary-file <path>` gives the Epic a Description the record does not hold. The file is used
+whole, and the claim is not read at all, so a brief with two claims still exports. A file that
+cannot be read, or that holds only whitespace, is a refusal: a caller that named a file meant to
+use it, and falling back would put the wrong text on the Epic without saying so. The flag exists
+because a shell script cannot summarize, and the moment of export is when the whole record for a
+brief is in hand (#0028).
+
 `jira-csv.sh` copies the claim into the Epic's Description and each phase's paragraph, without
 its bold lead, into that Task's Description. The path of the brief or the ledger follows the
 text. A missing text gives the path alone and a warning on stderr, and the export still

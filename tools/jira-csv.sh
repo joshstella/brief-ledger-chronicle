@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/jira-csv.sh SERIAL [BRIEFS_DIR]
+# tools/jira-csv.sh [--summary-file PATH] SERIAL [BRIEFS_DIR]
 # Write one brief and its phases as a Jira Cloud CSV import. Writes to stdout.
 #
 # One Epic row for the brief, then one Task row per phase, in status-line order:
@@ -22,7 +22,8 @@
 # a brief has no priority, no due date and no component. The column is there so Jira shows the
 # field and a person fills it in after the import. A default would put declared data in a file
 # whose every other column is derived, and nothing in Jira would tell the two apart (#0027).
-#   Description  for the Epic, the brief's `## The claim` text, then the brief's path. For a
+#   Description  for the Epic, the text of `--summary-file` when one is given, otherwise the
+#                brief's `## The claim` text, then the brief's path. For a
 #                Task, the ledger paragraph that starts `**<id> — <label>.**`, without that
 #                lead, then the ledger's path. A missing text gives the path alone and a
 #                warning on stderr. The text is converted from markdown to Jira wiki markup.
@@ -37,10 +38,31 @@
 # could be its description. A partial import is worse than none.
 set -euo pipefail
 
-if [ $# -lt 1 ] || [ -z "$1" ]; then
-  echo "usage: tools/jira-csv.sh SERIAL [BRIEFS_DIR]" >&2
+usage() {
+  echo "usage: tools/jira-csv.sh [--summary-file PATH] SERIAL [BRIEFS_DIR]" >&2
   exit 1
-fi
+}
+
+# The Epic's Description, supplied by a caller that can write prose. A shell script cannot
+# summarize, so the only way this file holds a summary is for something else to hand it over.
+#
+# A file and not an argument: a summary is several sentences of free prose, and passed as an
+# argument it has to meet the shell's quoting rules. A newline or a quote in it would then be a
+# defect in the caller rather than in this tool (#0028).
+SUMMARY_FILE=""
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --summary-file) [ $# -ge 2 ] || usage; SUMMARY_FILE="$2"; shift 2 ;;
+    --summary-file=*) SUMMARY_FILE="${1#*=}"; shift ;;
+    --) shift; ARGS+=("$@"); break ;;
+    -*) echo "jira-csv: unknown option \`$1\`" >&2; usage ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+set -- ${ARGS[@]+"${ARGS[@]}"}
+
+[ $# -ge 1 ] && [ -n "$1" ] || usage
 SERIAL_ARG="$1"
 BRIEFS_DIR="${2:-docs/blc/briefs}"
 
@@ -363,14 +385,25 @@ csv_row() {
 OUT=$(csv_row "Summary" "Work type" "Work item ID" "Parent" "Description" "Priority" \
               "Assignee" "Reporter" "Due Date" "Labels" "Components" "Status")
 # A missing source is a thinner ticket, not a refusal: the path still says where the text is.
-rc=0
-CLAIM=$(brief_claim "$BRIEF") || rc=$?
-[ "$rc" -eq 2 ] && die "#$SERIAL: $BRIEF has two '## The claim' sections, so its summary is ambiguous"
 EPIC_DESC="$BRIEF"
-if [ -n "$CLAIM" ]; then
-  EPIC_DESC="$(printf '%s\n' "$CLAIM" | md_to_wiki)"$'\n\n'"$BRIEF"
+if [ -n "$SUMMARY_FILE" ]; then
+  # A refusal, not a fall-through. A caller that named a file meant to use it, and quietly
+  # exporting the claim instead would put the wrong text on the Epic with nothing to show for it.
+  [ -r "$SUMMARY_FILE" ] || die "cannot read the summary file $SUMMARY_FILE"
+  SUMMARY="$(cat "$SUMMARY_FILE")"
+  [ -n "${SUMMARY//[[:space:]]/}" ] || die "the summary file $SUMMARY_FILE is empty"
+  # The claim is not read at all here, so a brief with two of them still exports: the ambiguity
+  # that refusal protects against is gone once the caller has said which text to use.
+  EPIC_DESC="$(printf '%s\n' "$SUMMARY" | md_to_wiki)"$'\n\n'"$BRIEF"
 else
-  warn "#$SERIAL: $BRIEF has no '## The claim' text, so the Epic's Description is its path only"
+  rc=0
+  CLAIM=$(brief_claim "$BRIEF") || rc=$?
+  [ "$rc" -eq 2 ] && die "#$SERIAL: $BRIEF has two '## The claim' sections, so its summary is ambiguous"
+  if [ -n "$CLAIM" ]; then
+    EPIC_DESC="$(printf '%s\n' "$CLAIM" | md_to_wiki)"$'\n\n'"$BRIEF"
+  else
+    warn "#$SERIAL: $BRIEF has no '## The claim' text and no --summary-file, so the Epic's Description is its path only"
+  fi
 fi
 OUT+=$'\n'$(csv_row "#$SERIAL — $TITLE" Epic 1 "" "$EPIC_DESC" "" \
                     "$ASSIGNEE" "$REPORTER" "" "$LABEL" "" "$BRIEF_STATE")
