@@ -207,3 +207,32 @@ test_skill_names_a_target_gets_instructions_that_name_real_skills() {
   done
   return 0
 }
+
+# ── Agent identity in shipped prose (#0026) ──────────────────────────────────
+#
+# `skills/`, `templates/` and `personal/` ship to both hosts unchanged — the installer substitutes nothing
+# into them. So a string naming one agent is wrong on the other host, every time, and nothing
+# noticed for as long as the author used the host it named.
+#
+# The match is a trailer with an address, not the words themselves. Prose that explains the
+# rule has to be able to write `Co-authored-by: Cursor` without tripping the test that enforces
+# it; a trailer with no address credits nobody and is not the defect.
+test_skill_names_shipped_prose_names_no_agent_identity() {
+  local hit
+  hit="$(cd "$REPO_ROOT" && grep -rniE 'co-authored-by:[^<]*<[^>]+@' skills/ templates/ personal/ || true)"
+  [ -z "$hit" ] || fail "shipped prose carries an agent trailer, which is wrong on every host but one: $hit"
+}
+
+# The same sweep by address, in case a trailer is ever written in another shape.
+test_skill_names_shipped_prose_carries_no_agent_address() {
+  local hit
+  hit="$(cd "$REPO_ROOT" && grep -rniE '(noreply@anthropic\.com|cursoragent@cursor\.com)' skills/ templates/ personal/ || true)"
+  [ -z "$hit" ] || fail "shipped prose names an agent address: $hit"
+}
+
+# The deletion has to carry its reason, or the line comes back the next time somebody thinks
+# a commit should say who made it.
+test_skill_names_commit_skill_defers_attribution_to_the_running_agent() {
+  assert_contains "Attribute yourself, and only if your host has not already done it" \
+    "$REPO_ROOT/skills/blc-commit-push-pr/SKILL.md"
+}
