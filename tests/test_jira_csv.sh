@@ -51,12 +51,12 @@ test_jira_csv_writes_the_epic_then_each_phase() {
   run_jc 1
   assert_status 0
   diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
-"Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
-"Epic","#0001 — The thing","1","","o@x.org","in-progress","docs/blc/briefs/0001-a/brief.md"
-"Task","#0001/a — the first","2","1","o@x.org","done","docs/blc/briefs/0001-a/ledger.md"
-"Task","#0001/b — the second","3","1","o@x.org","skipped","docs/blc/briefs/0001-a/ledger.md"
-"Task","#0001/c — the third","4","1","o@x.org","in-progress","docs/blc/briefs/0001-a/ledger.md"
-"Task","#0001/d — the fourth","5","1","o@x.org","pending","docs/blc/briefs/0001-a/ledger.md"
+"Summary","Work type","Work item ID","Parent","Description","Priority","Assignee","Reporter","Due Date","Labels","Components","Status"
+"#0001 — The thing","Epic","1","","docs/blc/briefs/0001-a/brief.md","","o@x.org","me@x.org","","blc-0001","","in-progress"
+"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","o@x.org","me@x.org","","blc-0001","","done"
+"#0001/b — the second","Task","3","1","docs/blc/briefs/0001-a/ledger.md","","o@x.org","me@x.org","","blc-0001","","skipped"
+"#0001/c — the third","Task","4","1","docs/blc/briefs/0001-a/ledger.md","","o@x.org","me@x.org","","blc-0001","","in-progress"
+"#0001/d — the fourth","Task","5","1","docs/blc/briefs/0001-a/ledger.md","","o@x.org","me@x.org","","blc-0001","","pending"
 CSV
 }
 
@@ -66,8 +66,8 @@ test_jira_csv_assigns_the_author_when_there_is_no_owner() {
     "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
   run_jc 1
   assert_status 0
-  assert_out '"Epic","#0001 — The thing","1","","me@x.org",'
-  assert_out '"Task","#0001/a — the first","2","1","me@x.org",'
+  assert_out '"#0001 — The thing","Epic","1","","docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org",'
+  assert_out '"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org",'
 }
 
 # The Epic's state drops its pointer too, or every finished brief is its own value to map.
@@ -77,7 +77,7 @@ test_jira_csv_drops_the_pointer_from_the_epic_state() {
     "${JC_TABLE_HEAD[@]}" '| a | the first | done | — |'
   run_jc 1
   assert_status 0
-  assert_out '"Epic","#0001 — The thing","1","","me@x.org","done",'
+  assert_out '"#0001 — The thing","Epic","1","","docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org","","blc-0001","","done"'
 }
 
 # A brief whose line names no phase yet is still an Epic.
@@ -96,8 +96,8 @@ test_jira_csv_quotes_every_field_and_doubles_quotes() {
     "${JC_TABLE_HEAD[@]}" '| a | say "hi", then | pending | — |'
   run_jc 1
   assert_status 0
-  assert_out '"Epic","#0001 — A ""quoted"", title","1",'
-  assert_out '"Task","#0001/a — say ""hi"", then","2",'
+  assert_out '"#0001 — A ""quoted"", title","Epic","1",'
+  assert_out '"#0001/a — say ""hi"", then","Task","2",'
 }
 
 # ── The descriptions ─────────────────────────────────────────────────────────
@@ -131,19 +131,19 @@ test_jira_csv_puts_the_claim_and_each_phase_paragraph_in_the_descriptions() {
   run_jc 1
   assert_status 0
   diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
-"Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
-"Epic","#0001 — The thing","1","","me@x.org","in-progress","*One line.*
+"Summary","Work type","Work item ID","Parent","Description","Priority","Assignee","Reporter","Due Date","Labels","Components","Status"
+"#0001 — The thing","Epic","1","","*One line.*
 
 h3. A part
 More.
 
-docs/blc/briefs/0001-a/brief.md"
-"Task","#0001/a — the first","2","1","me@x.org","in-progress","Do ""this"", then that.
+docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org","","blc-0001","","in-progress"
+"#0001/a — the first","Task","2","1","Do ""this"", then that.
 
-docs/blc/briefs/0001-a/ledger.md"
-"Task","#0001/b — the second","3","1","me@x.org","pending","Its text starts on the next line.
+docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","in-progress"
+"#0001/b — the second","Task","3","1","Its text starts on the next line.
 
-docs/blc/briefs/0001-a/ledger.md"
+docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","pending"
 CSV
   [ ! -s "$ERR" ] || fail "expected no warning: $(cat "$ERR")"
 }
@@ -174,8 +174,8 @@ test_jira_csv_converts_the_text_to_wiki_markup() {
   run_jc 1
   assert_status 0
   diff -u - "$OUT" <<'CSV' >"$TMP/diff.txt" || fail "export differs: $(cat "$TMP/diff.txt")"
-"Work type","Summary","Work item ID","Parent","Assignee","Status","Description"
-"Epic","#0001 — The thing","1","","me@x.org","planned","*Bold claim.* It has _italic_, {{code with \*\*stars\*\*}}, and {{`a — x`}}. A wrapped line with [a _link_|https://x.org/a_b] and {{\-\-max\-age}}.
+"Summary","Work type","Work item ID","Parent","Description","Priority","Assignee","Reporter","Due Date","Labels","Components","Status"
+"#0001 — The thing","Epic","1","","*Bold claim.* It has _italic_, {{code with \*\*stars\*\*}}, and {{`a — x`}}. A wrapped line with [a _link_|https://x.org/a_b] and {{\-\-max\-age}}.
 
 - item one continued
 - item _two_
@@ -186,7 +186,7 @@ test_jira_csv_converts_the_text_to_wiki_markup() {
 h3. A part
 2 * 3 and a lone ` tick.
 
-docs/blc/briefs/0001-a/brief.md"
+docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org","","blc-0001","","planned"
 CSV
 }
 
@@ -201,9 +201,9 @@ test_jira_csv_warns_and_writes_the_path_when_a_source_is_missing() {
     '**b — the second.** Has text.'
   run_jc 1
   assert_status 0
-  assert_out '"Epic","#0001 — The thing","1","","me@x.org","planned","docs/blc/briefs/0001-a/brief.md"'
-  assert_out '"Task","#0001/a — the first","2","1","me@x.org","pending","docs/blc/briefs/0001-a/ledger.md"'
-  assert_out '"Task","#0001/b — the second","3","1","me@x.org","pending","Has text.'
+  assert_out '"#0001 — The thing","Epic","1","","docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org","","blc-0001","","planned"'
+  assert_out '"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","pending"'
+  assert_out '"#0001/b — the second","Task","3","1","Has text.'
   assert_err "has no '## The claim' text"
   assert_err '#0001/a: no paragraph'
   [ "$(wc -l < "$ERR")" -eq 2 ] || fail "expected two warnings: $(cat "$ERR")"
@@ -216,7 +216,7 @@ test_jira_csv_warns_on_a_paragraph_with_another_label() {
     "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |' '' '**a — an old name.** Text.'
   run_jc 1
   assert_status 0
-  assert_out '"Task","#0001/a — the first","2","1","me@x.org","pending","docs/blc/briefs/0001-a/ledger.md"'
+  assert_out '"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","pending"'
   assert_err "does not carry the label 'the first'"
 }
 
@@ -228,7 +228,7 @@ test_jira_csv_reads_a_label_with_a_backslash_as_written() {
     "${JC_TABLE_HEAD[@]}" '| a | split on \t | pending | — |' '' '**a — split on \t.** Text.'
   run_jc 1
   assert_status 0
-  assert_out '"Task","#0001/a — split on \t","2","1","me@x.org","pending","Text.'
+  assert_out '"#0001/a — split on \t","Task","2","1","Text.'
 }
 
 test_jira_csv_refuses_two_paragraphs_for_one_phase() {
@@ -256,7 +256,7 @@ test_jira_csv_takes_the_serial_in_any_of_its_spellings() {
   for s in 8 0008 '#0008' 08; do
     run_jc "$s"
     assert_status 0
-    assert_out '"Epic","#0008 — Eight",'
+    assert_out '"#0008 — Eight","Epic",'
   done
 }
 
@@ -386,5 +386,71 @@ test_jira_csv_runs_from_a_fixture_install() {
   fixture_install_tool "$JC_DIR" jira-csv.sh
   ( cd "$JC_DIR" && ./tools/jira-csv.sh 1 ) >"$OUT" 2>"$ERR"
   assert_count 0 "$?" "jira-csv exit status from a fixture install"
-  assert_out '"Task","#0001/a — the first","2","1","me@x.org","pending",'
+  assert_out '"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","pending"'
+}
+
+# ── The columns Jira expects (#0027) ─────────────────────────────────────────
+
+# Priority, Due Date and Components ship empty because the record holds nothing for them. The
+# whole row is asserted, because an empty field is the one kind that disappears without trace:
+# a dropped column shifts every field after it onto the wrong header, and the file still parses.
+test_jira_csv_leaves_the_unsourced_columns_empty() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY" 'blc/2 #0001 planned a:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
+  run_jc 1
+  assert_status 0
+  assert_out '"#0001 — The thing","Epic","1","","docs/blc/briefs/0001-a/brief.md","","me@x.org","me@x.org","","blc-0001","","planned"'
+  assert_out '"#0001/a — the first","Task","2","1","docs/blc/briefs/0001-a/ledger.md","","me@x.org","me@x.org","","blc-0001","","pending"'
+}
+
+# Assignee is the Owner and Reporter is the Author, so a brief one person filed and another owns
+# exports as two different people.
+test_jira_csv_reports_the_author_and_assigns_the_owner() {
+  jc_repo
+  jc_brief 0001-a 'The thing' "$JC_IDENTITY · **Owner:** o@x.org" 'blc/2 #0001 planned a:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
+  run_jc 1
+  assert_status 0
+  assert_out '"docs/blc/briefs/0001-a/brief.md","","o@x.org","me@x.org",'
+  assert_out '"docs/blc/briefs/0001-a/ledger.md","","o@x.org","me@x.org",'
+  grep -q Reporter "$ERR" && fail "a well-formed Author warned: $(cat "$ERR")"
+  return 0
+}
+
+# An Author that is not one email is a thinner ticket, not a refusal: Jira fills an empty
+# Reporter with the importing user. A bad assignee still dies, and that difference is deliberate.
+test_jira_csv_empties_the_reporter_when_the_author_is_not_an_email() {
+  jc_repo
+  jc_brief 0001-a 'The thing' \
+    '**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** nobody · **Owner:** o@x.org' \
+    'blc/2 #0001 planned a:pending' "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
+  run_jc 1
+  assert_status 0
+  assert_out '"","o@x.org","","","blc-0001","","planned"'
+  assert_err "Author 'nobody' is not one email"
+}
+
+test_jira_csv_empties_the_reporter_when_there_is_no_author() {
+  jc_repo
+  jc_brief 0001-a 'The thing' \
+    '**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Owner:** o@x.org' \
+    'blc/2 #0001 planned a:pending' "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |'
+  run_jc 1
+  assert_status 0
+  assert_out '"","o@x.org","","","blc-0001","","planned"'
+  assert_err 'has no Author, so the Reporter column is empty'
+}
+
+# One label, the same on the Epic and on every Task, so one JQL term finds the whole import.
+# The phase letter is not in it: a label per phase would fragment that search.
+test_jira_csv_labels_every_row_with_the_serial_alone() {
+  jc_repo
+  jc_brief 0008-a 'Eight' "${JC_IDENTITY/0001/0008}" 'blc/2 #0008 planned a:pending b:pending' \
+    "${JC_TABLE_HEAD[@]}" '| a | the first | pending | — |' '| b | the second | pending | — |'
+  run_jc 8
+  assert_status 0
+  assert_count 3 "$(grep -c '"blc-0008",""' "$OUT")" 'rows labelled blc-0008'
+  grep -q 'blc-0008-a\|blc-0008/a' "$OUT" && fail "a phase label would fragment the search: $(cat "$OUT")"
+  return 0
 }
