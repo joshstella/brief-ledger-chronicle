@@ -19,7 +19,9 @@ PR_LIB="tools/lib/phase-row.sh"
 # the guard matched nothing at all, including the library it guards, and a verbatim copy
 # of the whole matcher planted in tools/ passed it. A regex here buys nothing: the thing
 # being searched for is a fixed string.
-PR_FINGERPRINT='~*\`?'
+# #0031 changed the matcher, and this guard caught it — which is the guard working. The
+# fragment now is the decoration class, which the pattern uses on both sides of the id.
+PR_FINGERPRINT='[[:space:]\`~]*'
 
 pr_source_lib() {
   # shellcheck source=/dev/null
@@ -203,18 +205,34 @@ test_phase_row_returns_every_candidate_not_the_first() {
   assert_count 2 "$count" "candidate rows returned"
 }
 
-# The three shapes #0013 left unmatched, pinned as unmatched *on purpose*.
+# The three shapes #0013 left unmatched. They were pinned as unmatched on purpose, by a
+# characterization test that said phase b of #0014 was where the gap closed and that the test
+# flipping is how that would be visible. Phase b did not close it, and the test went on
+# guarding the gap instead of reporting it. #0031 closes it, so the test is inverted.
 #
-# This is a characterization test, not an endorsement. #0014 phase a is declared "no
-# behaviour change", so the gap has to be provably still here when the extraction lands;
-# phase b is where it closes, and this test flipping is how that will be visible.
-test_phase_row_the_three_unmatched_shapes_are_still_unmatched() {
+# A person installing into a real project found the first of these twice, and rewrote correct
+# ledgers into a different correct shape both times, because the gate said their phases were
+# missing from their own table.
+test_phase_row_matches_a_backticked_or_struck_id() {
   pr_source_lib
   local shape
-  for shape in '| `a` |' '| ~~a~~ |' '| ~~`a`~~ |'; do
+  for shape in '| `a` |' '| ~~a~~ |' '| ~~`a`~~ |' '| `a` | label | done |' '| ``a`` |'; do
+    pr_fixture "$shape"
+    blc_phase_row_find a "$PR_FILE" | grep -q . \
+      || fail "did not match: $shape"
+  done
+  return 0
+}
+
+# Tolerating backticks and tildes must not tolerate a different id. The boundary either side
+# of the token is the whole reason this is a pattern and not a substring search.
+test_phase_row_still_refuses_a_longer_id() {
+  pr_source_lib
+  local shape
+  for shape in '| `ab` |' '| ab |' '| ~~ab~~ |' '| `ba` |'; do
     pr_fixture "$shape"
     if blc_phase_row_find a "$PR_FILE" | grep -q .; then
-      fail "shape now matches: $shape — if phase b did this, update this test"
+      fail "matched a row that is not phase a: $shape"
     fi
   done
   return 0

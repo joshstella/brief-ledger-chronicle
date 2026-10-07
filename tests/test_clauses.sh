@@ -95,6 +95,29 @@ $out" ;;
   esac
 }
 
+# The test the report asked for. A ledger whose phase table backticks its ids is a ledger a
+# person reads without trouble, and BRIEFS-9 used to call every phase in it missing from its
+# own table. Two contributors rewrote correct ledgers into a different correct shape because
+# the gate said so (#0031).
+test_clauses_briefs9_reads_a_backticked_phase_table() {
+  cl_repo backtick
+  cl_brief 0001 ticked -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 in-progress a:done b:pending`' \
+    '' \
+    '| id | label | status |' \
+    '|---|---|---|' \
+    '| `a` | the first | done |' \
+    '| ~~`b`~~ | the dropped one | pending |'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-9"*) fail "BRIEFS-9 called a backticked phase table unfindable:
+$CL_OUT" ;;
+  esac
+  cl_assert_clean_gate "BRIEFS-9"
+}
+
 # Both index alphabets. Six ledgers here still number their phases, and a clause that only
 # understood letters would report every one of them as unfindable.
 test_clauses_briefs9_reads_numbered_phases() {
@@ -145,10 +168,17 @@ $CL_OUT" ;;
   cl_assert_clean_gate "timestamp token"
 }
 
-# The gap #0013 left open, and the reason this clause exists. These three row shapes match
-# no pattern, so before BRIEFS-9 a ledger using them reported clean while its phases were
-# invisible to every reader.
-test_clauses_briefs9_catches_the_three_shapes_0013_left_silent() {
+# The three shapes #0013 left unmatched. BRIEFS-9 used to report them, and that was correct
+# while they were unmatched: a row no reader could find is a row that may as well not be there,
+# and reporting it was better than passing it in silence.
+#
+# #0031 made the readers find them, which removes the thing worth reporting. The clause now has
+# to stay quiet, or it accuses a ledger of hiding a phase that every reader can see — which is
+# how a real project came to rewrite two legible ledgers into a different legible shape.
+#
+# This test is the inverse of the one it replaces. Both pin the same three rows; what changed
+# is whether the toolkit can read them.
+test_clauses_briefs9_is_silent_on_the_three_shapes_0013_left_unmatched() {
   cl_repo shapes
   cl_brief 0001 shapes -- \
     '# Ledger — #0001' \
@@ -158,8 +188,7 @@ test_clauses_briefs9_catches_the_three_shapes_0013_left_silent() {
   local id
   for id in a b c; do
     case "$CL_OUT" in
-      *"declares phase '$id'"*) ;;
-      *) fail "BRIEFS-9 stayed silent on the '$id' row shape — the #0013 gap is still open:
+      *"declares phase '$id'"*) fail "BRIEFS-9 still calls the '$id' row shape unfindable:
 $CL_OUT" ;;
     esac
   done

@@ -39,7 +39,18 @@ blc_phase_row_pattern() {
   # Local, because a caller's loop variable named `pattern` is otherwise this
   # function's return value.
   local idx="$1" pattern
-  pattern="^\|[[:space:]]*~*\`?${idx}[[:space:]]*(\||—)"
+  # Backticks and tildes are allowed on both sides of the id, not just before it. The old
+  # pattern took an opening backtick and provided for no closing one, so `| `a` |` failed and
+  # every phase in such a ledger reported as missing from its own table. `~*` had the same
+  # shape of hole: it took a leading `~~` and not the trailing one.
+  #
+  # An id is a letter — `docs/blc/briefs/README.md`, "Phase ids" — so a backtick or a tilde
+  # beside one is Markdown, never part of the id. They are skipped wherever they fall rather
+  # than enumerated as shapes, which is the reading `status-line.sh` already uses and what
+  # this file already does to the cells it returns.
+  # The boundary is unchanged: between the decoration and the next `|` or em dash there must
+  # be the id and nothing else, so `| `ab` |` is still not phase a.
+  pattern="^\|[[:space:]\`~]*${idx}[[:space:]\`~]*(\||—)"
   case "$idx" in
     [0-9]*) pattern="${pattern}|^\|.*phase ${idx} " ;;
   esac
