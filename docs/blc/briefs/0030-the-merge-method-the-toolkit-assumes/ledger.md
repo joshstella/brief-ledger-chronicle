@@ -1,6 +1,6 @@
 # Ledger — #0030 The merge method the toolkit assumes
 
-`blc/2 #0030 in-progress a:done(PR#131) b:done(PR#133) c:in-progress(brief/0030-c-the-prose-and-the-count-that-holds-it)`
+`blc/2 #0030 in-progress a:done(PR#131) b:done(PR#133) c:in-progress(PR#135)`
 
 **Brief:** `docs/blc/briefs/0030-the-merge-method-the-toolkit-assumes/brief.md`
 **Started:** 2026-10-07
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | a | the move split across two commits | done | PR#131 |
 | b | the merge row reads the merge-methods row | done | PR#133 |
-| c | the prose, and the count that holds it | in-progress | `brief/0030-c-the-prose-and-the-count-that-holds-it` |
+| c | the prose, and the count that holds it | in-progress | PR#135 |
 
 **a — the move split across two commits.** Make `blc_touch_renames` read a move that was made as
 an add in one commit and a delete in the next, so a brief keeps its first date on a merge-commit
