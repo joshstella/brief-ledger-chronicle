@@ -53,15 +53,46 @@ blc_touch_skip() {
 
 # usage: blc_touch_renames
 # Prints `<old path><TAB><new path>` for every rename in the history of HEAD, relative to the
-# top of the repository. One walk of the history, so a tool reads it once, not once per brief.
-# A merge commit records no renames of its own here, and that is fine for a squash-merge
-# history. The quoting is off so a non-ASCII name matches the name `ls-files` prints.
+# top of the repository. Two walks of the history, so a tool reads it once, not once per brief.
+# The quoting is off so a non-ASCII name matches the name `ls-files` prints.
+#
+# Two walks, because `-M` finds a rename only inside one commit's diff, and a move is not
+# always made in one commit. "Add the new path, delete the old one in the next commit" puts
+# the halves in different diffs. A squash merge collapses them into one commit and git reports
+# the rename; a merge commit keeps them apart and the old name's history is cut off. This was
+# reported by a person whose trunk carries merge commits, and it was invisible here because
+# this repository squash-merges (#0030).
+#
+# The second walk reads each first-parent commit, and `-m` makes a merge commit show its diff
+# against that first parent — which is the change a squash of the branch would have carried.
+#
+# `--first-parent` has implied that since git 2.36, so `-m` changes nothing on a git new enough
+# to run these tests, and no test here fails without it. It stays because it is free and it is
+# what an older git needs; dropping it would make the dates quietly wrong there, which is the
+# failure this whole brief is about.
+#
+# The thresholds differ on purpose, and the asymmetry is the whole design:
+#
+#   walk 1   one commit's changes, matched loosely. The pool is small and well constrained, so
+#            an inexact pair is almost certainly the real move. This is what lets a draft filed
+#            as a brief keep its date, since filing rewrites the identity line.
+#   walk 2   a whole branch's changes, matched only on identical content. The pool is large,
+#            and at the default threshold git paired an unrelated new brief with an unrelated
+#            deleted one at 58% — which would hand the new brief the older one's history. That
+#            is the same failure `--follow` was removed for above.
+#
+# The cost is that a split move whose content also changed is still missed. That direction is
+# the safe one: a missed rename reports a first date that is too recent, and a false pair
+# reports one that is too old and silently merges two briefs' histories.
 blc_touch_renames() {
   # A repository with no commits has no HEAD, and `git log` exits 128. Its callers run under
   # `pipefail` plus `set -e`, so the failure has to stop here: a fresh install has no history,
   # and that is not an error.
-  { git -c core.quotePath=false log -M --diff-filter=R --name-status --format= 2>/dev/null || true; } \
-    | awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'
+  {
+    git -c core.quotePath=false log -M --diff-filter=R --name-status --format= 2>/dev/null || true
+    git -c core.quotePath=false log --first-parent -m --find-renames=100% \
+      --diff-filter=R --name-status --format= 2>/dev/null || true
+  } | awk -F'\t' '$1 ~ /^R/ { print $2 "\t" $3 }'
 }
 
 # usage: blc_touch_names RENAMES PATH

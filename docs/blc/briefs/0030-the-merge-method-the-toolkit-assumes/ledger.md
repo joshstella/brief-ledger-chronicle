@@ -54,6 +54,33 @@ Decisions 3 and 4 are the reporter's, adopted as argued. Decision 4 pins a count
 allow-list of files, because an allow-list cannot catch a new mention inside a file already on
 it, and the site that started this lives in exactly such a file.
 
+## Settled while building `a`
+
+**Two walks, with different thresholds.** The open question — how a rename is read across two
+commits — is answered by `git log --first-parent -m`, which shows each merge commit's diff
+against its first parent. That is the change a squash of the branch would have carried, so it
+recovers the split move in one pass rather than one `git diff` per merge.
+
+**The thresholds must differ, and that is the whole design.** Walk 2 matches identical content
+only. Its candidate pool is everything a branch changed, and at git's default similarity it
+paired an unrelated new brief with an unrelated deleted one at 58% — handing the new brief a
+date from before it existed, which is the `--follow` failure #0017 removed. Walk 1 stays loose
+because its pool is one commit's changes, and because filing a draft as a brief edits the file
+while moving it: every brief in this record was filed that way, and at 100% each loses its
+draft date.
+
+Both directions are now pinned. Tightening walk 1 fails the draft-filing test; relaxing walk 2
+fails the unrelated-pair test; removing walk 2 restores the reported defect.
+
+**What it still misses.** A split move whose content also changed between the add and the
+delete. That is the safe direction: a missed rename gives a first date that is too recent, and
+a false pair gives one that is too old and silently merges two briefs' histories.
+
+**`-m` is unproven here.** `--first-parent` has implied it since git 2.36, so no test fails
+without it on any git new enough to run this suite. It stays because it is free and an older
+git needs it, and because dates that are quietly wrong on an old git is the failure this brief
+is about. Said here rather than left as a confident comment.
+
 ## What this brief owes the reporter
 
 Every finding here came from somebody running the toolkit rather than writing it, and two of
