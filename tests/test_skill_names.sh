@@ -236,3 +236,36 @@ test_skill_names_commit_skill_defers_attribution_to_the_running_agent() {
   assert_contains "Attribute yourself, and only if your host has not already done it" \
     "$REPO_ROOT/skills/blc-commit-push-pr/SKILL.md"
 }
+
+# ── The merge method a shipped skill must not pick (#0030 b) ─────────────────
+
+# A merge flag written here ships to every repository unchanged. Where a forge disallows the
+# method the command fails and somebody finds it; where the forge merely unticks it — GitLab's
+# `squash_option: default_off` — the flag is accepted, the merge request is squashed, and a
+# trunk of merge commits quietly gains one that is not. That is the defect #0030 was filed for.
+#
+# The match is the merge invocation, not the words. The skill has to be able to write a mapping
+# table naming `--squash` as the output of reading a repository's own setting, which is the
+# opposite of hardcoding it. `--merge-request` and `--auto-merge` are ordinary flags on the same
+# rows and must not trip this; the pattern stops a merge-method flag at its own word boundary.
+test_skill_names_no_skill_hardcodes_a_merge_method() {
+  local hit
+  hit="$(cd "$REPO_ROOT" \
+    && grep -rn -- 'gh pr merge\|glab mr merge' skills/ \
+    | grep -E -- '--(squash|rebase|merge)([^a-z-]|$)' || true)"
+  [ -z "$hit" ] || fail "a shipped merge command names a merge method: $hit"
+}
+
+# The guard above is worth nothing if the skill stops reading the repository's answer. The
+# assertion is on the command that asks, not on the word appearing somewhere in the file: the
+# mapping table names the field too, so a file-wide match stays green while the command that
+# has to fetch it no longer does.
+test_skill_names_commit_skill_reads_the_merge_method_it_uses() {
+  local asks
+  asks="$(grep -n -- 'gh repo view --json' "$REPO_ROOT/skills/blc-commit-push-pr/SKILL.md" || true)"
+  [ -n "$asks" ] || fail "the commit skill has no command that asks the forge its merge methods"
+  printf '%s' "$asks" | grep -q 'viewerDefaultMergeMethod' \
+    || fail "the merge-methods command does not ask for the field it picks from: $asks"
+  assert_contains "Never write a merge method into this file" \
+    "$REPO_ROOT/skills/blc-commit-push-pr/SKILL.md"
+}

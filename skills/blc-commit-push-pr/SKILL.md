@@ -18,8 +18,8 @@ Steps:
    |---|---|---|
    | Open (7) | `gh pr create --title "<t>" --body "<body>"` | `glab mr create --title "<t>" --description "<body>" --yes` |
    | Checks (9) | `gh pr checks <n>` | `glab ci get --merge-request <n> -F json --jq .status` |
-   | Merge (9) | `gh pr merge <n> --squash` | `glab mr merge <n> --squash --auto-merge=false --yes` |
-   | Merge methods (9) | `gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed` | `glab repo view -F json --jq '{merge_method, squash_option}'` |
+   | Merge (9) | `gh pr merge <n> <method-flag>` | `glab mr merge <n> <method-flag> --auto-merge=false --yes` |
+   | Merge methods (9) | `gh repo view --json viewerDefaultMergeMethod,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed` | `glab repo view -F json --jq '{merge_method, squash_option}'` |
    | Failed jobs (9) | `gh run view <run-id> --log-failed` | `glab ci get --merge-request <n> --status failed --with-job-details`, then `glab ci trace <job-id>` |
 
    On GitLab, ask about the merge request's pipeline, not the branch's: a project that runs pipelines only for merge requests has none on the branch. `glab mr merge` sets auto-merge by default when a pipeline is running, so `--auto-merge=false` makes it merge now or fail.
@@ -43,7 +43,18 @@ Steps:
 8. Return the PR URL, plus the review verdict and any carried-forward suggestions, in the same response.
 9. **If asked to wait for CI and merge once green** (now, or in a later message on the same PR): don't poll manually with repeated sleeps or re-invocations. Use the Monitor tool to run a background poll loop against the forge's checks command that emits a line on each check's status change and exits once every check reports a terminal (non-pending) status.
    When the run lands:
-   - **All required checks passed** → merge with the forge's merge command (confirm this repo's actual default merge method first if unclear, with the forge's merge-methods command).
+   - **All required checks passed** → run the forge's merge-methods command, read `<method-flag>` from its answer, then merge. **Never write a merge method into this file.** A repository merges the way its own settings say, and a flag written here ships to every repository unchanged — where it does not merely fail, it is accepted and quietly reshapes a history that was not yours to reshape (#0030).
+
+     | forge | read | `<method-flag>` |
+     |---|---|---|
+     | `github` | `viewerDefaultMergeMethod` | `SQUASH` → `--squash`; `MERGE` → `--merge`; `REBASE` → `--rebase` |
+     | `gitlab` | `squash_option` is `always` or `default_on` | `--squash` |
+     | `gitlab` | otherwise, `merge_method` is `rebase_merge` or `ff` | `--rebase` |
+     | `gitlab` | otherwise | nothing — a merge commit is GitLab's default |
+
+     On GitHub the `*Allowed` fields say what is permitted, not what to use: a repository can allow all three. `viewerDefaultMergeMethod` is the one that answers the question. If it names a method the matching `*Allowed` field denies, stop and ask — the two disagreeing is a repository setting a person should look at, not something to work around.
+
+     On GitLab, `default_off` means squash is *permitted and unticked*, so passing `--squash` there is accepted and squashes. That is why the method is read rather than assumed.
    - **Failed** → fetch the failed jobs' logs with the forge's failed-jobs command and get the actual list of failing test/job names. If a known pre-existing baseline of acceptable failures has already been established earlier in this conversation (e.g. confirmed against main's own CI), compare the new failure set against it by name — only treat it as "the known flake" if the set is identical. Never assume a failure is pre-existing/flaky without checking; a new failure needs real diagnosis, not dismissal.
    If the outcome is something the user would want to know even if they've stepped away, follow up with PushNotification (under 200 chars, lead with the actionable fact — e.g. "PR #122 merged" or "PR #122: 2 new test failures, not the known flake") rather than leaving it sitting silently in chat.
 Do not amend existing commits. If the pre-commit hook fails, fix the issue and create a new commit.

@@ -1,6 +1,6 @@
 # Ledger — #0030 The merge method the toolkit assumes
 
-`blc/2 #0030 in-progress a:in-progress(brief/0030-a-the-move-split-across-two-commits) b:pending c:pending`
+`blc/2 #0030 in-progress a:done(PR#131) b:in-progress(brief/0030-b-the-merge-row-reads-the-merge-methods-row) c:pending`
 
 **Brief:** `docs/blc/briefs/0030-the-merge-method-the-toolkit-assumes/brief.md`
 **Started:** 2026-10-07
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the move split across two commits | in-progress | `brief/0030-a-the-move-split-across-two-commits` |
-| b | the merge row reads the merge-methods row | pending | — |
+| a | the move split across two commits | done | PR#131 |
+| b | the merge row reads the merge-methods row | in-progress | `brief/0030-b-the-merge-row-reads-the-merge-methods-row` |
 | c | the prose, and the count that holds it | pending | — |
 
 **a — the move split across two commits.** Make `blc_touch_renames` read a move that was made as
@@ -80,6 +80,34 @@ a false pair gives one that is too old and silently merges two briefs' histories
 without it on any git new enough to run this suite. It stays because it is free and an older
 git needs it, and because dates that are quietly wrong on an old git is the failure this brief
 is about. Said here rather than left as a confident comment.
+
+## Settled while building `b`
+
+**Open question 2 is answered by a field, not by a convention.** `gh repo view` exposes
+`viewerDefaultMergeMethod`, which names the method to use where the `*Allowed` fields only say
+what is permitted. This repository allows all three, so that field is the only thing that
+disambiguates — and it answers `SQUASH`, which is why the hardcoded flag was right here and
+nowhere else. Where the default names a method its `*Allowed` field denies, the skill stops and
+asks: two repository settings disagreeing is for a person to look at.
+
+GitLab needs two fields rather than one. `squash_option` decides squashing and `merge_method`
+decides the rest, so the mapping reads `always` or `default_on` as `--squash`, then
+`rebase_merge` or `ff` as `--rebase`, and otherwise passes nothing. Both flags were confirmed
+against `glab mr merge --help` on this machine.
+
+**Open question 1 is answered by where it is cheap.** Detection runs at step 9, where the method
+is used, not in preflight. Preflight would pay a forge call on every run of the skill, and most
+runs never merge.
+
+**Guard 1 matches the merge invocation, not the word.** The skill has to name `--squash` in its
+mapping table, which is the opposite of hardcoding it, so a sweep for the flag would forbid the
+fix. The guard reads only lines that invoke `gh pr merge` or `glab mr merge`. `--merge-request`
+and `--auto-merge` sit on neighbouring rows and do not trip it, which a mutation confirms.
+
+**A test that matched the file was not a test of the command.** The first version asserted
+`viewerDefaultMergeMethod` appeared somewhere in the skill. Removing it from the merge-methods
+command left it in the mapping table, and the test stayed green over a skill that no longer
+fetched the field it picks from. The assertion is now on the line that asks.
 
 ## What this brief owes the reporter
 
