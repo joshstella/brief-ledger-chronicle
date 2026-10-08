@@ -267,3 +267,42 @@ test_identity_line_create_brief_writes_the_readme_order() {
   [ "$labels" = "Serial|Created|Author|Owner|Jira|Depends on" ] \
     || fail "blc-create-brief writes the fields in the order: $labels"
 }
+
+# The draft's provenance line is a contract between two skills, not a format preference.
+# blc-create-brief reads `Created` and `Author` out of the draft and consumes them into the
+# identity line. A draft without them does not fail: the filer stamps `Created` = now and
+# resolves `Author` from git config, so the brief carries the date it was filed instead of the
+# date the idea was had, and nothing reports it. A wrong date written in silence (#0032).
+#
+# Read from the fenced example the skill shows, which is indented, so the anchors allow it.
+test_identity_line_create_draft_writes_what_create_brief_reads() {
+  local skill="$REPO_ROOT/skills/blc-create-draft/SKILL.md" line labels
+  [ -f "$skill" ] || fail "blc-create-draft does not exist, so nothing writes a draft"
+  line="$(grep -m1 "^[[:space:]]*\*\*Created:\*\*" "$skill")"
+  [ -n "$line" ] || fail "blc-create-draft shows no provenance template"
+  labels="$(printf '%s' "$line" | grep -o '\*\*[A-Za-z ]*:\*\*' | tr -d '*:' | paste -sd'|')"
+  [ "$labels" = "Created|Author|Owner|Jira" ] \
+    || fail "blc-create-draft writes the provenance fields in the order: $labels"
+  # The filer names these two as the fields it consumes. If the drafter stops writing either,
+  # the dates go wrong quietly rather than loudly.
+  local f
+  for f in Created Author; do
+    grep -q "\*\*$f:\*\* <from draft>" "$REPO_ROOT/skills/blc-create-brief/SKILL.md" \
+      || fail "blc-create-brief no longer reads $f from the draft; this contract moved"
+  done
+}
+
+# `Depends on` goes on its own line, last, and is always written. Every draft in the repository
+# carries it, and the filer reads it from there rather than from the provenance line.
+test_identity_line_create_draft_always_writes_depends_on() {
+  local skill="$REPO_ROOT/skills/blc-create-draft/SKILL.md"
+  [ -f "$skill" ] || fail "blc-create-draft does not exist, so nothing writes a draft"
+  grep -q '^[[:space:]]*\*\*Depends on:\*\*' "$skill" \
+    || fail "blc-create-draft shows no Depends on line in its template"
+  # The template alone cannot say the line is unconditional, and a reader of the template
+  # would reasonably write it only when there is a dependency. The instruction has to carry
+  # the word, and it is read on the line that names the field so a stray "always" elsewhere
+  # in the file cannot stand in for it.
+  grep -q 'Depends on.*always.*written' "$skill" \
+    || fail "blc-create-draft does not say Depends on is always written"
+}

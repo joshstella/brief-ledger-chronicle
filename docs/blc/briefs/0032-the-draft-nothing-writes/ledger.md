@@ -63,6 +63,36 @@ was filed rather than the date the idea was had. The failure is a wrong date in 
 record, written in silence. That is a contract between two skills, and this repository already
 tests the filer's half of it.
 
+## Settled while building `a`
+
+**The guard is two tests, because the contract has two halves.** One reads the drafter's
+template and pins the field order. The other reads the *filer* and asserts it still says
+`<from draft>` for `Created` and `Author`. Without the second, the contract could be broken
+from the far end — the filer could stop reading the fields while the drafter went on writing
+them, and a test that only looked at the drafter would stay green over it.
+
+**A weak assertion was caught before it shipped.** The first version checked that the word
+"always" appeared anywhere in the skill. It happened to be true for the right reason, which is
+the worst case: the assertion would have passed over a file that said "always" about something
+else entirely. It now reads the line that names the field. This is the same error the #0030
+review found, where a file-wide match stood in for a test of the command.
+
+**Then the tightened version failed on its own markup.** `Depends on.*always written` does not
+match `is **always** written`. Caught by running it rather than by reading it, which is the
+argument for a baseline run between writing a guard and mutating it: a guard that fails at
+baseline cannot tell you anything about a mutation.
+
+**The phase split is visible in `--print-ownership`.** After `a`, the installer reports
+`skills/blc-create-draft` placed as a directory by the glob, while `blc-create-brief` is placed
+as `.claude/commands/blc-create-brief.md`. That command file is what `PROCESS_SKILLS` buys and
+what `b` adds, so the two phases are separable in the installer's own output rather than only
+on paper.
+
+**The drafts README was the other half of the finding.** It described the filer completely and
+named no writer, which is how the gap stayed invisible. It now names the drafter and states the
+consequence of writing one by hand, so the document that created the expectation carries the
+correction.
+
 ## What this cannot prove
 
 A skill is prose and nothing runs it. The test pins the template the skill shows; it cannot
