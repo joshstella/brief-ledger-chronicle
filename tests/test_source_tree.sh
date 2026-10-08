@@ -77,3 +77,132 @@ test_source_tree_every_tool_is_in_the_installer_ship_list() {
   [ "$checked" -gt 0 ] || fail "the scan found no tools — it is broken, not clean"
   [ -z "$missing" ] || fail "install.sh never ships these, so they install nowhere:$missing"
 }
+
+# Every sed script the toolkit ships must parse on a POSIX sed, not only on GNU's.
+#
+# POSIX requires a `;` or a newline before the `}` that closes a `{...}` block. GNU sed accepts
+# the block without one, and accepts it even under `--posix`. BSD sed, which macOS ships, does
+# not. On 2026-10-08 `tools/orient.sh` ran its whole report on macOS and then exited 1 on
+# `sed '1{/^# /d}'`, because `set -euo pipefail` turns the parse error into a failure. `orient`
+# is step 1 of blc-start-brief, blc-next-brief-phase and blc-review-pr, so the toolkit failed
+# at its own first gate on that platform.
+#
+# This is a static check and not a second interpreter. tests/run.sh runs a five-candidate awk
+# matrix on the premise that one interpreter cannot see a portability bug; CI has no second sed
+# and no macOS runner, so sixty-six sed invocations have only ever run against GNU. A macOS
+# runner is the better answer and a larger change. This covers one shape, and says so.
+#
+# A regex interval — `\{10\}` — has the same closing brace and is correct. tools/orient.sh
+# contains one, so a guard that could not tell them apart would be reverted the first time
+# anybody ran it.
+# usage: source_tree_sed_blocks_are_posix <line> — prints each offending sed script on the
+# line, and nothing when the line is clean.
+#
+# The first version of this read the whole line and failed twice, which is why it reads the
+# quoted script instead. `[ "$closed" -gt 0 ] && { echo; }` matched because `closed` contains
+# the letters s-e-d, and `f() { ... | sed -n '...'; }` matched because the shell function's
+# own brace was on the line. Both are shell, neither is a sed script.
+#
+# `sed` is therefore required to be a word, and only single-quoted strings on the line are
+# examined. Every sed script this toolkit ships is single-quoted; a double-quoted one would be
+# missed, and that limit is real rather than hidden.
+source_tree_sed_blocks_are_posix() {
+  printf '%s\n' "$1" | awk -v q="'" '
+    # A `sed` word. Not `closed`, `parsed`, `used`.
+    !/(^|[^[:alnum:]_])sed([^[:alnum:]_]|$)/ { next }
+    {
+      # Splitting on the quote makes the even-numbered fields the quoted scripts. The quote
+      # arrives in a variable because a literal one cannot appear in this program.
+      n = split($0, parts, q)
+      for (i = 2; i <= n; i += 2) {
+        s = parts[i]
+        # `{d; }` is valid: POSIX wants a `;` or a newline before the brace, and the space
+        # between them is not the problem. Collapsing it first stops a false positive.
+        gsub(/[[:space:]]+\}/, "}", s)
+        # A `}` whose preceding character is neither `;` nor a backslash. The backslash case
+        # is a regex interval such as `\{10\}`, which is correct and which tools/orient.sh
+        # already contains.
+        if (s ~ /[^;\\]\}/) print s
+      }
+    }'
+}
+
+test_source_tree_every_shipped_sed_block_parses_on_a_posix_sed() {
+  git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || { skip "not a git checkout"; return; }
+
+  local path line n hit checked=0 bad=""
+  while read -r path; do
+    checked=$((checked + 1))
+    n=0
+    while IFS= read -r line; do
+      n=$((n + 1))
+      hit="$(source_tree_sed_blocks_are_posix "$line")"
+      [ -n "$hit" ] && bad="$bad
+    $path:$n: $hit"
+    done < "$REPO_ROOT/$path"
+  done < <(git -C "$REPO_ROOT" ls-files -- 'tools/*.sh' 'install.sh')
+
+  [ "$checked" -gt 0 ] || fail "the scan found no shell to read — it is broken, not clean"
+  [ -z "$bad" ] || fail "a POSIX sed rejects these; add a \`;\` before the \`}\`:$bad"
+}
+
+# The detector above has to tell three lookalikes apart, and each one is in the tree already.
+# Fed by hand rather than by mutating real files, so a future edit to those files cannot
+# quietly remove the case this proves.
+test_source_tree_posix_sed_detector_tells_the_lookalikes_apart() {
+  local flagged
+  # usage: want_flagged <expected: yes|no> <description> <line>
+  want_flagged() {
+    flagged="$(source_tree_sed_blocks_are_posix "$3")"
+    if [ "$1" = yes ]; then
+      [ -n "$flagged" ] || fail "missed: $2 — $3"
+    else
+      [ -z "$flagged" ] || fail "false positive: $2 — $3 (flagged \`$flagged\`)"
+    fi
+  }
+
+  want_flagged yes "the macOS bug itself" \
+    "  sed '1{/^# /d}' \"\$AUTHORED\""
+  want_flagged no "the same script, corrected" \
+    "  sed '1{/^# /d;}' \"\$AUTHORED\""
+  want_flagged no "a semicolon with a space before the brace" \
+    "  sed '1{/^# /d; }' \"\$AUTHORED\""
+
+  # A regex interval closes with \} and is correct. tools/orient.sh:147 has one.
+  want_flagged no "a regex interval" \
+    "  touched=\"\$(printf x | sed -n '1s/^[^ ]* \\(.\\{10\\}\\).*/\\1/p')\""
+
+  # `closed` contains the letters s-e-d. The first version of this detector flagged it.
+  want_flagged no "a shell brace group on a line mentioning closed" \
+    "  [ \"\$closed\" -gt 0 ] && { echo; echo \"\$closed closed\"; }"
+
+  # A shell function's own closing brace, on a line that really does call sed.
+  want_flagged no "a shell function wrapping a real sed call" \
+    "entry_pointer() { printf '%s' \"\$1\" | sed -n 's/.*(\\(.*\\))\$/\\1/p'; }"
+
+  # Not orient-specific: any shipped file with the shape must be caught.
+  want_flagged yes "the shape in some other tool" \
+    "  printf '%s' \"\$x\" | sed '/^\$/{N;s/a/b/}'"
+
+  # The three below are each proven load-bearing by mutation against the real tree, and are
+  # repeated here by hand so that editing those files cannot quietly retire the case.
+
+  # An awk block. No `sed` word, so the quoted script is never examined. Dropping the word
+  # requirement flags tools/lib/status-line.sh.
+  want_flagged no "an awk block with the same brace shape" \
+    "  awk '\$1 == want { sub(/^[^\\t]*\\t/, \"\"); print}' \"\$f\""
+
+  # A shell parameter expansion ends `:}`. Reading the whole line instead of the quoted script
+  # flags tools/open-briefs.sh.
+  want_flagged no "a parameter expansion beside a real sed call" \
+    "entry_state() { printf '%s' \"\${1#*:}\" | sed 's/(.*//';}"
+
+  # Prose in a comment is not a script. Reading the whole line flags the comment that explains
+  # this very fix.
+  want_flagged no "a comment that mentions a brace" \
+    "  # The \`;\` before the \`}\` is required by POSIX and optional in GNU sed."
+
+  unset -f want_flagged
+  return 0
+}

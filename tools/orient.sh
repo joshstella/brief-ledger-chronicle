@@ -273,7 +273,10 @@ echo
 echo "## What this project values"
 echo
 if [ -f "$AUTHORED" ]; then
-  sed '1{/^# /d}' "$AUTHORED"
+  # The `;` before the `}` is required by POSIX and optional in GNU sed. Without it, BSD sed —
+  # which macOS ships — rejects the script, and `set -e` above turns that into exit 1 after the
+  # whole report has already printed. Reported from macOS on 2026-10-08.
+  sed '1{/^# /d;}' "$AUTHORED"
 else
   echo "No \`$AUTHORED\` — nobody has written down what matters here."
   echo "It is the one part of this output a person has to author."
