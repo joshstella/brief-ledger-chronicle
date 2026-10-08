@@ -34,7 +34,7 @@ STATE_DIR="$BLC_ROOT/state"
 AUTHORED="$BLC_ROOT/orientation.md"
 INSTALL_LOG="$BLC_ROOT/install-log/install-log.md"
 CHRONICLE="$BLC_ROOT/chronicles/chronicle.md"
-CONTRACT="$BLC_ROOT/contracts/v1.4.md"
+CONTRACT="$BLC_ROOT/contracts/v1.5.md"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not inside a git repo." >&2; exit 1; }
 ROOT="$(git rev-parse --show-toplevel)"
@@ -259,7 +259,7 @@ else
 fi
 if [ -f "$CONTRACT" ]; then
   echo
-  echo "Contract v1.4 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
+  echo "Contract v1.5 binds the briefs directory. \`tools/validate-briefs.sh\` is the gate."
 fi
 echo
 

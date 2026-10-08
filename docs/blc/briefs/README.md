@@ -36,7 +36,7 @@ That single point of assignment is what keeps numbers from colliding. The serial
 
 Single assignment is not the same as no race. Two checkouts can fetch the same
 `origin/main`, compute the same next serial, and both be right until one pushes. Contract
-v1.4 records this as open. The narrow answer is to say out loud that you are taking a
+v1.5 records this as open. The narrow answer is to say out loud that you are taking a
 number, before you take it: see `docs/blc/state/README.md`. It closes the window by making the
 claim visible, not by locking anything.
 
@@ -353,7 +353,7 @@ described, not because it is part of publishing.
 
 ## Structural invariants
 
-The rules this layout must satisfy live in **[Contract v1.4](../contracts/v1.4.md)**, clauses
+The rules this layout must satisfy live in **[Contract v1.5](../contracts/v1.5.md)**, clauses
 `BRIEFS-1` through `BRIEFS-10`. They are stated there and not restated here, so there is one
 place to read them and one place to change them. [v1](../contracts/v1.md) and
 [v1.1](../contracts/v1.1.md) are superseded and stay published; clauses `BRIEFS-1` through
@@ -452,7 +452,7 @@ query nobody invokes buys exactly as much as no query. Until something calls it 
 branch that is quietly getting more expensive. A known boundary is a legitimate resting
 place; an unwatched one is not.
 
-The other known boundary, concurrent filing, is recorded in Contract v1.4 beside the
+The other known boundary, concurrent filing, is recorded in Contract v1.5 beside the
 clause it threatens. If two branches claim the same serial, the second to reach `main`
 renumbers. Fetching first does not prevent that.
 
