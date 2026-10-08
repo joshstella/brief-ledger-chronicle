@@ -63,6 +63,18 @@ was filed rather than the date the idea was had. The failure is a wrong date in 
 record, written in silence. That is a contract between two skills, and this repository already
 tests the filer's half of it.
 
+## Attribution
+
+The skill was proposed by **Alan Read, `alan@ariatha.ai`**, who wrote it against an installed
+project and found the change could not survive there, because an install replaces every
+toolkit-owned path.
+
+The filing commit `d7e7f65`, already on `main`, carries a mistyped address — `alan@ariath.ai`,
+missing the second `a`. A forge matches co-authorship by address, so that trailer credits
+nobody. It is recorded here rather than rewritten: `main` is published, other checkouts install
+from it, and a correct name in the record is worth more than a tidy history. Every later commit
+on this brief carries the right address.
+
 ## Settled while building `a`
 
 **The guard is two tests, because the contract has two halves.** One reads the drafter's
