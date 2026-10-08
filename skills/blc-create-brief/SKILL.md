@@ -1,7 +1,7 @@
 ---
 name: blc-create-brief
 description: >-
-  File an unnumbered draft into docs/blc/briefs/ with the next serial. Use when the user asks to blc-create-brief or file a draft brief.
+  Assign the next serial to a draft that already exists and move it into docs/blc/briefs/NNNN-slug/. This is the one-way door. Use when the user asks to blc-create-brief, or to file or number a draft. Writing a new draft is blc-create-draft.
 ---
 
 # blc-create-brief

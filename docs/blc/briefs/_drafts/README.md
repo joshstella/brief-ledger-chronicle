@@ -7,6 +7,12 @@ filed: no serial, no identity, and no commitment to do the work.
 available from any workstation. The commitment a draft lacks is the decision to do the
 work, not a git commit — nothing here is untracked.
 
+Write one with `/blc-create-draft <slug>`. It stamps `Created` and `Author` from git and the
+clock, which is the part worth having: `/blc-create-brief` reads those two fields out of the
+draft when it files. A draft written by hand without them does not fail — the filer stamps
+`Created` = now — so the brief enters the record with the date it was filed instead of the date
+the idea was had.
+
 Rules:
 - Filenames must **not** begin with four digits (that format is reserved for filed briefs).
   Never rename or number a draft by hand — `/blc-create-brief` owns numbering.
