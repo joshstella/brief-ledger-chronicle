@@ -1,6 +1,6 @@
 # Ledger — #0034 Check the status of the repo for serials not on main yet
 
-`blc/2 #0034 in-progress a:in-progress(brief/0034-a-remote-serial-scan) b:pending`
+`blc/2 #0034 in-progress a:done(PR#145) b:in-progress(brief/0034-b-contract-v15)`
 
 **Brief:** `docs/blc/briefs/0034-claim-the-serial/brief.md`
 **Status:** in-progress
@@ -10,8 +10,8 @@
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | remote serial scan | in-progress | `brief/0034-a-remote-serial-scan` | — |
-| b | contract v1.5 recovery rule | pending | — | — |
+| a | remote serial scan | done | `brief/0034-a-remote-serial-scan` | [#145](https://github.com/joshstella/brief-ledger-chronicle/pull/145) |
+| b | contract v1.5 recovery rule | in-progress | `brief/0034-b-contract-v15` | — |
 
 **a — remote serial scan.** Adds `tools/next-serial.sh`, which reports the next free brief
 serial after reading serials claimed on the remote as well as in the local directory. It
@@ -59,8 +59,15 @@ would make `b` describe a tool that might still change shape.
   rather than gates. A clean run prints nothing, because a warning printed every time is one
   nobody reads when it matters.
 - **Phase `b`: whether the recovery rule names a tiebreak for equal or absent `Created`
-  stamps.** Old briefs filed before `blc-create-draft` stamped provenance have no `Created`
-  to compare. Blocks `b` only.
+  stamps.** *Resolved before `b` was written.* The contributors decide between them and record
+  the decision in both ledgers. A same-second tie is vanishingly rare, and an invented
+  fallback — lowest email, fewest inbound links, least work to move — would look objective
+  while settling a question it has no standing to settle.
+- **Phase `b`: whether the worked example names the contributors.** *Raised and resolved
+  during `b`.* It does not. `install.sh` ships `docs/blc/contracts/*.md` into every target
+  repository, so names in a Contract travel to projects that have no idea who they are. The
+  example describes the two filings by their times and by what each contributor could do. The
+  mechanism teaches the rule; the names do not.
 
 ## Complications found while reading the code
 
@@ -133,6 +140,42 @@ with the answer `0001`. Dropping any tool from the ship list,
 new or old, fails `source_tree_every_tool_is_in_the_installer_ship_list`. Every restore was a
 file copy, not `git checkout`, which during `#0033` restored from an index that still held the
 pre-fix version and made a mutation result meaningless.
+
+## Settled while building `b`
+
+**v1.5 adds no clause.** It changes the recovery rule for concurrent filing and nothing else.
+That still needs a version, because the rule is normative text people follow and editing it
+inside v1.4 would make every citation of v1.4 silently wrong. Superseded is not deleted.
+
+**`orient` could point at a Contract that is not there, and the whole suite stayed green.**
+Measured, not assumed: with `CONTRACT=` moved to a nonexistent `v1.9.md`, all 684 tests
+passed. `#0033` listed the cost of a version bump and the list was incomplete, which is the
+same defect one version later. Phase `b` moved that pointer, so phase `b` carries the guard.
+
+Two guards, both reading two ends so neither can drift alone. The first takes the path out of
+`orient.sh` and requires that the file exists **and** that it is the version the table marks
+`current` — a superseded version is as wrong as a missing one, and quieter. The second
+requires the version `orient` prints to equal the version it reads, because those are two
+literals in one file and a bump can move one. Neither pins a version number, so neither needs
+editing at the next bump, which is the hand-maintenance that caused the drift.
+
+Mutations: `CONTRACT=` to a nonexistent version fails both guards. Printing v1.4 while reading
+v1.5 fails the second. Leaving the table marking v1.4 `current` fails the first. A first
+attempt to mutate the table with `perl` failed to compile and proved nothing; it was redone in
+`python3` rather than counted as a passing result.
+
+**A version cut by copying carries the old version's self-references.** Reading the new file
+found two: "Every clause in version 1.4 is checked by `tools/validate-briefs.sh`" and "Every
+clause in version 1.4 is scope `both`". Both are claims about the version they sit in, so both
+were false the moment the file was saved as v1.5. Neither is a link, so nothing resolved wrong
+and nothing could have caught them. The other mentions of 1.4, 1.3 and 1.1 in the same file
+are history and are correct to leave — which is why a blanket rule against naming an older
+version would be the wrong guard. Recorded for `_drafts/contract-citation-drift.md`: the hard
+part of that brief is telling a self-reference from a citation, and this is a worked case.
+
+**What `b` does not guard.** The recovery rule is prose, and no test can say whether it is the
+right rule. The two guards prove the version pointers resolve, not that v1.5 reads correctly.
+The two self-references above were found by reading, and the next pair would be too.
 
 ## Not proven by `a`
 

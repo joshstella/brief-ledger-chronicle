@@ -761,3 +761,46 @@ test_orient_takes_an_absolute_path_from_a_subdirectory() {
   assert_status 0
   assert_out "A thing"
 }
+
+# The Contract orient.sh reads must exist, and must be the one marked current.
+#
+# orient.sh names the Contract by path, in `CONTRACT=` and again in the line it prints. A
+# version bump that misses either leaves orient reading a file that is not there, or quietly
+# reporting a superseded version as the one that binds. #0033 cut v1.4 and listed the cost of
+# a bump; the list was incomplete. #0034b then pointed `CONTRACT=` at a nonexistent v1.9 and
+# all 684 tests stayed green, which is how this gap was measured rather than assumed.
+#
+# Both ends are read, so neither can drift alone: the path out of orient.sh, and the `current`
+# row of the versions table. A test pinning one literal would need editing on every bump,
+# which is the same hand-maintenance that caused the drift.
+test_orient_reads_the_contract_version_that_is_current() {
+  local named current
+  named="$(sed -n 's|^CONTRACT="\$BLC_ROOT/contracts/\(v[0-9.]*\.md\)"$|\1|p' \
+    "$REPO_ROOT/tools/orient.sh")"
+  [ -n "$named" ] || { fail "could not read a contract path out of tools/orient.sh"; return 1; }
+
+  assert_file "$REPO_ROOT/docs/blc/contracts/$named"
+
+  # The table row whose status is exactly `current`, not one that merely mentions the word.
+  # `#` as the delimiter, not `|`: every row of a markdown table is full of pipes.
+  current="$(sed -n 's#^| \[v[0-9.]*\](\(v[0-9.]*\.md\)) |.*| current |$#\1#p' \
+    "$REPO_ROOT/docs/blc/contracts/README.md")"
+  [ -n "$current" ] \
+    || { fail "no version is marked current in docs/blc/contracts/README.md"; return 1; }
+  [ "$named" = "$current" ] \
+    || fail "orient.sh reads $named, but $current is the version marked current"
+}
+
+# The line orient prints has to name the same version it reads. They are two literals in one
+# file and a bump can move one.
+test_orient_prints_the_contract_version_it_reads() {
+  local named printed
+  named="$(sed -n 's|^CONTRACT="\$BLC_ROOT/contracts/v\([0-9.]*\)\.md"$|\1|p' \
+    "$REPO_ROOT/tools/orient.sh")"
+  printed="$(sed -n 's|^.*echo "Contract v\([0-9.]*\) binds the briefs directory\..*$|\1|p' \
+    "$REPO_ROOT/tools/orient.sh")"
+  [ -n "$named" ] || { fail "could not read CONTRACT= out of tools/orient.sh"; return 1; }
+  [ -n "$printed" ] || { fail "orient.sh no longer prints a Contract version"; return 1; }
+  [ "$named" = "$printed" ] \
+    || fail "orient.sh reads v$named and tells the reader v$printed"
+}

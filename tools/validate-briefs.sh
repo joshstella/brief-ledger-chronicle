@@ -15,7 +15,7 @@
 # different responses, and a checker that could not load its clauses must never be
 # read as a clean tree.
 #
-# The clause text lives in docs/blc/contracts/v1.4.md. This script cites clause ids and
+# The clause text lives in docs/blc/contracts/v1.5.md. This script cites clause ids and
 # does not restate them: a paraphrase here would be a fourth copy of the rules,
 # which is the drift this Contract was extracted to end.
 #

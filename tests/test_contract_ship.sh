@@ -190,7 +190,7 @@ test_ship_the_briefs_readme_is_this_repos_own_file() {
 test_ship_exactly_one_contract_version_is_current() {
   local current
   current=$(grep -lx '\*\*Status:\*\* current' "$REPO_ROOT"/docs/blc/contracts/v*.md | sed 's#.*/##')
-  assert_count "v1.4.md" "$current" "Contract versions marked current"
+  assert_count "v1.5.md" "$current" "Contract versions marked current"
 }
 
 # A structural guard rather than a behavioural one: the drift can only come back by
