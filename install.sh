@@ -8,7 +8,7 @@
 #
 # One source, two hosts. Every skill under skills/ is host-neutral prose; only where the
 # files land differs. Cursor reads everything from `.cursor/skills/`; Claude Code splits
-# them, taking the six process skills as slash-commands under `.claude/commands/` and the
+# them, taking the process skills as slash-commands under `.claude/commands/` and the
 # rest as skills. Nothing is duplicated per host, so a wording fix lands once.
 
 set -euo pipefail
@@ -24,10 +24,16 @@ ASSUME_YES=false
 PRINT_OWNERSHIP=false
 PRINT_PROCESS_RULES=false
 
-# The six skills that drive the workflow. Claude Code installs these as slash-commands so
+# The skills that drive the workflow. Claude Code installs these as slash-commands so
 # they can be invoked explicitly as `/name`; Cursor has no such concept and takes them as
 # ordinary skills. Everything else in skills/ installs as a skill on both hosts.
-PROCESS_SKILLS="blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+#
+# Three test files write these names out by hand again and nothing derives them, so a
+# name added here has to be added there too. #0032 added the seventh and recorded the
+# duplication rather than removing it. A fourth copy held only the count and is now read
+# back out of this line, which is why the quoting here is load-bearing: see
+# `tests/test_project_mode.sh`.
+PROCESS_SKILLS="blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 
 is_process_skill() {
   case " $PROCESS_SKILLS " in *" $1 "*) return 0 ;; *) return 1 ;; esac
@@ -656,7 +662,7 @@ fi
 #
 # Skills are not linked here. They install per-project, and each project run replaces
 # toolkit-owned paths with whatever this checkout ships — local edits do not survive.
-# Machine mode only links the six slash-commands and personal CLAUDE.md; a machine-wide
+# Machine mode only links the slash-commands and personal CLAUDE.md; a machine-wide
 # skills link would override every target on `git pull` with no per-project boundary.
 
 if [[ "$MODE" == "machine" ]]; then
@@ -1177,7 +1183,7 @@ done < <(map_rows toolkit)
 # ── Step 5: Place the skills ─────────────────────────────────────────────────
 #
 # Same source files either way. On Cursor every skill goes to .cursor/skills/ as a
-# directory. On Claude Code the six process skills become flat slash-command files under
+# directory. On Claude Code the process skills become flat slash-command files under
 # .claude/commands/ (the command name comes from the filename, which is why SKILL.md is
 # renamed to <skill>.md), and the rest install as skills. The shared YAML frontmatter is
 # valid in both places, so no per-host copy of the prose exists.

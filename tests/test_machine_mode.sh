@@ -20,13 +20,13 @@ test_machine_links_each_process_skill_as_a_command() {
   run_install y --machine
   assert_status 0
   local s
-  for s in blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief; do
+  for s in blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief; do
     assert_symlink_to "$CLAUDE_HOME_DIR/commands/$s.md" \
                       "$REPO_ROOT/skills/$s/SKILL.md"
   done
 }
 
-# Only the six process skills become commands. Linking the utility skills machine-wide
+# Only the process skills become commands. Linking the utility skills machine-wide
 # would override the per-project copies they are meant to be.
 test_machine_links_no_utility_skills_as_commands() {
   run_install y --machine
