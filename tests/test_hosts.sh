@@ -5,7 +5,7 @@
 # These tests pin both layouts and, more importantly, pin that neither host leaks the
 # other's files into a project.
 
-PROCESS="blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+PROCESS="blc-close-brief blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 UTILITY="blc-chronicle blc-installer-builder blc-my-briefs blc-orient blc-ste-writing"
 
 # ── Cursor ───────────────────────────────────────────────────────────────────

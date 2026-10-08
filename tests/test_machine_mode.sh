@@ -20,7 +20,7 @@ test_machine_links_each_process_skill_as_a_command() {
   run_install y --machine
   assert_status 0
   local s
-  for s in blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief; do
+  for s in blc-close-brief blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief; do
     assert_symlink_to "$CLAUDE_HOME_DIR/commands/$s.md" \
                       "$REPO_ROOT/skills/$s/SKILL.md"
   done

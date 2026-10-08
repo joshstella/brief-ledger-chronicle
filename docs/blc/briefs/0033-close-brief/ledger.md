@@ -1,6 +1,6 @@
 # Ledger — #0033 The close nothing writes
 
-`blc/2 #0033 in-progress a:in-progress(brief/0033-a-the-clause-that-defines-a-close) b:pending`
+`blc/2 #0033 in-progress a:done(PR#142) b:in-progress(brief/0033-b-the-skill-that-writes-one)`
 
 **Brief:** `docs/blc/briefs/0033-close-brief/brief.md`
 **Started:** 2026-10-08
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the clause that defines a close | in-progress | `brief/0033-a-the-clause-that-defines-a-close` |
-| b | the skill that writes one | pending | — |
+| a | the clause that defines a close | done | PR#142 |
+| b | the skill that writes one | in-progress | `brief/0033-b-the-skill-that-writes-one` |
 
 **a — the clause that defines a close.** Add `BRIEFS-11` as a `[judgment]`: a ledger whose
 status is `done` carries a `**Closed:**` date. Ship it as Contract v1.4, mark v1.3
@@ -149,6 +149,31 @@ alternative was one collapsed line naming all sixteen. Per-brief lines were kept
 every other clause, and the judgment count stays honest at sixteen instead of dropping to one.
 The noise is the real cost of a record this project chose not to rewrite, and hiding the cost
 would misreport the decision.
+
+## Settled while building `b`
+
+**The guard from #0032 caught its first real mistake.** `blc-close-brief` was added to
+`PROCESS_SKILLS` and the three test lists, and the only failure was
+`test_skill_names_this_repo_links_its_process_skills_as_commands`, reporting that
+`.claude/commands/blc-close-brief.md` was not tracked. That guard exists because #0032 phase
+`a` made exactly this mistake and nothing noticed. One brief later it is the thing that
+notices.
+
+**The derived count needed no edit.** `tests/test_project_mode.sh` reads the number of
+process skills out of `install.sh` rather than holding a literal, so an eighth name changed
+nothing there. #0032 phase `b` derived it after finding `assert_count 6` broken by a seventh.
+That is the second addition it has absorbed in silence, which is what the change was for.
+
+**The skill's contract with `BRIEFS-11` is asserted from both ends.** The clause reads a
+`**Closed:**` line and the skill is what writes one. Either half could move alone without
+looking wrong: the clause would stop finding the field while the skill went on writing it,
+and the gate would report every closed brief while every closed brief looked correct. The
+test reads the skill and the scan, and both ends were mutated.
+
+**The two documents that described the closeout now name its writer.** That is the brief's
+actual subject. `blc-next-brief-phase` step 8 and `docs/blc/briefs/README.md` each said the
+closeout branch carries the close and neither said what writes it, which is how a step ends
+up with no writer for thirty-two briefs.
 
 ## Open decisions
 
