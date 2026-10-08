@@ -1,17 +1,18 @@
 # Ledger — #0032 The draft nothing writes
 
-`blc/2 #0032 in-progress a:done(PR#139) b:in-progress(brief/0032-b-the-machine-level-command)`
+`blc/2 #0032 done a:done(PR#139) b:done(PR#140)`
 
 **Brief:** `docs/blc/briefs/0032-the-draft-nothing-writes/brief.md`
 **Started:** 2026-10-08
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-08
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the skill that writes a draft | done | PR#139 |
-| b | the machine-level command | in-progress | `brief/0032-b-the-machine-level-command` |
+| b | the machine-level command | done | PR#140 |
 
 **a — the skill that writes a draft.** Ship `skills/blc-create-draft/`, its tracked symlink
 under `.claude/skills/`, and the rewritten descriptions on both the drafter and the filer. The
@@ -133,6 +134,62 @@ against the defect before the link moved.
 cannot place fails it; breaking the `sed` that reads the list fails it with its own message
 rather than passing on an empty string. Without the second, a renamed variable would have made
 the assertion read zero and compare zero against zero.
+
+## What shipped
+
+Two phases, two PRs. `skills/blc-create-draft/` writes an idea into
+`docs/blc/briefs/_drafts/` with no serial, and `PROCESS_SKILLS` carries its name, so Claude
+Code installs it as `/blc-create-draft` and Cursor as an ordinary skill. The descriptions on
+the drafter and the filer no longer cross their nouns. `tests/test_identity_line.sh` pins the
+provenance template the drafter writes and the filer reads, from both ends.
+
+All seven settled decisions held. None was re-opened by the work.
+
+## What the record shows that the brief did not predict
+
+**The brief was filed to close a gap in the record, and the work found two more of the same
+kind.** The gap was a missing writer: everything described how a draft is *filed* and nothing
+described how one is *written*, so drafts were written by hand and arrived missing the fields
+the filer reads. Phase `b` then found the list of process skills copied in five places, one of
+them holding a count rather than names, and six more copies of that count in prose. Same
+shape: a fact stated in more places than anything reconciles.
+
+**The suite could not see this repository's own links.** Every test on that path reads what
+the installer writes into a target. Phase `a` put the new skill in the wrong one of this
+checkout's two link trees and the suite stayed green, so the toolkit could have shipped a
+correct install while being unable to run the command itself. The gap was in what the tests
+*looked at*, not in what they asserted.
+
+**A count is a copy.** Six prose sites and one assertion said "six process skills". Searching
+for the skill *names* found none of them. The rewording removed the number rather than
+bumping it, which is the only version of the fix that does not have to be made again.
+
+**The attribution was wrong in the first commit.** The proposer's address was mistyped in a
+commit already on `main`, where a forge credits co-authorship by address and so credited
+nobody. It is recorded above rather than rewritten, because `main` is published and other
+checkouts install from it.
+
+## Open after close
+
+**Nothing runs a skill, so the drafter is unproven in use.** The tests pin the template it
+shows. Whether an agent reading it produces a draft with those fields is not measured here.
+This is the "A skill guard is not a check" case and it is the brief's central limit, not a
+footnote.
+
+**The four hand-written copies of the process names remain.** This brief added a seventh name
+to each by hand and deliberately did not build the mechanism that would make that unnecessary.
+The count was derived because leaving it would have re-created a defect the same phase had
+just removed; the names were left alone. An eighth process skill will need the same four edits.
+
+**No test asserts that the four copies agree.** Adding one is cheap and was not done, so the
+drift this brief worked around is still undetected until an install places the wrong set.
+
+**`BLC_UTILITY` in `tests/test_skill_names.sh` is defined and never read,** and lists three of
+the eight utility skills. Noticed while editing the line above it. Nothing acts on it here.
+
+**The drafts README now names the drafter, and no test reads that.** `blc-create-draft` could
+be renamed and that document would go stale the way `/create-brief` did, which the sweep in
+`test_skill_names.sh` exists to catch for the old names only.
 
 ## What this cannot prove
 
