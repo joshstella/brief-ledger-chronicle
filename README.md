@@ -88,7 +88,7 @@ places, which is what makes a single source possible.
 `CLAUDE.md` / `AGENTS.md` written only when absent, and a starter permission allowlist.
 
 **Shipped documents** — this repository's own `docs/blc/briefs/README.md`, the briefs Contract
-(`docs/blc/contracts/`, currently v1.3), and the tools those docs name:
+(`docs/blc/contracts/`, currently v1.4), and the tools those docs name:
 
 | | Purpose |
 |---|---|

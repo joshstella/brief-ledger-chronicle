@@ -408,7 +408,7 @@ $CL_OUT" ;;
   esac
   # Positive control: the run must have reached the clause at all.
   case "$CL_OUT" in
-    *"10 clauses decided"*) ;;
+    *"11 clauses decided"*) ;;
     *) fail "validate-briefs did not complete — the glob check never ran:
 $CL_OUT" ;;
   esac
@@ -550,16 +550,22 @@ test_clauses_the_promotion_criteria_still_describe_this_repository() {
 $out" ;;
   esac
 
-  # The comma matters. `0 judgment(s)` is a substring of `10 judgment(s)`, and of 20, 30, 100
-  # — without the separator this guard passes with ten standing judgments in the tree. The
-  # summary prints `, %d judgment(s)`, so the comma-space is the anchor.
-  case "$out" in
-    *", 0 judgment(s)"*) ;;
-    *) fail "a ledger in this repository now produces a judgment, so promotion criterion 3 in
-docs/blc/contracts/README.md ('unmet for every [judgment] in this repository') is stale.
-Update the sentence, then update this test:
-$out" ;;
-  esac
+  # This asserted `, 0 judgment(s)` until BRIEFS-11, which reports sixteen ledgers here and
+  # made criterion 3 met for exactly one clause. The guard did its job then — it caught the
+  # prose going stale in the same run that made it stale — and the question it asks has to
+  # change with the answer rather than be deleted.
+  #
+  # It now reads which clauses fire rather than how many findings they produce. A count
+  # would have to be edited by whoever closes the next brief, for a reason that has nothing
+  # to do with them. A clause id appearing here means the README's list of what criterion 3
+  # is unmet for is wrong, which is the thing worth catching.
+  local firing
+  firing="$(printf '%s\n' "$out" | sed -n 's/^\(BRIEFS-[0-9]*\) \[judgment\].*/\1/p' | sort -u | paste -sd' ')"
+  [ "$firing" = "BRIEFS-11" ] \
+    || fail "the clauses producing judgments in this repository are now '$firing', not
+'BRIEFS-11'. Promotion criterion 3 in docs/blc/contracts/README.md names which clauses it is
+unmet for. Update that list, then update this test:
+$out"
 }
 
 test_clauses_an_unknown_scan_field_is_refused() {
@@ -612,5 +618,132 @@ test_clauses_a_missing_library_refuses_to_report_a_clean_tree() {
   esac
   case "$out" in
     *"0 defect"*) fail "a validator that could not load its checks reported a clean tree" ;;
+  esac
+}
+
+# ── BRIEFS-11 — a closed brief records when it closed ────────────────────────
+#
+# The clause reads the status line, not the `**Status:**` field. Both say whether a brief
+# is closed and the ledgers carry both, so one had to be chosen: the status line is the
+# machine-readable statement every tool here already parses, and all 32 closed ledgers
+# carry one. Reading the prose field instead would have made the gate the only tool in
+# the repository that answers "is this closed?" from a different place.
+
+test_clauses_briefs11_reports_a_closed_brief_with_no_date() {
+  cl_repo nodate
+  cl_brief 0001 finished -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 done a:done(PR#1)`' \
+    '' \
+    '| id | label | status |' \
+    '|---|---|---|' \
+    '| a | the only phase | done |'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) ;;
+    *) fail "BRIEFS-11 did not report a closed brief with no Closed: date
+$CL_OUT" ;;
+  esac
+  cl_assert_clean_gate "BRIEFS-11"
+}
+
+test_clauses_briefs11_is_silent_when_the_date_is_there() {
+  cl_repo dated
+  cl_brief 0001 finished -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 done a:done(PR#1)`' \
+    '' \
+    '**Closed:** 2026-01-02' \
+    '' \
+    '| id | label | status |' \
+    '|---|---|---|' \
+    '| a | the only phase | done |'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) fail "BRIEFS-11 complained about a ledger that records its close:
+$CL_OUT" ;;
+  esac
+}
+
+# The clause asks only closed briefs. An open one has no date to carry yet, and asking for
+# one would report every brief in flight — which is how a judgment stops being read.
+test_clauses_briefs11_does_not_ask_an_open_brief_for_a_date() {
+  cl_repo stillopen
+  cl_brief 0001 running -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 in-progress a:in-progress(brief/0001-a-x)`' \
+    '' \
+    '| id | label | status |' \
+    '|---|---|---|' \
+    '| a | the only phase | in-progress |'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) fail "BRIEFS-11 asked an unfinished brief for a Closed: date
+$CL_OUT" ;;
+  esac
+}
+
+# `done(commit 92a7168)` is a real status in this repository — #0001 — and the pointer
+# holds a space. A reader taking the third whitespace-separated field gets `done(commit`
+# and matches nothing, so the oldest closed briefs would go unreported by a clause written
+# to find exactly them.
+test_clauses_briefs11_reads_a_state_whose_pointer_holds_a_space() {
+  cl_repo spacey
+  cl_brief 0001 ancient -- \
+    '# Ledger — #0001' \
+    '`blc/1 #0001 done(commit 92a7168)`'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) ;;
+    *) fail "BRIEFS-11 did not read a state whose pointer contains a space
+$CL_OUT" ;;
+  esac
+}
+
+# A ledger that shows the field in a fenced example is documenting the format, not recording
+# its own close. The clause reads the shared scan, which skips fences once for every clause
+# that reads a ledger, rather than grepping the raw file. The first version did grep, and
+# this fixture passed it silently — found in review, before any ledger here did it, which is
+# how the same fault was caught on the status line.
+test_clauses_briefs11_does_not_read_a_fenced_example_as_a_close() {
+  cl_repo fenced
+  cl_brief 0001 documented -- \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 done a:done(PR#1)`' \
+    '' \
+    'A closed ledger shows the field like this:' \
+    '' \
+    '```' \
+    '**Closed:** 2026-01-02' \
+    '```'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) ;;
+    *) fail "a fenced example of the field was read as the ledger's own close
+$CL_OUT" ;;
+  esac
+}
+
+# The same question for the other region the scan skips. Frontmatter is YAML, so a key that
+# looks like the field is a string in a config block, not a statement about this brief.
+test_clauses_briefs11_does_not_read_frontmatter_as_a_close() {
+  cl_repo fmclose
+  cl_brief 0001 fronted -- \
+    '---' \
+    '**Closed:** 2026-01-02' \
+    '---' \
+    '# Ledger — #0001' \
+    '`blc/2 #0001 done a:done(PR#1)`'
+  cl_run
+
+  case "$CL_OUT" in
+    *"BRIEFS-11"*) ;;
+    *) fail "a frontmatter key was read as the ledger's own close
+$CL_OUT" ;;
   esac
 }

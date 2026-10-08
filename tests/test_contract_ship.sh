@@ -168,22 +168,29 @@ test_ship_the_briefs_readme_is_this_repos_own_file() {
   assert_status 0
   cmp -s "$REPO_ROOT/docs/blc/briefs/README.md" "$TARGET/docs/blc/briefs/README.md" \
     || fail "installed briefs README differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.md" "$TARGET/docs/blc/contracts/v1.md" \
-    || fail "installed Contract v1 differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.1.md" \
-    || fail "installed Contract v1.1 differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.2.md" "$TARGET/docs/blc/contracts/v1.2.md" \
-    || fail "installed Contract v1.2 differs from this repository's own copy"
-  cmp -s "$REPO_ROOT/docs/blc/contracts/v1.3.md" "$TARGET/docs/blc/contracts/v1.3.md" \
-    || fail "installed Contract v1.3 differs from this repository's own copy"
+  # Every version in the tree, not a list of them. The versions were named one per line up
+  # to v1.3, so publishing v1.4 added a file this test did not look at — a new Contract
+  # could have installed wrong, or not installed at all, and the assertion about the
+  # installed Contract would still have passed.
+  local v name
+  for v in "$REPO_ROOT"/docs/blc/contracts/v*.md; do
+    name="${v##*/}"
+    cmp -s "$v" "$TARGET/docs/blc/contracts/$name" \
+      || fail "installed Contract $name differs from this repository's own copy"
+  done
+  return 0
 }
 
 # Publishing a version means marking the one before it superseded. Two versions that both say
 # `current` leave a reader to guess which clause text binds.
+#
+# The expected name stays written out rather than derived from the highest version on disk.
+# That is the point of it: publishing a version has to be a deliberate edit here, so a file
+# dropped into the directory cannot promote itself to current without someone saying so.
 test_ship_exactly_one_contract_version_is_current() {
   local current
   current=$(grep -lx '\*\*Status:\*\* current' "$REPO_ROOT"/docs/blc/contracts/v*.md | sed 's#.*/##')
-  assert_count "v1.3.md" "$current" "Contract versions marked current"
+  assert_count "v1.4.md" "$current" "Contract versions marked current"
 }
 
 # A structural guard rather than a behavioural one: the drift can only come back by

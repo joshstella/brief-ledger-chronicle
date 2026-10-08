@@ -64,6 +64,12 @@
 blc_ledger_scan() {
   awk '
     function is_status(l) { return l ~ /^[[:space:]]*`?blc\/[0-9]+[[:space:]]/ }
+    # BRIEFS-11 reads this. It is matched by the same scan as the status line, and for the
+    # same reason: a ledger that shows the field in a fenced example is documenting the
+    # format, not recording its own close, and a reader grepping the raw file cannot tell
+    # the two apart. That is not hypothetical here — the status line had this exact fault
+    # and it was found in review before any ledger hit it.
+    function is_closed(l) { return l ~ /^[[:space:]]*\*\*Closed:\*\*/ }
 
     { line = $0; sub(/\r$/, "", line) }
 
@@ -115,6 +121,8 @@ blc_ledger_scan() {
     # how the file ends — exiting early reports a fence closed because the scan stopped
     # before reaching the line that never closes it.
     outside == "" && is_status(line) { outside = line }
+    # Sits below every skip above, so a fenced or frontmatter example never sets it.
+    closed == "" && is_closed(line) { closed = "yes" }
 
     END {
       # The file ended inside a fence that never closed. Treating the remainder as code
@@ -133,6 +141,7 @@ blc_ledger_scan() {
 
       printf "frontmatter\t%s\n", (fm == 1 ? "open" : (fm == 2 ? "closed" : "none"))
       printf "fence\t%s\n", (fence ? "open" : "closed")
+      printf "closed\t%s\n", (closed == "" ? "no" : "yes")
     }
   ' "$1" 2>/dev/null
 }
@@ -140,6 +149,24 @@ blc_ledger_scan() {
 blc_status_line() {
   blc_ledger_scan "$1" | blc_scan_field status | tr -d '`' \
     | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+# The brief-level state token from a status line: the `done(PR#45)` in
+# `blc/2 #0045 done(PR#45) a:done(PR#44)`. The pointer is kept, because the one caller that
+# renders it wants it and the one that compares it can cut it.
+#
+# This lived inside `list-briefs.sh` until `BRIEFS-11` needed the same answer. It moved here
+# rather than being written twice, for the reason stated at the top of `validate-briefs.sh`:
+# a validator with its own private copy would be a reader free to disagree with the tool
+# that renders the timeline, and the two would drift without either being wrong on its own.
+#
+# The schema and serial are stripped off the front and the phase entries off the back,
+# instead of taking a field by position. `done(commit 92a7168)` is a real state in this
+# repository and holds a space, so a positional read returns `done(commit` and the oldest
+# closed briefs match nothing.
+blc_status_state() {
+  printf '%s' "$1" \
+    | sed -E 's/^blc\/[0-9]+[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9a-z]+:.*$//'
 }
 
 # Pull one field out of a scan already performed. Reads stdin, so a caller wanting more
@@ -152,7 +179,7 @@ blc_status_line() {
 # clause in silence — the failure this brief is about, in the code enforcing it.
 blc_scan_field() {
   case "$1" in
-    status|frontmatter|fence) ;;
+    status|frontmatter|fence|closed) ;;
     *) printf 'blc_scan_field: unknown field: %s\n' "$1" >&2; return 2 ;;
   esac
   awk -F'\t' -v want="$1" '$1 == want { sub(/^[^\t]*\t/, ""); print }'
@@ -167,7 +194,8 @@ blc_ledger_facts() {
   blc_ledger_scan "$1" | awk -F'\t' '
     $1 == "frontmatter" { fm = $2 }
     $1 == "fence"       { fe = $2 }
-    END { printf "frontmatter=%s fence=%s\n", fm, fe }
+    $1 == "closed"      { cl = $2 }
+    END { printf "frontmatter=%s fence=%s closed=%s\n", fm, fe, cl }
   '
 }
 

@@ -384,3 +384,42 @@ test_status_line_a_tilde_fence_counts_too() {
   [ "$(blc_status_line "$SL_FILE")" = "blc/2 #0001 in-progress a:pending" ] \
     || fail "a tilde fence was not treated as a fence"
 }
+
+# ── blc_status_state — the brief-level token ─────────────────────────────────
+#
+# Moved out of list-briefs.sh when BRIEFS-11 needed the same answer. These pin the two
+# shapes the extraction exists for, so the reasoning cannot be lost to a later rewrite
+# that reaches for a positional read because every status line it happened to look at
+# would have survived one.
+
+test_status_line_state_is_the_token_after_the_serial() {
+  sl_source_lib
+  [ "$(blc_status_state 'blc/2 #0032 done a:done(PR#139) b:done(PR#140)')" = "done" ] \
+    || fail "the brief state was not read as 'done'"
+}
+
+# #0001 writes `done(commit 92a7168)`. The pointer holds a space, so the third
+# whitespace-separated field is `done(commit` — half a status, and a reader comparing it
+# against `done` matches nothing.
+test_status_line_state_survives_a_pointer_holding_a_space() {
+  sl_source_lib
+  [ "$(blc_status_state 'blc/1 #0001 done(commit 92a7168)')" = "done(commit 92a7168)" ] \
+    || fail "a state whose pointer holds a space was cut: $(blc_status_state 'blc/1 #0001 done(commit 92a7168)')"
+}
+
+# A state with no phase entries after it has nothing to strip off the back. The same
+# expression has to handle both, or the oldest ledgers return empty.
+test_status_line_state_reads_a_line_with_no_phases() {
+  sl_source_lib
+  [ "$(blc_status_state 'blc/1 #0001 done(PR#11)')" = "done(PR#11)" ] \
+    || fail "a status line with no phase entries returned the wrong state"
+}
+
+# list-briefs.sh renders this token and validate-briefs.sh compares it. One reader, so the
+# timeline and the gate cannot disagree about which briefs are closed.
+test_status_line_state_has_one_reader() {
+  local hits
+  hits="$(cd "$REPO_ROOT" && grep -ln "s/\^blc" tools/*.sh 2>/dev/null)"
+  [ -z "$hits" ] \
+    || fail "a tool re-derives the brief state instead of calling blc_status_state: $hits"
+}

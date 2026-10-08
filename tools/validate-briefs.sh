@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-10.
+# Check a briefs directory against the briefs Contract, clauses BRIEFS-1 to BRIEFS-11.
 #
 # Usage: validate-briefs.sh [briefs-dir]     (default: docs/blc/briefs)
 # Run from the repository root. Project checks are read from brief-checks/ there.
@@ -7,7 +7,7 @@
 # Exit 0 if no [defect] clause is violated, 1 otherwise. [judgment] findings are
 # printed and never affect the exit status — the Contract says a judgment clause
 # is surfaced for a human, so making it fail the build would silently promote it
-# to a defect. BRIEFS-8, BRIEFS-9 and BRIEFS-10 are all [judgment].
+# to a defect. BRIEFS-8, BRIEFS-9, BRIEFS-10 and BRIEFS-11 are all [judgment].
 #
 # Exit 2 means the question could not be asked: a briefs directory that is not a
 # directory, or a shared library under tools/lib/ that cannot be read. It is kept
@@ -15,7 +15,7 @@
 # different responses, and a checker that could not load its clauses must never be
 # read as a clean tree.
 #
-# The clause text lives in docs/blc/contracts/v1.3.md. This script cites clause ids and
+# The clause text lives in docs/blc/contracts/v1.4.md. This script cites clause ids and
 # does not restate them: a paraphrase here would be a fourth copy of the rules,
 # which is the drift this Contract was extracted to end.
 #
@@ -315,6 +315,21 @@ EOF
   done <<EOF
 $(blc_status_phase_entries "$status_line")
 EOF
+
+  # BRIEFS-11. The pointer is cut off the state, so `done(PR#45)` and a bare `done` are
+  # the same answer. blc_status_state keeps it because list-briefs.sh renders it.
+  #
+  # `$closed` comes from blc_ledger_facts above, not from a grep of the file. A grep passes
+  # a ledger whose only `**Closed:**` sits in a fenced example of the format, which is the
+  # fault the status-line locator already carries a paragraph about. One scan answers all
+  # three questions and skips fences once, for every clause that reads this file.
+  brief_state="$(blc_status_state "$status_line")"
+  case "${brief_state%%(*}" in
+    done)
+      [ "$closed" = yes ] \
+        || judgment "BRIEFS-11" "$entry: status line says done, and ledger.md records no **Closed:** date"
+      ;;
+  esac
 done
 
 # ── Project checks (brief-checks/) ───────────────────────────────────────────
@@ -359,15 +374,25 @@ fi
 # The brief count is reported for the same reason. Without it, a caller cannot
 # tell compliance from an empty directory: both are zero defects and exit 0, and
 # a test asserting only the exit code would pass on a tree containing nothing.
+#
+# Declared once and printed twice. It was written out in both branches below, so
+# BRIEFS-11 made two lines wrong and a reader fixing one could leave the other.
+#
+# It is not derived from the Contract, and that is the paragraph above restated as
+# code: the number says how many clauses this script decides. Counting the headings
+# in v1.4 would make the report agree with the document by construction and tell a
+# reader nothing — a clause added to the Contract and never implemented here would
+# raise this number, which is precisely the overstatement being guarded against.
+CLAUSES_DECIDED=11
 
 BRIEF_COUNT=$(printf '%s' "$WELL_FORMED" | grep -c '[^[:space:]]')
 
 if [ "$PROJECT_CHECK_FAILURES" -gt 0 ]; then
-  printf '\nvalidate-briefs: %s — %d brief(s), 10 clauses decided, %d defect(s), %d judgment(s), %d project check failure(s)\n' \
-    "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS" "$PROJECT_CHECK_FAILURES"
+  printf '\nvalidate-briefs: %s — %d brief(s), %d clauses decided, %d defect(s), %d judgment(s), %d project check failure(s)\n' \
+    "$BRIEFS_DIR" "$BRIEF_COUNT" "$CLAUSES_DECIDED" "$DEFECTS" "$JUDGMENTS" "$PROJECT_CHECK_FAILURES"
 else
-  printf '\nvalidate-briefs: %s — %d brief(s), 10 clauses decided, %d defect(s), %d judgment(s)\n' \
-    "$BRIEFS_DIR" "$BRIEF_COUNT" "$DEFECTS" "$JUDGMENTS"
+  printf '\nvalidate-briefs: %s — %d brief(s), %d clauses decided, %d defect(s), %d judgment(s)\n' \
+    "$BRIEFS_DIR" "$BRIEF_COUNT" "$CLAUSES_DECIDED" "$DEFECTS" "$JUDGMENTS"
 fi
 
 [ "$DEFECTS" -eq 0 ] && [ "$PROJECT_CHECK_FAILURES" -eq 0 ] || exit 1

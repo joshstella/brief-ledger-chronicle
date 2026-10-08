@@ -110,10 +110,9 @@ brief_status() {
     printf '%s' "no-line"
     return
   fi
-  # The token can contain a space — `done(commit 383ed5b)` — so this strips the
-  # schema and serial off the front and the phase fields off the back rather than
-  # taking a field by position. Taking $3 would cut that status in half.
-  printf '%s' "$raw" | sed -E 's/^blc\/[0-9]+[[:space:]]+#[0-9]+[[:space:]]+//; s/[[:space:]]+[0-9a-z]+:.*$//'
+  # Shared with validate-briefs.sh since BRIEFS-11, which asks the same question of the
+  # same token. The reasoning about why this is not a positional read moved with it.
+  blc_status_state "$raw"
 }
 
 # The `Depends on` value from the identity line, or `—`. Read through the shared reader so
