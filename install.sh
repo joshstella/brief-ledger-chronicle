@@ -439,6 +439,7 @@ ownership_map() {
     tools/open-briefs.sh \
     tools/detect-forge.sh \
     tools/list-briefs.sh \
+    tools/next-serial.sh \
     tools/jira-csv.sh \
     tools/orient.sh \
     tools/stale-branches.sh \
@@ -959,7 +960,7 @@ echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.4 — the briefs convent
 echo "  $TARGET_DIR/docs/blc/chronicles/   (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/blc/install-log/  (append-only record of every install)"
 echo "  $TARGET_DIR/docs/blc/state/        (one declaration per contributor)"
-echo "  $TARGET_DIR/tools/                 (validate-briefs.sh, open-briefs.sh, detect-forge.sh, list-briefs.sh, jira-csv.sh, orient.sh, stale-branches.sh, check-architecture.sh, lib/)"
+echo "  $TARGET_DIR/tools/                 (validate-briefs.sh, open-briefs.sh, detect-forge.sh, list-briefs.sh, next-serial.sh, jira-csv.sh, orient.sh, stale-branches.sh, check-architecture.sh, lib/)"
 if [[ "$HOST" == "cursor" ]]; then
   echo "  $TARGET_DIR/$SKILLS_DST_REL/       ($ALL_SKILL_COUNT skills)"
   echo "  $TARGET_DIR/$PROCESS_RULES_REL"

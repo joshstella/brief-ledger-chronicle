@@ -28,10 +28,17 @@ and get their identity here, at filing time, not while being written.
 0. **Preflight.** If `docs/blc/briefs/` or `docs/blc/briefs/_drafts/` is missing, **stop** and
    tell the user to run `blc-init-briefs` first. Do not scaffold the structure here — setup
    is `blc-init-briefs`'s job; this command assumes it exists.
-1. **Compute the next serial.** List `docs/blc/briefs/`; from each entry **whose name begins
-   with four digits**, parse `NNNN`; take the max and add 1; zero-pad to four. Entries
-   without a leading four-digit prefix (`_drafts/`, `README`, etc.) are ignored. If there
-   are none, start at `0001`. Enacts `BRIEFS-8` (contiguity).
+1. **Compute the next serial.** Run `bash tools/next-serial.sh`. It prints the next free
+   serial, zero-padded to four. It reads the local `docs/blc/briefs/` directory **and**
+   `docs/blc/briefs/` on every `origin` branch, because a serial filed on a branch is taken
+   even though the local directory cannot see it — which is how `#0018` was filed twice.
+   Anything it could not read it prints to stderr; read that before taking the number. It
+   refuses, with exit 2 and no serial, when the briefs directory is not there — the same
+   condition step 0 stops on. Do not work around that by counting the directory yourself.
+   If the script is absent, fall back to the local directory alone — the max four-digit
+   prefix plus one, `0001` if there are none, ignoring entries without that prefix such as
+   `_drafts/` and `README` — and **say that you fell back**, because that is the narrower
+   view the incident came from. Enacts `BRIEFS-8` (contiguity).
 2. **Collision guard.** If `docs/blc/briefs/NNNN-*` already exists, increment until free —
    defensive against a stale read. Assignment must reflect the directory *now*. Enacts
    `BRIEFS-3` (unique serials); its race is the known limitation recorded in the Contract.

@@ -48,3 +48,32 @@ test_source_tree_every_invoked_script_is_executable_in_the_index() {
   [ "$checked" -gt 0 ] || fail "the scan found no invoked scripts — it is broken, not clean"
   [ -z "$bad" ] || fail "not executable in the git index:$bad"
 }
+
+# A tool absent from install.sh's ship list installs nowhere. Nothing used to notice.
+#
+# The existing coverage names tools one at a time — `assert_file "$TARGET/tools/open-briefs.sh"`
+# and four more like it — so it proves the named four and says nothing about a fifth. #0034
+# added tools/next-serial.sh and both mutations of its ship-list entry, dropping it and
+# keeping it, left the whole suite green. The tool would have shipped to no target at all.
+#
+# Derived from the tree, like the mode check above, and for the same reason: a hand-written
+# roster needs editing at the moment someone is adding a tool and thinking about something
+# else. tools/lib/ is included here even though it is exempt from the mode check — it is
+# sourced rather than invoked, which changes its permissions and not whether it must arrive.
+test_source_tree_every_tool_is_in_the_installer_ship_list() {
+  git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || { skip "not a git checkout"; return; }
+
+  local path escaped checked=0 missing=""
+  while read -r path; do
+    checked=$((checked + 1))
+    # Anchored to a whole line of the list, so a path named only in a comment or an echo does
+    # not count as shipped. The list continues with ` \` and its last entry ends `; do`.
+    escaped="$(printf '%s' "$path" | sed 's/\./\\./g')"
+    grep -qE "^[[:space:]]*${escaped}([[:space:]]*\\\\|;[[:space:]]*do)[[:space:]]*$" \
+      "$REPO_ROOT/install.sh" || missing="$missing $path"
+  done < <(git -C "$REPO_ROOT" ls-files -- 'tools/*.sh')
+
+  [ "$checked" -gt 0 ] || fail "the scan found no tools — it is broken, not clean"
+  [ -z "$missing" ] || fail "install.sh never ships these, so they install nowhere:$missing"
+}
