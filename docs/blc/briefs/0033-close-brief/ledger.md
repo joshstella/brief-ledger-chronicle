@@ -1,16 +1,16 @@
 # Ledger — #0033 The close nothing writes
 
-`blc/2 #0033 pending a:pending b:pending`
+`blc/2 #0033 in-progress a:in-progress(brief/0033-a-the-clause-that-defines-a-close) b:pending`
 
 **Brief:** `docs/blc/briefs/0033-close-brief/brief.md`
 **Started:** 2026-10-08
-**Status:** pending
+**Status:** in-progress
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the clause that defines a close | pending | — |
+| a | the clause that defines a close | in-progress | `brief/0033-a-the-clause-that-defines-a-close` |
 | b | the skill that writes one | pending | — |
 
 **a — the clause that defines a close.** Add `BRIEFS-11` as a `[judgment]`: a ledger whose
@@ -75,6 +75,80 @@ a superseded contract and reporting it as current. The others are prose in `READ
 clauses BRIEFS-1..8 (currently v1.3)". `BRIEFS-9` and `BRIEFS-10` exist. The document went
 stale two clauses ago and nothing reported it, which is the same failure this brief is about,
 one layer out.
+
+## Settled while building `a`
+
+**The clause reads the status line, and that had to be chosen rather than assumed.** A ledger
+states whether it is closed twice — in the `**Status:**` field and in the `blc/2` status line.
+The status line won because every other tool here already parses it through one shared reader,
+and all 32 closed ledgers carry one. A clause reading the prose field would have made the gate
+the only reader in the repository answering "is this closed?" from a different place, which is
+the drift `BRIEFS-9` and `BRIEFS-10` were written to end. The clause says which one it asks,
+so the choice is in the published text and not only in the code.
+
+**The brief-state reader moved, and that move was not optional.** `list-briefs.sh` held a
+careful extraction of the state token, with a comment warning that a positional read cuts
+`done(commit 92a7168)` in half. `validate-briefs.sh` needed the same answer. Its own header
+forbids the obvious shortcut: a validator with a private copy is "a reader free to disagree",
+which is the defect #0014 spent four phases removing. So it became `blc_status_state` in
+`tools/lib/status-line.sh`, with a test that fails if any tool re-derives it.
+
+**The clause count must not be derived, and working out why took longer than the fix.** The
+hand-written `10 clauses decided` looked like the same defect #0032 had just removed from the
+installer, and the first instinct was to count the clause headings in the Contract. The
+comment above it says why that is wrong: the number is how many clauses *this script decides*,
+not how many the Contract contains, and counting the document would make the report agree with
+it by construction — a clause published and never implemented would raise the number. The real
+defect was that the literal was written twice, in two branches of the same report, so
+`BRIEFS-11` made two lines wrong and a reader fixing one could leave the other. It is declared
+once now. Not every copied number is the same defect, and "derive it" was the wrong lesson to
+carry over.
+
+**The installer would not have shipped the new Contract.** `install.sh` named the versions one
+per line up to `v1.3`. A target would have kept the superseded version while the briefs README
+it also ships linked to a `v1.4.md` that was not there. This was not found by reading the
+installer: a test in `test_contract_ship.sh` had the same hand-written list, and changing that
+test to walk the directory failed immediately. The fix is a glob in both places.
+
+**`BRIEFS-11` is the first clause in this repository to meet promotion criterion 3, and that
+settled nothing about promoting it.** Criterion 3 asks that a check has produced findings on
+records written without it in mind, examined and judged correct. The clause reports sixteen
+ledgers written long before it existed, and all sixteen were read: the date is genuinely
+absent and nothing was a false positive. The Contract README said criterion 3 was "unmet for
+every `[judgment]` in this repository", and that sentence stopped being true in the same run
+that made it so. It now names the three clauses it is still unmet for and records why
+`BRIEFS-11` stays a judgment anyway: the records it reports are record, they will not be
+corrected, and promoting the clause would gate this repository's build forever on a past
+nobody intends to change. Criterion 3 was always necessary and never sufficient. This is the
+first case that shows the difference.
+
+**A guard caught its own prose going stale in the run that staled it.**
+`test_clauses_the_promotion_criteria_still_describe_this_repository` asserted that no ledger
+here produces a judgment. It failed the moment the clause worked. It now reads *which* clauses
+fire rather than how many findings they make, so the next brief does not have to edit a count
+for a reason that has nothing to do with it, and a new clause firing still trips it.
+
+**The first version of the check could be fooled by a ledger that documented itself.** It
+matched `**Closed:**` anywhere in the file, so a fenced example of the field satisfied the
+clause — a brief with no recorded close passing silently. Caught by the review gate before
+the commit, with a fixture that demonstrated it rather than an argument that it could happen.
+The repository already knew this fault: `status-line.sh` carries a paragraph about a fenced
+example being returned instead of a ledger's own status, found the same way, before any
+ledger here did it. The fix extends that same scan with a `closed` field instead of adding a
+second reader, so fences are skipped once for every clause that reads a ledger.
+
+**A mutation test produced a false result and was redone.** Restoring the mutated file with
+`git checkout --` restored it from the *index*, which still held the version staged before
+the fence fix. The run afterwards therefore measured the old code and reported the guards
+working. The second attempt restored from a file copy and ran a baseline on both sides of
+the mutation. A mutation test is only worth the restore step being right, and nothing about
+the first run's output showed that it was not.
+
+**The decision to keep sixteen judgment lines was taken with the output in hand.** The
+alternative was one collapsed line naming all sixteen. Per-brief lines were kept: they match
+every other clause, and the judgment count stays honest at sixteen instead of dropping to one.
+The noise is the real cost of a record this project chose not to rewrite, and hiding the cost
+would misreport the decision.
 
 ## Open decisions
 

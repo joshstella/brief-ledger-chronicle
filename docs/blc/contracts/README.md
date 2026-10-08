@@ -16,7 +16,8 @@ legend cannot drift against itself.
 | [v1](v1.md) | the structure of `docs/briefs/` | superseded by v1.1 |
 | [v1.1](v1.1.md) | the structure of `docs/briefs/` | superseded by v1.2 |
 | [v1.2](v1.2.md) | the structure of `docs/briefs/`, and `ledger.md` consistency | superseded by v1.3 |
-| [v1.3](v1.3.md) | the structure of `docs/blc/briefs/`, and `ledger.md` consistency | current |
+| [v1.3](v1.3.md) | the structure of `docs/blc/briefs/`, and `ledger.md` consistency | superseded by v1.4 |
+| [v1.4](v1.4.md) | the same, plus a closed brief recording when it closed | current |
 
 A version states what holds for that version. A later version supersedes it without making
 it retroactively false. v1 to v1.2 name `docs/briefs/`, the root before v1.3.
@@ -142,12 +143,23 @@ schedule.
    A clause nobody violates cannot satisfy this, and that is accepted rather than worked
    around. A rule that has never met a real record does not become a gate because time passed.
 
-Criterion 3 is the one that cannot be hurried, and at the time of writing it is unmet for
-every `[judgment]` in this repository — not unverifiable, unmet. Installs write their log into
-the target rather than back here, so this project learns about a consumer's run only when
-someone reports it. Until there is someone to report it, the only records available are this
-repository's own, and a clause that reports nothing across all of them has produced no evidence
-either way.
+Criterion 3 is the one that cannot be hurried. Installs write their log into the target
+rather than back here, so this project learns about a consumer's run only when someone
+reports it. Until there is someone to report it, the only records available are this
+repository's own, and a clause that reports nothing across all of them has produced no
+evidence either way.
+
+It is unmet for `BRIEFS-8`, `BRIEFS-9` and `BRIEFS-10` — not unverifiable, unmet. None of
+them has ever fired outside a fixture here.
+
+`BRIEFS-11` is the first clause to meet it, and meeting it did not make promotion right.
+It reports sixteen ledgers in this repository, every one written years of briefs before the
+clause existed, and all sixteen were read and judged correct — the date is genuinely absent,
+and no finding was a false positive. That is the evidence criterion 3 asks for. The clause
+stays `[judgment]` anyway, because the records it reports are record: they will not be
+corrected, so promoting the clause would gate this repository's own build forever on a past
+nobody intends to change. Criterion 3 was always necessary and never sufficient, and this is
+the first case to show the difference.
 
 ### Scope — who the clause binds
 

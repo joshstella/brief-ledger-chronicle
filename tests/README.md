@@ -87,7 +87,7 @@ tests/
   test_ownership_map.sh   one ownership map, five readers
   test_install_log.sh     the append-only install log
   test_machine_mode.sh    --machine symlinking into $CLAUDE_HOME
-  test_briefs.sh          Contract clauses BRIEFS-1..8 (currently v1.3), plus this repo's own compliance
+  test_briefs.sh          Contract clauses on brief.md, plus this repo's own compliance
   test_brief_checks.sh    project checks in brief-checks/ (#0011)
   test_open_briefs.sh     every finding open-briefs.sh can emit, each provoked by a fixture
   test_detect_forge.sh    which forge hosts the remote, asked of stub gh and glab on a PATH

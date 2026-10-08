@@ -414,17 +414,26 @@ fi
 ownership_map() {
   local same skill_dir skill_name
 
+  # Every Contract version in this repository, rather than a list of them. The versions
+  # were named one per line up to v1.3. Publishing v1.4 added a file the list did not
+  # name, so the new Contract would not have installed at all: a target would have kept
+  # the superseded version while the briefs README it also ships linked to one that was
+  # not there. Found by a test, not by reading this (#0033).
+  local contract_versions="" v
+  for v in "$SCRIPT_DIR"/docs/blc/contracts/v*.md; do
+    contract_versions="$contract_versions docs/blc/contracts/${v##*/}"
+  done
+
   # Shipped docs, the Contract, and the tools its clauses name. Source and destination
   # are the same path: these travel from this repository's own docs/, so a target lives
   # by the files this repository lives by rather than by a template copy that drifts.
+  #
+  # shellcheck disable=SC2086
   for same in \
     docs/blc/briefs/README.md \
     docs/blc/briefs/_drafts/README.md \
     docs/blc/contracts/README.md \
-    docs/blc/contracts/v1.md \
-    docs/blc/contracts/v1.1.md \
-    docs/blc/contracts/v1.2.md \
-    docs/blc/contracts/v1.3.md \
+    $contract_versions \
     docs/blc/state/README.md \
     tools/validate-briefs.sh \
     tools/open-briefs.sh \
@@ -946,7 +955,7 @@ echo "Agent host:       $HOST"
 echo ""
 echo "This will create or update:"
 echo "  $TARGET_DIR/docs/blc/briefs/       (brief/ledger structure)"
-echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.3 — the briefs convention)"
+echo "  $TARGET_DIR/docs/blc/contracts/    (Contract v1.4 — the briefs convention)"
 echo "  $TARGET_DIR/docs/blc/chronicles/   (chronicle.md; other files stay ignored)"
 echo "  $TARGET_DIR/docs/blc/install-log/  (append-only record of every install)"
 echo "  $TARGET_DIR/docs/blc/state/        (one declaration per contributor)"

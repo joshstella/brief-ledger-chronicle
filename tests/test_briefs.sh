@@ -54,7 +54,7 @@ test_briefs_a_compliant_tree_passes() {
   add_brief 0002-second "#0001"
   run_validator "$BRIEFS"
   assert_status 0
-  assert_out "2 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "2 brief(s), 11 clauses decided, 0 defect(s), 0 judgment(s)"
 }
 
 # Zero defects and exit 0 is also what an empty directory produces. Any test that
@@ -401,7 +401,7 @@ test_briefs_the_optional_tracker_fields_decide_nothing() {
     "**Serial:** #0001 · **Created:** 2026-08-21T12:00:00Z · **Author:** a@b.com · **Owner:** not-an-email · **Jira:** !!! · **Depends on:** —"
   run_validator "$BRIEFS"
   assert_status 0
-  assert_out "1 brief(s), 10 clauses decided, 0 defect(s), 0 judgment(s)"
+  assert_out "1 brief(s), 11 clauses decided, 0 defect(s), 0 judgment(s)"
   # Both values are deliberately malformed. A well-formed fixture would pass under a
   # validator that had learned to check them, which is the change this test exists to catch.
   grep -q 'not-an-email' "$BRIEFS/0001-owned/brief.md" \
