@@ -23,8 +23,8 @@
 # This file is exempt too, and for a duller reason: it is the only place outside the
 # record that has to write the old names down, because it is what searches for them.
 
-# The nine, and the six of them that Claude Code takes as slash-commands.
-BLC_PROCESS="blc-commit-push-pr blc-create-brief blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+# The ones Claude Code takes as slash-commands, and a sample of the ones it does not.
+BLC_PROCESS="blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 BLC_UTILITY="blc-chronicle blc-installer-builder blc-ste-writing"
 
 # The names as they were before #0010. Matched with a negative lookbehind so
@@ -128,9 +128,9 @@ test_skill_names_a_claude_install_places_only_prefixed_skills_and_commands() {
   done
 }
 
-# Both hosts ship the same six process skills; only the destination differs. A rename
+# Both hosts ship the same process skills; only the destination differs. A rename
 # that updated one host's list and not the other would leave the sets disagreeing.
-test_skill_names_both_hosts_agree_on_the_six() {
+test_skill_names_both_hosts_agree_on_the_process_skills() {
   local s
   run_install y --host claude --target "$TARGET"
   assert_status 0
@@ -178,6 +178,28 @@ test_skill_names_the_cursor_link_is_committed_as_a_link() {
   mode="$(cd "$REPO_ROOT" && git ls-files -s .cursor/skills | awk '{print $1}')"
   [ "$mode" = "120000" ] \
     || fail "expected .cursor/skills committed as a symlink (120000), got ${mode:-untracked}"
+}
+
+# This repository links its own skills twice, and the two links are not interchangeable.
+# A process skill is a slash-command, so it belongs under `.claude/commands/<name>.md`;
+# everything else is a skill directory under `.claude/skills/<name>`. Which of the two a
+# skill gets is the whole observable difference the process list makes here.
+#
+# #0032 added a skill to the process list and linked it the other way, and the suite was
+# silent: every test above reads what the *installer* places into a target, and nothing
+# read this checkout's own links. The toolkit could ship a correct install while being
+# unable to invoke the command itself.
+test_skill_names_this_repo_links_its_process_skills_as_commands() {
+  local s mode
+  for s in $BLC_PROCESS; do
+    mode="$(cd "$REPO_ROOT" && git ls-files -s ".claude/commands/$s.md" | awk '{print $1}')"
+    [ "$mode" = "120000" ] \
+      || fail ".claude/commands/$s.md is ${mode:-not tracked}, expected a committed symlink (120000)"
+    # The other half, or a skill could sit in both trees and look installed twice.
+    [ ! -e "$REPO_ROOT/.claude/skills/$s" ] \
+      || fail ".claude/skills/$s exists, but $s is a process skill and belongs in commands/"
+  done
+  return 0
 }
 
 # The two READMEs under docs/blc/briefs/ are documentation, not record, and they install

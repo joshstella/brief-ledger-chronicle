@@ -57,7 +57,7 @@ unrunnable from clean.
 Both hosts also get `docs/blc/briefs/` (with `_drafts/`), `docs/blc/chronicles/`,
 `docs/blc/contracts/`, `docs/blc/install-log/install-log.md`, and `tools/`.
 
-The six process files are the same document either way. Cursor has no slash-command
+The process files are the same document either way. Cursor has no slash-command
 concept, so it reads them as ordinary skills. Shared YAML frontmatter is valid in both
 places, which is what makes a single source possible.
 

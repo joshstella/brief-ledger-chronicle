@@ -1,6 +1,6 @@
 # Ledger — #0032 The draft nothing writes
 
-`blc/2 #0032 in-progress a:in-progress(brief/0032-a-the-skill-that-writes-a-draft) b:pending`
+`blc/2 #0032 in-progress a:done(PR#139) b:in-progress(brief/0032-b-the-machine-level-command)`
 
 **Brief:** `docs/blc/briefs/0032-the-draft-nothing-writes/brief.md`
 **Started:** 2026-10-08
@@ -10,8 +10,8 @@
 
 | id | label | status | branch |
 |---|---|---|---|
-| a | the skill that writes a draft | in-progress | `brief/0032-a-the-skill-that-writes-a-draft` |
-| b | the machine-level command | pending | — |
+| a | the skill that writes a draft | done | PR#139 |
+| b | the machine-level command | in-progress | `brief/0032-b-the-machine-level-command` |
 
 **a — the skill that writes a draft.** Ship `skills/blc-create-draft/`, its tracked symlink
 under `.claude/skills/`, and the rewritten descriptions on both the drafter and the filer. The
@@ -104,6 +104,35 @@ on paper.
 named no writer, which is how the gap stayed invisible. It now names the drafter and states the
 consequence of writing one by hand, so the document that created the expectation carries the
 correction.
+
+## Settled while building `b`
+
+**The list is copied in five places, not four.** The plan named `install.sh` and three test
+files. The fifth is `tests/test_project_mode.sh`, which wrote the *count* — `assert_count 6` —
+rather than the names, so a search for the names never found it. A count is a copy of a fact
+like any other and goes stale the same way. Six more copies of the same number sat in prose:
+`README.md`, three comments in `install.sh`, `docs/architecture/README.md`, and the comment
+above the failing test.
+
+**This phase partly did what the plan deferred, and that is a deliberate reversal.** The
+dependency section says the copies are "not this brief's to fix". The prose counts are now
+reworded to carry no number, and the one in `test_project_mode.sh` is read out of
+`install.sh`. The reason is narrow: bumping `6` to `7` would have reinstated the exact defect
+the phase had just removed from six other sites. The four copies of the *names* are untouched
+and still hand-maintained, so the deferral stands for what it was written about.
+
+**`a` shipped a defect that the whole suite was blind to.** It linked `blc-create-draft` into
+this checkout as `.claude/skills/blc-create-draft` — correct for a utility skill, wrong for a
+process one, which belongs at `.claude/commands/<name>.md`. Nothing failed. Every test on this
+path reads what the installer writes into a *target*; none read this repository's own links,
+so the toolkit could ship a correct install while being unable to invoke the command itself.
+`test_skill_names_this_repo_links_its_process_skills_as_commands` is the guard, and it was run
+against the defect before the link moved.
+
+**The derived count was mutated twice before it was believed.** Declaring a name the installer
+cannot place fails it; breaking the `sed` that reads the list fails it with its own message
+rather than passing on an empty string. Without the second, a renamed variable would have made
+the assertion read zero and compare zero against zero.
 
 ## What this cannot prove
 

@@ -34,7 +34,7 @@ there with the code that proves it.
 
 - `install.sh` is the whole distribution mechanism — argument parsing, the ownership map, and the
   copying, in one script. <!-- cite: install.sh :: place_dir() -->
-- `skills/` holds one directory per skill, each a single `SKILL.md`. Six of them are process
+- `skills/` holds one directory per skill, each a single `SKILL.md`. Some of them are process
   skills, which Claude Code takes as slash-commands rather than skills. <!-- cite: install.sh :: PROCESS_SKILLS= -->
 - `tools/` holds the scripts. They are the half of the toolkit that can be tested, because a
   skill is instructions and a script is behaviour. <!-- cite: tools/validate-briefs.sh -->

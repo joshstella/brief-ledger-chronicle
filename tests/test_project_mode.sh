@@ -99,7 +99,7 @@ test_project_install_does_not_create_an_architecture_document() {
     || fail "the installer created docs/architecture/, which the project owns"
 }
 
-# Every skill in the source must land somewhere. On Claude Code the six process skills
+# Every skill in the source must land somewhere. On Claude Code the process skills
 # become commands and the rest stay skills, so the two destinations together must account
 # for the whole source tree — a skill silently dropped by the host split would otherwise
 # go unnoticed.
@@ -111,7 +111,15 @@ test_project_places_every_source_skill_somewhere() {
   skills=$(ls -d "$TARGET/.claude/skills"/*/ 2>/dev/null | wc -l | tr -d ' ')
   total=$((cmds + skills))
   assert_count "$src" "$total" "skills placed (commands + skills)"
-  assert_count 6 "$cmds" "process skills installed as commands"
+  # Counted out of the installer's own list rather than written here as a number. This
+  # read `6`, and adding a seventh process skill broke it — a count in a test is a copy
+  # of a fact like any other, and it goes stale the same way. Deriving it still proves
+  # something: the installer has to *place* every name it declares, and a skill dropped
+  # by the host split fails this whether the list has six names or sixty.
+  local declared
+  declared=$(sed -n 's/^PROCESS_SKILLS="\(.*\)"$/\1/p' "$REPO_ROOT/install.sh" | wc -w | tr -d ' ')
+  [ "$declared" -gt 0 ] || fail "could not read PROCESS_SKILLS out of install.sh"
+  assert_count "$declared" "$cmds" "process skills installed as commands"
 }
 
 # Project-owned stubs survive every run. Toolkit-owned paths are replaced (#0012b).
