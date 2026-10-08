@@ -1,17 +1,18 @@
 # Ledger — #0033 The close nothing writes
 
-`blc/2 #0033 in-progress a:done(PR#142) b:in-progress(brief/0033-b-the-skill-that-writes-one)`
+`blc/2 #0033 done a:done(PR#142) b:done(PR#143)`
 
 **Brief:** `docs/blc/briefs/0033-close-brief/brief.md`
 **Started:** 2026-10-08
-**Status:** in-progress
+**Status:** done
+**Closed:** 2026-10-08
 
 ## Phases
 
 | id | label | status | branch |
 |---|---|---|---|
 | a | the clause that defines a close | done | PR#142 |
-| b | the skill that writes one | in-progress | `brief/0033-b-the-skill-that-writes-one` |
+| b | the skill that writes one | done | PR#143 |
 
 **a — the clause that defines a close.** Add `BRIEFS-11` as a `[judgment]`: a ledger whose
 status is `done` carries a `**Closed:**` date. Ship it as Contract v1.4, mark v1.3
@@ -178,3 +179,95 @@ up with no writer for thirty-two briefs.
 ## Open decisions
 
 None. Both decisions the brief opened were settled before execution.
+
+## What shipped
+
+Two phases, two PRs. Contract **v1.4** adds `BRIEFS-11`: a ledger whose status line says the
+brief is `done` carries a `**Closed:**` line, read outside fences and frontmatter by the scan
+that already finds the status line. `skills/blc-close-brief/` writes one, and joins
+`PROCESS_SKILLS` so Claude Code installs it as a slash-command. `blc-next-brief-phase` and
+`docs/blc/briefs/README.md` now name the writer they described and left anonymous.
+
+All four settled decisions held. None was re-opened. Decision 3 — the clause asks for the
+date and nothing else — was the one most open to drifting wider during execution, and it did
+not.
+
+This ledger is the first close written by `blc-close-brief`, against the clause the same
+brief published. The sections below are the ones the skill prescribes, in the order it gives.
+
+## What the record shows that the brief did not predict
+
+**The brief was filed against a step with no writer, and the work found the same shape three
+more times.** The process-skill list was copied in five places. The Contract version was
+named in eight, one of them a *path* in `tools/orient.sh` that would have left `orient`
+reading a superseded contract. `install.sh` listed the Contract versions by hand, so v1.4
+would not have installed at all — a target keeping v1.3 while the briefs README it also ships
+linked to a file that was not there. None of these was the close. All of them were a fact
+stated in more places than anything reconciles.
+
+**Not every copied number is the same defect, and that took working out.** The gate's
+`10 clauses decided` looked exactly like the count #0032 had just derived out of the
+installer. Deriving it from the Contract would have been wrong: the number says how many
+clauses *this script decides*, so counting the document would make the report agree by
+construction and a clause published but never implemented would raise it. The real fault was
+that the literal appeared twice in two branches of one report. The lesson #0032 taught was
+"a count is a copy", not "derive every count", and the two are easy to confuse.
+
+**`BRIEFS-11` is the first clause here to meet promotion criterion 3, and that settled
+nothing about promoting it.** The criterion asks for findings on records written without the
+check in mind, examined and judged correct. Sixteen ledgers qualify and all sixteen were
+read. The clause stays `[judgment]` anyway, because those ledgers are record and will not be
+corrected, so promoting it would gate this repository's build forever on a past nobody
+intends to change. Criterion 3 was always necessary and never sufficient. The Contract README
+had claimed it was unmet for every judgment here, and that sentence stopped being true in the
+run that made it so — caught by a guard written to notice exactly that.
+
+**The review gate paid for itself twice.** In `a` it caught a check that a ledger could
+satisfy with a fenced example of the field — a brief with no recorded close passing silently.
+In the same phase a mutation run was found invalid: restoring the mutated file with
+`git checkout --` restored it from the index, which still held the pre-fix version, so the
+run measured the old code and reported the guards working. Both are in the record rather than
+quietly fixed.
+
+**#0032's guards caught their first real mistakes here, one brief after being written.** The
+command-link guard reported the missing `.claude/commands/blc-close-brief.md` — the exact
+mistake #0032 phase `a` made while nothing was watching. The derived process-skill count
+absorbed an eighth name with no edit. A guard that has only ever passed is unproven; these
+two stopped being unproven in this brief.
+
+## Open after close
+
+**The clause checks one line and the convention it was filed against is wider.** The closing
+*sections* are still improvised — six spellings across thirty-two ledgers. `BRIEFS-11` does
+not touch them, deliberately, because a check that reads headings would pass a heading with
+nothing under it. The skill prescribes four sections and nothing enforces them.
+
+**Sixteen judgment lines now print on every gate run, permanently.** That was chosen with the
+output in hand rather than described. The alternative was one collapsed line, rejected
+because it would drop the judgment count from sixteen to one and misreport the cost of a
+record this project will not rewrite.
+
+**The four hand-written copies of the process-skill names remain.** #0032 deferred them and
+this brief added an eighth name to each by hand. No test asserts the four agree. A ninth
+process skill will need the same four edits, and the drift stays undetected until an install
+places the wrong set.
+
+**`BLC_UTILITY` in `tests/test_skill_names.sh` is still defined and never read.** Carried
+from #0032's close unchanged. Nothing acts on it.
+
+**Nothing re-closes the sixteen.** They are reported for as long as the clause exists. No
+work is planned on them and none should be read into this ledger.
+
+## What this cannot prove
+
+A skill is prose and nothing runs it. The tests pin what `blc-close-brief` *says* — that it
+names the reserved branch, writes the field the clause reads, refuses a derived date, and
+refuses an unfinished brief. Whether an agent follows those steps is not measured, and the
+same ceiling covers every skill here. It is named because phase `a` exists precisely to put
+one checkable line under prose that is otherwise unenforced, and a reader should not take the
+clause as evidence for the rest.
+
+The clause cannot prove the record improves either. It reports a missing date; it cannot tell
+a date written because the work closed from a date written to quiet the gate. The sixteen
+existing findings were judged correct by one person reading them, which is evidence and not
+measurement.
