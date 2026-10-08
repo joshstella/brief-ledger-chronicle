@@ -24,7 +24,7 @@
 # record that has to write the old names down, because it is what searches for them.
 
 # The ones Claude Code takes as slash-commands, and a sample of the ones it does not.
-BLC_PROCESS="blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+BLC_PROCESS="blc-close-brief blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 BLC_UTILITY="blc-chronicle blc-installer-builder blc-ste-writing"
 
 # The names as they were before #0010. Matched with a negative lookbehind so

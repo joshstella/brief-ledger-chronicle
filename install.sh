@@ -33,7 +33,7 @@ PRINT_PROCESS_RULES=false
 # duplication rather than removing it. A fourth copy held only the count and is now read
 # back out of this line, which is why the quoting here is load-bearing: see
 # `tests/test_project_mode.sh`.
-PROCESS_SKILLS="blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
+PROCESS_SKILLS="blc-close-brief blc-commit-push-pr blc-create-brief blc-create-draft blc-init-briefs blc-next-brief-phase blc-review-pr blc-start-brief"
 
 is_process_skill() {
   case " $PROCESS_SKILLS " in *" $1 "*) return 0 ;; *) return 1 ;; esac

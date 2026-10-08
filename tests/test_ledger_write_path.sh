@@ -44,3 +44,41 @@ test_ledger_write_path_readme_states_push_and_the_merge_path() {
 test_ledger_write_path_readme_says_what_the_closeout_branch_is_for() {
   assert_contains "It carries the brief's close" "$(WP_README)"
 }
+
+WP_CLOSE() { printf '%s' "$REPO_ROOT/skills/blc-close-brief/SKILL.md"; }
+
+# The close rides the reserved branch, not a phase branch. A closeout written onto the last
+# phase's branch goes nowhere: that branch is already merged and is no longer a path to main.
+test_ledger_write_path_close_brief_uses_the_reserved_branch() {
+  assert_contains 'brief/<serial>-closeout' "$(WP_CLOSE)"
+  assert_contains "no successor" "$(WP_CLOSE)"
+}
+
+# The contract between the skill and the clause, asserted from both ends.
+#
+# BRIEFS-11 reads a `**Closed:**` line; this skill is what writes one. Neither half is wrong
+# on its own if the field name moves — the clause would stop finding it and the skill would
+# go on writing it, and the gate would report every closed brief while every closed brief
+# looked correct. The failure would be a clause that fires on nothing but its own fixtures.
+test_ledger_write_path_close_brief_writes_what_briefs11_reads() {
+  assert_contains '**Closed:**' "$(WP_CLOSE)"
+  assert_contains "BRIEFS-11" "$(WP_CLOSE)"
+  # The far end: the scan that BRIEFS-11 reads still looks for this field.
+  grep -q 'is_closed(l).*Closed:' "$REPO_ROOT/tools/lib/status-line.sh" \
+    || fail "the shared scan no longer looks for a **Closed:** line; this contract moved"
+}
+
+# The date is written by a person, not derived. A date taken from a merge commit is when a
+# branch landed, which is not when anyone closed the brief — the record would assert
+# something nobody said, and nothing downstream could tell the two apart.
+test_ledger_write_path_close_brief_refuses_a_derived_date() {
+  assert_contains "Do not derive it from a merge commit" "$(WP_CLOSE)"
+}
+
+# A brief with an unfinished phase is not closed, it is abandoned. The skill has to send
+# that case to blc-next-brief-phase rather than stamp a date on it.
+test_ledger_write_path_close_brief_refuses_an_unfinished_brief() {
+  assert_contains "blc-next-brief-phase" "$(WP_CLOSE)"
+  grep -q 'pending.*in-progress.*stop and name it\|stop and name it' "$(WP_CLOSE)" \
+    || fail "blc-close-brief does not refuse a brief with an unfinished phase"
+}

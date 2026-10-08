@@ -124,7 +124,8 @@ so the owner sees it on every machine that pulls. A commit left unpushed achieve
 evolves on the phase branch and returns by merge, the same way code does. `blc-next-brief-phase`
 marks the previous phase `done` on the next phase's branch, because that phase is already merged
 by then, and its branch — whether or not it still exists — is no longer a path to `main`. The
-last phase has no successor, so `brief/<serial>-closeout` carries the close.
+last phase has no successor, so `brief/<serial>-closeout` carries the close. `blc-close-brief`
+writes it.
 
 **`in-progress` names its branch.** That is what makes it the only state anything can
 interrogate: whether the branch still exists, whether a PR was ever opened, how far `main`
@@ -245,7 +246,8 @@ clause, one script) or larger (a contract version, a workflow reversal).
 
 **Reserved, not a phase:** `brief/<serial>-closeout`. It carries the brief's close, because the
 ledger does not go straight to `main` after initiation and the final phase has no successor
-branch to ride.
+branch to ride. `blc-close-brief` writes what goes on it. For sixteen of the first thirty-two
+closed briefs here nothing did, which is why half of them record no date — see `BRIEFS-11`.
 
 **Ceiling: 26 phases.** A 27th is a new brief, not `aa`.
 
