@@ -1,17 +1,18 @@
 # Ledger — #0034 Check the status of the repo for serials not on main yet
 
-`blc/2 #0034 in-progress a:done(PR#145) b:in-progress(brief/0034-b-contract-v15)`
+`blc/2 #0034 done a:done(PR#145) b:done(PR#146)`
 
 **Brief:** `docs/blc/briefs/0034-claim-the-serial/brief.md`
-**Status:** in-progress
+**Status:** done
 **Started:** 2026-10-08
+**Closed:** 2026-10-08
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
 | a | remote serial scan | done | `brief/0034-a-remote-serial-scan` | [#145](https://github.com/joshstella/brief-ledger-chronicle/pull/145) |
-| b | contract v1.5 recovery rule | in-progress | `brief/0034-b-contract-v15` | — |
+| b | contract v1.5 recovery rule | done | `brief/0034-b-contract-v15` | [#146](https://github.com/joshstella/brief-ledger-chronicle/pull/146) |
 
 **a — remote serial scan.** Adds `tools/next-serial.sh`, which reports the next free brief
 serial after reading serials claimed on the remote as well as in the local directory. It
@@ -193,3 +194,88 @@ A declaration was written to `docs/blc/state/` before `blc-create-brief` ran, an
 the same command minutes later. It was never pushed, so no other checkout could have seen
 it. That is the incident's mechanism reproduced in this repository: the only claim BLC
 publishes needs a push to `main`, and a claim that is not pushed protects nobody.
+
+## What shipped
+
+`tools/next-serial.sh` (`a`, [#145](https://github.com/joshstella/brief-ledger-chronicle/pull/145)),
+which answers the next free serial after reading `docs/blc/briefs/` on every `origin` branch
+as well as locally. `blc-create-brief` asks it instead of listing the directory itself. Against
+the incident's own shape — a serial that exists only on a remote branch — it answers `0003`
+where the old rule answered `0002`.
+
+Contract v1.5 (`b`, [#146](https://github.com/joshstella/brief-ledger-chronicle/pull/146)).
+The recovery rule for a serial collision turns on the `**Created:**` stamp, not on which brief
+reaches `main` first. Equal or absent stamps are a decision the contributors make and record.
+The both-already-merged case is covered, which v1.4 had no step for. The section states that
+every mechanism this toolkit has for claiming a serial requires pushing to `main`.
+
+Three guards that did not exist: the installer ships every tool in the tree, `orient` reads a
+Contract that exists and is the one marked current, and `orient` prints the version it reads.
+
+Every settled decision held. Two planned positions were overturned by measurement: the
+install-list drift was planned as out of scope and taken into scope, and the missing-directory
+case was written to report and now refuses.
+
+## What the record shows that the brief did not predict
+
+**The brief was filed as a prevention brief. The more consequential half was the rule.** The
+remote read narrows a window. The recovery rule decides who loses a serial, and v1.4's version
+of it measured push access while reading as a neutral tiebreak. The brief listed the rule
+second.
+
+**The published recovery procedure had no step for the state the incident was in.** v1.4
+described renumbering on a branch before it merged; both colliding briefs had already merged.
+This was not found by planning or by review. It surfaced when the person who filed the brief
+asked whether any of this helped clean up the live collision — a question about the present,
+not about the design.
+
+**The suite was blind in three places, and each was measured rather than suspected.** A tool
+absent from the installer's list installs nowhere, and both mutations of the new entry left
+673 tests green. `orient` pointed at a nonexistent `v1.9.md` and 684 tests passed. `#0033`
+had enumerated the cost of a version bump one version earlier, and its list was incomplete.
+
+**Filing this brief reproduced the incident inside this repository.** A declaration was
+written to `docs/blc/state/` before `blc-create-brief` ran, and the same command cleared it
+minutes later, exactly as its step 5 says. It was never pushed, so no other checkout could
+have seen it. The only claim this toolkit publishes needs a push to `main`, and that is the
+access the first contributor did not have.
+
+**A version cut by copying carries the previous version's claims about itself.** Two sentences
+in the new file said "every clause in version 1.4" while describing version 1.5. Neither is a
+link, so nothing resolved wrong and no test could have caught them.
+
+**Two tests passed for the wrong reason before they were trusted.** One asserted "not `0002`",
+which is also true of no answer at all, and passed while the tool did not exist. The ship-list
+guard passed before the new tool was staged, when `git ls-files` had nothing to show it. Both
+were found by asking why a green result was green.
+
+## Open after close
+
+- **The race is not closed, and this brief does not claim to close it.** Nothing publishes a
+  reservation at filing time. Two checkouts can fetch the same `origin` seconds apart and both
+  pick the same number. Closing it needs a push at filing time, which needs the access the
+  incident was about.
+- **Nothing proves an agent calls the tool.** `blc-create-brief` is prose. A run that counted
+  the local directory by hand looks the same afterwards as a run that asked.
+- **The fetch is unbounded and barely exercised.** Every test points `origin` at a directory on
+  disk. A remote that accepts the connection and hangs stalls filing with no timeout, and
+  there is no portable fix.
+- **The live `#0018` collision is unrepaired.** A renumber checklist was written for whoever
+  acts in that repository. It was not applied, and this repository was never read.
+- **`_drafts/contract-citation-drift.md` is parked and now has a worked case.** Four citations
+  of the superseded v1.3 are still in the tree, and `tests/test_contract_ship.sh` hand-lists
+  versions to v1.3 and never asserts a newer one ships. The hard part of that brief is telling
+  a self-reference from a citation, and `b` produced an example of each.
+- Neither phase branch had a bug ledger, so no open correctness bugs were carried.
+
+## What this cannot prove
+
+- **The fixtures were written from a report, not from the colliding repository.** That
+  repository was never opened. The timings, the branch names and the access levels are as they
+  were described. A fixture built from a description can only reproduce the mechanism its
+  author understood.
+- **That the recovery rule is right.** It is prose. The two new guards prove the version
+  pointers resolve; no test reads what v1.5 says.
+- **That `Created` is true.** It is self-reported, written by whichever machine wrote the
+  draft. A wrong clock or an edited line produces a wrong winner. v1.5 states that limit
+  rather than hiding it, and it is still better than a rule that tests who can push.
