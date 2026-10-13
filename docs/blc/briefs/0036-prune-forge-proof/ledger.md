@@ -1,16 +1,16 @@
 # Ledger — #0036 The query nothing tests and the delete nothing checks
 
-`blc/2 #0036 pending a:pending b:pending c:pending`
+`blc/2 #0036 in-progress a:in-progress(brief/0036-a-checked-deletion) b:pending c:pending`
 
 **Brief:** `docs/blc/briefs/0036-prune-forge-proof/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Started:** 2026-10-13
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | checked deletion | pending | — | — |
+| a | checked deletion | in-progress | `brief/0036-a-checked-deletion` | — |
 | b | forge query tests | pending | — | — |
 | c | gitlab query | pending | — | — |
 
@@ -56,18 +56,26 @@ and `tree` cannot prove become provable, and each is one the program will offer 
 delete. The brief's argument for making these one piece of work is that those extra deletions
 should not run through a loop that does not check what it did.
 
+## Settled before `a` began, 2026-10-13
+
+- **A failed `update-ref` aborts that branch's deletion.** The branch is left alone, the
+  failure is reported on its line, and the run exits non-zero. Not deleting a branch costs a
+  second run; deleting one whose tip was never saved is the loss the saved tip exists to
+  prevent. The rule is uniform across proofs rather than conditional on which test proved the
+  branch: a `tree`-proven tip is genuinely unreachable from the trunk, and a rule that reads
+  the proof before deciding how careful to be is one more thing to get wrong in the only
+  irreversible path this toolkit has.
+- **A surviving `branch.<name>.*` section is reported, not removed.** It goes on that
+  branch's line and the run exits non-zero. The refs are gone by then, so this is a report
+  about a deletion that already happened, and the smallest honest thing the program can do is
+  stop claiming the deletion was clean. Removing it is a second write in the same loop that
+  just failed to write.
+
 ## Open decisions
 
-- **Does a failed `update-ref` abort the deletion, or only report it?** Blocks `a`. The saved
-  tip is insurance against a bug in the prover. An `ancestor`-proven branch is in the trunk by
-  definition and has nothing to recover; a `tree`-proven tip is not reachable from the trunk
-  and does.
-- **Is a residual `branch.<name>.*` section reported, removed in the same run, or left to a
-  separate repair mode?** Blocks `a`. A person cleaned ten of them by hand after the run that
-  prompted this brief.
 - **Where the CLI fixture lives, and whether it shims `git` as well as the forge CLI.** Blocks
-  `b`. Phase `a` needs the same answer if it drives its failures with a `git` shim, which is
-  the one place these two tracks could collide.
+  `b`. Phase `a` needs the same answer, because it has to make `update-ref` and `branch -D`
+  fail inside a fixture — so the mechanism is built in `a` and extended in `b` and `c`.
 
 ## Complications found while planning
 
@@ -85,4 +93,4 @@ should not run through a loop that does not check what it did.
 
 ## Branches
 
-None cut yet.
+`brief/0036-a-checked-deletion`, cut from `main` at `1e434f6`.
