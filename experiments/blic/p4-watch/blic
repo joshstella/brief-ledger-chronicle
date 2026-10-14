@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# blic — the control prototype for the #0039 bake-off: two commands, no screen.
+#
+#   blic next     what is mine to do next, as an ordered list
+#   blic watch    one line when something changes that I did not do, silent otherwise
+#
+# Read-only. It never writes a record, never pushes, never calls a forge.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+  sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'
+  echo
+  echo "  blic next  [--all] [--why]"
+  echo "  blic watch [--interval N] [--peer] [--transport T] [--once]"
+}
+
+case "${1:-next}" in
+  next)  shift || true; exec bash "$HERE/next.sh" "$@" ;;
+  watch) shift || true; exec bash "$HERE/watch.sh" "$@" ;;
+  transports) shift || true; exec bash "$HERE/notify.sh" --probe ;;
+  -h|--help|help) usage ;;
+  *) echo "blic: unknown command: $1" >&2; usage >&2; exit 2 ;;
+esac
