@@ -255,6 +255,42 @@ unbounded feed with no grouping buries the record it exists to report.
 A small fault found on the way: prototype 1 started with `--no-peer` still reads the peer file
 at line 232 and prints `No such file or directory`.
 
+### Corrections to the section above, later the same day
+
+Three claims above are wrong. Running the five prototypes again, to choose between them rather
+than to test them, found all three. The claims stay in place and these corrections follow them.
+
+**Prototype 3 does not fail only when it shrinks.** The text above says a resize back to
+140x40 repairs the frame, "so the damage is in the shrink path only". That is wrong. Prototype
+3 draws a corrupt first frame in a 120x30 terminal with no resize at any point. `state
+in-progress` reads `state in-progresscord nobody is watching while it changes`. The `DETAIL`
+header does not appear at all. A start at 80x24, left to settle for 12 seconds, fails the same
+way. A grow to 120x36 repairs it. The rule is width, not direction. This reaches a person who
+opens the console in a default terminal and never touches the window, so the defect is worse
+than the first report says. The first report reached 80 columns only by shrinking from 120.
+That is the same fault of method this section names in the bake-off.
+
+**WSL interop does not refuse the connection.** The "Two walls" section says it does.
+`powershell.exe` answers from this shell and reports version 5.1.26100.9444. The failure comes
+after that. `notify.sh --send --transport windows` exits 0 and shows nothing, and no toast
+reached the author's desktop. The send path uses `NotifyIcon.ShowBalloonTip`, which Windows 10
+and Windows 11 suppress, in a process that exits before a tray icon can render. The same path
+sends all output to `/dev/null` and returns success whenever PowerShell exits 0. The probe
+agrees with it because `interop_works()` runs `powershell.exe -NoProfile -Command exit`. That
+proves PowerShell starts. It proves nothing about a notification. A transport that reports
+itself available and then delivers nothing is worse than one that refuses.
+
+**The `--no-peer` fault is not small.** The line above calls it small. Prototype 1 started with
+`--no-peer` writes that error to standard error on every poll. The lines land on the terminal
+and destroy the display in a few seconds.
+
+### What a terminal would still answer
+
+`bell` and `osc9` report unavailable in every probe run so far. Both report that way only
+because the shell running the probe has no controlling terminal. The probe's own note says
+Windows Terminal honors OSC 9. Nobody has run the probe from a real terminal yet. The question
+of where a notification lands stays open. It is not closed by the two walls above.
+
 ## Branches
 
 `blic/bake-off`, cut from `main`. It carries the read surface and the five prototype branches
