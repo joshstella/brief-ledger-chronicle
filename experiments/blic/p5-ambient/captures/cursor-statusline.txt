@@ -1,0 +1,19 @@
+capture 2 — the Cursor CLI status line
+======================================
+
+Not installed. This is blic-statusline.sh fed the payload the skill documents.
+
+--- stdout, rendered (what the CLI shows above the prompt) ---
+[90mblc[0m [33m▸ #0039a · ↑5~ · !16 · the bake-off[0m
+[36mClaude 4 Opus[0m [90mctx 34%[0m
+
+--- stdout, escapes visible ---
+^[[90mblc^[[0m ^[[33mM-bM-^VM-8 #0039a M-BM-7 M-bM-^FM-^Q5~ M-BM-7 !16 M-BM-7 the bake-off^[[0m
+^[[36mClaude 4 Opus^[[0m ^[[90mctx 34%^[[0m
+
+--- narrow terminal: render_width_chars 24, truncation by the payload's own width ---
+[90mblc[0m [33m▸ #0039a · ↑5~ · !16 · …[0m
+[36mClaude 4 Opus[0m [90mctx 34%[0m
+
+--- outside a BLC repo: the record row disappears, the session row stays ---
+[36mClaude 4 Opus[0m [90mctx 2%[0m

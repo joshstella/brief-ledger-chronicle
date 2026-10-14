@@ -1,0 +1,25 @@
+{
+  "_comment": "p5-ambient example project hooks. NOT INSTALLED. Copy the two hook entries into .cursor/hooks.json, preserving any hooks already there, and set BLIC_P5_DIR or move the scripts under .cursor/hooks/. Paths in a project hooks file are relative to the project root. See INSTALL.md.",
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "experiments/blic/p5-ambient/hooks/blic-warm.sh",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": "experiments/blic/p5-ambient/hooks/blic-warm.sh",
+        "timeout": 5
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "experiments/blic/p5-ambient/hooks/blic-notify.sh",
+        "matcher": "git (push|commit)|blc-commit-push-pr",
+        "timeout": 5
+      }
+    ]
+  }
+}

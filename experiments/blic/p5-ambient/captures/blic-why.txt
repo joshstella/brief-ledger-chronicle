@@ -1,0 +1,27 @@
+capture 4 — blic why and blic doctor
+====================================
+
+--- blic why: the lines behind the one line ---
+record at 0174e7c, read 0s ago
+mine     #0039 The record nobody is watching while it changes — phase a the bake-off (in-progress)
+         next phase b the console
+theirs   5 new, 5 synthetic — latest: phase #0024 by dana (synthetic)
+         c0ffee01 phase       [#0024b] split the renderer from the scan [synthetic]
+         c0ffee02 declaration docs: declare #0041, picked up not yet filed [synthetic]
+         c0ffee03 filed       docs: file #0041, the serial two people took [synthetic]
+         c0ffee04 close       docs: close #0024 (the renderer split) [synthetic]
+         c0ffee05 code        fix: the scan no longer reads its own example [synthetic]
+gate     16 judgments from validate-briefs.sh
+
+--- blic doctor ---
+repo      /home/josha/git/brief-ledger-chronicle/.worktrees/p5-ambient
+reader    /home/josha/git/brief-ledger-chronicle/.worktrees/p5-ambient/experiments/blic/read.sh (ok)
+cache     /tmp/blic-capture-3850079/home-josha-git-brief-ledger-chronicle--worktrees-p5-ambient
+bash      5.2.21(1)-release
+awk       /usr/bin/awk
+jq        absent (not required)
+peer mode off
+cached    line    54
+cached    facts   389
+cached    events  4217
+cached    seen    360

@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# bin/blic — the out-of-band surface for the ambient ones. Read-only, like everything in p5.
+#
+#   blic line       print the prompt line once (for zsh, fish, tmux, anything not bash)
+#   blic why        the three or four lines behind the one line
+#   blic ack        mark what other people did as seen, so the counter goes quiet
+#   blic refresh    refresh now, in the foreground, and say how long it took
+#   blic doctor     what is installed, what is cached, what is missing
+#
+# `blic line` costs a bash startup — about 4ms — where the sourced function costs about
+# 0.1ms. It exists for shells that cannot source a bash function, and the difference between
+# the two numbers is the argument for shipping both.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../lib/blic-cache.sh
+. "$HERE/lib/blic-cache.sh"
+# shellcheck source=../lib/render.sh
+. "$HERE/lib/render.sh"
+
+REPO="${BLIC_REPO:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+[ -n "$REPO" ] || { echo "blic: not in a git repository" >&2; exit 2; }
+CACHE="$(blic_cache_dir "$REPO")"
+TTL="${BLIC_TTL:-20}"
+
+spawn() { ( BLIC_REPO="$REPO" "$HERE/blic-refresh.sh" --auto >/dev/null 2>&1 & ) 2>/dev/null; }
+
+cmd_line() {
+  local gen line age
+  if ! read -r gen line 2>/dev/null < "$CACHE/line"; then spawn; return 0; fi
+  age=$(( EPOCHSECONDS - gen ))
+  [ "$age" -gt "$TTL" ] && spawn
+  [ "$age" -gt $(( TTL * 10 )) ] && line="$line ?"
+  printf '%s\n' "$line"
+}
+
+cmd_why() {
+  blic_load_facts "$CACHE/facts" || { echo "blic: no cache yet; run blic refresh"; return 0; }
+  blic_glyphs
+  local age; age=$(( EPOCHSECONDS - ${generated:-0} ))
+  printf 'record at %s, read %ss ago\n' "${head:-?}" "$age"
+  if [ -n "${mine_serial:-}" ]; then
+    printf 'mine     #%s %s — phase %s %s (%s)\n' \
+      "$mine_serial" "${mine_title:0:48}" "${mine_phase:-?}" "${mine_phase_label:-}" "${mine_phase_state:-?}"
+    [ -n "${next_phase:-}" ] && [ "${next_phase:-}" != "${mine_phase:-}" ] && \
+      printf '         next phase %s %s\n' "$next_phase" "${next_label:-}"
+  else
+    printf 'mine     nothing open of %s briefs\n' "${briefs_total:-0}"
+  fi
+  printf 'theirs   %s new, %s synthetic%s\n' \
+    "${new_total:-0}" "${new_synthetic:-0}" "${new_top:+ — latest: $new_top}"
+  # The unacknowledged list, newest first, with the synthetic mark intact.
+  if [ -f "$CACHE/events" ] && [ "${new_total:-0}" -gt 0 ]; then
+    local sha mine syn kind serial who subject n=0
+    while IFS=$'\x1f' read -r sha mine syn kind serial who subject; do
+      [ "$mine" = 0 ] || continue
+      grep -qxF "$sha" "$CACHE/seen" 2>/dev/null && continue
+      n=$(( n + 1 )); [ "$n" -le 5 ] || continue
+      printf '         %s %-11s %s%s\n' "$sha" "$kind" "${subject:0:52}" \
+        "$([ "$syn" = 1 ] && printf ' [synthetic]')"
+    done < "$CACHE/events"
+  fi
+  printf 'gate     %s judgments from validate-briefs.sh\n' "${defects:-0}"
+}
+
+cmd_ack() {
+  [ -f "$CACHE/events" ] || { echo "blic: nothing cached to acknowledge"; return 0; }
+  cut -d$'\x1f' -f1 "$CACHE/events" >"$CACHE/seen"
+  BLIC_REPO="$REPO" "$HERE/blic-refresh.sh" --events >/dev/null 2>&1 || true
+  echo "blic: acknowledged; the counter is quiet until something else lands"
+}
+
+cmd_refresh() {
+  local t0 t1
+  t0="$(date +%s%N)"
+  BLIC_REPO="$REPO" "$HERE/blic-refresh.sh" "${1:---full}"
+  t1="$(date +%s%N)"
+  printf 'refreshed in %sms\n' "$(( (t1 - t0) / 1000000 ))"
+  cmd_line
+}
+
+cmd_doctor() {
+  printf 'repo      %s\n' "$REPO"
+  printf 'reader    %s%s\n' "$(blic_reader "$REPO")" \
+    "$([ -x "$(blic_reader "$REPO")" ] && printf ' (ok)' || printf ' (MISSING)')"
+  printf 'cache     %s\n' "$CACHE"
+  printf 'bash      %s\n' "$BASH_VERSION"
+  printf 'awk       %s\n' "$(command -v awk || echo MISSING)"
+  printf 'jq        %s (not required)\n' "$(command -v jq || echo absent)"
+  printf 'peer mode %s\n' "$([ "${BLIC_PEER:-0}" = 1 ] && echo on || echo off)"
+  for f in line facts events seen; do
+    printf 'cached    %-7s %s\n' "$f" "$([ -f "$CACHE/$f" ] && wc -c <"$CACHE/$f" | tr -d ' ' || echo '-')"
+  done
+}
+
+case "${1:-line}" in
+  line)    cmd_line ;;
+  why)     cmd_why ;;
+  ack)     cmd_ack ;;
+  refresh) shift || true; cmd_refresh "${1:---full}" ;;
+  doctor)  cmd_doctor ;;
+  -h|--help) sed -n '2,13p' "$0" ;;
+  *) echo "blic: unknown command: $1" >&2; exit 2 ;;
+esac

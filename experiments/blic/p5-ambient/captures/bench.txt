@@ -1,0 +1,41 @@
+=== bench.sh — p5-ambient ===
+repo      /home/josha/git/brief-ledger-chronicle/.worktrees/p5-ambient
+cache     /tmp/blic-bench-3823706
+iterations 200
+
+--- the instrument, for reference (read.sh is frozen; these are its numbers) ---
+  read.sh me            5ms
+  read.sh declarations  5ms
+  read.sh events        300ms
+  read.sh defects       920ms
+  read.sh briefs        1906ms
+  read.sh snapshot      3192ms
+
+--- cold start: empty cache to a rendered line ---
+  refresh --full         3155ms
+  refresh --events       322ms
+  refresh --auto (warm)  316ms
+
+--- per-prompt cost, sourced function (the installed path) ---
+  blic_prompt x200       5662us total, 28us each
+  after cd (relocate) x200  71us each
+  empty function x200    6us each (loop overhead)
+
+--- cold cache, from a shell that has just sourced the segment ---
+  first prompt           1640us, rendered: []
+  line appears after     3165ms  [▸ #0039a · !16 · the bake-off]
+
+--- per-prompt cost, standalone script (zsh/fish/tmux path) ---
+  blic line x20          6ms each
+  bash -c : x20          1ms each (interpreter startup)
+
+--- Cursor CLI status line, per conversation update ---
+  blic-statusline.sh x20  7ms each (budget: timeoutMs 2000)
+
+--- hook scripts, per event ---
+  blic-notify.sh x20     5ms each
+  blic-warm.sh x20       4ms each
+
+--- size ---
+  lines of code (sh/bash/awk, excluding docs and examples): 819
+  of that, comment and blank: 301

@@ -1,0 +1,16 @@
+capture 3 — the notification hooks
+==================================
+
+Not installed. These are the scripts fed the stdin a hook event carries.
+
+--- beforeShellExecution, record moved (peer mode on) ---
+{"permission":"allow","user_message":"5 change(s) landed in the record that you did not make — latest: phase #0024 by dana (synthetic); 5 of them are synthetic peer events. Run: blic why"}
+
+--- beforeShellExecution, nothing new: allow, no message, no interruption ---
+{"permission":"allow"}
+
+--- beforeShellExecution, outside a BLC repo: allow, silent ---
+{"permission":"allow"}
+
+--- sessionStart / stop: blic-warm.sh returns nothing and refreshes detached ---
+(exit 0; no stdout by design)

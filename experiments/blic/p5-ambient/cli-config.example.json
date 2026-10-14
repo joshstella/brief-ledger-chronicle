@@ -1,0 +1,10 @@
+{
+  "_comment": "p5-ambient example Cursor CLI status line. NOT INSTALLED. Merge the statusLine key into ~/.cursor/cli-config.json, keeping whatever else is in that file. Replace the path with your checkout. See INSTALL.md.",
+  "statusLine": {
+    "type": "command",
+    "command": "/absolute/path/to/brief-ledger-chronicle/experiments/blic/p5-ambient/blic-statusline.sh",
+    "padding": 2,
+    "updateIntervalMs": 1000,
+    "timeoutMs": 2000
+  }
+}
