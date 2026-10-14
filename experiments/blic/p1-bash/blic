@@ -1,0 +1,842 @@
+#!/usr/bin/env bash
+# BLIC — prototype 1 of the #0039 bake-off. Pure bash and ANSI, no build step.
+#
+#   experiments/blic/p1-bash/blic
+#
+# Reads the record through the frozen instrument (../read.sh) and shows two things at once:
+# what is mine to do next, and what changed that I did not do. It writes nothing.
+#
+# Flags:
+#   --no-peer        do not start ../peer-events.sh --stream
+#   --peer-interval  seconds between synthetic events (default 7)
+#   --once           draw one frame to stdout and exit (for a transcript or a pipe)
+#   --keys STRING    feed keystrokes from STRING instead of the keyboard, then exit
+#   --frames         with --keys, print whole frames as text instead of positioned writes
+#
+# BLIC_ROWS / BLIC_COLS override the terminal size, for a capture with no terminal attached.
+#
+# `set -e` is deliberately absent. This is a loop that must survive a child that failed,
+# a terminal that resized mid-draw, and a git command that returned nothing.
+set -uo pipefail
+
+# Width is counted in characters, not bytes. `${#s}` counts bytes under LC_ALL=C, and the
+# record is full of `·` and `—`, so a C locale puts every pane border in a different place
+# on every row. The fallback is still C — a terminal without a UTF-8 locale gets a layout
+# that is wrong by a few cells rather than no layout at all.
+if [ -z "${LC_ALL:-}" ]; then
+  case "${LANG:-}" in
+    *UTF-8*|*utf8*) export LC_ALL="$LANG" ;;
+    *) locale -a 2>/dev/null | grep -qi '^C\.utf-\?8$' && export LC_ALL=C.UTF-8 ;;
+  esac
+fi
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTRUMENT="$HERE/../read.sh"
+PEER="$HERE/../peer-events.sh"
+AWKDIR="$HERE/lib"
+
+US=$'\x1f'; GS=$'\x1d'; RSX=$'\x1e'
+
+PEER_ON=1
+PEER_INTERVAL="${BLIC_PEER_INTERVAL:-7}"
+ONCE=0
+SCRIPTED=""
+SCRIPT_MODE=0
+FRAMES=0
+FRAMENO=1
+SETTLE=0
+TICK="${BLIC_TICK:-0.25}"          # input poll; also the ceiling on redraw latency
+EVENT_POLL="${BLIC_EVENT_POLL:-5}" # seconds between git event refreshes
+BRIEF_POLL="${BLIC_BRIEF_POLL:-60}"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-peer) PEER_ON=0 ;;
+    --peer-interval) PEER_INTERVAL="$2"; shift ;;
+    --once) ONCE=1 ;;
+    --keys) SCRIPTED="$2"; SCRIPT_MODE=1; shift ;;
+    --frames) FRAMES=1 ;;
+    --settle) SETTLE=1 ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) printf 'blic: unknown flag: %s\n' "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+[ -x "$INSTRUMENT" ] || { printf 'blic: instrument not found: %s\n' "$INSTRUMENT" >&2; exit 2; }
+
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/blic.XXXXXX")"
+PEER_PID=""
+STTY_SAVE=""
+
+cleanup() {
+  [ -n "$PEER_PID" ] && kill "$PEER_PID" 2>/dev/null
+  # The stream's `sleep` is a grandchild and outlives a kill of the parent shell.
+  pkill -P "${PEER_PID:-0}" 2>/dev/null
+  if [ "${RAWTTY:-0}" = 1 ]; then
+    printf '\033[?25h\033[?1049l'
+    [ -n "$STTY_SAVE" ] && stty "$STTY_SAVE" 2>/dev/null
+  fi
+  rm -rf "$TMP"
+}
+trap cleanup EXIT
+trap 'RESIZED=1' WINCH
+
+# ── colour ───────────────────────────────────────────────────────────────────
+# Honoured even on a terminal that claims no colour, because the fallback is "no escape
+# codes at all" rather than a second layout.
+if [ -t 1 ] && [ "${TERM:-dumb}" != dumb ] || [ -n "$SCRIPTED" ] || [ "${BLIC_COLOR:-}" = 1 ]; then
+  R=$'\033[0m'; B=$'\033[1m'; DIM=$'\033[2m'; INV=$'\033[7m'
+  RED=$'\033[31m'; GRN=$'\033[32m'; YEL=$'\033[33m'; BLU=$'\033[34m'
+  MAG=$'\033[35m'; CYN=$'\033[36m'; GRY=$'\033[90m'
+else
+  R=; B=; DIM=; INV=; RED=; GRN=; YEL=; BLU=; MAG=; CYN=; GRY=
+fi
+
+# ── data ─────────────────────────────────────────────────────────────────────
+declare -a B_SERIAL B_STATE B_MINE B_ASSIGNEE B_TITLE B_LEDGER B_LINE B_CLOSED
+declare -a B_SLUG B_DIR B_CREATED B_OWNER B_AUTHOR B_PHASES
+declare -a E_WHEN E_WHO E_MINE E_KIND E_SERIAL E_PHASE E_SHA E_SUBJECT E_SYN
+declare -A DEFECTS          # slug -> packed "clause<RS>kind<RS>message<GS>…"
+declare -a DEC_WHO DEC_CLAIMS
+NB=0; NE=0; NDEF=0; NDEC=0
+ME=""; BRANCH=""; HEADSHA=""
+UNREAD=0; LOADED=0
+STATUS="loading the record…"
+
+# Filtered view
+declare -a VIEW
+NVIEW=0; SEL=0; TOP=0; DSCROLL=0
+FILTER=0                     # 0 mine+open, 1 open, 2 mine, 3 all
+FILTER_NAMES=("mine · in flight" "in flight" "mine" "all")
+SEARCH=""
+HELP=0; PAUSED=0
+
+# `done(PR#45)` -> `done`. A function that returns through a global instead of through
+# stdout, because `$(…)` forks, and the first version of this console forked about a hundred
+# times per frame and cost 163 ms a keypress for it. See REPORT.md section 6.
+BS=""
+bs() { BS="${1%%(*}"; }
+
+# Split a packed child list into PARTS without forking. `tr | read` in a loop was the first
+# version and it dropped the last child on every brief, because the pipeline's output has no
+# trailing newline and `read` reports failure on a final partial line. GS and RS are not IFS
+# whitespace, so empty fields survive the split — an absent phase pointer has to.
+declare -a PARTS
+split_packed() { local IFS="$GS"; read -ra PARTS <<< "$1"; }
+split_fields()  { local IFS="$RSX"; read -ra PARTS <<< "$1"; }
+
+load_briefs() {
+  local f="$TMP/briefs.rec"
+  [ -s "$f" ] || return 1
+  B_SERIAL=(); B_STATE=(); B_MINE=(); B_ASSIGNEE=(); B_TITLE=(); B_LEDGER=()
+  B_LINE=(); B_CLOSED=(); B_SLUG=(); B_DIR=(); B_CREATED=(); B_OWNER=(); B_AUTHOR=(); B_PHASES=()
+  local serial state mine assignee title ledger line closed slug dir created owner author phases
+  while IFS="$US" read -r serial state mine assignee title ledger line closed slug dir created owner author phases; do
+    [ -n "$serial" ] || continue
+    B_SERIAL+=("$serial"); B_STATE+=("$state"); B_MINE+=("$mine"); B_ASSIGNEE+=("$assignee")
+    B_TITLE+=("$title"); B_LEDGER+=("$ledger"); B_LINE+=("$line"); B_CLOSED+=("$closed")
+    B_SLUG+=("$slug"); B_DIR+=("$dir"); B_CREATED+=("$created"); B_OWNER+=("$owner")
+    B_AUTHOR+=("$author"); B_PHASES+=("$phases")
+  done < "$f"
+  NB=${#B_SERIAL[@]}
+  return 0
+}
+
+load_events() {
+  local f="$TMP/events.rec"
+  [ -s "$f" ] || return 1
+  # Synthetic events arrive while the console runs and are always newer than any commit,
+  # so they stay at the head of the list and only the git tail is replaced.
+  local keep=() i
+  for ((i = 0; i < NE; i++)); do
+    [ "${E_SYN[i]}" = 1 ] && keep+=("$i")
+  done
+  local kw=() kwho=() kmine=() kkind=() kser=() kph=() ksha=() ksub=()
+  for i in "${keep[@]+"${keep[@]}"}"; do
+    kw+=("${E_WHEN[i]}"); kwho+=("${E_WHO[i]}"); kmine+=("${E_MINE[i]}"); kkind+=("${E_KIND[i]}")
+    kser+=("${E_SERIAL[i]}"); kph+=("${E_PHASE[i]}"); ksha+=("${E_SHA[i]}"); ksub+=("${E_SUBJECT[i]}")
+  done
+  E_WHEN=("${kw[@]+"${kw[@]}"}"); E_WHO=("${kwho[@]+"${kwho[@]}"}"); E_MINE=("${kmine[@]+"${kmine[@]}"}")
+  E_KIND=("${kkind[@]+"${kkind[@]}"}"); E_SERIAL=("${kser[@]+"${kser[@]}"}"); E_PHASE=("${kph[@]+"${kph[@]}"}")
+  E_SHA=("${ksha[@]+"${ksha[@]}"}"); E_SUBJECT=("${ksub[@]+"${ksub[@]}"}")
+  E_SYN=(); for ((i = 0; i < ${#E_WHEN[@]}; i++)); do E_SYN+=(1); done
+
+  local when who mine kind serial phase sha subject
+  while IFS="$US" read -r when who mine kind serial phase sha subject; do
+    [ -n "$sha" ] || continue
+    E_WHEN+=("$when"); E_WHO+=("$who"); E_MINE+=("$mine"); E_KIND+=("$kind")
+    E_SERIAL+=("$serial"); E_PHASE+=("$phase"); E_SHA+=("$sha"); E_SUBJECT+=("$subject"); E_SYN+=(0)
+  done < "$f"
+  NE=${#E_SHA[@]}
+  return 0
+}
+
+load_defects() {
+  local f="$TMP/defects.rec"
+  [ -s "$f" ] || return 1
+  DEFECTS=(); NDEF=0
+  local subject clause kind message
+  while IFS="$US" read -r subject clause kind message; do
+    [ -n "$clause" ] || continue
+    DEFECTS[$subject]="${DEFECTS[$subject]:+${DEFECTS[$subject]}$GS}${clause}${RSX}${kind}${RSX}${message}"
+    NDEF=$((NDEF + 1))
+  done < "$f"
+  return 0
+}
+
+load_declarations() {
+  local f="$TMP/declarations.rec"
+  [ -f "$f" ] || return 1
+  DEC_WHO=(); DEC_CLAIMS=()
+  local who mine touched claims
+  while IFS="$US" read -r who mine touched claims; do
+    [ -n "$who" ] || continue
+    DEC_WHO+=("$who"); DEC_CLAIMS+=("$claims")
+  done < "$f"
+  NDEC=${#DEC_WHO[@]}
+  return 0
+}
+
+# Each instrument subcommand runs in its own child, so the slow one (briefs, which forks
+# git per brief) does not hold up the three fast ones, and none of them holds up the UI.
+fetch() {
+  local what="$1" kind="$2"
+  (
+    "$INSTRUMENT" "$what" 2>"$TMP/$what.err" \
+      | awk -f "$AWKDIR/json.awk" \
+      | awk -v kind="$kind" -f "$AWKDIR/shape.awk" > "$TMP/$what.new" \
+      && mv "$TMP/$what.new" "$TMP/$what.rec" && : > "$TMP/$what.ready"
+  ) &
+}
+
+fetch_all() {
+  rm -f "$TMP"/*.ready
+  fetch briefs briefs
+  fetch events events
+  fetch defects defects
+  fetch declarations declarations
+}
+
+# ── peer stream ──────────────────────────────────────────────────────────────
+start_peer() {
+  [ "$PEER_ON" = 1 ] && [ -x "$PEER" ] || return 0
+  : > "$TMP/peer.jsonl"
+  BLIC_PEER_INTERVAL="$PEER_INTERVAL" "$PEER" --stream >> "$TMP/peer.jsonl" 2>/dev/null &
+  PEER_PID=$!
+}
+
+PEER_SEEN=0
+drain_peer() {
+  local n
+  n=$(wc -l < "$TMP/peer.jsonl" 2>/dev/null || echo 0)
+  [ "$n" -gt "$PEER_SEEN" ] || return 1
+  local line rec when who mine kind serial phase sha subject syn
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    rec="$(printf '%s\n' "$line" | awk -f "$AWKDIR/json.awk" \
+          | awk -v kind=events -v FS="$US" '
+              { V[$1] = $2 }
+              END { printf "%s%c%s%c%s%c%s%c%s%c%s%c%s%c%s\n",
+                      V["synthetic"], 31, V["who"], 31, V["mine"], 31, V["kind"], 31,
+                      V["serial"], 31, V["phase"], 31, V["sha"], 31, V["subject"] }')"
+    IFS="$US" read -r syn who mine kind serial phase sha subject <<< "$rec"
+    # The marking is not cosmetic: the instrument's README says a console that shows one of
+    # these unmarked is lying about the record. An event that does not carry the field is
+    # therefore refused rather than shown as real.
+    [ "$syn" = true ] || continue
+    # Local time, and in the same layout git's %cI uses, because the feed sorts and slices
+    # these two sources with one rule.
+    E_WHEN=("$(date +%Y-%m-%dT%H:%M:%S)" "${E_WHEN[@]+"${E_WHEN[@]}"}")
+    E_WHO=("$who" "${E_WHO[@]+"${E_WHO[@]}"}")
+    E_MINE=("$mine" "${E_MINE[@]+"${E_MINE[@]}"}")
+    E_KIND=("$kind" "${E_KIND[@]+"${E_KIND[@]}"}")
+    E_SERIAL=("$serial" "${E_SERIAL[@]+"${E_SERIAL[@]}"}")
+    E_PHASE=("$phase" "${E_PHASE[@]+"${E_PHASE[@]}"}")
+    E_SHA=("$sha" "${E_SHA[@]+"${E_SHA[@]}"}")
+    E_SUBJECT=("$subject" "${E_SUBJECT[@]+"${E_SUBJECT[@]}"}")
+    E_SYN=(1 "${E_SYN[@]+"${E_SYN[@]}"}")
+    UNREAD=$((UNREAD + 1))
+  done < <(tail -n "+$((PEER_SEEN + 1))" "$TMP/peer.jsonl")
+  PEER_SEEN="$n"
+  NE=${#E_SHA[@]}
+  return 0
+}
+
+# ── derived ──────────────────────────────────────────────────────────────────
+# The brief's open question is whether a next action is derivable from the ledger at all.
+# This is the answer attempted: every branch below is a rule read off the status line, the
+# phase states and the Closed date, and nothing else. Where the record cannot support an
+# action the function says so rather than inventing one.
+next_action() {
+  local i="$1" st ph id lab pst ptr first_open="" first_open_state="" first_open_ptr=""
+  st="${B_STATE[i]%%(*}"
+  [ "${B_LEDGER[i]}" = true ] || { printf 'serial filed, no ledger — blc-start-brief'; return; }
+  [ -n "${B_LINE[i]}" ] || { printf 'ledger with no status line — the gate cannot read it'; return; }
+
+  local -a phases=()
+  split_packed "${B_PHASES[i]}"; phases=("${PARTS[@]}")
+  for ph in "${phases[@]}"; do
+    [ -n "$ph" ] || continue
+    split_fields "$ph"
+    id="${PARTS[0]-}"; pst="${PARTS[2]-}"; ptr="${PARTS[3]-}"
+    case "${pst%%(*}" in
+      done|skipped) ;;
+      *) [ -n "$first_open" ] || { first_open="$id"; first_open_state="${pst%%(*}"; first_open_ptr="$ptr"; } ;;
+    esac
+  done
+
+  case "$st" in
+    in-progress)
+      if [ -n "$first_open" ]; then
+        if [ "$first_open_state" = in-progress ]; then
+          if [ -n "$first_open_ptr" ]; then
+            printf 'phase %s in flight on %s — finish it, then blc-commit-push-pr' "$first_open" "$first_open_ptr"
+          else
+            printf 'phase %s in flight, no branch recorded — the ledger cannot say where' "$first_open"
+          fi
+        else
+          printf 'phase %s is %s — blc-next-brief-phase' "$first_open" "$first_open_state"
+        fi
+      else
+        printf 'in-progress with every phase done — blc-close-brief'
+      fi ;;
+    planned)
+      printf 'planned — blc-start-brief to plan phases and branch the first' ;;
+    no-line)
+      printf 'ledger with no status line — nothing can read its state' ;;
+    done)
+      if [ -z "${B_CLOSED[i]}" ]; then
+        printf 'done with no Closed date — blc-close-brief (BRIEFS-11 is open on this)'
+      else
+        printf 'closed %s — nothing to do' "${B_CLOSED[i]}"
+      fi ;;
+    *)
+      if [ -n "$first_open" ]; then
+        printf 'status says %s, phase %s is %s — the two disagree' "$st" "$first_open" "$first_open_state"
+      else
+        printf 'status says %s — not a state the five-state vocabulary has' "$st"
+      fi ;;
+  esac
+}
+
+# "In flight" is not the same as "not done". A brief whose status line says `done` and whose
+# ledger carries no `**Closed:**` date still has an action on it — that is BRIEFS-11, and the
+# brief that asked for this console names #0028 as the case that has survived every run of
+# the gate. Treating it as finished would hide the fixture's loudest signal.
+is_open() {
+  local i="$1"
+  case "${B_STATE[i]%%(*}" in
+    done) [ -z "${B_CLOSED[i]}" ] && return 0 || return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+# Sort rank inside a filtered view. Work in flight first, then work not started, then the
+# undated closes, then everything finished.
+rank() {
+  local i="$1"
+  case "${B_STATE[i]%%(*}" in
+    in-progress) RANKV=0 ;;
+    pending|planned) RANKV=1 ;;
+    done) [ -z "${B_CLOSED[i]}" ] && RANKV=2 || RANKV=4 ;;
+    *) RANKV=3 ;;
+  esac
+}
+RANKV=0
+
+rebuild_view() {
+  local prev_serial=""
+  [ "$NVIEW" -gt 0 ] && prev_serial="${B_SERIAL[${VIEW[SEL]}]}"
+  VIEW=()
+  local i ok
+  local -a BUCKET=("" "" "" "" "")
+  for ((i = 0; i < NB; i++)); do
+    ok=1
+    case "$FILTER" in
+      0) { [ "${B_MINE[i]}" = true ] && is_open "$i"; } || ok=0 ;;
+      1) is_open "$i" || ok=0 ;;
+      2) [ "${B_MINE[i]}" = true ] || ok=0 ;;
+    esac
+    if [ "$ok" = 1 ] && [ -n "$SEARCH" ]; then
+      case "${B_SERIAL[i]} ${B_TITLE[i]} ${B_SLUG[i]}" in
+        *"$SEARCH"*) ;;
+        *) ok=0 ;;
+      esac
+    fi
+    [ "$ok" = 1 ] && { rank "$i"; BUCKET[RANKV]+="$i "; }
+  done
+  local r
+  for r in 0 1 2 3 4; do
+    for i in ${BUCKET[r]-}; do VIEW+=("$i"); done
+  done
+  NVIEW=${#VIEW[@]}
+  # Keep the cursor on the brief it was on, not on the row number it was on.
+  if [ -n "$prev_serial" ]; then
+    local j
+    SEL=0
+    for ((j = 0; j < NVIEW; j++)); do
+      [ "${B_SERIAL[${VIEW[j]}]}" = "$prev_serial" ] && { SEL=$j; break; }
+    done
+  fi
+  [ "$SEL" -ge "$NVIEW" ] && SEL=$((NVIEW > 0 ? NVIEW - 1 : 0))
+  DSCROLL=0                   # a filter or search change is a change of context
+}
+
+# ── drawing ──────────────────────────────────────────────────────────────────
+# Lines are composed as plain text with the width known at every step, and colour is added
+# around segments that have already been padded. Measuring a string that contains escape
+# codes is the usual way a bash TUI goes wrong.
+# Every one of these returns through a global. A frame touches about forty rows and each row
+# wants three or four of them, and at one fork apiece that was 163 ms of latency on a
+# keypress. Nothing here forks, and the same frame now costs what section 6 of REPORT.md
+# says it costs.
+FITV=""
+fit() {                       # fit TEXT WIDTH -> FITV, exactly WIDTH characters
+  local s="$1" w="$2"
+  if (( w <= 0 )); then FITV=""; return; fi
+  if (( ${#s} > w )); then
+    if (( w > 1 )); then FITV="${s:0:w-1}…"; else FITV="${s:0:w}"; fi
+  else
+    printf -v FITV '%s%*s' "$s" $((w - ${#s})) ''
+  fi
+}
+
+SCOL=""
+state_colour() {
+  case "${1%%(*}" in
+    in-progress) SCOL="$YEL" ;;
+    done)        SCOL="$GRY" ;;
+    pending)     SCOL="$CYN" ;;
+    skipped)     SCOL="$DIM" ;;
+    planned)     SCOL="$BLU" ;;
+    no-line|'')  SCOL="$RED" ;;
+    *)           SCOL="$MAG" ;;
+  esac
+}
+
+KTAG=""
+kind_tag() {
+  case "$1" in
+    phase)       KTAG='phase' ;;
+    close)       KTAG='close' ;;
+    filed)       KTAG='filed' ;;
+    declaration) KTAG='decl ' ;;
+    record)      KTAG='rec  ' ;;
+    code)        KTAG='code ' ;;
+    *)           printf -v KTAG '%-5.5s' "$1" ;;
+  esac
+}
+
+declare -a FRAME PREV
+FORCE=1
+measure() {
+  # BLIC_ROWS/BLIC_COLS exist because a transcript has to be produced somewhere without a
+  # terminal attached. They are an override, not the normal path.
+  ROWS="${BLIC_ROWS:-$(tput lines 2>/dev/null || echo 24)}"
+  COLS="${BLIC_COLS:-$(tput cols 2>/dev/null || echo 80)}"
+  (( ROWS < 12 )) && ROWS=12
+  (( COLS < 50 )) && COLS=50
+  LW=$((COLS * 42 / 100)); (( LW < 28 )) && LW=28; (( LW > 46 )) && LW=46
+  RW=$((COLS - LW - 1))
+  FEEDH=$((ROWS / 4)); (( FEEDH < 4 )) && FEEDH=4; (( FEEDH > 9 )) && FEEDH=9
+  BODYH=$((ROWS - 2 - FEEDH - 2))
+  (( BODYH < 3 )) && { BODYH=3; FEEDH=$((ROWS - 7)); (( FEEDH < 1 )) && FEEDH=1; }
+}
+
+brief_rows() {                # left pane, into LEFT[]
+  LEFT=()
+  local i idx mark col st row
+  (( SEL < TOP )) && TOP=$SEL
+  (( SEL >= TOP + BODYH )) && TOP=$((SEL - BODYH + 1))
+  (( TOP < 0 )) && TOP=0
+  for ((row = 0; row < BODYH; row++)); do
+    i=$((TOP + row))
+    if (( i >= NVIEW )); then fit '' "$LW"; LEFT+=("$FITV"); continue; fi
+    idx=${VIEW[i]}
+    mark=' '; [ "${B_MINE[idx]}" = true ] && mark='*'
+    st="${B_STATE[idx]%%(*}"
+    state_colour "${B_STATE[idx]}"; col="$SCOL"
+    # `done` with no Closed date reads as finished and is not. The row says so.
+    if [ "$st" = done ] && [ -z "${B_CLOSED[idx]}" ]; then st="done·undated"; col="$RED"; fi
+    local text
+    printf -v text '%s#%s %-12.12s %s' "$mark" "${B_SERIAL[idx]}" "$st" "${B_TITLE[idx]}"
+    fit "$text" "$LW"
+    if (( i == SEL )); then
+      LEFT+=("${INV}${FITV}${R}")
+    else
+      LEFT+=("${col}${FITV}${R}")
+    fi
+  done
+}
+
+detail_rows() {               # right pane, into RIGHT[]
+  local -a D=()
+  if (( NVIEW == 0 )); then
+    D+=("no brief matches this filter")
+  else
+    local idx=${VIEW[SEL]}
+    D+=("${B}#${B_SERIAL[idx]} ${B_TITLE[idx]}${R}")
+    D+=("${DIM}${B_DIR[idx]}${R}")
+    D+=("")
+    state_colour "${B_STATE[idx]}"
+    D+=("state      ${SCOL}${B_STATE[idx]}${R}")
+    local viaauthor=""
+    [ -z "${B_OWNER[idx]}" ] && viaauthor=" ${DIM}(author, no Owner)${R}"
+    D+=("assignee   ${B_ASSIGNEE[idx]:-—}${viaauthor}")
+    D+=("created    ${B_CREATED[idx]:-—}    closed  ${B_CLOSED[idx]:-—}")
+    D+=("status     ${DIM}${B_LINE[idx]:-(none)}${R}")
+    D+=("")
+    D+=("${B}next${R}       ${GRN}$(next_action "$idx")${R}")
+    D+=("")
+    D+=("${B}phases${R}")
+    local ph id lab pst ptr n=0
+    local -a phases=()
+    split_packed "${B_PHASES[idx]}"; phases=("${PARTS[@]}")
+    for ph in "${phases[@]}"; do
+      [ -n "$ph" ] || continue
+      split_fields "$ph"
+      id="${PARTS[0]-}"; lab="${PARTS[1]-}"; pst="${PARTS[2]-}"; ptr="${PARTS[3]-}"
+      n=$((n + 1))
+      state_colour "$pst"
+      local pid pstv pptr
+      printf -v pid '%-3.3s' "$id"
+      printf -v pstv '%-13.13s' "${pst%%(*}"
+      printf -v pptr '%-18.18s' "${ptr:-—}"
+      D+=("  ${pid}${SCOL}${pstv}${R}${DIM}${pptr}${R}${lab}")
+    done
+    (( n == 0 )) && D+=("  ${DIM}none recorded on the status line${R}")
+    D+=("")
+    local packed="${DEFECTS[${B_SLUG[idx]}]:-}"
+    if [ -n "$packed" ]; then
+      D+=("${B}${RED}defects${R}")
+      local d
+      local -a dl=()
+      split_packed "$packed"; dl=("${PARTS[@]}")
+      for d in "${dl[@]}"; do
+        [ -n "$d" ] || continue
+        split_fields "$d"
+        D+=("  ${RED}${PARTS[0]-}${R} ${DIM}${PARTS[1]-}${R} ${PARTS[2]-}")
+      done
+    else
+      D+=("${B}defects${R}  ${GRN}none${R}")
+    fi
+  fi
+
+  RIGHT=()
+  local total=${#D[@]} row i
+  (( DSCROLL > total - 1 )) && DSCROLL=$((total > 0 ? total - 1 : 0))
+  (( DSCROLL < 0 )) && DSCROLL=0
+  for ((row = 0; row < BODYH; row++)); do
+    i=$((DSCROLL + row))
+    if (( i >= total )); then RIGHT+=(""); else RIGHT+=("${D[i]}"); fi
+  done
+  DTOTAL=$total
+}
+
+feed_rows() {                 # bottom pane, into FEED[]
+  FEED=()
+  local row i when who tag syn
+  for ((row = 0; row < FEEDH; row++)); do
+    i=$row
+    if (( i >= NE )); then FEED+=(""); continue; fi
+    when="${E_WHEN[i]}"; when="${when:11:5}"
+    who="${E_WHO[i]}"; who="${who%@*}"
+    kind_tag "${E_KIND[i]}"; tag="$KTAG"
+    if [ "${E_SYN[i]}" = 1 ]; then
+      syn="${MAG}${INV}SYN${R}"
+    else
+      syn="${DIM}git${R}"
+    fi
+    local mineish ref ftag fref fsub
+    if [ "${E_MINE[i]}" = true ]; then
+      mineish="${DIM}me${R}  "
+    else
+      fit "$who" 4; mineish="${B}${CYN}${FITV}${R}"
+    fi
+    ref="#${E_SERIAL[i]:-————}${E_PHASE[i]}"
+    [ -z "${E_SERIAL[i]}" ] && ref="${E_SHA[i]:0:8}"
+    fit "$tag" 5; ftag="$FITV"
+    fit "$ref" 10; fref="$FITV"
+    fit "${E_SUBJECT[i]}" $((COLS - 32 > 10 ? COLS - 32 : 10)); fsub="$FITV"
+    FEED+=("${DIM}${when}${R} ${syn} ${mineish} ${YEL}${ftag}${R} ${DIM}${fref}${R}${fsub}")
+  done
+}
+
+compose() {
+  FRAME=()
+  local i
+  local mineopen=0 inflight=0
+  for ((i = 0; i < NB; i++)); do
+    is_open "$i" && { inflight=$((inflight + 1)); [ "${B_MINE[i]}" = true ] && mineopen=$((mineopen + 1)); }
+  done
+
+  # Header is composed as plain text and fitted once. Colouring the pieces and then padding
+  # by their string length is the bug that puts a bar one cell off on every other frame.
+  local left right pad
+  left=" BLIC  ${ME:-?} on ${BRANCH}@${HEADSHA}"
+  printf -v right '%s briefs · %s in flight · %s mine · %s defects · %s decl ' \
+    "$NB" "$inflight" "$mineopen" "$NDEF" "$NDEC"
+  # An 80-column terminal cannot hold both halves. Shed the long identity before the counts:
+  # the counts are the thing that changes while you sit there.
+  if (( ${#left} + ${#right} > COLS )); then
+    left=" BLIC  ${ME%%@*} on ${BRANCH}"
+  fi
+  if (( ${#left} + ${#right} > COLS )); then
+    printf -v right '%s/%s mine · %s defects ' "$mineopen" "$inflight" "$NDEF"
+  fi
+  pad=$((COLS - ${#left} - ${#right}))
+  (( pad < 1 )) && pad=1
+  local gap
+  printf -v gap '%*s' "$pad" ''
+  fit "${left}${gap}${right}" "$COLS"
+  FRAME+=("${INV}${FITV}${R}")
+
+  # column bar
+  local badge=""
+  (( UNREAD > 0 )) && badge="${MAG}${B}● ${UNREAD} new${R}"
+  brief_rows
+  detail_rows
+  # The pane header carries the overflow count. On a 24-row terminal the detail of a brief
+  # with defects does not fit, and a pane that silently cuts its last line is worse than one
+  # that says how much it cut.
+  local more=""
+  (( DTOTAL > BODYH )) && more="  ${YEL}▾ $((DTOTAL - BODYH)) more ([ ])${R}"
+  fit " briefs — ${FILTER_NAMES[FILTER]}${SEARCH:+ /$SEARCH} ($((NVIEW == 0 ? 0 : SEL + 1))/$NVIEW)" "$LW"
+  FRAME+=("${B}${FITV}${R}${DIM}│${R}${B} detail${R}${more}")
+
+  local row
+  for ((row = 0; row < BODYH; row++)); do
+    FRAME+=("${LEFT[row]}${DIM}│${R}${RIGHT[row]}")
+  done
+
+  local feedtitle=" events — newest first"
+  [ -n "$PEER_PID" ] && kill -0 "$PEER_PID" 2>/dev/null \
+    && feedtitle+=" · peer stream on (SYN = synthetic, not the record)" \
+    || feedtitle+=" · peer stream off (p)"
+  fit "$feedtitle" $((COLS - 20))
+  FRAME+=("${B}${FITV}${R}${badge}")
+  feed_rows
+  for ((row = 0; row < FEEDH; row++)); do FRAME+=("${FEED[row]}"); done
+
+  if (( HELP )); then
+    fit " j/k move · g/G ends · f filter · / search · [ ] scroll detail · a mark read · p peer · r refresh · q quit" "$COLS"
+    FRAME+=("${INV}${FITV}${R}")
+  else
+    local lstat rstat
+    fit " ${STATUS}" $((COLS - 26)); lstat="$FITV"
+    fit "? keys  q quit" 26; rstat="$FITV"
+    FRAME+=("${INV}${lstat}${rstat}${R}")
+  fi
+}
+
+EL=$'\033[K'
+NOPREV=$'\x01'                # a row never equal to a composed one; `${x-$'…'}` does not expand
+flush() {
+  local out="" i line
+  for ((i = 0; i < ROWS; i++)); do
+    line="${FRAME[i]-}"
+    if (( FORCE )) || [ "${PREV[i]-$NOPREV}" != "$line" ]; then
+      out+=$'\033['"$((i + 1))"';1H'"${EL}${line}"
+      PREV[i]="$line"
+    fi
+  done
+  [ -n "$out" ] && printf '%s' "$out"
+  FORCE=0
+}
+
+redraw() {
+  compose
+  if (( FRAMES )); then
+    # Same compose(), printed as whole frames instead of positioned row writes. This is the
+    # transcript path: it proves what the frame said, not how few bytes it took to say it.
+    printf '\n──── frame %d · %s ────\n' "$FRAMENO" "${STATUS}"
+    printf '%s\n' "${FRAME[@]}"
+    FRAMENO=$((FRAMENO + 1))
+    return
+  fi
+  flush
+}
+
+# ── input ────────────────────────────────────────────────────────────────────
+move() {
+  local d="$1"
+  SEL=$((SEL + d)); DSCROLL=0
+  (( SEL < 0 )) && SEL=0
+  (( SEL >= NVIEW )) && SEL=$((NVIEW > 0 ? NVIEW - 1 : 0))
+}
+
+# One source of keys, so the search prompt behaves the same whether a person or --keys is
+# typing. The prompt having its own `read` was a second input path, and it spun on EOF.
+next_key() {
+  if (( SCRIPT_MODE )); then
+    [ -n "$SCRIPTED" ] || return 2
+    KEY="${SCRIPTED:0:1}"; SCRIPTED="${SCRIPTED:1}"
+    # `read -n1` hands back an empty string for Return. A scripted newline has to arrive as
+    # the same thing or the search prompt in a transcript never closes.
+    case "$KEY" in $'\n'|$'\r') KEY="" ;; esac
+    return 0
+  fi
+  read_key
+}
+
+prompt_search() {
+  SEARCH=""
+  local c rc
+  while :; do
+    STATUS="search: ${SEARCH}_"
+    redraw
+    next_key; rc=$?
+    (( rc == 2 )) && break
+    (( STDIN_EOF )) && break
+    (( rc != 0 )) && continue
+    c="$KEY"
+    case "$c" in
+      '') break ;;                                   # Enter
+      $'\033') SEARCH=""; break ;;
+      $'\177'|$'\b') SEARCH="${SEARCH%?}" ;;
+      *) SEARCH+="$c" ;;
+    esac
+    rebuild_view
+  done
+  rebuild_view
+  STATUS="filter ${FILTER_NAMES[FILTER]}${SEARCH:+ · search /$SEARCH}"
+}
+
+dispatch() {
+  case "$1" in
+    j|DOWN) move 1 ;;
+    k|UP) move -1 ;;
+    g|HOME) SEL=0; DSCROLL=0 ;;
+    G|END) SEL=$((NVIEW > 0 ? NVIEW - 1 : 0)); DSCROLL=0 ;;
+    $'\006'|PGDN) move "$BODYH" ;;
+    $'\002'|PGUP) move -"$BODYH" ;;
+    ']') DSCROLL=$((DSCROLL + 1)) ;;
+    '[') DSCROLL=$((DSCROLL - 1)) ;;
+    f) FILTER=$(((FILTER + 1) % 4)); rebuild_view; STATUS="filter ${FILTER_NAMES[FILTER]}" ;;
+    /) prompt_search ;;
+    a) UNREAD=0; STATUS="feed marked read" ;;
+    p)
+      if [ -n "$PEER_PID" ] && kill -0 "$PEER_PID" 2>/dev/null; then
+        kill "$PEER_PID" 2>/dev/null; pkill -P "$PEER_PID" 2>/dev/null
+        PEER_PID=""; STATUS="peer stream stopped"
+      else
+        start_peer; STATUS="peer stream started (synthetic, marked SYN)"
+      fi ;;
+    r) fetch_all; STATUS="refreshing the record…" ;;
+    '?') HELP=$((1 - HELP)) ;;
+    q) return 1 ;;
+  esac
+  return 0
+}
+
+STDIN_EOF=0
+read_key() {
+  local k rest rc
+  IFS= read -rsn1 -t "$TICK" k; rc=$?
+  # Three outcomes, and they are not the same thing. A timeout is the idle case and is the
+  # loop working. A non-zero that is not a timeout is stdin closed, and treating it as a
+  # timeout is how this spun a core at 100% when it was run with its input redirected.
+  if (( rc > 128 )); then return 1; fi
+  if (( rc != 0 )); then STDIN_EOF=1; return 1; fi
+  if [ "$k" = $'\033' ]; then
+    IFS= read -rsn2 -t 0.02 rest
+    case "$rest" in
+      '[A') k=UP ;; '[B') k=DOWN ;; '[C') k=']' ;; '[D') k='[' ;;
+      '[H') k=HOME ;; '[F') k=END ;;
+      '[5') IFS= read -rsn1 -t 0.02 _; k=PGUP ;;
+      '[6') IFS= read -rsn1 -t 0.02 _; k=PGDN ;;
+      *) k='' ;;
+    esac
+  fi
+  KEY="$k"
+  return 0
+}
+
+# ── run ──────────────────────────────────────────────────────────────────────
+RESIZED=0
+measure
+ME="$(git config user.email 2>/dev/null)"
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+HEADSHA="$(git rev-parse --short HEAD 2>/dev/null)"
+
+RAWTTY=0
+if (( ONCE == 0 && FRAMES == 0 )); then
+  RAWTTY=1
+  STTY_SAVE="$(stty -g 2>/dev/null)"
+  stty -echo -icanon min 1 time 0 2>/dev/null
+  printf '\033[?1049h\033[?25l\033[2J'
+fi
+
+fetch_all
+start_peer
+# The first frame goes up before any data arrives, because the instrument is two seconds
+# away and a console that shows nothing for two seconds has already lost the argument.
+(( ONCE == 0 )) && redraw
+
+deadline_events=$SECONDS
+deadline_briefs=$SECONDS
+
+if [ "$ONCE" = 1 ]; then
+  # Wait for the record, draw once, print the frame as plain lines.
+  while [ ! -f "$TMP/briefs.ready" ] || [ ! -f "$TMP/defects.ready" ]; do sleep 0.1; done
+  load_briefs; load_events; load_defects; load_declarations; rebuild_view
+  STATUS="one frame, --once"
+  compose
+  printf '%s\n' "${FRAME[@]}"
+  exit 0
+fi
+
+# --settle holds the key loop until the record is on screen. A keystroke measured against a
+# half-loaded console is measuring the load.
+if (( SETTLE )); then
+  while [ ! -f "$TMP/briefs.ready" ] || [ ! -f "$TMP/defects.ready" ]; do sleep 0.05; done
+  rm -f "$TMP"/*.ready
+  load_briefs; load_events; load_defects; load_declarations
+  rebuild_view; LOADED=1
+  STATUS="record read · filter ${FILTER_NAMES[FILTER]}"
+  redraw
+fi
+
+while :; do
+  dirty=0
+  if (( RESIZED )); then
+    RESIZED=0; measure; FORCE=1; printf '\033[2J'; dirty=1
+  fi
+  for what in briefs events defects declarations; do
+    if [ -f "$TMP/$what.ready" ]; then
+      rm -f "$TMP/$what.ready"
+      case "$what" in
+        briefs) load_briefs && { rebuild_view; LOADED=1; } ;;
+        events) load_events ;;
+        defects) load_defects ;;
+        declarations) load_declarations ;;
+      esac
+      dirty=1
+      (( LOADED )) && STATUS="record read at $(date +%H:%M:%S) · filter ${FILTER_NAMES[FILTER]}${SEARCH:+ · /$SEARCH}"
+    fi
+  done
+  drain_peer && dirty=1
+  if (( SECONDS - deadline_events >= EVENT_POLL )); then deadline_events=$SECONDS; fetch events events; fi
+  if (( SECONDS - deadline_briefs >= BRIEF_POLL )); then
+    deadline_briefs=$SECONDS; fetch briefs briefs; fetch defects defects; fetch declarations declarations
+  fi
+
+  # --keys drives the same dispatch the keyboard drives, so a transcript is a real session
+  # and not a second code path pretending to be one.
+  if (( SCRIPT_MODE )); then
+    next_key || break
+    STATUS="key: ${KEY}"
+    dispatch "$KEY" || break
+    redraw
+    sleep "${BLIC_SCRIPT_DELAY:-0.4}"
+    continue
+  fi
+
+  if read_key; then
+    dispatch "$KEY" || break
+    dirty=1
+  fi
+  (( STDIN_EOF )) && break
+  (( dirty )) && redraw
+done
