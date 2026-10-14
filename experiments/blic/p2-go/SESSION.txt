@@ -1,0 +1,656 @@
+BLIC prototype 2 — one session, as plain text
+=============================================
+
+Two recordings, because this machine has no pseudo-terminal: `script` cannot open one and the
+program refuses to start on /dev/tty. So there is no recording of the real screen, and the two
+things below are what honesty allows. REPORT.md section 6 says what that does and does not
+prove.
+
+  1. FRAMES — rendered by `blic -capture`, which drives the same model and the same view with
+     the colors stripped. Every frame is the real layout at 124x40. Synthetic peer events are
+     injected at the marked steps. Note that a synthetic event is still marked `SYNTH` with
+     no color available, which is the point.
+
+       ./blic -capture '4,peer:0,peer:1,tab,j,s,s,5,/,0,0,3,9' -width 124 -height 40
+
+  2. PROOF OF LIFE — the tail of `blic -session`, which runs the actual Bubble Tea program
+     against a scripted input stream with no terminal. The peer subprocess, the one-second
+     ticker, the 20-second event reread and the key decoder all ran, and the program quit
+     cleanly on `q`. The frame is a partial repaint, because the standard renderer repaints
+     parts of the screen. It is here to show that the loop ran, not to be read as a layout.
+
+       BLIC_PEER_INTERVAL=3 ./blic -session '4,j,tab,s' -hold 3s
+
+########## 1. FRAMES ##########
+
+=== on open: mine and in flight =============================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c                                                                        
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · mine, in flight · 1 of 39           ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│─────────────────────────────────────────────││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│ GATE  16 judgments · press 4 to list them   ││ docs/blc/briefs/0039-blic-console                                         │
+│   BRIEFS-11  × 16                           ││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│ CLAIMS nobody has declared unfiled work     ││                                                                           │
+│                                             ││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│                                             ││       phase a is in progress at blic/bake-off — the bake-off              │
+│                                             ││                                                                           │
+│                                             ││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│                                             ││                                                                           │
+│                                             ││ PHASES                                                                    │
+│                                             ││   id  state        pointer             label                              │
+│                                             ││   a   in-progress  blic/bake-off       the bake-off                       │
+│                                             ││   b   pending      —                   the console                        │
+│                                             ││                                                                           │
+│                                             ││ GATE  no judgments against this brief                                     │
+│                                             ││                                                                           │
+│                                             ││                                                                           │
+│                                             │╰───────────────────────────────────────────────────────────────────────────╯
+│                                             │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 0 synthetic · s hides synthetic                            │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+│                                             ││  22:08 mine    phase       #0036b [#0036b] reach the forge query the s…   │
+│                                             ││  21:26 mine    phase       #0036a [#0036a] check the two writes the de…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 4 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c                                                                        
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 0 synthetic · s hides synthetic                            │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+│                                             ││  22:08 mine    phase       #0036b [#0036b] reach the forge query the s…   │
+│                                             ││  21:26 mine    phase       #0036a [#0036a] check the two writes the de…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== a peer event arrives (phase) ============================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 1 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 1 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+│                                             ││  22:08 mine    phase       #0036b [#0036b] reach the forge query the s…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== a peer event arrives (declaration) ======================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: tab ================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: j ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: s ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic hidden · s shows them                          │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+│                                             ││  22:08 mine    phase       #0036b [#0036b] reach the forge query the s…   │
+│                                             ││  21:26 mine    phase       #0036a [#0036a] check the two writes the de…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: s ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · flagged by the gate · 16 of 39      ││DETAIL                                                                     │
+│▸ ● 0028 done        2/2 !1 The summary with…││#0028 The summary with no writer                                           │
+│  ● 0027 done        1/1 !1 The export that …││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0026 done        1/1 !1 The trailer that…││ docs/blc/briefs/0028-the-summary-with-no-writer                           │
+│  ● 0025 done        4/4 !1 Stale branches n…││ filed 2026-10-07 · touched 6d ago · no Closed date                        │
+│  ● 0024 done        1/1 !1 Orient believes …││                                                                           │
+│  ● 0023 done        3/3 !1 An upgrade that …││ NEXT  blc-close-brief                                                     │
+│  ● 0017 done        4/4 !1 The BLC docs tree││       BRIEFS-11: status line says done and the ledger records no Closed   │
+│  ● 0010 done        2/2 !1 The skills live …││       date                                                                │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ STATUS blc/2 #0028 done a:done(PR#125) b:done(PR#126)                     │
+│  ● 0006 done        5/5 !1 One chronicle, n…││                                                                           │
+│  ● 0005 done        4/4 !1 Closing the sing…││ PHASES                                                                    │
+│  ● 0004 done        3/3 !1 The ledger is an…││   id  state        pointer             label                              │
+│  ● 0003 done        5/5 !1 A fourth artifac…││   a   done         PR#125              the tool takes a summary           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││   b   done         PR#126              the skill that writes one          │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│─────────────────────────────────────────────││ GATE  1 judgment(s) from tools/validate-briefs.sh                         │
+│ GATE  16 judgments · press 4 to list them   ││   BRIEFS-11 status line says done, and ledger.md records no **Closed:** … │
+│   BRIEFS-11  × 16                           │╰───────────────────────────────────────────────────────────────────────────╯
+│ CLAIMS nobody has declared unfiled work     │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 5 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · all · 39 of 39                      ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│  ● 0028 done        2/2 !1 The summary with…││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0027 done        1/1 !1 The export that …││ docs/blc/briefs/0039-blic-console                                         │
+│  ● 0026 done        1/1 !1 The trailer that…││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│  ● 0025 done        4/4 !1 Stale branches n…││                                                                           │
+│  ● 0024 done        1/1 !1 Orient believes …││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│  ● 0023 done        3/3 !1 An upgrade that …││       phase a is in progress at blic/bake-off — the bake-off              │
+│  ● 0017 done        4/4 !1 The BLC docs tree││                                                                           │
+│  ● 0010 done        2/2 !1 The skills live …││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ PHASES                                                                    │
+│  ● 0006 done        5/5 !1 One chronicle, n…││   id  state        pointer             label                              │
+│  ● 0005 done        4/4 !1 Closing the sing…││   a   in-progress  blic/bake-off       the bake-off                       │
+│  ● 0004 done        3/3 !1 The ledger is an…││   b   pending      —                   the console                        │
+│  ● 0003 done        5/5 !1 A fourth artifac…││                                                                           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││ GATE  no judgments against this brief                                     │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│  ● 0038 done        1/1    The fix that was…││                                                                           │
+│  ● 0037 done        1/1    The declarations…│╰───────────────────────────────────────────────────────────────────────────╯
+│  ● 0036 done        3/3    The query nothin…│╭───────────────────────────────────────────────────────────────────────────╮
+│  ● 0035 done        1/1    orient exits 1 o…││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│  ● 0034 done        2/2    Check the status…││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│  ● 0033 done        2/2    The close nothin…││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│  ● 0032 done        2/2    The draft nothin…││  00:55 mine    code               experiment: the frozen read surface …   │
+│  ● 0031 done        1/1    phase-row.sh can…││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│  ● 0030 done        3/3    The merge method…││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│  ● 0029 done        2/2    The architecture…││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│  ● 0022 done        4/4    The agent file a…││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│  ● 0021 done        3/3    Orient answers c…││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│  ● 0020 done        1/1    The move git can…││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│  ● 0019 done        5/5    The source is no…││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│  ● 0018 done        3/3    The Jira export …││  22:57 mine    record             docs: open the ledger for #0037         │
+│  ● 0016 done        4/4    The readers that…││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│  ● 0015 done        2/2    The interpreter …││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: / ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · / · 39 of 39                        ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│  ● 0028 done        2/2 !1 The summary with…││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0027 done        1/1 !1 The export that …││ docs/blc/briefs/0039-blic-console                                         │
+│  ● 0026 done        1/1 !1 The trailer that…││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│  ● 0025 done        4/4 !1 Stale branches n…││                                                                           │
+│  ● 0024 done        1/1 !1 Orient believes …││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│  ● 0023 done        3/3 !1 An upgrade that …││       phase a is in progress at blic/bake-off — the bake-off              │
+│  ● 0017 done        4/4 !1 The BLC docs tree││                                                                           │
+│  ● 0010 done        2/2 !1 The skills live …││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ PHASES                                                                    │
+│  ● 0006 done        5/5 !1 One chronicle, n…││   id  state        pointer             label                              │
+│  ● 0005 done        4/4 !1 Closing the sing…││   a   in-progress  blic/bake-off       the bake-off                       │
+│  ● 0004 done        3/3 !1 The ledger is an…││   b   pending      —                   the console                        │
+│  ● 0003 done        5/5 !1 A fourth artifac…││                                                                           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││ GATE  no judgments against this brief                                     │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│  ● 0038 done        1/1    The fix that was…││                                                                           │
+│  ● 0037 done        1/1    The declarations…│╰───────────────────────────────────────────────────────────────────────────╯
+│  ● 0036 done        3/3    The query nothin…│╭───────────────────────────────────────────────────────────────────────────╮
+│  ● 0035 done        1/1    orient exits 1 o…││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│  ● 0034 done        2/2    Check the status…││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│  ● 0033 done        2/2    The close nothin…││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│  ● 0032 done        2/2    The draft nothin…││  00:55 mine    code               experiment: the frozen read surface …   │
+│  ● 0031 done        1/1    phase-row.sh can…││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│  ● 0030 done        3/3    The merge method…││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│  ● 0029 done        2/2    The architecture…││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│  ● 0022 done        4/4    The agent file a…││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│  ● 0021 done        3/3    Orient answers c…││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│  ● 0020 done        1/1    The move git can…││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│  ● 0019 done        5/5    The source is no…││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│  ● 0018 done        3/3    The Jira export …││  22:57 mine    record             docs: open the ledger for #0037         │
+│  ● 0016 done        4/4    The readers that…││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│  ● 0015 done        2/2    The interpreter …││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 0 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · /0 · 39 of 39                       ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│  ● 0028 done        2/2 !1 The summary with…││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0027 done        1/1 !1 The export that …││ docs/blc/briefs/0039-blic-console                                         │
+│  ● 0026 done        1/1 !1 The trailer that…││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│  ● 0025 done        4/4 !1 Stale branches n…││                                                                           │
+│  ● 0024 done        1/1 !1 Orient believes …││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│  ● 0023 done        3/3 !1 An upgrade that …││       phase a is in progress at blic/bake-off — the bake-off              │
+│  ● 0017 done        4/4 !1 The BLC docs tree││                                                                           │
+│  ● 0010 done        2/2 !1 The skills live …││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ PHASES                                                                    │
+│  ● 0006 done        5/5 !1 One chronicle, n…││   id  state        pointer             label                              │
+│  ● 0005 done        4/4 !1 Closing the sing…││   a   in-progress  blic/bake-off       the bake-off                       │
+│  ● 0004 done        3/3 !1 The ledger is an…││   b   pending      —                   the console                        │
+│  ● 0003 done        5/5 !1 A fourth artifac…││                                                                           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││ GATE  no judgments against this brief                                     │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│  ● 0038 done        1/1    The fix that was…││                                                                           │
+│  ● 0037 done        1/1    The declarations…│╰───────────────────────────────────────────────────────────────────────────╯
+│  ● 0036 done        3/3    The query nothin…│╭───────────────────────────────────────────────────────────────────────────╮
+│  ● 0035 done        1/1    orient exits 1 o…││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│  ● 0034 done        2/2    Check the status…││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│  ● 0033 done        2/2    The close nothin…││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│  ● 0032 done        2/2    The draft nothin…││  00:55 mine    code               experiment: the frozen read surface …   │
+│  ● 0031 done        1/1    phase-row.sh can…││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│  ● 0030 done        3/3    The merge method…││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│  ● 0029 done        2/2    The architecture…││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│  ● 0022 done        4/4    The agent file a…││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│  ● 0021 done        3/3    Orient answers c…││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│  ● 0020 done        1/1    The move git can…││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│  ● 0019 done        5/5    The source is no…││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│  ● 0018 done        3/3    The Jira export …││  22:57 mine    record             docs: open the ledger for #0037         │
+│  ● 0016 done        4/4    The readers that…││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│  ● 0015 done        2/2    The interpreter …││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 0 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · /00 · 39 of 39                      ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│  ● 0028 done        2/2 !1 The summary with…││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0027 done        1/1 !1 The export that …││ docs/blc/briefs/0039-blic-console                                         │
+│  ● 0026 done        1/1 !1 The trailer that…││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│  ● 0025 done        4/4 !1 Stale branches n…││                                                                           │
+│  ● 0024 done        1/1 !1 Orient believes …││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│  ● 0023 done        3/3 !1 An upgrade that …││       phase a is in progress at blic/bake-off — the bake-off              │
+│  ● 0017 done        4/4 !1 The BLC docs tree││                                                                           │
+│  ● 0010 done        2/2 !1 The skills live …││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│  ● 0009 done        3/3 !1 One name for a p…││                                                                           │
+│  ● 0008 done        5/5 !1 The record outgr…││ PHASES                                                                    │
+│  ● 0006 done        5/5 !1 One chronicle, n…││   id  state        pointer             label                              │
+│  ● 0005 done        4/4 !1 Closing the sing…││   a   in-progress  blic/bake-off       the bake-off                       │
+│  ● 0004 done        3/3 !1 The ledger is an…││   b   pending      —                   the console                        │
+│  ● 0003 done        5/5 !1 A fourth artifac…││                                                                           │
+│  ● 0002 done        1/1 !1 Add MIT license  ││ GATE  no judgments against this brief                                     │
+│  ● 0001 done            !1 Bootstrap: brief…││                                                                           │
+│  ● 0038 done        1/1    The fix that was…││                                                                           │
+│  ● 0037 done        1/1    The declarations…│╰───────────────────────────────────────────────────────────────────────────╯
+│  ● 0036 done        3/3    The query nothin…│╭───────────────────────────────────────────────────────────────────────────╮
+│  ● 0035 done        1/1    orient exits 1 o…││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│  ● 0034 done        2/2    Check the status…││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│  ● 0033 done        2/2    The close nothin…││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│  ● 0032 done        2/2    The draft nothin…││  00:55 mine    code               experiment: the frozen read surface …   │
+│  ● 0031 done        1/1    phase-row.sh can…││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│  ● 0030 done        3/3    The merge method…││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│  ● 0029 done        2/2    The architecture…││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│  ● 0022 done        4/4    The agent file a…││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│  ● 0021 done        3/3    Orient answers c…││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│  ● 0020 done        1/1    The move git can…││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│  ● 0019 done        5/5    The source is no…││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│  ● 0018 done        3/3    The Jira export …││  22:57 mine    record             docs: open the ledger for #0037         │
+│  ● 0016 done        4/4    The readers that…││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│  ● 0015 done        2/2    The interpreter …││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 3 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · /003 · 11 of 39                     ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│  ● 0003 done        5/5 !1 A fourth artifac…││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│  ● 0038 done        1/1    The fix that was…││ docs/blc/briefs/0039-blic-console                                         │
+│  ● 0037 done        1/1    The declarations…││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│  ● 0036 done        3/3    The query nothin…││                                                                           │
+│  ● 0035 done        1/1    orient exits 1 o…││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│  ● 0034 done        2/2    Check the status…││       phase a is in progress at blic/bake-off — the bake-off              │
+│  ● 0033 done        2/2    The close nothin…││                                                                           │
+│  ● 0032 done        2/2    The draft nothin…││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│  ● 0031 done        1/1    phase-row.sh can…││                                                                           │
+│  ● 0030 done        3/3    The merge method…││ PHASES                                                                    │
+│─────────────────────────────────────────────││   id  state        pointer             label                              │
+│ GATE  16 judgments · press 4 to list them   ││   a   in-progress  blic/bake-off       the bake-off                       │
+│   BRIEFS-11  × 16                           ││   b   pending      —                   the console                        │
+│ CLAIMS nobody has declared unfiled work     ││                                                                           │
+│                                             ││ GATE  no judgments against this brief                                     │
+│                                             ││                                                                           │
+│                                             ││                                                                           │
+│                                             │╰───────────────────────────────────────────────────────────────────────────╯
+│                                             │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+=== key: 9 ==================================================================
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 2 NEW since you opened (a to clear)                                  
+╭─────────────────────────────────────────────╮╭───────────────────────────────────────────────────────────────────────────╮
+│BRIEFS · /0039 · 1 of 39                     ││DETAIL                                                                     │
+│▸ ● 0039 in-progress 0/2    The record nobod…││#0039 The record nobody is watching while it changes                       │
+│─────────────────────────────────────────────││ josh.stella@gmail.com (author; no Owner line)  ← mine                     │
+│ GATE  16 judgments · press 4 to list them   ││ docs/blc/briefs/0039-blic-console                                         │
+│   BRIEFS-11  × 16                           ││ filed 2026-10-14 · touched 50m ago · no Closed date                       │
+│ CLAIMS nobody has declared unfiled work     ││                                                                           │
+│                                             ││ NEXT  blc-review-pr then blc-commit-push-pr                               │
+│                                             ││       phase a is in progress at blic/bake-off — the bake-off              │
+│                                             ││                                                                           │
+│                                             ││ STATUS blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending     │
+│                                             ││                                                                           │
+│                                             ││ PHASES                                                                    │
+│                                             ││   id  state        pointer             label                              │
+│                                             ││   a   in-progress  blic/bake-off       the bake-off                       │
+│                                             ││   b   pending      —                   the console                        │
+│                                             ││                                                                           │
+│                                             ││ GATE  no judgments against this brief                                     │
+│                                             ││                                                                           │
+│                                             ││                                                                           │
+│                                             │╰───────────────────────────────────────────────────────────────────────────╯
+│                                             │╭───────────────────────────────────────────────────────────────────────────╮
+│                                             ││FEED · 40 git · 2 synthetic · s hides synthetic                            │
+│                                             ││    —   SYNTH ⚠ declaration        docs: declare #0041, picked up not y…   │
+│                                             ││    —   SYNTH ⚠ phase       #0024b [#0024b] split the renderer from the…   │
+│                                             ││  00:55 mine    code               experiment: the frozen read surface …   │
+│                                             ││  00:52 mine    filed       #0039  docs: file #0039 and open its ledger…   │
+│                                             ││  00:42 mine    close       #0038  docs: close #0038 (derived contract …   │
+│                                             ││  00:40 mine    phase       #0038a [#0038a] derive the contract version…   │
+│                                             ││  00:04 mine    record             docs: open the ledger for #0038, der…   │
+│                                             ││  23:38 mine    filed       #0038  docs: file #0038, the fix applied on…   │
+│                                             ││  23:34 mine    close       #0037  docs: close #0037 (#155)                │
+│                                             ││  23:26 mine    phase       #0037a [#0037a] count the claims a declarat…   │
+│                                             ││  22:57 mine    record             docs: open the ledger for #0037         │
+│                                             ││  22:46 mine    close       #0036  docs: close #0036 (#153)                │
+│                                             ││  22:38 mine    phase       #0036c [#0036c] ask GitLab which merge requ…   │
+╰─────────────────────────────────────────────╯╰───────────────────────────────────────────────────────────────────────────╯
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.1s just now · events 
+ j/k move  tab pane  1-5/f filter  / search  r reread  s synthetic  a ack new  ? help  q quit                               
+
+########## 2. PROOF OF LIFE ##########
+
+the program ran for real: 30219 bytes of frames written, quit cleanly on q
+
+BLIC p2 · go+bubbletea │ p2-go │ blic/p2-go @0174e7c │ 6 NEW since you opened (a to clear)                                  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+│                                             ││FEED · 40 git · 6 synthetic hidden · s shows them                          │
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ josh.stella@gmail.com │ 39 briefs, 1 mine and open │ 16 gate judgments │ 0 declarations │ full read 3.2s 12s ago · events 1
