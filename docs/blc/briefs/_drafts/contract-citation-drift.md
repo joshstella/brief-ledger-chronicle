@@ -20,6 +20,17 @@ link resolves. They are wrong in the way that is hardest to catch: they work.
 through v1.3 in four places and asserts each ships. It never asserts v1.4 ships, and it
 passed the whole time. A test that enumerates what exists cannot notice what was added.
 
+**That half is gone. #0038 took it, and it was five places, not four.** Every list in that
+file now reads `docs/blc/contracts/`. What is left here is the citations, which is the
+harder population: a list of what ships has one right answer, and a citation of a specific
+version does not. #0038 also found the line that separates them — a derived list answers
+what ships, a written name answers what someone decided — which is the distinction the
+"Two populations" section below reaches for.
+
+One citation outside the four is still open: `install.sh:959` prints "Contract v1.5" in the
+install banner. It is a pointer to current, not a citation of a version, so it belongs to
+the first population.
+
 ## The finding
 
 **Nothing checks that cutting a version moves its citations.** `#0033` enumerated the cost

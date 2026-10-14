@@ -1,16 +1,17 @@
 # Ledger — #0038 The fix that was applied once and not propagated
 
-`blc/2 #0038 in-progress a:in-progress(brief/0038-a-derived-contract-lists)`
+`blc/2 #0038 done a:done`
 
 **Brief:** `docs/blc/briefs/0038-derived-contract-lists/brief.md`
-**Status:** in-progress
+**Status:** done
 **Started:** 2026-10-14
+**Closed:** 2026-10-14
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | derived contract lists | in-progress | `brief/0038-a-derived-contract-lists` | — |
+| a | derived contract lists | done | `brief/0038-a-derived-contract-lists` | #156 |
 
 **a — derived contract lists.** `tests/test_contract_ship.sh` names Contract versions by hand
 in five places, and every list stops at `v1.3`. `v1.4` and `v1.5` are published, ship to every
@@ -94,3 +95,78 @@ None.
 ## Branches
 
 `brief/0038-a-derived-contract-lists`, cut from `main` at `e2fd440`.
+`brief/0038-closeout`, cut from `main` at `3dbdee0`.
+
+## Close, 2026-10-14
+
+### What shipped
+
+`tests/test_contract_ship.sh` no longer names a Contract version in a list. Publishing `v1.6`
+puts it under every assertion in that file the day the file exists, with no edit here.
+
+One phase, `a` (#156). Five lists became reads of `docs/blc/contracts/`, the same glob
+`install.sh:423` uses to decide what it ships. Every loop got a floor, because a derived list
+passes whether or not the derivation found anything. The one hand-written version name that
+answers a decision rather than a fact stayed written out, with the reason beside it.
+
+All four decisions settled before the phase held. The fifth list the brief did not name was
+found while planning, and folding it in was decided before any code was written.
+
+### What the record shows that the brief did not predict
+
+- **The defect was never silent. It was reported in the wrong words.** The brief said `v1.4`
+  and `v1.5` are "asserted by none of them". The counterfactual says otherwise: run the old
+  test file against an installer that ships only `v1.md` through `v1.3.md` and two tests fail
+  — the already-derived `cmp` test and the relative-link test. So a Contract that failed to
+  install would have been caught. It would have been caught by tests that exist for other
+  reasons, naming other properties, while every test whose stated job is to assert the
+  Contract installed stayed green. That is a weaker claim than the brief made and it is the
+  true one. It also explains how the defect survived: nothing ever went red, so nobody was
+  sent to the lists.
+- **The floor is the part that nearly shipped broken.** The first draft put
+  `[ "$found" -gt 0 ] || fail` inside the helper. A `fail` in a command substitution dies in
+  the subshell, the caller loops over an empty list, and the test passes having checked
+  nothing. The fix for a test that cannot report emptiness was written as a test that cannot
+  report emptiness. Caught by reading, not by a run: the suite was green either way, which is
+  the whole point.
+- **One of the five lists carried its own specification.**
+  `ship_every_tool_the_installed_docs_name_is_present` had a comment saying the property is
+  about the shipped set and that scanning a subset would let a tool in an omitted document go
+  unchecked, written above a hand-written subset. The comment needed no rewrite. Obeying it
+  found a second omission the brief did not name: `docs/blc/state/README.md` ships on every
+  install and no list here had ever scanned it.
+- **"Derive everything" was wrong, and the file said so before this brief did.**
+  `ship_exactly_one_contract_version_is_current` already explained why its version name is
+  written out. The brief's contribution was not finding that rule but naming the two
+  categories — a derived list answers what ships, a written name answers what someone decided
+  — so the next sweep has a test to apply rather than a precedent to respect.
+
+### Open after close
+
+- **`install.sh:959` prints "Contract v1.5" in the install banner.** It is a hand-written
+  version name outside this file and it will go stale the same way. Out of scope here, and
+  the same question as the parent draft's citations.
+- **The parent draft keeps the other half.** `_drafts/contract-citation-drift.md` holds the
+  `v1.3` citations in the skills, the README, the architecture doc and `tests/test_briefs.sh`.
+  Deciding which citation of a specific version is right to leave alone needs the argument
+  that draft has not had.
+- **The tool scan now reads `install-log.md`, which the installer writes rather than ships.**
+  It passes today. No fixture builds a target whose install log names a tool a later version
+  removed, so whether that test would then fail usefully or only make noise is unknown.
+- **The derivation is correct while `install.sh` stays derived.** If the installer goes back
+  to naming versions, these tests agree with the tree against the target, and the two lists
+  are again two things to keep in step. Said at the site; nothing enforces it.
+- No bug ledger (`review-<branch>.md`) was written. There were no surviving correctness bugs.
+
+### What this cannot prove
+
+- **A floor proves the loop ran, not that the loop would catch the defect.** Both were tested
+  separately: pointing the helper's glob at a pattern that matches nothing fails all four
+  floors, and mutating the installer fails three of the changed tests. Neither shows the
+  assertions cover a case nobody thought of.
+- **The mutation only models a version that does not install.** A version that installs with
+  the wrong content was already caught by the `cmp` test before this change, and a version
+  that installs correctly but states no clause is caught by nothing here.
+- **The review was written by the author of the code.** `blc-review-pr` returned Approve with
+  one scope item for the person to settle, and Bugbot found no bugs. No person read the diff
+  before it merged.
