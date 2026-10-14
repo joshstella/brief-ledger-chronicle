@@ -203,8 +203,32 @@ if $DELETE; then
       ref="refs/blc/pruned/$name-$n"
       n=$((n + 1))
     done
-    git update-ref "$ref" "$tip"
+    # The loop above does not catch a directory/file conflict: pruning `feature` leaves
+    # refs/blc/pruned/feature, and pruning `feature/x` later asks git for a ref under a path
+    # that is already a ref. That does not resolve, so the rename never fires, and git
+    # refuses. The caller needs the failure, not a ref name for a ref that was never written.
+    git update-ref "$ref" "$tip" || return 1
     printf '%s' "$ref"
+  }
+
+  # usage: surviving_config <name> — how many branch.<name>.* settings outlived the deletion.
+  # git normally removes them. A value in a file reached through `[include] path = …` is not
+  # in a file this repository owns, so git leaves it and so does this program.
+  #
+  # The scope is this repository's configuration and nothing above it. `--local` is the wrong
+  # reading: it is one file, so it drops the included value, which is the case this exists for.
+  # Every scope is wrong the other way: a global `[branch "name"]` section belongs to the
+  # person, not to the branch that was deleted, and reporting it would make a clean prune
+  # fail for anyone who keeps per-branch defaults in `~/.gitconfig`. Suppressing the two outer
+  # files leaves the local file and everything it includes, which is what the deletion was
+  # supposed to clear.
+  #
+  # Prefix-matched with index() rather than a regex, because a branch name is full of
+  # characters a regex reads: `.`, `+`, and the `*` a wildcard refspec can leave behind.
+  surviving_config() {
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
+      git config --list --name-only 2>/dev/null \
+      | awk -v p="branch.$1." 'index($0, p) == 1' | grep -c . || true
   }
 
   status=0
@@ -233,9 +257,29 @@ if $DELETE; then
       status=1
       continue
     fi
-    ref="$(save_tip "$name" "$tip")"
-    git branch -D "$name" >/dev/null
-    echo "deleted $name ($proof), tip kept at $ref"
+    # "refused" is for a branch this program left untouched, which is why a failed save reads
+    # the same as the four checks above it: nothing happened to the branch. "failed" is for a
+    # deletion that was attempted and did not finish, which is a different thing to wake up to.
+    if ! ref="$(save_tip "$name" "$tip")"; then
+      echo "refused $name: the tip could not be saved under refs/blc/pruned/." >&2
+      status=1
+      continue
+    fi
+    if ! git branch -D "$name" >/dev/null; then
+      # The saved tip now names a branch that is still here. Removing it would be a second
+      # write in the loop that just failed to write, so the run reports it and stops there.
+      echo "failed $name: the branch is still here, and its tip is also at $ref." >&2
+      status=1
+      continue
+    fi
+    left="$(surviving_config "$name")"
+    if [ "$left" -gt 0 ]; then
+      echo "deleted $name ($proof), tip kept at $ref" \
+           "— $left \`branch.$name.*\` setting(s) outlived it, in a file this repository does not own."
+      status=1
+    else
+      echo "deleted $name ($proof), tip kept at $ref"
+    fi
   done
   exit $status
 fi

@@ -71,11 +71,45 @@ should not run through a loop that does not check what it did.
   stop claiming the deletion was clean. Removing it is a second write in the same loop that
   just failed to write.
 
+## Settled while writing `a`, 2026-10-14
+
+- **No `git` shim. Every failure is produced with plain git.** Measured on git 2.43 before any
+  code was written:
+  - `update-ref` fails on a directory/file ref conflict. Pruning `feature` leaves
+    `refs/blc/pruned/feature`. Pruning `feature/x` later builds `refs/blc/pruned/feature/x`,
+    which the existence loop does not catch because it does not resolve, and git exits 128.
+    A case the toolkit will meet, not only a way to fail on purpose.
+  - `branch -D` fails while `update-ref` succeeds when the `.git` top directory alone is
+    read-only. `update-ref` locks under `.git/refs/blc/pruned/`, a subdirectory that stays
+    writable. `branch -D` needs `.git/packed-refs.lock` in the top directory and exits 1.
+    That is the selective failure the abort rule exists for, with nothing between the tool
+    and git. It is a no-op for root, so this test calls `skip`.
+  - A `branch.<name>.*` section survives a successful deletion when it lives in a file reached
+    through `[include] path = …`. The branch goes, the run exits 0, and the value still reads.
+
+  The decision below is therefore closed for `a`, and narrowed to the forge CLI for `b`.
+
+- **A configuration section does not survive because a sandbox blocked a write.** The decision
+  above stands; the reason given for it was wrong, and the skill must not repeat it. A
+  read-only `.git/config` is rewritten anyway, because git writes a temp file and renames it
+  and the containing directory is writable. A read-only `.git` directory fails the deletion
+  itself, so the refs are not gone either. "Refs gone, configuration not" could not be
+  produced with permissions at all. An included file produces it, and it is the stronger
+  argument for reporting rather than removing: **the toolkit may not own the file the value
+  lives in.**
+
+- **"Surviving" means the local file and what it includes, not every scope.** Found by the
+  review gate, after a stray `[branch …]` section in a global file made a clean prune report a
+  survivor and exit non-zero. `--local` is the wrong correction: it reads one file and drops
+  the included value, which is the only case this check exists for. The reading is
+  `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git config --list`, which keeps
+  includes and drops the two outer files. The rule behind it: **a section the deletion was
+  never going to remove is not a residue of the deletion.** A person's per-branch defaults in
+  `~/.gitconfig` belong to the person.
+
 ## Open decisions
 
-- **Where the CLI fixture lives, and whether it shims `git` as well as the forge CLI.** Blocks
-  `b`. Phase `a` needs the same answer, because it has to make `update-ref` and `branch -D`
-  fail inside a fixture — so the mechanism is built in `a` and extended in `b` and `c`.
+- **Where the forge CLI fixture lives.** Blocks `b`. No longer blocks `a`.
 
 ## Complications found while planning
 

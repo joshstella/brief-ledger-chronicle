@@ -39,6 +39,17 @@ owns the conversation and owns no logic.
    - **Read the output, not the exit code.** A refusal makes the run exit non-zero even when
      other branches were deleted, so the exit status cannot tell "nothing happened" from "three
      deleted, one refused". Every line says which.
+   - Three lines mean something other than a refusal, and each needs a different answer:
+     - `refused <name>: the tip could not be saved` — the branch is untouched. It happens when
+       a ref already occupies the path, which is what pruning `feature` and later `feature/x`
+       does. Remove the older ref under `refs/blc/pruned/`, or leave the branch alone.
+     - `failed <name>: the branch is still here` — the tip was saved and the deletion was not
+       made. Nothing is lost, and the same tip is now in two places. Find out why git could not
+       write, then run the command again.
+     - `… setting(s) outlived it` — the branch is gone and its `branch.<name>.*` settings are
+       not. git removes those itself, so this means they live in a file reached through
+       `[include] path = …`, which this repository does not own. Say which file. Do not edit it
+       without asking.
 7. **Report what happened**, including each refusal and the reason the script gave for it.
 
 ## What the saved tips are, and are not
