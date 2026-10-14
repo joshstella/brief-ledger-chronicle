@@ -379,6 +379,112 @@ decision above.
   handled rather than unnoticed. Nobody has read those tests closely enough to say, and the
   brief that files it should start there.
 
+## Phase b, 2026-10-14
+
+The read surface is published as `tools/read-record.sh`. **It stays bash**, by the author's
+decision. The console is compiled and the surface every reader shares is not, so a reader of
+the record still needs nothing installed.
+
+Subcommands: `snapshot`, `briefs`, `events`, `declarations`, `defects`, `next`, `me`.
+
+### The four faults `a` recorded are closed
+
+- **A revision the tool accepted and dropped.** `snapshot REV` discarded REV and answered a
+  different question with exit 0. Arguments are parsed once now, and an argument the surface
+  does not understand is an error rather than a silent drop.
+- **Two shapes for one state.** The instrument split phase states into state and pointer and
+  left the brief-level state whole. Both split now, and `status_line` still carries the line
+  as written, so the split loses nothing. The pointer is cut at the last `)`, because
+  `done(commit 92a7168)` is a real state here and its pointer holds a space.
+- **A serial snapshot.** The four heavy sections share no state and none reads another's
+  output. Gathered concurrently, the document costs about the slowest section instead of the
+  sum: **1.94 s against 3.10 s**, measured on this repository.
+- **Dead code in the event classifier.** The paths were read into `kind` before a `case` on
+  the subject that assigns `kind` in every branch, so the first read was never used.
+
+### The defect it inherited, which `a` did not record
+
+`tools/list-briefs.sh` prints `planned` for a brief with no ledger and `no-line` for a ledger
+with no status line. Neither word is in the five-state vocabulary at
+`docs/blc/briefs/README.md:105`. The brief for #0039 names that tool-against-document
+disagreement as one of the four findings it was filed about, **and the instrument copied both
+words.** The published surface reports an empty state and two booleans, `has_ledger` and
+`has_status_line`, that say why it is empty. A reader that wants a word for the empty case
+chooses its own and owns it. `tools/list-briefs.sh` is unchanged and still invents both.
+
+### The derivation moved, as prototype 2 asked
+
+`next` returns one action and its basis for each brief that is not done and dated. Five
+shapes are recognised and everything else returns `none` and names the state. The derivation
+is thin and the surface says so rather than guessing, because a wrong next action is worse
+than no next action when the claim of the brief is that a person trusts it without checking.
+
+### What the test suite caught that review would not have
+
+- **A second identity-line reader.** The instrument parsed `**Owner:**` and `**Author:**`
+  with its own `sed`, which was harmless outside `tools/` and is a second reader inside it.
+  `tests/test_identity_line.sh` failed on the first full run. The surface now reads the
+  identity line through `tools/lib/identity-line.sh`, like every other tool.
+- **An exit that died in a subshell.** The argument guard was written as
+  `cmd_snapshot "$(rev_arg ...)"`. An `exit` inside a command substitution ends the subshell,
+  so the error reached stderr and the script carried on and exited 0 — a reader that reports
+  a problem and answers anyway. #0038 records the same shape in the test suite. The test
+  asserts the status and not the message, because asserting the message would have passed.
+
+### A wrong answer the review caught, not the suite
+
+The first `next` reported `blc-close-brief` with the basis "every phase is finished and the
+brief is still open" whenever no phase matched a rule. A **deferred** brief matched no rule.
+So a brief parked on purpose, with the reason written in its own ledger, was told to close,
+and the stated basis was not true either.
+
+Nothing failed. Every test passed, because no test asked about a deferred brief. It was found
+by reading the fallback during review and trying the case by hand.
+
+The rule that was over-firing is still needed, so it is now bounded: it fires only when every
+phase is `done` or `skipped`. A phase state outside the five-state vocabulary — `planned`, for
+instance, which `tools/list-briefs.sh` still invents — blocks it too, because the surface does
+not guess what an unknown word meant. Four tests pin the boundary and each was proved by
+restoring the old rule.
+
+This is the second time in this phase that the dangerous defect was a confident wrong answer
+rather than a crash. The argument guard reported an error and exited 0. This told somebody to
+close a brief they had parked.
+
+### Tests
+
+`tests/test_read_record.sh`, 22 tests, green under both awk interpreters the matrix finds.
+Each guard was proved by breaking the tool: restoring the subshell exit, the invented states,
+the dropped revision and the unsplit state each fails exactly the guards that name it. A
+guard that has never failed is unproven.
+
+Two tests assert the tree rather than the behaviour: the surface sources the shared readers,
+and it defines none of them itself. A pasted copy of the tokenizer would pass every
+behavioural test here and rebuild the defect #0013 was filed about.
+
+### The schema the plan asked for, and what was built instead
+
+The plan for `b` said "a schema". **No JSON Schema file was written**, and the reason is this
+repository's rule rather than time. A schema beside a hand-rolled emitter is a declared second
+copy of the same fact, and nothing here could check that the two agree. `jq` is absent on the
+machine that published this surface. Adding a JSON toolchain so the surface could validate
+itself would hand it the dependency it exists to avoid.
+
+So the contract is pinned as the exact field set of every object the surface emits — brief,
+phase, event, next, and the snapshot's top level — and the pins are tests. A field added,
+removed or renamed fails the suite and somebody decides on purpose. That is the property the
+schema was wanted for, and a pin cannot drift from the thing it describes.
+
+Phase `c` needs a strict decoder. It can generate one from these pins or hand-write it against
+them. What it must not do is write a third description of the same shape.
+
+### Left alone, and named
+
+Three suite failures predate this phase and were measured on a clean tree before any of this
+was written: `log_version_refuses_to_count_a_shallow_source`,
+`skill_names_no_unprefixed_name_survives_outside_the_record` and
+`skill_names_to_do_is_gone_outside_the_record`. Nothing here touches them.
+
 ## Branches
 
 `brief/0039-b-read-surface`, cut from `main` after PR#158 merged. It carries phase `b`.

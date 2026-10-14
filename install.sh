@@ -442,6 +442,7 @@ ownership_map() {
     tools/next-serial.sh \
     tools/jira-csv.sh \
     tools/orient.sh \
+    tools/read-record.sh \
     tools/stale-branches.sh \
     tools/check-architecture.sh \
     tools/lib/phase-row.sh \
