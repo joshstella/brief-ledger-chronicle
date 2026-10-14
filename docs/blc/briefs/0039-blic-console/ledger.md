@@ -1,6 +1,6 @@
 # Ledger — #0039 The record nobody is watching while it changes
 
-`blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending`
+`blc/2 #0039 in-progress a:done(blic/bake-off) b:pending`
 
 **Brief:** `docs/blc/briefs/0039-blic-console/brief.md`
 **Status:** in-progress
@@ -10,8 +10,8 @@
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | the bake-off | in-progress | `blic/bake-off` | — |
-| b | the console | pending | — | — |
+| a | the bake-off | done | `blic/bake-off` | — (no PR; the prototypes do not return) |
+| b | the delivered answer | pending | — | — |
 
 **a — the bake-off.** Nobody knows what shape a BLC console should be, and the design proposal
 says so in its own open questions. This phase answers it with evidence instead of argument.
@@ -82,6 +82,178 @@ Each blocks `b`, not `a` — `a` exists to answer them.
 - **A watch loop is a process that outlives a shell.** The prototypes that poll have to say
   what happens on a laptop that sleeps, and none of them can be judged on a run that lasted
   five minutes.
+
+## Result of `a`, 2026-10-14
+
+Five prototypes ran in parallel, each in its own worktree on its own branch off
+`blic/bake-off`, over the frozen read surface and this repository's own 39 briefs. All five
+branches are pushed. None merges to `main`.
+
+| # | Branch | Stack | Wrote | Cold start | Cost to a user |
+|---|---|---|---|---|---|
+| 1 | `blic/p1-bash` | bash and ANSI | 1,028 lines | 21 ms first frame, 1.95 s populated | nothing |
+| 2 | `blic/p2-go` | Go and Bubble Tea | 2,340 lines | 4.05 s build, 3.13 s to frame | ≈367 MB toolchain for a 5.4 MiB binary |
+| 3 | `blic/p3-ts` | TypeScript and Ink | 1,964 lines | 4.24 s install, 8.56 s to screen | 71 MB `node_modules`, 62 dependencies, ≈105 MB RSS |
+| 4 | `blic/p4-watch` | bash, two commands, no screen | 395 lines | 2.15 s from a cold clone | nothing |
+| 5 | `blic/p5-ambient` | bash, prompt and status line | 689 lines | 28 µs per prompt | nothing |
+
+### Every prototype concluded it should not win
+
+Including the three that built the thing they were asked to build, and each for its own
+reason, written before any of them saw another's report.
+
+- **1** proved the no-build constraint survives a live full-screen view, then said the panes
+  were not what made the exercise worthwhile — two lines of text were.
+- **2** said a pane you have to look at is not better than a shell prompt you cannot avoid,
+  and costs 367 MB more.
+- **3** said the honest answer to "what can only this do" is *nothing a user sees*, and that
+  the right outcome is to keep the schema and throw the renderer away.
+
+Convergence this strong across five independent runs is either the result or a shared bias
+from the brief's framing. It is recorded as both, because nothing here can tell them apart.
+
+### The open decision about derivability is answered, and the answer is smaller than the claim
+
+**The record supports deriving what is wrong with the record. It does not support deriving
+what to do about the work.** Prototype 4 wrote ten rules. Three fire against the 39 real
+briefs; seven have no instance at all, because this repository closes a phase on the day it
+opens one, so the states that would need a decision never persist long enough to be read.
+
+Of the 17 items the record does yield, 16 are repairs to the record itself — and
+`tools/validate-briefs.sh` has printed every one of them on every run since each brief closed.
+So the value on offer is **delivery, not derivation.** The derivation was already done, by the
+gate, and ignored. The one live brief yields "phase a is in-progress on `blic/bake-off`",
+which is the sentence the brief predicted a prototype would be limited to, and the only part
+that made it actionable came from git rather than from the ledger.
+
+What is missing is specific: a phase row records a state and a pointer, not what the phase is
+waiting for, and the vocabulary deliberately merges "not started" with "in review" under
+`in-progress`.
+
+### Two walls stopped all five, and neither is caused by having no screen
+
+- **No notification transport reaches this machine.** No pseudo-terminal, no notification
+  daemon on the session bus, WSL interop refuses the connection. Writing to a named tty is the
+  only thing that worked.
+- **Nothing survives a suspend** or a `wsl --shutdown` with `systemd --user` offline.
+
+Prototype 5 found the structural half: **Cursor hooks cannot tell you a peer's work landed.**
+Every hook event is fired by your own agent, and there is no timer event and no
+filesystem-watch event, so another person's push cannot fire a hook at all. Hooks can warm a
+cache, and they can show a sentence at `beforeShellExecution` — which is the right moment,
+just before you add to a trunk that moved, and is a permission gate wearing an informational
+hat.
+
+### The finding nobody was asked for
+
+The brief's two questions want **different shapes**, and building them ambiently split them
+apart. "What is mine" is 35 characters, fits in a shell prompt, and costs 28 µs. "What changed
+that I did not do" is a queue you enumerate and acknowledge. A one-line surface can only carry
+its cardinality, and with the synthetic peers running, prototype 5 reported that the badge
+"stopped feeling like information and started feeling like a badge that would read ↑37 within
+a week". Widening the line does not fix a shape mismatch.
+
+A console that answered the second half would be an inbox living in a terminal. **That is a
+third design, and this bake-off did not price it.**
+
+### Faults found in the instrument, and one in shipped code
+
+Three prototypes independently hit the same thing, and it is not the instrument's:
+**`blc_status_phase_entries` in `tools/lib/phase-row.sh` splits a status line on whitespace,**
+so the older pointer form `1:done(commit 92a7168)` arrives as state `done(commit` with no
+pointer. Five ledgers here carry that form, and the function is shared by `open-briefs.sh` and
+`validate-briefs.sh`, so `BRIEFS-9` reads a truncated state on those briefs. Nothing is
+drifting today because all five are closed. It belongs to a brief of its own, not to this one.
+
+Instrument faults, left unfixed because it was frozen for the comparison: `snapshot <rev>`
+accepts a revision and silently drops it; brief-level `state` keeps its pointer while
+phase-level `state` splits it; `snapshot` is about 60% slower than fetching the same
+subcommands in parallel; and a commit touching only `experiments/` classifies as `code`
+through a path that is dead code.
+
+### What this cannot prove
+
+- **No full-screen prototype has ever been drawn to a real terminal.** This machine has no
+  pseudo-terminal, so prototypes 1, 2 and 3 were proved with scripted input and capture modes.
+  Redraw, flicker and resize behaviour is genuinely untested, and all three say so.
+- **The fixture has one author and one live brief.** Every real event is the author's, so the
+  notification half ran on synthetic peers throughout. The five-line answer is five lines
+  because 38 of 39 briefs are done; four contributors and nine live briefs would produce a
+  list that scrolls, and a list that scrolls wants filtering, and filtering wants a cursor.
+- **Prototype 5's hook finding is read from documentation, not observed.** Nothing was
+  installed, so no hook was seen to fire, and whether the CLI renders `user_message` on an
+  `allow` verdict is marked unverified.
+
+## Re-run on a real terminal, 2026-10-14
+
+The section above lists "no full-screen prototype has ever been drawn to a real terminal" as
+a thing the bake-off cannot prove. That limit is gone. All five prototypes ran again over the
+same fixture, and two of the bake-off's conclusions change.
+
+**The machine does have a pseudo-terminal.** `tmux` 3.4 is installed. A `tmux` session reports
+`/dev/pts/7`, and `tmux capture-pane` reads the frame back as text. The bake-off recorded the
+absence as a property of the machine. It was a property of the agent's own shell. Prototypes
+1, 2 and 3 were each started inside a `tmux` session at 120x36 and then resized.
+
+| # | What ran | Result |
+|---|---|---|
+| 1 | `blic` live at 120x36 | draws, then **corrupts the frame** |
+| 2 | `go build` then `./blic` | draws, **survives resize** |
+| 3 | `npm run build` then `node dist/cli.js` | draws, **ghosts on shrink** |
+| 4 | `./blic` | 4 lines, 3 actions, no screen needed |
+| 5 | `./blic-refresh.sh` then the prompt | 27 µs per prompt, as reported |
+
+### Two redraw defects, both invisible to the method that cleared them
+
+**Prototype 1 does not clip the detail pane.** Select #0003 and the `status` and `next` values
+run past the right edge. The terminal wraps them, and the overflow overwrites the left pane.
+`Stale branches nothing pru…` becomes `le branches nothing pru…`. The frame then scrolls and
+the brief rows paint out of order. The defect is deterministic. Three keystrokes reach it.
+
+**Prototype 3 does not clear the screen when it shrinks.** Resize from 120x36 to 80x24 and
+glyphs from the wider frame stay on the right edge. `state in-progress` reads
+`state in-progresscord nobody is watchin…`. Whole rows disappear. A resize back to 140x40
+repairs it, so the damage is in the shrink path only.
+
+**Prototype 2 handles both.** It clips every line, it reflows on resize, and at 80x24 it adds
+`DETAIL · lines 1–9 of 17 · j/k scrolls` where the other two simply lose the content.
+
+The reason the bake-off missed these matters more than the defects. Prototype 1 proved its
+rendering with `--frames`, which writes each frame to standard output. A pipe never wraps, so
+a line too long for the terminal prints in full and the saved frame looks correct.
+**`session.txt` cannot show the defect it was used to rule out.** A capture mode that bypasses
+the terminal cannot answer a question about the terminal.
+
+### What the re-run confirms
+
+- **Prototype 2's dependency cost is real.** Go 1.27.2 is a 68 MB download and 283 MB on disk.
+  The module cache adds 72 MB. The total is 355 MB against the 367 MB first reported. The
+  build takes 3.4 s and produces a 6.4 MB binary.
+- **Prototype 3 is honest about its weight.** 24 of 24 tests pass. The build takes 0.33 s with
+  `node_modules` already present. Resident memory starts at 107 MB and reaches 118 MB after
+  one resize.
+- **Prototype 5's per-prompt cost holds.** 27 µs against the 28 µs reported. A cold refresh
+  costs 3.2 s, and the prompt shows `reading the record…` until the cache is warm.
+- **Prototype 4 still answers the brief in four lines.** It names the one live item, the 16
+  undated closes, and 7 merged branches to prune.
+
+### The badge argument is now measured, not predicted
+
+Prototype 5 predicted that the unread count "would read ↑37 within a week". Prototype 1 ran
+for about 21 minutes with the default 7 second synthetic interval. The badge read **184 new**,
+and the synthetic events had pushed every real git event out of the feed. The rate is
+synthetic and proves nothing about a real team. The shape of the failure is not synthetic. An
+unbounded feed with no grouping buries the record it exists to report.
+
+### Still unproved
+
+- **One author, one live brief.** The re-run changed the terminal, not the fixture. The
+  notification half still runs on synthetic peers.
+- **Nothing was observed over a suspend.** The longest session was about 21 minutes.
+- **Prototype 5's hook finding is still read from documentation.** Nothing was installed.
+
+A small fault found on the way: prototype 1 started with `--no-peer` still reads the peer file
+at line 232 and prints `No such file or directory`.
 
 ## Branches
 
