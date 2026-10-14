@@ -1,16 +1,16 @@
 # Ledger — #0037 The declarations orient counts are files, not claims
 
-`blc/2 #0037 pending a:pending`
+`blc/2 #0037 in-progress a:in-progress(brief/0037-a-live-declarations)`
 
 **Brief:** `docs/blc/briefs/0037-live-declarations/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Started:** 2026-10-14
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | live declarations | pending | — | — |
+| a | live declarations | in-progress | `brief/0037-a-live-declarations` | — |
 
 **a — live declarations.** `tools/orient.sh` lists every non-empty file in `docs/blc/state/`
 under **Picked up, not yet filed**, whether or not that file claims anything, so a contributor
@@ -71,4 +71,4 @@ None.
 
 ## Branches
 
-None cut yet.
+`brief/0037-a-live-declarations`, cut from `main` at `80ed157`.
