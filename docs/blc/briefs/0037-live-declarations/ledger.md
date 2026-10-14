@@ -1,16 +1,17 @@
 # Ledger — #0037 The declarations orient counts are files, not claims
 
-`blc/2 #0037 in-progress a:in-progress(brief/0037-a-live-declarations)`
+`blc/2 #0037 done a:done`
 
 **Brief:** `docs/blc/briefs/0037-live-declarations/brief.md`
-**Status:** in-progress
+**Status:** done
 **Started:** 2026-10-14
+**Closed:** 2026-10-14
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | live declarations | in-progress | `brief/0037-a-live-declarations` | — |
+| a | live declarations | done | `brief/0037-a-live-declarations` | #154 |
 
 **a — live declarations.** `tools/orient.sh` lists every non-empty file in `docs/blc/state/`
 under **Picked up, not yet filed**, whether or not that file claims anything, so a contributor
@@ -72,3 +73,67 @@ None.
 ## Branches
 
 `brief/0037-a-live-declarations`, cut from `main` at `80ed157`.
+`brief/0037-closeout`, cut from `main` at `38311d6`.
+
+## Close, 2026-10-14
+
+### What shipped
+
+`orient` counts claims rather than files. A contributor who cleared their declaration down to
+its header no longer appears under **Picked up, not yet filed** on every run.
+
+One phase, `a` (#154). It captured the output the program already computed on the line that
+prints a declaration's entries, skipped the file when that output is empty, and counted only
+when it is not. It completed the sentence in `blc-create-brief` and `blc-close-brief`, which
+said to delete an entry and did not say what to do when that entry was the last one. It added
+the fixtures.
+
+All three decisions settled before the phase held, and none was re-opened while writing it.
+
+### What the record shows that the brief did not predict
+
+- **The brief was wrong that no fixture had ever covered this.** It said no test fed `orient` a
+  declaration that claims nothing. `tests/test_orient.sh` already had
+  `orient_ignores_an_emptied_declaration`, which builds a zero-byte file. The real gap was
+  narrower and more specific: a file that is **not** empty and still claims nothing, which is
+  what clearing an entry by hand leaves behind, and which `[ -s "$f" ]` passes. A fixture that
+  looked adjacent to the case was part of why the case read as covered.
+- **"Capture the output" was two decisions, not one.** The brief described the fix as keeping
+  the `sed` result instead of discarding it. Where to keep it mattered as much: read after the
+  age computation, a file that is never reported still pays for a `git log`, and that section
+  is the only per-file log in the cheap read. The review gate found it; the brief did not
+  anticipate that the fix had an ordering at all.
+- **The fix made an existing guard redundant and the brief did not see it coming.** The brief
+  named `[ -s "$f" ]` as "not the liveness test" and warned it must not become one. It is now
+  subsumed by the claims check, because a zero-byte file has no `##` entries either.
+- **All three open questions resolved without argument.** That is unusual enough to record. The
+  one that could have grown the work — a `brief-checks/` script failing on a stub — was
+  declined on a principle the repository had already written down, that a gate failing on
+  another person's file is one the person who hit it cannot clear.
+
+### Open after close
+
+- **The repository that reported this still has its stub files.** This change makes `orient`
+  ignore them. It does not remove them, and nothing prunes `docs/blc/state/`. Anything else
+  that reads that directory by counting files will still count them.
+- **The skills half is unenforceable by construction.** The test that covers it asserts a
+  string appears in two files. It stops the sentence going missing. It cannot show an agent
+  follows it, and this drift came from an agent following an instruction literally.
+- **`[ -s "$f" ]` at `tools/orient.sh:142` is now redundant.** It stays because it avoids a
+  `sed` on an empty file, but `orient_ignores_an_emptied_declaration` no longer distinguishes
+  which of the two guards catches that case.
+- No bug ledger (`review-<branch>.md`) was written. There were no surviving correctness bugs,
+  but step 4 of the close had nothing to read.
+
+### What this cannot prove
+
+- **The fix has never run against the files that prompted it.** It was verified against
+  synthetic fixtures written from the report, not against the reporting repository's own
+  declarations. The report described a header and prose; a stub shaped some other way, with a
+  `##` heading that disclaims in words, is reported as a live claim by design.
+- **The review was written by the author of the code.** `blc-review-pr` returned Approve with
+  suggestions, and one independent pass — Bugbot — found no bugs. No person read the diff
+  before it merged.
+- **The mutation check shows coupling, not coverage.** Reverting `orient.sh` fails exactly the
+  two new behavioural tests, which shows they are tied to the change. It does not show they
+  cover the cases nobody thought of.
