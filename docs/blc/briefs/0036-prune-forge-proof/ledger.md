@@ -1,6 +1,6 @@
 # Ledger — #0036 The query nothing tests and the delete nothing checks
 
-`blc/2 #0036 in-progress a:done b:in-progress(brief/0036-b-forge-query-tests) c:pending`
+`blc/2 #0036 in-progress a:done b:done c:in-progress(brief/0036-c-gitlab-query)`
 
 **Brief:** `docs/blc/briefs/0036-prune-forge-proof/brief.md`
 **Status:** in-progress
@@ -11,8 +11,8 @@
 | id | label | status | branch | PR |
 |---|---|---|---|---|
 | a | checked deletion | done | `brief/0036-a-checked-deletion` | #150 |
-| b | forge query tests | in-progress | `brief/0036-b-forge-query-tests` | — |
-| c | gitlab query | pending | — | — |
+| b | forge query tests | done | `brief/0036-b-forge-query-tests` | #151 |
+| c | gitlab query | in-progress | `brief/0036-c-gitlab-query` | — |
 
 **a — checked deletion.** The delete loop in `tools/stale-branches.sh` runs `git update-ref`
 to save the branch tip and `git branch -D` to remove the branch, then prints
@@ -132,6 +132,35 @@ should not run through a loop that does not check what it did.
 - **The same directory holds a `glab` that rejects.** `detect-forge.sh:85` probes both CLIs on
   every call. Without a local `glab`, a machine that has the real one makes a live
   `glab auth status` round trip to a hostname that does not exist, on every run of the suite.
+
+## What `b` taught, 2026-10-14 (PR #151)
+
+- **The fixture extends to `c` unchanged.** `c` adds a recording `glab` that accepts and a `gh`
+  that rejects, so `detect-forge.sh` answers `gitlab`. Nothing else about `b` needs revision.
+- **Three items left `b` and are now on `main`**, recorded in PR #151 rather than fixed: the
+  fake `gh` records `"$*"`, so the query is pinned by text and not by argv shape; the
+  base-column test stays green when the forge is never asked, so it means something only beside
+  the query test; and `run_stale_forge` carries a guard for a state only `c` can reach.
+
+## Settled for `c`, 2026-10-14
+
+Measured against the live GitLab REST API before any code was written, because `glab` is
+installed here with no valid token and cannot be asked.
+
+- **The query is `glab api`, not `glab mr list`.** `glab api` takes a `:fullpath` placeholder
+  and returns the REST response, so the field names are the API's own. `glab mr list -F json`
+  returns whatever shape `glab` chose to marshal, which cannot be checked here. A fake CLI
+  proves the program builds the command it was told to build; it cannot prove the command is
+  right for the real CLI, so the less this depends on, the more `c` is worth.
+- **The fields are `sha` and `target_branch`.** Confirmed on a real merged merge request. The
+  same object also carries `merge_commit_sha` and `squash_commit_sha`, and all three differ, so
+  the brief's insistence on the source head rather than the merge commit is a real distinction.
+  The `pr` test matches a branch tip, and only `sha` is that tip.
+- **Five pages of 100, and stop.** Confirmed: `per_page=200` returns 100 items with
+  `x-per-page: 100` and `x-next-page: 2`, so paging is not optional. `glab api --paginate`
+  would walk every page to the end, which on a large project is hundreds of round trips the
+  GitHub side never makes. 500 is what `gh pr list --limit 500` already fetches, so both forges
+  prove the same amount of history and neither can hang.
 
 ## Open decisions
 
