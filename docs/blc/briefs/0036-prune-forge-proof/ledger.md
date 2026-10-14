@@ -1,6 +1,6 @@
 # Ledger — #0036 The query nothing tests and the delete nothing checks
 
-`blc/2 #0036 in-progress a:in-progress(brief/0036-a-checked-deletion) b:pending c:pending`
+`blc/2 #0036 in-progress a:done b:in-progress(brief/0036-b-forge-query-tests) c:pending`
 
 **Brief:** `docs/blc/briefs/0036-prune-forge-proof/brief.md`
 **Status:** in-progress
@@ -10,8 +10,8 @@
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | checked deletion | in-progress | `brief/0036-a-checked-deletion` | — |
-| b | forge query tests | pending | — | — |
+| a | checked deletion | done | `brief/0036-a-checked-deletion` | #150 |
+| b | forge query tests | in-progress | `brief/0036-b-forge-query-tests` | — |
 | c | gitlab query | pending | — | — |
 
 **a — checked deletion.** The delete loop in `tools/stale-branches.sh` runs `git update-ref`
@@ -107,9 +107,35 @@ should not run through a loop that does not check what it did.
   never going to remove is not a residue of the deletion.** A person's per-branch defaults in
   `~/.gitconfig` belong to the person.
 
+## What `a` taught, 2026-10-14 (PR #150)
+
+- **The sequence is unchanged. `c` lost one constraint.** `c` had to land after `a` because it
+  makes more branches qualify for deletion and those deletions should not run through an
+  unchecked loop. The loop is checked, so `c` now waits only on `b`.
+- **`a` built no fixture, so it answered nothing for `b`.** Every failure `a` had to drive came
+  out of plain git, so the shim question never arose. The precedent does not carry: there is no
+  real forge to reach, so `b` has to fake one. It narrows what may be faked — the forge CLI,
+  never `git`.
+- **Two open items left `a` and are now on `main`**, recorded in PR #150 rather than fixed:
+  the read-only `.git` test calls `skip` for root, so the abort path does not run on a root CI
+  container; and `GIT_CONFIG_GLOBAL` needs git 2.32 with nothing probing for it, which the tool
+  and its test both assume, so neither catches its absence.
+
+## Settled for `b`, 2026-10-14
+
+- **The fixture gets its own directory, not the suite's shared `$STUB_BIN`.** `tests/run.sh:231`
+  fills that directory with an inert `gh` that exits 0 for every invocation. A test built on it
+  would pass without proving anything: `gh auth status` succeeds, so `detect-forge.sh` answers
+  `github`, and `gh pr list` then exits 0 with no output, so `PR_RAW` is empty and `PR_TEST`
+  still reads `ran`. That is the same shape of defect this brief was filed about. The fixture
+  needs a recording `gh` of its own.
+- **The same directory holds a `glab` that rejects.** `detect-forge.sh:85` probes both CLIs on
+  every call. Without a local `glab`, a machine that has the real one makes a live
+  `glab auth status` round trip to a hostname that does not exist, on every run of the suite.
+
 ## Open decisions
 
-- **Where the forge CLI fixture lives.** Blocks `b`. No longer blocks `a`.
+None.
 
 ## Complications found while planning
 
