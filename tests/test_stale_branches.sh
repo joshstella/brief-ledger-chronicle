@@ -364,6 +364,90 @@ test_stale_keeps_both_tips_when_a_name_is_pruned_twice() {
   [ "$(saved_tip behind-2)" = "$second" ] || fail "the second tip was not kept beside it"
 }
 
+# ── When the two writes fail (#0036a) ────────────────────────────────────────
+#
+# The loop used to run `git update-ref` and `git branch -D` and then print a line asserting
+# both had worked, without reading either exit status. These drive the failures rather than
+# describing them, each with plain git and no shim, because a shim would prove the program
+# handles a fake git rather than the one it runs under.
+
+# usage: stale_block_git_dir — makes `branch -D` fail while `update-ref` still succeeds.
+# `update-ref` locks under .git/refs/blc/pruned/, a subdirectory that stays writable;
+# `branch -D` needs .git/packed-refs.lock in the top directory. A no-op for root.
+stale_block_git_dir() {
+  [ "$(id -u)" -eq 0 ] && return 1
+  chmod a-w "$REPO/.git"
+}
+stale_unblock_git_dir() { chmod u+w "$REPO/.git"; }
+
+# A tip that was never written must not be reported as kept, and the branch it belongs to must
+# still be here. Produced by a directory/file ref conflict, which is a case the toolkit meets:
+# a repository that pruned `feature` and later prunes `feature/x`.
+test_stale_refuses_to_delete_when_the_tip_cannot_be_saved() {
+  stale_repo
+  git -C "$REPO" branch feature main
+  run_stale --delete feature
+  assert_status 0
+  git -C "$REPO" branch feature/x main
+  run_stale --delete feature/x
+  [ "$LAST_STATUS" -eq 0 ] && fail "a tip that could not be saved must not exit 0"
+  assert_err "refused feature/x: the tip could not be saved"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/feature/x >/dev/null \
+    || fail "the branch was deleted after its tip failed to save"
+}
+
+test_stale_does_not_claim_a_deletion_the_branch_survived() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  stale_block_git_dir || { skip "running as root, so a read-only .git is not read-only"; return; }
+  run_stale --delete behind
+  stale_unblock_git_dir
+  [ "$LAST_STATUS" -eq 0 ] && fail "a deletion that did not happen must not exit 0"
+  assert_err "failed behind: the branch is still here"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/behind >/dev/null \
+    || fail "the branch went after branch -D reported failure"
+  grep -q "deleted behind" "$OUT" && fail "the run said it deleted a branch that is still here"
+}
+
+# git removes branch.<name>.* on a successful deletion. A value in a file reached through
+# `[include] path = …` is not in a file this repository owns, so it stays — and the line that
+# says the deletion was clean is then wrong.
+test_stale_reports_configuration_that_outlived_the_deletion() {
+  stale_repo
+  printf '[branch "behind"]\n\tdescription = from an included file\n' > "$REPO/.git/extra"
+  git -C "$REPO" config include.path extra
+  git -C "$REPO" branch behind main
+  run_stale --delete behind
+  [ "$LAST_STATUS" -eq 0 ] && fail "surviving configuration must not exit 0"
+  assert_out "deleted behind (ancestor)"
+  assert_out "1 \`branch.behind.*\` setting(s) outlived it"
+  git -C "$REPO" rev-parse --verify --quiet refs/heads/behind >/dev/null \
+    && fail "the branch survived a deletion the run reported"
+}
+
+# A `[branch "x"]` section in ~/.gitconfig belongs to the person, not to the branch that was
+# deleted, and git was never going to remove it. Counting it would make a clean prune fail for
+# anyone who keeps per-branch defaults there.
+test_stale_ignores_a_global_setting_of_the_same_name() {
+  stale_repo
+  printf '[branch "behind"]\n\tremote = origin\n' > "$TMP/global-gitconfig"
+  git -C "$REPO" branch behind main
+  GIT_CONFIG_GLOBAL="$TMP/global-gitconfig" run_stale --delete behind
+  assert_status 0
+  grep -q "outlived it" "$OUT" && fail "a global setting was counted as surviving the deletion"
+}
+
+# The report must stay quiet when nothing survived, or every clean run carries a warning and
+# the warning stops meaning anything.
+test_stale_says_nothing_about_configuration_when_none_survived() {
+  stale_repo
+  git -C "$REPO" branch behind main
+  git -C "$REPO" config branch.behind.description "removed with the branch"
+  run_stale --delete behind
+  assert_status 0
+  grep -q "outlived it" "$OUT" && fail "a clean deletion reported surviving configuration"
+}
+
 test_stale_rejects_an_unknown_argument() {
   stale_repo
   run_stale --wipe
@@ -395,6 +479,14 @@ test_stale_skill_says_to_fetch_first() {
 # stops would report the deletions as a failure.
 test_stale_skill_warns_that_the_exit_code_is_not_the_result() {
   assert_contains "not the exit code" "$REPO_ROOT/$SKILL_MD"
+}
+
+# A deletion can now stop half-finished, and the three lines that say so are the only place a
+# reader learns what each one costs them. The script cannot explain itself at that length.
+test_stale_skill_says_what_a_half_finished_deletion_looks_like() {
+  assert_contains "the tip could not be saved" "$REPO_ROOT/$SKILL_MD"
+  assert_contains "the branch is still here" "$REPO_ROOT/$SKILL_MD"
+  assert_contains "outlived it" "$REPO_ROOT/$SKILL_MD"
 }
 
 # Nothing removes the saved tips. A person should learn that from the run that creates them.
