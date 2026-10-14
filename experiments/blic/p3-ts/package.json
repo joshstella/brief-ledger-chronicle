@@ -1,0 +1,32 @@
+{
+  "name": "blic-p3-ts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Prototype 3 of the #0039 bake-off: a read-only BLC console in TypeScript and Ink. Evidence, not a deliverable.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bin": {
+    "blic-p3": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "start": "npm run build --silent && node dist/cli.js",
+    "capture": "npm run build --silent && node dist/cli.js --capture",
+    "types": "json2ts --input schema/read-surface.schema.json --output src/read-surface/generated/read-surface.ts --bannerComment \"/** GENERATED FILE - do not edit by hand. Source: schema/read-surface.schema.json. Regenerate with: npm run types */\" --additionalProperties false",
+    "test": "npm run build --silent && node --test \"dist/**/*.test.js\"",
+    "typecheck": "tsc --build --force"
+  },
+  "dependencies": {
+    "ink": "^5.1.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "@types/react": "^18.3.11",
+    "json-schema-to-typescript": "^15.0.2",
+    "typescript": "^5.6.3"
+  }
+}

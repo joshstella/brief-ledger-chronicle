@@ -1,0 +1,298 @@
+BLIC prototype 3 (TypeScript + Ink) — one recorded session
+==========================================================
+
+How this was recorded, exactly:
+
+  node dist/cli.js --capture=40 --peer-interval=7      segment A, with the peer stream
+  node dist/cli.js --capture=8 --no-peers --filter=judged --select=2    segment B
+  node dist/cli.js --capture=8 --no-peers --filter=all --select=1       segment C
+
+  COLUMNS=130 LINES=40, output piped to a file, then ANSI escapes stripped with sed.
+
+Two honest notes about the capture, before you read it:
+
+  1. There is no TTY behind a pipe, so Ink cannot redraw in place. Each state change
+     appends a whole fresh 40-row frame instead of repainting one. Segment A produced
+     19 frames; four are reproduced below and the rest are identical except for the
+     feed and the clock.
+  2. For the same reason raw mode is unavailable, so no keystroke could be recorded.
+     Segments B and C show what `f` reaches by starting there with a flag instead.
+     The keyboard is real and is in src/ui/App.tsx; this file cannot prove it.
+
+The colours are gone with the escapes. In a terminal the SYNTHETIC tag is black on
+magenta, THEIRS is bold yellow, gate judgments are red, and this console's own lints
+are magenta.
+
+==============================================================================
+SEGMENT A, frame 1 of 19 — boot. The instrument has not answered yet.
+==============================================================================
+▌BRIEFS  mine · open  0                                │ DETAIL
+  nothing matches this filter                          │   no brief selected
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  0
+  waiting for the record to change…
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+reading…    │ 0 gate judgments  0 declarations  │ 0 not mine of 0 since open
+read 0 ms  rss 93 MB  reading…
+
+==============================================================================
+SEGMENT A, frame 2 — the first synthetic event arrives before the first snapshot
+does. peer-events.sh answers in milliseconds; read.sh snapshot takes 3.1 s, so for
+the first three seconds the console can report what changed and not what is mine.
+==============================================================================
+▌BRIEFS  mine · open  0                                │ DETAIL
+  nothing matches this filter                          │   no brief selected
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  1
+03:46:28~ SYNTHETIC  PHASE       THEIRS #0024b    [#0024b] split the renderer from the scan
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+reading…    │ 0 gate judgments  0 declarations  │ 1 not mine of 1 since open  (1 synthetic)
+read 0 ms  rss 93 MB  reading…
+
+==============================================================================
+SEGMENT A, frame 9 — three peer events in. Every line carries the SYNTHETIC tag and
+the ~ that says the timestamp is arrival and not a commit date, because
+peer-events.sh emits no date for a console to show.
+==============================================================================
+▌BRIEFS  mine · open  1                                │ DETAIL  #0039 The record nobody is watching while it changes
+▸ #0039 in-progress  @ The record nobody is watching … │ state    in-progress
+                                                       │ assignee josh.stella@gmail.com  (mine)
+                                                       │ owner    —, so assignee is the Author
+                                                       │ created  2026-10-14
+                                                       │ closed   —
+                                                       │ touched  2026-10-14
+                                                       │ dir      docs/blc/briefs/0039-blic-console
+                                                       │
+                                                       │ NEXT  [derived]
+                                                       │   finish phase a on blic/bake-off, then blc-review-pr and blc-commit-pus…
+                                                       │   basis: phase a is in-progress
+                                                       │
+                                                       │ PHASES  2
+                                                       │   a  in-progress blic/bake-off the bake-off
+                                                       │   b  pending     —             the console
+                                                       │
+                                                       │ DEFECTS  0  the gate's own output
+                                                       │   none
+                                                       │
+                                                       │   blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  3
+03:46:42~ SYNTHETIC  FILED       THEIRS #0041     docs: file #0041, the serial two people took
+03:46:35~ SYNTHETIC  DECLARATION THEIRS c0ffee02  docs: declare #0041, picked up not yet filed
+03:46:28~ SYNTHETIC  PHASE       THEIRS #0024b    [#0024b] split the renderer from the scan
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+blic/p3-ts@0174e7c  josh.stella@gmail.com  │ 16 gate judgments  0 declarations  │ 3 not mine of 3 since open  (3 synthetic)
+read 3164 ms at 03:46:28  rss 86 MB
+
+==============================================================================
+SEGMENT A, final frame of 19 — six synthetic events in, none of them mine. The
+status bar counts them whether or not the feed is on screen.
+==============================================================================
+▌BRIEFS  mine · open  1                                │ DETAIL  #0039 The record nobody is watching while it changes
+▸ #0039 in-progress  @ The record nobody is watching … │ state    in-progress
+                                                       │ assignee josh.stella@gmail.com  (mine)
+                                                       │ owner    —, so assignee is the Author
+                                                       │ created  2026-10-14
+                                                       │ closed   —
+                                                       │ touched  2026-10-14
+                                                       │ dir      docs/blc/briefs/0039-blic-console
+                                                       │
+                                                       │ NEXT  [derived]
+                                                       │   finish phase a on blic/bake-off, then blc-review-pr and blc-commit-pus…
+                                                       │   basis: phase a is in-progress
+                                                       │
+                                                       │ PHASES  2
+                                                       │   a  in-progress blic/bake-off the bake-off
+                                                       │   b  pending     —             the console
+                                                       │
+                                                       │ DEFECTS  0  the gate's own output
+                                                       │   none
+                                                       │
+                                                       │   blc/2 #0039 in-progress a:in-progress(blic/bake-off) b:pending
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+                                                       │
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  6
+03:47:03~ SYNTHETIC  PHASE       THEIRS #0024b    [#0024b] split the renderer from the scan
+03:46:56~ SYNTHETIC  CODE        THEIRS c0ffee05  fix: the scan no longer reads its own example
+03:46:49~ SYNTHETIC  CLOSE       THEIRS #0024     docs: close #0024 (the renderer split)
+03:46:42~ SYNTHETIC  FILED       THEIRS #0041     docs: file #0041, the serial two people took
+03:46:35~ SYNTHETIC  DECLARATION THEIRS c0ffee02  docs: declare #0041, picked up not yet filed
+03:46:28~ SYNTHETIC  PHASE       THEIRS #0024b    [#0024b] split the renderer from the scan
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+blic/p3-ts@0174e7c  josh.stella@gmail.com  │ 16 gate judgments  0 declarations  │ 6 not mine of 6 since open  (6 synthetic)
+read 3164 ms at 03:46:28  rss 104 MB
+
+==============================================================================
+SEGMENT B — the 'gate judgments' filter. Sixteen briefs the gate has an opinion
+about, every one of them already done. No filter over open work reaches them.
+The detail pane shows #0003: one BRIEFS-11 judgment from the gate, five lints
+this console found, and the pointer PR#11 split out of the state string.
+==============================================================================
+▌BRIEFS  gate judgments  16                            │ DETAIL  #0003 A fourth artifact: the Contract
+  #0001 done       ! @ Bootstrap: brief-ledger-chroni… │ state    done PR#11
+  #0002 done       !~@ Add MIT license                 │ assignee josh.stella@gmail.com  (mine)
+▸ #0003 done       !~@ A fourth artifact: the Contract │ owner    —, so assignee is the Author
+  #0004 done       !~@ The ledger is an archive and a… │ created  2026-08-21
+  #0005 done       !~@ Closing the single-writer hole… │ closed   —
+  #0006 done       !~@ One chronicle, newest first, w… │ touched  2026-10-02
+  #0008 done       ! @ The record outgrew the reader   │ dir      docs/blc/briefs/0003-contract-artifact
+  #0009 done       !~@ One name for a phase, used eve… │
+  #0010 done       ! @ The skills live in someone els… │ NEXT  [derived]
+  #0017 done       ! @ The BLC docs tree               │   status says done and the ledger has no Closed date: run blc-close-brief
+  #0023 done       ! @ An upgrade that cannot be re-r… │   basis: BRIEFS-11
+  #0024 done       ! @ Orient believes the directory … │
+  #0025 done       ! @ Stale branches nothing prunes   │ PHASES  5
+  #0026 done       ! @ The trailer that credits the w… │   1  done        PR#9          no table row
+  #0027 done       ! @ The export that omits the fiel… │   2  done        PR#10         no table row
+  #0028 done       ! @ The summary with no writer      │   3  skipped     —             no table row
+                                                       │   … 2 more phases
+                                                       │
+                                                       │ DEFECTS  1  the gate's own output
+                                                       │   BRIEFS-11 [judgment] status line says done, and ledger.md records no *…
+                                                       │ LINTS  5  found by this console, not by the gate
+                                                       │   BRIEFS-9 phase 1 is in the status line and not in the phase table
+                                                       │   … 4 more findings
+                                                       │
+                                                       │   blc/1 #0003 done(PR#11) 1:done(PR#9) 2:done(PR#10) 3:skipped 4:done(PR…
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  0
+  waiting for the record to change…
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+blic/p3-ts@0174e7c  josh.stella@gmail.com  │ 16 gate judgments  0 declarations  │ 0 not mine of 0 since open
+read 3137 ms at 03:47:08  rss 110 MB
+
+==============================================================================
+SEGMENT C — all 39 briefs, #0002 selected. Its one phase is the row where the
+instrument's tokenizer lost the pointer to a space: the raw token is
+'done(commit', and the console prints 'pointer lost' rather than 'commit'.
+==============================================================================
+▌BRIEFS  all  39                                       │ DETAIL  #0002 Add MIT license
+  #0001 done       ! @ Bootstrap: brief-ledger-chroni… │ state    done commit 383ed5b
+▸ #0002 done       !~@ Add MIT license                 │ assignee josh.stella@gmail.com  (mine)
+  #0003 done       !~@ A fourth artifact: the Contract │ owner    —, so assignee is the Author
+  #0004 done       !~@ The ledger is an archive and a… │ created  2026-08-02
+  #0005 done       !~@ Closing the single-writer hole… │ closed   —
+  #0006 done       !~@ One chronicle, newest first, w… │ touched  2026-10-02
+  #0007 done         @ Jira as a reporting surface, w… │ dir      docs/blc/briefs/0002-mit-license
+  #0008 done       ! @ The record outgrew the reader   │
+  #0009 done       !~@ One name for a phase, used eve… │ NEXT  [derived]
+  #0010 done       ! @ The skills live in someone els… │   status says done and the ledger has no Closed date: run blc-close-brief
+  #0011 done         @ A project cannot add a gate     │   basis: BRIEFS-11
+  #0012 done         @ An install is not an update     │
+  #0013 done         @ A reader that cannot find it r… │ PHASES  1
+  #0014 done         @ The shape nothing prescribes    │   1  done        pointer lost  no table row
+  #0015 done         @ The interpreter nothing pins    │
+  #0016 done         @ The readers that guess          │ DEFECTS  1  the gate's own output
+  #0017 done       ! @ The BLC docs tree               │   BRIEFS-11 [judgment] status line says done, and ledger.md records no *…
+  #0018 done         @ The Jira export carries what t… │ LINTS  2  found by this console, not by the gate
+  #0019 done         @ The source is not a target, an… │   BRIEFS-9 phase 1 is in the status line and not in the phase table
+  #0020 done         @ The move git cannot see         │   instrument phase 1: read.sh lost the pointer to a space
+  #0021 done         @ Orient answers confidently, an… │
+  #0022 done         @ The agent file an install writ… │   blc/1 #0002 done(commit 383ed5b) 1:done(commit 383ed5b)
+  #0023 done       ! @ An upgrade that cannot be re-r… │
+  #0024 done       ! @ Orient believes the directory … │
+  … 24/39                                              │
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ FEED  newest first  0
+  waiting for the record to change…
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+↑↓/jk move  ⇥ pane  f filter  p pause  r refresh  q quit
+blic/p3-ts@0174e7c  josh.stella@gmail.com  │ 16 gate judgments  0 declarations  │ 0 not mine of 0 since open
+read 3105 ms at 03:47:16  rss 107 MB

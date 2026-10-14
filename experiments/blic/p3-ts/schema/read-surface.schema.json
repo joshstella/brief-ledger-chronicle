@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brief-ledger-chronicle.invalid/experiments/blic/read-surface.schema.json",
+  "title": "ReadSurface",
+  "description": "The shape of experiments/blic/read.sh output, as observed against this repository's 39 briefs. This schema is a description of the frozen instrument, not a contract it agreed to: read.sh is hand-rolled JSON with no schema of its own, so every field here was read out of the script and confirmed against a live snapshot. Where the instrument disagrees with the five-state vocabulary in docs/blc/briefs/README.md, this schema records what the instrument actually emits and the disagreement is carried in a description.",
+  "type": "object",
+  "definitions": {
+    "Identity": {
+      "title": "Identity",
+      "description": "read.sh me",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["email"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "git config user.email, or empty when git has no identity configured."
+        }
+      }
+    },
+    "Phase": {
+      "title": "Phase",
+      "description": "One phase entry. Its state comes from the ledger status line and its label from the phase table; the two can disagree, which is BRIEFS-9, and the instrument reports both rather than correcting either.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "state", "pointer"],
+      "properties": {
+        "id": { "type": "string", "description": "Phase id as written in the status line: a letter for modern briefs, a digit for the earliest ones." },
+        "label": { "type": "string", "description": "Phase label from the ledger's phase table. Empty for the oldest briefs, which have no table." },
+        "state": {
+          "type": "string",
+          "description": "Raw phase state token. Usually one of pending / in-progress / done / skipped / blocked, but the instrument's tokenizer splits on whitespace, so a pointer containing a space leaks into this field as the truncated token \"done(commit\". Normalize before display."
+        },
+        "pointer": { "type": "string", "description": "Merge pointer, e.g. PR#45. Empty when the phase has none, and also empty when the tokenizer lost it to a space." }
+      }
+    },
+    "Brief": {
+      "title": "Brief",
+      "description": "One numbered brief. Identity fields come from brief.md, state from ledger.md. A brief with no ledger is reported rather than skipped.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "serial", "slug", "dir", "title", "state", "status_line",
+        "owner", "author", "assignee", "mine", "created", "closed",
+        "touched", "has_ledger", "phases"
+      ],
+      "properties": {
+        "serial": { "type": "string", "description": "Zero-padded serial, e.g. 0039." },
+        "slug": { "type": "string", "description": "Directory name, serial-slug." },
+        "dir": { "type": "string", "description": "Path relative to the repository root." },
+        "title": { "type": "string", "description": "First H1 of brief.md, falling back to the slug." },
+        "state": {
+          "type": "string",
+          "description": "Raw brief state from the status line. NOT the five-state vocabulary: for older briefs the merge pointer is glued on, e.g. \"done(PR#11)\" or \"done(commit 92a7168)\". Normalize before display or before comparing."
+        },
+        "status_line": { "type": "string", "description": "The whole status line, verbatim. Empty when the ledger has none, in which case state is \"no-line\"." },
+        "owner": { "type": "string", "description": "**Owner:** from the identity line. Empty when absent." },
+        "author": { "type": "string", "description": "**Author:** from the identity line." },
+        "assignee": { "type": "string", "description": "Owner, or Author when there is no Owner. The rule list-briefs.sh --owner uses." },
+        "mine": { "type": "boolean", "description": "assignee equals the current git identity, case-insensitively." },
+        "created": { "type": "string", "description": "**Created:** timestamp. Format varies across three years of convention." },
+        "closed": { "type": "string", "description": "**Closed:** date from the ledger. Empty when the ledger records none, which for a done brief is the BRIEFS-11 judgment." },
+        "touched": { "type": "string", "description": "Commit date of the last commit to touch the brief directory, ISO 8601 with offset. Empty when git knows nothing about the path." },
+        "has_ledger": { "type": "boolean" },
+        "phases": { "type": "array", "items": { "$ref": "#/definitions/Phase" } }
+      }
+    },
+    "Declaration": {
+      "title": "Declaration",
+      "description": "One contributor's claim on work picked up and not yet filed. Only files carrying at least one ## entry appear.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["who", "mine", "touched", "claims"],
+      "properties": {
+        "who": { "type": "string", "description": "Declaration file basename, which is the contributor's git email." },
+        "mine": { "type": "boolean" },
+        "touched": { "type": "string" },
+        "claims": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "Defect": {
+      "title": "Defect",
+      "description": "One line of tools/validate-briefs.sh output, parsed. The gate's own judgment, not a second reading of it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clause", "kind", "subject", "message"],
+      "properties": {
+        "clause": { "type": "string", "description": "Contract clause id, e.g. BRIEFS-11." },
+        "kind": { "type": "string", "description": "judgment or violation, as the gate classified it." },
+        "subject": { "type": "string", "description": "Usually the brief slug the judgment is about." },
+        "message": { "type": "string" }
+      }
+    },
+    "EventKind": {
+      "title": "EventKind",
+      "description": "How the instrument classified a commit. Closed set: read.sh assigns exactly these and falls through to \"code\" rather than guessing.",
+      "type": "string",
+      "enum": ["phase", "close", "filed", "declaration", "record", "code"]
+    },
+    "RecordEvent": {
+      "title": "RecordEvent",
+      "description": "One commit, classified. read.sh events.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha", "when", "who", "mine", "kind", "serial", "phase", "subject"],
+      "properties": {
+        "sha": { "type": "string", "description": "First eight hex characters." },
+        "when": { "type": "string", "description": "Commit date, ISO 8601 with offset." },
+        "who": { "type": "string", "description": "Author email." },
+        "mine": { "type": "boolean", "description": "True for every real event in this fixture: the repository has one author." },
+        "kind": { "$ref": "#/definitions/EventKind" },
+        "serial": { "type": "string", "description": "Brief serial the commit names, or empty." },
+        "phase": { "type": "string", "description": "Phase letter the commit names, or empty." },
+        "subject": { "type": "string" }
+      }
+    },
+    "PeerEvent": {
+      "title": "PeerEvent",
+      "description": "One line of experiments/blic/peer-events.sh. Carries synthetic: true, which nothing removes. It has no \"when\": the generator emits none, so a consumer that wants a timestamp must stamp arrival and say so.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha", "who", "mine", "synthetic", "kind", "serial", "phase", "subject"],
+      "properties": {
+        "sha": { "type": "string" },
+        "who": { "type": "string" },
+        "mine": { "type": "boolean" },
+        "synthetic": { "type": "boolean", "const": true },
+        "kind": { "$ref": "#/definitions/EventKind" },
+        "serial": { "type": "string" },
+        "phase": { "type": "string" },
+        "subject": { "type": "string" }
+      }
+    },
+    "Snapshot": {
+      "title": "Snapshot",
+      "description": "read.sh snapshot. Everything a console needs in one document.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated", "repo", "me", "head", "branch", "briefs", "declarations", "defects", "events"],
+      "properties": {
+        "generated": { "type": "string", "description": "UTC timestamp of the read, not of the record." },
+        "repo": { "type": "string", "description": "Absolute path of the repository root the instrument read." },
+        "me": { "$ref": "#/definitions/Identity" },
+        "head": { "type": "string" },
+        "branch": { "type": "string" },
+        "briefs": { "type": "array", "items": { "$ref": "#/definitions/Brief" } },
+        "declarations": { "type": "array", "items": { "$ref": "#/definitions/Declaration" } },
+        "defects": { "type": "array", "items": { "$ref": "#/definitions/Defect" } },
+        "events": { "type": "array", "items": { "$ref": "#/definitions/RecordEvent" } }
+      }
+    }
+  },
+  "properties": {
+    "snapshot": { "$ref": "#/definitions/Snapshot" },
+    "peerEvent": { "$ref": "#/definitions/PeerEvent" }
+  }
+}
