@@ -1,10 +1,11 @@
 # Ledger — #0036 The query nothing tests and the delete nothing checks
 
-`blc/2 #0036 in-progress a:done b:done c:in-progress(brief/0036-c-gitlab-query)`
+`blc/2 #0036 done a:done b:done c:done`
 
 **Brief:** `docs/blc/briefs/0036-prune-forge-proof/brief.md`
-**Status:** in-progress
+**Status:** done
 **Started:** 2026-10-13
+**Closed:** 2026-10-14
 
 ## Phases
 
@@ -12,7 +13,7 @@
 |---|---|---|---|---|
 | a | checked deletion | done | `brief/0036-a-checked-deletion` | #150 |
 | b | forge query tests | done | `brief/0036-b-forge-query-tests` | #151 |
-| c | gitlab query | in-progress | `brief/0036-c-gitlab-query` | — |
+| c | gitlab query | done | `brief/0036-c-gitlab-query` | #152 |
 
 **a — checked deletion.** The delete loop in `tools/stale-branches.sh` runs `git update-ref`
 to save the branch tip and `git branch -D` to remove the branch, then prints
@@ -183,3 +184,87 @@ None.
 ## Branches
 
 `brief/0036-a-checked-deletion`, cut from `main` at `1e434f6`.
+`brief/0036-b-forge-query-tests`, cut from `main` at `51f74ba`.
+`brief/0036-c-gitlab-query`, cut from `main` at `c80936f`.
+`brief/0036-closeout`, cut from `main` at `1a887ce`.
+
+## Close, 2026-10-14
+
+### What shipped
+
+`tools/stale-branches.sh` now reads what it did before it says what it did, and can ask either
+forge which work landed.
+
+- **`a` (#150)** — the delete loop ran `git update-ref` and `git branch -D` and then printed a
+  line asserting both had worked, reading neither exit status. Each result now decides what the
+  line says, and any failure sets a non-zero exit.
+- **`b` (#151)** — every test of the `pr` proof handed the program a file through
+  `BLC_MERGED_PRS`, which is read first and short-circuits the forge branch. The command that
+  asks the forge had never run under test. It does now.
+- **`c` (#152)** — the switch on the detected forge had a GitHub case and a default saying the
+  forge could not be queried. GitLab can be asked, five pages of 100, matching what
+  `gh pr list --limit 500` already fetches.
+
+Both settled decisions held. A failed `update-ref` aborts that branch's deletion, uniformly
+across proofs. A surviving `branch.<name>.*` section is reported and not removed.
+
+### What the record shows that the brief did not predict
+
+- **The brief expected a `git` shim and was wrong about where the hard part was.** It planned
+  for `a` and `b` to share a mechanism for making commands fail inside a fixture. `a` needed
+  none: a directory/file ref conflict fails `update-ref`, and a read-only `.git` top directory
+  fails `branch -D` while `update-ref` still succeeds, because it locks in a subdirectory that
+  stays writable. The one place a fake was unavoidable is the forge, which the brief treated as
+  a detail of `b`.
+- **The brief's stated cause for a surviving configuration section was false.** It said an
+  agent sandbox blocking writes to `.git/config` leaves the refs gone and the configuration
+  behind. Measured: a read-only `.git/config` is rewritten anyway, because git writes a temp
+  file and renames it into a writable directory, and a read-only `.git` fails the deletion
+  itself. That state could not be produced with permissions at all. An included file produces
+  it, and it is the better argument for the decision the brief had already settled: **the
+  toolkit may not own the file the value lives in.**
+- **The check needed a scope, and nothing in the plan said so.** `surviving_config` first read
+  every config scope, so a `[branch "x"]` section in `~/.gitconfig` counted as outliving a
+  deletion it was never part of, and a clean prune exited non-zero. Found by the review gate
+  rather than by the plan. `--local` is the wrong correction — it drops the included value,
+  which is the only case the check exists for.
+- **The brief said pagination was not optional and did not say how far to page.** The answer
+  was already in the file: `gh pr list --limit 500`. Stopping at five pages of 100 makes both
+  forges prove the same amount of history.
+- **A tripwire nobody wrote for this caught a real edit.** `tests/test_skill_names.sh` pins how
+  often "squash" appears in each shipped file. Phase `c` moved the count and the test said to
+  read the lines before re-pinning.
+
+### Open after close
+
+- **The root skip.** `stale_does_not_claim_a_deletion_the_branch_survived` calls `skip` when
+  the user is root, because a read-only `.git` is not read-only for root. On a root CI
+  container the abort path for a failed `branch -D` never runs and the suite still reports
+  clean. That is the machine most likely to run this.
+- **A version floor nothing probes.** `GIT_CONFIG_GLOBAL` arrived in git 2.32. On older git the
+  variable is ignored, and the tool and its test share the same assumption, so neither catches
+  its absence.
+- **The GitLab query has never run against a real GitLab.** Field names, the 100-item page cap
+  and the `x-next-page` header were verified against the live REST API, and the CLI flags
+  against `glab api --help`. `glab api` returning that body unmodified through `--jq` is not
+  verified.
+- **Both fake CLIs record `"$*"`**, which flattens argument boundaries, so each query is pinned
+  by text rather than by argv shape. A quoting regression would pass.
+- **`run_stale_forge` carries a guard** for a fixture-less state that nothing now reaches. It
+  exists because `TMP` is per-test and a stale `FORGE_BIN` would send the suite to a real CLI.
+- No bug ledger (`review-<branch>.md`) was written for any phase. There were no surviving
+  correctness bugs, but step 4 of the close had nothing to read.
+
+### What this cannot prove
+
+- **Every review on this brief was written by the author of the code.** `blc-review-pr` ran on
+  each phase and returned Approve with suggestions three times. One independent pass — Bugbot,
+  on `c` only — found no bugs. No person read any of the three diffs before they merged.
+- **The mutation checks were designed by the same person who wrote the code.** Eleven mutations
+  across the three phases each failed exactly one test, which shows the tests are coupled to the
+  behaviour. It does not show they cover the breaks nobody thought of.
+- **A fixture shows the program builds the command it was told to build.** It cannot show the
+  command is right. This is stated about GitLab because that query is new, but it is equally
+  true of the GitHub query `b` tested, which was presumed working because it had shipped.
+- **`blc-review-pr` is a skill, not a check.** Nothing enforced it on any phase. The only
+  evidence it ran is the prose in the pull request bodies, which the same agent wrote.
