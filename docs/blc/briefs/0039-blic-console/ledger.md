@@ -1,6 +1,6 @@
 # Ledger — #0039 The record nobody is watching while it changes
 
-`blc/2 #0039 in-progress a:done(PR#158) b:in-progress(brief/0039-b-read-surface) c:pending d:pending e:pending`
+`blc/2 #0039 in-progress a:done(PR#158) b:done(PR#159) c:in-progress(brief/0039-c-console) d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0039-blic-console/brief.md`
 **Status:** in-progress
@@ -11,8 +11,8 @@
 | id | label | status | branch | PR |
 |---|---|---|---|---|
 | a | the bake-off | done | `blic/bake-off` | PR#158 (the record only; the prototypes do not return) |
-| b | the read surface, published | in-progress | `brief/0039-b-read-surface` | — |
-| c | the console, reduced and rebuilt | pending | — | — |
+| b | the read surface, published | done | `brief/0039-b-read-surface` | PR#159 |
+| c | the console, reduced and rebuilt | in-progress | `brief/0039-c-console` | — |
 | d | distribution | pending | — | — |
 | e | where a notification lands | pending | — | — |
 
@@ -484,6 +484,33 @@ Three suite failures predate this phase and were measured on a clean tree before
 was written: `log_version_refuses_to_count_a_shallow_source`,
 `skill_names_no_unprefixed_name_survives_outside_the_record` and
 `skill_names_to_do_is_gone_outside_the_record`. Nothing here touches them.
+
+## What `b` leaves `c`, 2026-10-14
+
+`b` merged as PR#159. The remaining sequence is unchanged: `c`, then `d`, and `e` beside
+either. Nothing `b` found reorders them.
+
+Three things `c` inherits and must not undo.
+
+- **The field set is the contract.** `tests/test_read_record.sh` pins the exact fields of
+  every object the surface emits. `c` generates or hand-writes its decoder against those
+  pins. A third description of the same shape is the thing `b` refused to write.
+- **`c` does not derive.** `read-record.sh next` is the one place that knows what a state
+  implies. A console that computes its own next action is the third reader prototype 2 asked
+  this phase to prevent.
+- **The surface invents no state.** A brief with no ledger reports an empty `state` with
+  `has_ledger` false. A console that renders that as a word chooses the word itself and owns
+  it, rather than taking one from a tool.
+
+### A disagreement this phase created, left for its own serial
+
+`tools/read-record.sh` refuses to invent a state. `tools/list-briefs.sh` still prints
+`planned` and `no-line`. Two tools in one directory now answer the same question differently.
+
+The new surface is the correct one and the old behavior is unchanged rather than newly
+broken, so this blocks nothing. It is written down because it is the same shape the brief was
+filed about, and because an undocumented disagreement reads as an oversight rather than as a
+decision. It belongs to its own serial, with #0039's phase tokenizer finding.
 
 ## Branches
 
