@@ -454,6 +454,109 @@ test_stale_rejects_an_unknown_argument() {
   [ "$LAST_STATUS" -eq 2 ] || fail "expected exit 2 for an unknown argument, got $LAST_STATUS"
 }
 
+# ── Asking the forge (#0036b) ────────────────────────────────────────────────
+#
+# Every test above hands the program a file through BLC_MERGED_PRS, which is read before the
+# forge branch and short-circuits it. So the command that asks the forge, and the filter that
+# shapes its answer, have never run under test. These reach them.
+
+# usage: stale_with_forge — a repository whose remote has a host, and a PATH where `gh`
+# answers and `glab` does not.
+#
+# Its own directory rather than the suite's shared $STUB_BIN. That one holds a `gh` that exits
+# 0 for every invocation, which would satisfy `detect-forge.sh`, answer the query with nothing,
+# and leave the program reporting a `pr` test that ran. A test built on it would assert a green
+# forge path and prove none of it.
+stale_with_forge() {
+  stale_repo
+  # BLC_MERGED_PRS is read first, so the fixture cannot leave a file for it.
+  rm -f "$REPO/prs.tsv"
+  # A URL with a host. The clone-based fixtures use a local path, which has no host, so
+  # detect-forge.sh declines and the forge branch is never reached.
+  git -C "$REPO" remote add origin https://forge.example.test/o/r.git
+  FORGE_BIN="$TMP/forge-bin"
+  FORGE_LOG="$TMP/gh-argv"
+  FORGE_PRS="$TMP/gh-prs"
+  mkdir -p "$FORGE_BIN"
+  : > "$FORGE_LOG"
+  : > "$FORGE_PRS"
+  cat > "$FORGE_BIN/gh" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$FORGE_LOG"
+case "\$1" in
+  auth) exit 0 ;;
+  pr)   cat "$FORGE_PRS" ;;
+  *)    exit 1 ;;
+esac
+EOF
+  # detect-forge.sh probes both CLIs on every call. Without a local `glab`, a machine that has
+  # the real one makes a live round trip to a host that does not exist, on every run.
+  printf '#!/bin/sh\nexit 1\n' > "$FORGE_BIN/glab"
+  chmod +x "$FORGE_BIN/gh" "$FORGE_BIN/glab"
+}
+
+# usage: stale_forge_pr <tip-sha> <base> — one merged pull request the fake `gh` reports, in
+# the two columns `--jq` builds from headRefOid and baseRefName.
+stale_forge_pr() { printf '%s\t%s\n' "$1" "$2" >> "$FORGE_PRS"; }
+
+# usage: run_stale_forge [args...] — BLC_MERGED_PRS unset, so the forge branch is reached.
+run_stale_forge() {
+  # $TMP is new for each test, so $FORGE_BIN left over from an earlier one names a directory
+  # that is gone. Without this, a test that forgot the fixture would find the real `gh` and
+  # make a live call to a forge from the suite.
+  [ -x "${FORGE_BIN:-}/gh" ] || fail "run_stale_forge needs stale_with_forge first"
+  ( cd "$REPO" && PATH="$FORGE_BIN:$PATH" bash "$(STALE)" "$@" ) >"$OUT" 2>"$ERR"
+  LAST_STATUS=$?
+}
+
+# The query is one bulk call, not one per branch, and it asks for the two fields the filter
+# reads. A later phase adds the GitLab form of the same question; this pins the GitHub one.
+test_stale_asks_the_forge_for_merged_pull_requests() {
+  stale_with_forge
+  run_stale_forge --tsv
+  assert_status 0
+  assert_contains "pr list --state merged --limit 500" "$FORGE_LOG"
+  assert_contains "headRefOid,baseRefName" "$FORGE_LOG"
+}
+
+# The whole point of the `pr` test, now through the command that fetches it: a squash merge
+# leaves the tip outside the trunk's ancestry, and only the forge knows it landed.
+test_stale_proves_a_squash_merge_the_forge_reported() {
+  stale_with_forge
+  stale_branch feature g one
+  local tip; tip="$(tip_of feature)"
+  stale_squash_into_trunk feature
+  stale_forge_pr "$tip" main
+  run_stale_forge --tsv
+  assert_status 0
+  assert_out "stale	feature	pr"
+}
+
+# The second column has to be read as a column. A run that treated each line as one blob would
+# pass the test above and fail here, because the tip still matches.
+test_stale_reads_the_base_column_of_what_the_forge_returned() {
+  stale_with_forge
+  stale_branch feature g one
+  local tip; tip="$(tip_of feature)"
+  stale_forge_pr "$tip" release-1.x
+  run_stale_forge --tsv
+  assert_status 0
+  assert_out "unproven	feature"
+  assert_not_contains "stale	feature" "$OUT"
+}
+
+# A forge that is there and will not answer is not the same as no forge, and the program says
+# which. Until now nothing reached the line that says it.
+test_stale_says_when_the_forge_could_not_answer() {
+  stale_with_forge
+  printf '#!/bin/sh\ncase "$1" in auth) exit 0 ;; *) exit 1 ;; esac\n' > "$FORGE_BIN/gh"
+  chmod +x "$FORGE_BIN/gh"
+  stale_branch wip w work
+  run_stale_forge
+  assert_status 0
+  assert_out "the forge is github and \`gh\` could not answer"
+}
+
 # ── The skill (#0025c) ───────────────────────────────────────────────────────
 #
 # These assert prose, which is the weakest thing in this file. They cannot show that an agent
