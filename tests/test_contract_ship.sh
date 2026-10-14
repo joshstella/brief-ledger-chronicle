@@ -6,27 +6,50 @@
 # it could become a lie: a rule document whose links dangle in the target, and a
 # `checked:` path naming a script that was never installed.
 
+# Every version this repository holds, not a list of them. `install.sh` decides what to ship
+# with the same glob over the same directory, so a list written out here could only ever lag
+# that one — which is how v1.4 and v1.5 came to install unasserted. This stays correct while
+# the installer stays derived; if it ever goes back to naming versions, the two lists are
+# again two things to keep in step, and this test would agree with the tree against the target.
+#
+# The floor belongs to the caller, not in here. A `fail` inside `$( )` dies in the subshell,
+# the loop reads an empty list, and the test passes having checked nothing — the same shape
+# of silence this brief is about.
+contract_versions_here() {
+  local v
+  for v in "$REPO_ROOT"/docs/blc/contracts/v*.md; do
+    [ -f "$v" ] || continue
+    printf '%s\n' "${v##*/}"
+  done
+}
+
 test_ship_places_the_contract() {
   run_install y --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/blc/contracts/v1.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.1.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.2.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.3.md"
   assert_file "$TARGET/docs/blc/contracts/README.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.2.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.3.md"
+  local name found=0
+  for name in $(contract_versions_here); do
+    found=$((found + 1))
+    assert_file "$TARGET/docs/blc/contracts/$name"
+    # Asserted over every version, v1.md included. The list this replaced started at v1.1,
+    # which read as a judgment that v1.md does not carry the clause. It does, once rather
+    # than twice: the later versions restate it in their change note. The omission was a
+    # list written before v1.md was worth adding to it.
+    assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/$name"
+  done
+  [ "$found" -gt 0 ] || fail "no contract version in this repository — the scan checked nothing"
 }
 
 test_ship_places_the_contract_for_cursor_too() {
   run_install y --host cursor --target "$TARGET"
   assert_status 0
-  assert_file "$TARGET/docs/blc/contracts/v1.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.1.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.2.md"
-  assert_file "$TARGET/docs/blc/contracts/v1.3.md"
   assert_file "$TARGET/docs/blc/contracts/README.md"
+  local name found=0
+  for name in $(contract_versions_here); do
+    found=$((found + 1))
+    assert_file "$TARGET/docs/blc/contracts/$name"
+  done
+  [ "$found" -gt 0 ] || fail "no contract version in this repository — the scan checked nothing"
 }
 
 # Generalised deliberately. A test naming open-briefs.sh would have caught the bug
@@ -38,15 +61,19 @@ test_ship_places_the_contract_for_cursor_too() {
 test_ship_every_tool_the_installed_docs_name_is_present() {
   run_install y --target "$TARGET"
   assert_status 0
-  local doc path found=0
+  local doc path found=0 scanned=0
   # Every document install.sh ships under docs/, not the ones that happen to name a
   # tool today. The property is about the shipped set; scanning a subset of it would
   # let a tool named in the omitted document go unchecked.
-  for doc in "$TARGET/docs/blc/briefs/README.md" "$TARGET/docs/blc/briefs/_drafts/README.md" \
-             "$TARGET/docs/blc/contracts/README.md" "$TARGET/docs/blc/contracts/v1.md" \
-             "$TARGET/docs/blc/contracts/v1.1.md" "$TARGET/docs/blc/contracts/v1.2.md" \
-             "$TARGET/docs/blc/contracts/v1.3.md"; do
+  #
+  # So the set is read from the target rather than written out. The list that used to sit
+  # here was exactly the subset this comment warns about: it ended at v1.3, and it never
+  # covered docs/blc/state/README.md, which install.sh has always shipped.
+  while IFS= read -r doc; do
+    # Not redundant after `find -type f`: a `find` that matched nothing still feeds this loop
+    # one empty line, and the floor below is what has to catch that, not a stat on "".
     [ -f "$doc" ] || continue
+    scanned=$((scanned + 1))
     # Underscores and digits included so a tool named off the lowercase-hyphen
     # convention is caught rather than skipped. A pattern that silently ignores the
     # name it cannot parse would report success for the case it failed to look at.
@@ -57,7 +84,10 @@ test_ship_every_tool_the_installed_docs_name_is_present() {
       [ -x "$TARGET/$path" ] \
         || fail "installed tool is not executable: $path"
     done
-  done
+  done <<EOF
+$(find "$TARGET/docs" -type f -name '*.md' | sort)
+EOF
+  [ "$scanned" -gt 0 ] || fail "the target has no documents under docs/ — the scan read nothing"
   [ "$found" -gt 0 ] || fail "installed docs name no tools at all — the scan found nothing to check"
 }
 
@@ -148,16 +178,22 @@ test_ship_every_relative_link_in_the_briefs_readme_resolves() {
 test_ship_the_installed_contract_names_a_check_that_exists() {
   run_install y --target "$TARGET"
   assert_status 0
-  local contract path found=0
-  for contract in "$TARGET/docs/blc/contracts/v1.md" "$TARGET/docs/blc/contracts/v1.1.md" \
-                  "$TARGET/docs/blc/contracts/v1.2.md" \
-                  "$TARGET/docs/blc/contracts/v1.3.md"; do
+  local contract name path found=0 scanned=0
+  for name in $(contract_versions_here); do
+    contract="$TARGET/docs/blc/contracts/$name"
+    [ -f "$contract" ] || continue
+    scanned=$((scanned + 1))
     for path in $(grep -oE 'checked: `[^`]+`' "$contract" | sed 's/checked: `\(.*\)`/\1/' | sort -u); do
       found=$((found + 1))
       [ -f "$TARGET/$path" ] \
         || fail "installed ${contract##*/} names a check absent from the target: $path"
     done
   done
+  # `scanned` and `found` answer different questions. A version that installed but names no
+  # check leaves `found` where it was, and only the second floor would notice. A version that
+  # did not install at all leaves both — but `ship_places_the_contract` is the test that owns
+  # that failure, and this one should not report it in the wrong words.
+  [ "$scanned" -gt 0 ] || fail "no contract version reached the target — the scan read nothing"
   [ "$found" -gt 0 ] || fail "installed Contract names no checks at all"
 }
 
@@ -187,6 +223,12 @@ test_ship_the_briefs_readme_is_this_repos_own_file() {
 # The expected name stays written out rather than derived from the highest version on disk.
 # That is the point of it: publishing a version has to be a deliberate edit here, so a file
 # dropped into the directory cannot promote itself to current without someone saying so.
+#
+# This is the one version name in this file that a sweep must leave alone, and the reason is
+# not style. The other lists answered "what ships", which the tree is the authority for, so
+# reading the tree made them right. This one answers "what did someone decide", which the tree
+# cannot answer. Derive it and the test still passes, every time, having stopped checking the
+# thing it exists for (#0038).
 test_ship_exactly_one_contract_version_is_current() {
   local current
   current=$(grep -lx '\*\*Status:\*\* current' "$REPO_ROOT"/docs/blc/contracts/v*.md | sed 's#.*/##')
@@ -203,17 +245,21 @@ test_ship_no_second_copy_of_the_briefs_docs_exists() {
 test_ship_default_replaces_a_stale_contract() {
   mark_prior_install
   mkdir -p "$TARGET/docs/blc/contracts"
-  echo "OLD CONTRACT" > "$TARGET/docs/blc/contracts/v1.md"
-  echo "OLD SUPERSEDED" > "$TARGET/docs/blc/contracts/v1.1.md"
-  echo "OLD CURRENT" > "$TARGET/docs/blc/contracts/v1.2.md"
+  # Staled over every version rather than the first three. A list here does not go
+  # unasserted when a version is published — it goes unstaled, which looks the same from
+  # the report: the newest Contract was the one whose replacement nobody proved.
+  local name found=0
+  for name in $(contract_versions_here); do
+    found=$((found + 1))
+    echo "OLD CONTRACT $name" > "$TARGET/docs/blc/contracts/$name"
+  done
+  [ "$found" -gt 0 ] || fail "no contract version in this repository — nothing was staled"
   run_install y --target "$TARGET"
   assert_status 0
-  assert_not_contains "OLD CONTRACT" "$TARGET/docs/blc/contracts/v1.md"
-  assert_not_contains "OLD SUPERSEDED" "$TARGET/docs/blc/contracts/v1.1.md"
-  assert_not_contains "OLD CURRENT" "$TARGET/docs/blc/contracts/v1.2.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.1.md"
-  assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/v1.2.md"
+  for name in $(contract_versions_here); do
+    assert_not_contains "OLD CONTRACT" "$TARGET/docs/blc/contracts/$name"
+    assert_contains "BRIEFS-1" "$TARGET/docs/blc/contracts/$name"
+  done
 }
 
 # The Contract README ships into every target, and #0015b gave it a command to run and a path

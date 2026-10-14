@@ -79,6 +79,18 @@ None.
 - **The install suite is the slow one.** These tests each run a full `install.sh`, and the
   `install-sh` CI check takes eight to ten minutes. The mutation check costs a second pass.
 
+## Big decisions
+
+- **The tool scan reads every document the target has, not the contracts plus a list.**
+  2026-10-14. The review gate on phase `a` raised it as scope: the brief said derive from
+  `docs/blc/contracts/`, and this reads `find "$TARGET/docs" -name '*.md'`. Kept. The test's
+  own comment already specified the shipped set and warned that a subset lets a tool named in
+  an omitted document go unchecked, so the narrow fix would have obeyed the brief and left the
+  comment false. It also surfaced a second omission the brief did not name:
+  `docs/blc/state/README.md` ships on every install and no list here has ever scanned it. The
+  cost is that the scan now reads `install-log.md`, which the installer writes rather than
+  ships, and no fixture covers an install log that names a tool a later version removed.
+
 ## Branches
 
 `brief/0038-a-derived-contract-lists`, cut from `main` at `e2fd440`.
