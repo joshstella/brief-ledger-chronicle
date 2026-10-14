@@ -557,6 +557,135 @@ test_stale_says_when_the_forge_could_not_answer() {
   assert_out "the forge is github and \`gh\` could not answer"
 }
 
+# ── Asking GitLab (#0036c) ───────────────────────────────────────────────────
+#
+# Until now the switch on the detected forge had a GitHub case and a default saying the forge
+# could not be queried. A GitLab trunk that squashes was pruned on two tests instead of three,
+# and the absent one is the only test that proves a squash merge.
+
+# usage: stale_with_gitlab — the same fixture, answering as GitLab. `detect-forge.sh` needs
+# exactly one CLI to accept, so the two swap places.
+#
+# The fake `glab` pages for real: it reads the page number out of the endpoint and serves that
+# slice of $FORGE_PRS. A stub that returned everything on every page would make the paging
+# tests assert nothing.
+stale_with_gitlab() {
+  stale_with_forge
+  printf '#!/bin/sh\nexit 1\n' > "$FORGE_BIN/gh"
+  cat > "$FORGE_BIN/glab" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$FORGE_LOG"
+case "\$1" in
+  auth) exit 0 ;;
+  api)
+    # \`[?&]page=\` and not \`page=\`, which also matches per_page.
+    page=\$(printf '%s' "\$*" | sed -n 's/.*[?&]page=\([0-9]*\).*/\1/p')
+    [ -n "\$page" ] || page=1
+    sed -n "\$(( (page - 1) * 100 + 1 )),\$(( page * 100 ))p" "$FORGE_PRS" ;;
+  *) exit 1 ;;
+esac
+EOF
+  chmod +x "$FORGE_BIN/gh" "$FORGE_BIN/glab"
+}
+
+# usage: stale_fill_pages <n> — n merged merge requests for branches that do not exist, so the
+# pages are full without proving anything.
+stale_fill_pages() {
+  local i=1
+  while [ "$i" -le "$1" ]; do
+    printf '%040d\tmain\n' "$i" >> "$FORGE_PRS"
+    i=$((i + 1))
+  done
+}
+
+# The endpoint and the two fields it reads. `sha` is the source head at merge; the same object
+# carries merge_commit_sha and squash_commit_sha, which name commits the trunk already has.
+test_stale_asks_gitlab_for_merged_merge_requests() {
+  stale_with_gitlab
+  run_stale_forge --tsv
+  assert_status 0
+  assert_contains "projects/:fullpath/merge_requests?state=merged" "$FORGE_LOG"
+  assert_contains "per_page=100" "$FORGE_LOG"
+  assert_contains ".sha" "$FORGE_LOG"
+  assert_contains ".target_branch" "$FORGE_LOG"
+}
+
+# The reason the phase exists. A squash merge leaves the tip outside the trunk's ancestry, and
+# before this a GitLab trunk had no test that could see it.
+test_stale_proves_a_squash_merge_gitlab_reported() {
+  stale_with_gitlab
+  stale_branch feature g one
+  local tip; tip="$(tip_of feature)"
+  stale_squash_into_trunk feature
+  stale_forge_pr "$tip" main
+  run_stale_forge --tsv
+  assert_status 0
+  assert_out "stale	feature	pr"
+}
+
+# A short page is the last page. Asking for another costs a round trip to learn what this one
+# already said.
+test_stale_stops_paging_when_a_page_is_short() {
+  stale_with_gitlab
+  stale_fill_pages 3
+  run_stale_forge --tsv
+  assert_status 0
+  assert_contains "page=1" "$FORGE_LOG"
+  grep -q "page=2" "$FORGE_LOG" && fail "it asked for a second page after a short first one"
+}
+
+# 500 is what `gh pr list --limit 500` fetches. Both forges prove the same amount of history,
+# and neither walks a large project to the end.
+test_stale_stops_paging_at_five_pages() {
+  stale_with_gitlab
+  stale_fill_pages 500
+  run_stale_forge --tsv
+  assert_status 0
+  assert_contains "page=5" "$FORGE_LOG"
+  grep -q "page=6" "$FORGE_LOG" && fail "it paged past the 500 the GitHub side stops at"
+}
+
+# A forge that is there and will not answer is not the same as no forge.
+test_stale_says_when_gitlab_could_not_answer() {
+  stale_with_gitlab
+  printf '#!/bin/sh\ncase "$1" in auth) exit 0 ;; *) exit 1 ;; esac\n' > "$FORGE_BIN/glab"
+  chmod +x "$FORGE_BIN/glab"
+  stale_branch wip w work
+  run_stale_forge
+  assert_status 0
+  assert_out "the forge is gitlab and \`glab\` could not answer"
+}
+
+# A walk that fails partway holds a partial list of merged merge requests, which proves fewer
+# branches while reading exactly like a complete one. The partial answer is dropped, and the
+# run says the forge could not answer.
+test_stale_discards_a_page_walk_that_failed_partway() {
+  stale_with_gitlab
+  # Not squashed into the trunk: the `tree` test would prove it on its own, and dropping the
+  # merge requests would change nothing. Only the forge can prove this branch.
+  stale_branch feature g one
+  local tip; tip="$(tip_of feature)"
+  # A full first page ending with the one merge request that would prove the branch, so the
+  # walk continues to a second page that fails.
+  stale_fill_pages 99
+  stale_forge_pr "$tip" main
+  cat > "$FORGE_BIN/glab" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >> "$FORGE_LOG"
+case "\$1" in
+  auth) exit 0 ;;
+  api)
+    case "\$*" in *"&page=1"*) sed -n '1,100p' "$FORGE_PRS" ;; *) exit 1 ;; esac ;;
+  *) exit 1 ;;
+esac
+EOF
+  chmod +x "$FORGE_BIN/glab"
+  run_stale_forge --tsv
+  assert_status 0
+  assert_out "unproven	feature"
+  assert_not_contains "stale	feature" "$OUT"
+}
+
 # ── The skill (#0025c) ───────────────────────────────────────────────────────
 #
 # These assert prose, which is the weakest thing in this file. They cannot show that an agent

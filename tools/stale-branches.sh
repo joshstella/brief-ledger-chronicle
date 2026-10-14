@@ -134,6 +134,40 @@ elif forge="$(bash "$(dirname "$0")/detect-forge.sh" 2>/dev/null)"; then
       else
         PR_TEST="the forge is github and \`gh\` could not answer"
       fi ;;
+    gitlab)
+      # `sha` is the source branch's head when the merge request merged, which is the tip the
+      # `pr` test matches. The same object carries `merge_commit_sha` and `squash_commit_sha`,
+      # and all three differ — those name commits on the trunk, which the trunk's own history
+      # already proves.
+      #
+      # `glab api` rather than `glab mr list`, so the field names are the REST API's own rather
+      # than whatever shape the CLI marshals. A fixture can show this program builds the command
+      # it was told to build; only the real CLI can show the command is right.
+      #
+      # Paged by hand rather than with `--paginate`. GitLab caps a page at 100 whatever is
+      # asked for, and `--paginate` walks to the end — hundreds of round trips on a large
+      # project. Five pages is the 500 `gh pr list --limit 500` already fetches above, so
+      # both forges prove the same amount of history.
+      PR_RAW=""
+      gl_page=1
+      while [ "$gl_page" -le 5 ]; do
+        if ! gl_out="$(glab api \
+              "projects/:fullpath/merge_requests?state=merged&per_page=100&page=$gl_page" \
+              --jq '.[] | "\(.sha)\t\(.target_branch)"' 2>/dev/null)"; then
+          # A page that failed mid-walk leaves a partial answer, and a partial list of merged
+          # merge requests proves fewer branches while reading exactly like a complete one.
+          PR_RAW=""
+          PR_TEST="the forge is gitlab and \`glab\` could not answer"
+          break
+        fi
+        [ -n "$gl_out" ] || break
+        # `$'\n'` does not expand inside double quotes, so the join is written out.
+        if [ -z "$PR_RAW" ]; then PR_RAW="$gl_out"; else PR_RAW="$PR_RAW"$'\n'"$gl_out"; fi
+        # A short page is the last page. Asking for the next one costs a round trip to learn
+        # what this one already said.
+        [ "$(printf '%s\n' "$gl_out" | grep -c .)" -lt 100 ] && break
+        gl_page=$((gl_page + 1))
+      done ;;
     *) PR_TEST="the forge is $forge, which this program cannot query yet" ;;
   esac
 else
