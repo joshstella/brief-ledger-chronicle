@@ -141,6 +141,20 @@ if [ -d "$STATE_DIR" ]; then
     [ "$(basename "$f")" = "README.md" ] && continue
     [ -s "$f" ] || continue
     who="$(basename "$f" .md)"
+    # The claims are the file's `##` entries, so a file with none makes no claim. This used to
+    # print them further down and increment the counter on the next line, which counted files
+    # rather than claims: a declaration cleared down to its header stayed in this list for as
+    # long as the file existed. `[ -s "$f" ]` above is not the test — it rejects a zero-byte
+    # file, and a cleared declaration usually keeps its header.
+    #
+    # Liveness is read from the entry shape the directory already uses, not from the words. A
+    # file that says in prose that nothing is picked up is a file to delete, which is what
+    # `docs/blc/state/README.md` asks for, and recognising the sentence instead would be
+    # matching prose a person wrote in whatever words they chose that day.
+    #
+    # Read before the age below, so a file that is not reported does not pay for a `git log`.
+    claims="$(sed -n 's/^## /  · /p' "$f")"
+    [ -n "$claims" ] || continue
     # Nothing prunes this directory, so age is reported rather than enforced —
     # a declaration someone abandoned shows up as old instead of as truth.
     if [ -r "$TOUCH_LIB" ]; then
@@ -149,7 +163,7 @@ if [ -d "$STATE_DIR" ]; then
       touched="$(git log -1 --format='%ad' --date=short -- "$f" 2>/dev/null || true)"
     fi
     echo "- **$who** (last written ${touched:-uncommitted})"
-    sed -n 's/^## /  · /p' "$f"
+    printf '%s\n' "$claims"
     declared=$((declared + 1))
   done
 fi

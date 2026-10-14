@@ -226,6 +226,36 @@ test_orient_ignores_an_emptied_declaration() {
   assert_out "Nobody has declared unfiled work"
 }
 
+# The case the emptied-declaration test above does not reach. Clearing an entry by hand leaves
+# the header behind, so the file is not empty and the `-s` test passes it. Reported from a
+# downstream repository where two contributors appeared as open claims for weeks, and no
+# fixture here had ever built a declaration that claims nothing.
+test_orient_ignores_a_declaration_cleared_to_its_header() {
+  orient_repo
+  mkdir -p "$REPO/docs/blc/state"
+  printf '# someone@example.com\n\nNothing picked up and unfiled.\n' \
+    > "$REPO/docs/blc/state/someone@example.com.md"
+  git -C "$REPO" add -A && git -C "$REPO" commit -qm stub >/dev/null 2>&1
+  run_orient
+  assert_status 0
+  assert_out "Nobody has declared unfiled work"
+  assert_not_contains "someone@example.com" "$OUT"
+}
+
+# The count has to follow the same rule as the list, or a stub beside a real claim suppresses
+# the "nobody" line while contributing nothing to it.
+test_orient_counts_claims_and_not_files() {
+  orient_repo
+  orient_declaration live@example.com "picked up the parser"
+  printf '# stub@example.com\n' > "$REPO/docs/blc/state/stub@example.com.md"
+  git -C "$REPO" add -A && git -C "$REPO" commit -qm stub >/dev/null 2>&1
+  run_orient
+  assert_status 0
+  assert_out "live@example.com"
+  assert_out "picked up the parser"
+  assert_not_contains "stub@example.com" "$OUT"
+}
+
 test_orient_reports_two_contributors_separately() {
   orient_repo
   orient_declaration one@example.com "picked up the parser"
@@ -680,6 +710,20 @@ test_orient_is_named_by_the_three_orientation_steps() {
 # only warning available for the half of the race docs/blc/briefs/ cannot show.
 test_orient_create_brief_knows_about_declarations() {
   assert_contains "docs/blc/state" "$REPO_ROOT/skills/blc-create-brief/SKILL.md"
+}
+
+# Both skills said to delete the entry and neither said what to do when it was the last one.
+# An agent that followed either literally left a header behind, which is a file that claims
+# nothing — the input this brief is about. The fix to orient makes that file harmless to read;
+# this is what stops it being written.
+#
+# Prose, so this is the weakest kind of test here. It cannot show an agent obeys the sentence.
+# What it stops is the sentence going missing again.
+test_orient_the_clearing_skills_say_to_delete_the_last_entry() {
+  local f
+  for f in blc-create-brief blc-close-brief; do
+    assert_contains "delete the file" "$REPO_ROOT/skills/$f/SKILL.md"
+  done
 }
 
 # The rules file is what a target's agents actually read, so the wiring has to

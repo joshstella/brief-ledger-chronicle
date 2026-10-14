@@ -92,7 +92,10 @@ rather than letting a green check imply the rest was verified.
 7. **Clear the declaration.** If `docs/blc/state/<your git user.email>.md` claims this
    brief, remove the entry. The brief is closed, so the claim is now derivable from
    `docs/blc/briefs/` and a declaration that repeats the record is the stale second copy
-   the convention exists to avoid. Leave the file if it names other work.
+   the convention exists to avoid. Leave the file if it names other work. **If that entry was
+   the last, delete the file.** A file left holding just its header declares nothing, and the
+   steady state for a person with nothing unfiled is no file rather than a file that describes
+   being empty.
 
 8. **Check the record, then commit.** Run `bash tools/validate-briefs.sh`. `BRIEFS-11` must
    not report this brief — if it does, step 6 did not write the date. Then hand the staged

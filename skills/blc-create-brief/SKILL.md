@@ -73,6 +73,9 @@ and get their identity here, at filing time, not while being written.
    `docs/blc/state/<git user.email lowercased>.md` claimed this serial, delete that entry — the
    brief is filed, so the claim is now derivable from `docs/blc/briefs/` and a declaration that
    repeats the record is the stale second copy this convention exists to avoid.
+   **If that was the only entry, delete the file.** A file left holding just its header
+   declares nothing, and the steady state for a person with nothing unfiled is no file rather
+   than a file that describes being empty.
    *Note:* this command does not write a claim on the way in. The serial is computed and
    filed in the same run, so a claim written here would be cleared seconds later without
    ever being pushed. A claim is worth writing when a person decides to take a number and
