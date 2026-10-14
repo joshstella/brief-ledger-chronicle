@@ -1,6 +1,6 @@
 # Ledger — #0039 The record nobody is watching while it changes
 
-`blc/2 #0039 in-progress a:done(blic/bake-off) b:pending`
+`blc/2 #0039 in-progress a:done(PR#158) b:in-progress(brief/0039-b-read-surface) c:pending d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0039-blic-console/brief.md`
 **Status:** in-progress
@@ -10,8 +10,11 @@
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | the bake-off | done | `blic/bake-off` | — (no PR; the prototypes do not return) |
-| b | the delivered answer | pending | — | — |
+| a | the bake-off | done | `blic/bake-off` | PR#158 (the record only; the prototypes do not return) |
+| b | the read surface, published | in-progress | `brief/0039-b-read-surface` | — |
+| c | the console, reduced and rebuilt | pending | — | — |
+| d | distribution | pending | — | — |
+| e | where a notification lands | pending | — | — |
 
 **a — the bake-off.** Nobody knows what shape a BLC console should be, and the design proposal
 says so in its own open questions. This phase answers it with evidence instead of argument.
@@ -21,16 +24,32 @@ a bash view with no build step, a compiled static binary, a typed Node applicati
 loop with no full-screen view at all, and no new surface at all. None merges to `main`; the
 output of this phase is five working programs and five reports, not a shipped tool.
 
-**b — the console.** Provisional. It builds the winner properly: tests, the read surface it
-needs published rather than improvised, and the normal gates. Its shape depends entirely on
-what `a` returns, so it is a placeholder with a letter rather than a plan. If prototype 4
-wins, `b` is small and is not a terminal application at all.
+**b — the read surface, published.** It takes `read.sh` from a frozen instrument to a tested
+contract: a schema, tests, and the four faults `a` recorded against it fixed. It also moves
+the next-action derivation out of the console and into the surface. Prototype 2 asked for
+this in its own report, and the reason is a defect this repository already filed. See the
+re-plan below.
+
+**c — the console, reduced and rebuilt.** Prototype 2's Go program rebuilt under the normal
+gates. It is a reduction, not a port: its own report keeps the typed decode, the refusal to
+show an unmarked synthetic event, the two polling cadences and the digest, and throws away
+the three-pane layout and the 400-event buffer. Its rendering is proved in a real terminal,
+because `a` proved a capture mode cannot prove rendering.
+
+**d — distribution.** How one binary reaches a person who has no toolchain. This phase exists
+only because the stack decision chose a compiled program, and it is the price of that choice.
+
+**e — where a notification lands.** The brief's open question. Prototype 2 cannot answer it,
+and says so: a full-screen program cannot leave the terminal. This phase may become a brief
+of its own.
 
 ## Dependency structure
 
-A strict chain of two, and the second is **provisional** until the first completes. `b` cannot
-be planned before `a` reports, and re-planning `b` from `a`'s result is the expected path, not
-a failure of this plan.
+Re-planned after `a` reported. See the re-plan below for why four phases replaced one.
+
+`b` blocks `c`: a console that derives its own next action rebuilds the defect #0013 was filed
+about. `c` blocks `d`: nothing is distributed before it is built under the gates. `e` depends
+on none of them and could run beside any of them, or leave for its own serial.
 
 Inside `a`, the five prototypes are **parallel tracks** with one shared dependency: the frozen
 read surface. They do not read each other's work. Divergence is the point — five agents that
@@ -291,7 +310,184 @@ because the shell running the probe has no controlling terminal. The probe's own
 Windows Terminal honors OSC 9. Nobody has run the probe from a real terminal yet. The question
 of where a notification lands stays open. It is not closed by the two walls above.
 
+## The stack decision, 2026-10-14
+
+The brief said this conflict was the author's and was not delegated to an agent. The author
+decided it after reading the five reports and watching the prototypes run: **prototype 2
+wins.** The repository trades away "bash and markdown with no build step" for a compiled
+program with explicit types at the boundary.
+
+**The bake-off's own table understated the case.** It priced prototype 2 at "≈367 MB
+toolchain for a 5.4 MiB binary" under a column headed *Cost to a user*. That column is wrong.
+The binary is statically linked and runs with no Go on the machine, which was tested after the
+toolchain was removed from the path. The toolchain cost falls on whoever builds, once. A
+person receives one 6.4 MB file with no runtime and nothing to install. Against 71 MB of
+`node_modules` and 62 dependencies for prototype 3, the compiled program is the cheaper thing
+to receive, not the more expensive one.
+
+Prototype 2 is also the only one of the three consoles that is not broken. It clips every
+line, it reflows in both directions, and it adds a scroll affordance where the other two lose
+content.
+
+**What the decision costs, recorded so nobody has to rediscover it.** A build step now exists.
+Phase `d` exists only because of it. The repository's own value is weakened and the weakening
+is deliberate.
+
+## Re-plan after `a`, 2026-10-14
+
+One provisional phase became four. Three findings forced it.
+
+**The derivation belongs in the read surface, not in the console.** Prototype 2 asked for this
+against its own interest, in answer to "what would you throw away":
+
+> `NextAction`, in this repository. The derivation lives in Go, which means prototype 1 and
+> prototype 3 will each write their own and the three will disagree about what `pending`
+> means. That is exactly the "sixth reader" defect #0013 was filed about, and I rebuilt it
+> here. The next action belongs in the read surface, where all five prototypes read one
+> answer.
+
+So the surface is published first and the console reads one answer. That is `b` before `c`.
+
+**The value on offer is delivery, not derivation.** `a` found the record yields 17 items and
+16 are repairs the gate already prints. The console is not getting cleverer than the gate. It
+is getting in front of a person. That argues for a small console, and prototype 2's own report
+agrees: the thing worth keeping is about three hundred lines.
+
+**A compiled program has to reach somebody.** `d` is new and exists only because of the stack
+decision above.
+
+### Corrections to prototype 2's report, which `c` will be built against
+
+- It names `tools/lib/status-line.sh` for the phase tokenizer. The function is
+  `blc_status_phase_entries` at `tools/lib/phase-row.sh:153`. The report's other description
+  of the fault is right. Only the file is wrong.
+- It says `pending` "is not in the five-state vocabulary in `docs/blc/briefs/README.md`".
+  `pending` is the first of the five, at `docs/blc/briefs/README.md:105`. So "one brief
+  defeats it today, and the brief is #0039 itself" is a defect in the console, not in this
+  ledger. `c` inherits it unless somebody writes it down, which is what this line does.
+
+### Left for their own serials, not for this brief
+
+- **The inbox.** `a` found the brief's two questions want different shapes, and that "what
+  changed that I did not do" is a queue you enumerate and acknowledge. `a` called it a third
+  design the bake-off did not price. Prototype 2 adds that the strongest real signal is a
+  forge review comment, which the console is forbidden to read.
+- **The phase tokenizer.** Named in `a`. One caution for whoever files it: tests already exist
+  that name the whitespace split, including
+  `test_status_line_state_survives_a_pointer_holding_a_space` and
+  `test_open_briefs_a_pointer_cut_at_a_space_is_reported`. The behaviour may be deliberate and
+  handled rather than unnoticed. Nobody has read those tests closely enough to say, and the
+  brief that files it should start there.
+
+## Phase b, 2026-10-14
+
+The read surface is published as `tools/read-record.sh`. **It stays bash**, by the author's
+decision. The console is compiled and the surface every reader shares is not, so a reader of
+the record still needs nothing installed.
+
+Subcommands: `snapshot`, `briefs`, `events`, `declarations`, `defects`, `next`, `me`.
+
+### The four faults `a` recorded are closed
+
+- **A revision the tool accepted and dropped.** `snapshot REV` discarded REV and answered a
+  different question with exit 0. Arguments are parsed once now, and an argument the surface
+  does not understand is an error rather than a silent drop.
+- **Two shapes for one state.** The instrument split phase states into state and pointer and
+  left the brief-level state whole. Both split now, and `status_line` still carries the line
+  as written, so the split loses nothing. The pointer is cut at the last `)`, because
+  `done(commit 92a7168)` is a real state here and its pointer holds a space.
+- **A serial snapshot.** The four heavy sections share no state and none reads another's
+  output. Gathered concurrently, the document costs about the slowest section instead of the
+  sum: **1.94 s against 3.10 s**, measured on this repository.
+- **Dead code in the event classifier.** The paths were read into `kind` before a `case` on
+  the subject that assigns `kind` in every branch, so the first read was never used.
+
+### The defect it inherited, which `a` did not record
+
+`tools/list-briefs.sh` prints `planned` for a brief with no ledger and `no-line` for a ledger
+with no status line. Neither word is in the five-state vocabulary at
+`docs/blc/briefs/README.md:105`. The brief for #0039 names that tool-against-document
+disagreement as one of the four findings it was filed about, **and the instrument copied both
+words.** The published surface reports an empty state and two booleans, `has_ledger` and
+`has_status_line`, that say why it is empty. A reader that wants a word for the empty case
+chooses its own and owns it. `tools/list-briefs.sh` is unchanged and still invents both.
+
+### The derivation moved, as prototype 2 asked
+
+`next` returns one action and its basis for each brief that is not done and dated. Five
+shapes are recognised and everything else returns `none` and names the state. The derivation
+is thin and the surface says so rather than guessing, because a wrong next action is worse
+than no next action when the claim of the brief is that a person trusts it without checking.
+
+### What the test suite caught that review would not have
+
+- **A second identity-line reader.** The instrument parsed `**Owner:**` and `**Author:**`
+  with its own `sed`, which was harmless outside `tools/` and is a second reader inside it.
+  `tests/test_identity_line.sh` failed on the first full run. The surface now reads the
+  identity line through `tools/lib/identity-line.sh`, like every other tool.
+- **An exit that died in a subshell.** The argument guard was written as
+  `cmd_snapshot "$(rev_arg ...)"`. An `exit` inside a command substitution ends the subshell,
+  so the error reached stderr and the script carried on and exited 0 — a reader that reports
+  a problem and answers anyway. #0038 records the same shape in the test suite. The test
+  asserts the status and not the message, because asserting the message would have passed.
+
+### A wrong answer the review caught, not the suite
+
+The first `next` reported `blc-close-brief` with the basis "every phase is finished and the
+brief is still open" whenever no phase matched a rule. A **deferred** brief matched no rule.
+So a brief parked on purpose, with the reason written in its own ledger, was told to close,
+and the stated basis was not true either.
+
+Nothing failed. Every test passed, because no test asked about a deferred brief. It was found
+by reading the fallback during review and trying the case by hand.
+
+The rule that was over-firing is still needed, so it is now bounded: it fires only when every
+phase is `done` or `skipped`. A phase state outside the five-state vocabulary — `planned`, for
+instance, which `tools/list-briefs.sh` still invents — blocks it too, because the surface does
+not guess what an unknown word meant. Four tests pin the boundary and each was proved by
+restoring the old rule.
+
+This is the second time in this phase that the dangerous defect was a confident wrong answer
+rather than a crash. The argument guard reported an error and exited 0. This told somebody to
+close a brief they had parked.
+
+### Tests
+
+`tests/test_read_record.sh`, 22 tests, green under both awk interpreters the matrix finds.
+Each guard was proved by breaking the tool: restoring the subshell exit, the invented states,
+the dropped revision and the unsplit state each fails exactly the guards that name it. A
+guard that has never failed is unproven.
+
+Two tests assert the tree rather than the behaviour: the surface sources the shared readers,
+and it defines none of them itself. A pasted copy of the tokenizer would pass every
+behavioural test here and rebuild the defect #0013 was filed about.
+
+### The schema the plan asked for, and what was built instead
+
+The plan for `b` said "a schema". **No JSON Schema file was written**, and the reason is this
+repository's rule rather than time. A schema beside a hand-rolled emitter is a declared second
+copy of the same fact, and nothing here could check that the two agree. `jq` is absent on the
+machine that published this surface. Adding a JSON toolchain so the surface could validate
+itself would hand it the dependency it exists to avoid.
+
+So the contract is pinned as the exact field set of every object the surface emits — brief,
+phase, event, next, and the snapshot's top level — and the pins are tests. A field added,
+removed or renamed fails the suite and somebody decides on purpose. That is the property the
+schema was wanted for, and a pin cannot drift from the thing it describes.
+
+Phase `c` needs a strict decoder. It can generate one from these pins or hand-write it against
+them. What it must not do is write a third description of the same shape.
+
+### Left alone, and named
+
+Three suite failures predate this phase and were measured on a clean tree before any of this
+was written: `log_version_refuses_to_count_a_shallow_source`,
+`skill_names_no_unprefixed_name_survives_outside_the_record` and
+`skill_names_to_do_is_gone_outside_the_record`. Nothing here touches them.
+
 ## Branches
+
+`brief/0039-b-read-surface`, cut from `main` after PR#158 merged. It carries phase `b`.
 
 `blic/bake-off`, cut from `main`. It carries the read surface and the five prototype branches
 are cut from it. It is outside `brief/` on purpose: the name is reserved for phase branches

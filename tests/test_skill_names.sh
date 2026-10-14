@@ -314,6 +314,7 @@ test_skill_names_the_squash_mentions_are_the_pinned_ones() {
     'skills/blc-commit-push-pr/SKILL.md 5' \
     'skills/blc-prune-stale-branches/SKILL.md 1' \
     'tools/lib/touch-log.sh 3' \
+    'tools/read-record.sh 1' \
     'tools/stale-branches.sh 3')"
   actual="$(cd "$REPO_ROOT" \
     && LC_ALL=C grep -rci -- squash skills/ tools/ 2>/dev/null \
