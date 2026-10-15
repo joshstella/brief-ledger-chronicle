@@ -1,7 +1,6 @@
 # The meta-brief layer - commitments and schedule
 
-**Created:** 2026-10-14T22:50:39Z · **Author:** josh.stella@gmail.com
-**Depends on:** —
+**Serial:** #0040 · **Created:** 2026-10-14T22:50:39Z · **Author:** josh.stella@gmail.com · **Depends on:** —
 
 A project with defined deliverables needs a step above a brief: read the outcome, measure the
 current state, find the delta, and cut the delta into briefs small enough to finish instead of
