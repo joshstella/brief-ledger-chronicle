@@ -219,5 +219,6 @@ test_host_yes_flag_installs_without_a_prompt() {
 test_host_yes_flag_works_for_machine_mode() {
   run_install n --machine --yes
   assert_status 0
-  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" "$REPO_ROOT/personal/CLAUDE.md"
+  assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" \
+                    "$REPO_ROOT/docs/blc/briefs/README.md"
 }

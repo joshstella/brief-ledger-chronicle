@@ -1,7 +1,8 @@
 # Personal working agreement — global
 
-Goes at `~/.claude/CLAUDE.md`, linked there by `install.sh --machine`. Applies to
-every project on the machine. Project-specific facts — stack, directory layout,
+An example to copy, not part of the install. `install.sh --machine` does not link it
+(#0041). If you want it, copy or link it to `~/.claude/CLAUDE.md` yourself. There it applies
+to every project on the machine. Project-specific facts — stack, directory layout,
 build/test commands — live in each repo's own `CLAUDE.md`, not here. Keep this file
 short; concise instructions are followed more reliably than long ones.
 

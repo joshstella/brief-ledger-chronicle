@@ -3,13 +3,33 @@
 # CLAUDE_HOME is overridable precisely so these can run without touching the real
 # ~/.claude. Each test gets a fresh one from setup().
 
-test_machine_links_the_personal_agreement_and_brief_template() {
+test_machine_links_the_brief_template() {
   run_install y --machine
   assert_status 0
-  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" \
-                    "$REPO_ROOT/personal/CLAUDE.md"
   assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" \
                     "$REPO_ROOT/docs/blc/briefs/README.md"
+}
+
+# personal/CLAUDE.md is one author's working style and nothing in the toolkit reads it, so
+# linking it handed every machine that author's global instructions (#0041). -e follows a
+# link and so misses a dangling one, and -L catches it, so both tests are needed to say
+# "nothing is there".
+test_machine_does_not_link_the_personal_agreement() {
+  run_install y --machine
+  assert_status 0
+  [ ! -e "$CLAUDE_HOME_DIR/CLAUDE.md" ] && [ ! -L "$CLAUDE_HOME_DIR/CLAUDE.md" ] \
+    || fail "machine mode wrote $CLAUDE_HOME_DIR/CLAUDE.md"
+}
+
+# A machine that ran the old step has this link, and its owner may rely on it. The path is
+# no longer the installer's, so a re-run leaves it in place and does not mention it.
+test_machine_leaves_an_old_personal_agreement_link_alone() {
+  mkdir -p "$CLAUDE_HOME_DIR"
+  ln -s "$REPO_ROOT/personal/CLAUDE.md" "$CLAUDE_HOME_DIR/CLAUDE.md"
+  run_install y --machine
+  assert_status 0
+  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" "$REPO_ROOT/personal/CLAUDE.md"
+  assert_not_contains "CLAUDE.md" "$OUT"
 }
 
 # One link per process skill, not one for a whole directory: the single source tree
@@ -55,28 +75,29 @@ test_machine_rerun_skips_links_that_are_already_correct() {
 # link resolves to nothing. It cannot be content anyone would lose, so it is safe
 # to replace.
 test_machine_replaces_a_dangling_link() {
-  mkdir -p "$CLAUDE_HOME_DIR"
-  ln -s "$TMP/deleted-config-repo/CLAUDE.md" "$CLAUDE_HOME_DIR/CLAUDE.md"
+  mkdir -p "$CLAUDE_HOME_DIR/briefs"
+  ln -s "$TMP/deleted-config-repo/README.md" "$CLAUDE_HOME_DIR/briefs/README.template.md"
   run_install y --machine
   assert_status 0
-  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" "$REPO_ROOT/personal/CLAUDE.md"
+  assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" \
+                    "$REPO_ROOT/docs/blc/briefs/README.md"
   assert_out "replaced dangling symlink"
 }
 
 test_machine_refuses_to_clobber_a_real_file() {
-  mkdir -p "$CLAUDE_HOME_DIR"
-  echo "HAND-ROLLED CONFIG" > "$CLAUDE_HOME_DIR/CLAUDE.md"
+  mkdir -p "$CLAUDE_HOME_DIR/briefs"
+  echo "HAND-ROLLED CONFIG" > "$CLAUDE_HOME_DIR/briefs/README.template.md"
   run_install y --machine
-  assert_contains "HAND-ROLLED CONFIG" "$CLAUDE_HOME_DIR/CLAUDE.md"
+  assert_contains "HAND-ROLLED CONFIG" "$CLAUDE_HOME_DIR/briefs/README.template.md"
   assert_out "Conflicts — resolve by hand"
 }
 
 test_machine_refuses_a_symlink_pointing_somewhere_else() {
-  mkdir -p "$CLAUDE_HOME_DIR" "$TMP/other"
-  echo "SOMEONE ELSES CONFIG" > "$TMP/other/CLAUDE.md"
-  ln -s "$TMP/other/CLAUDE.md" "$CLAUDE_HOME_DIR/CLAUDE.md"
+  mkdir -p "$CLAUDE_HOME_DIR/briefs" "$TMP/other"
+  echo "SOMEONE ELSES CONFIG" > "$TMP/other/README.md"
+  ln -s "$TMP/other/README.md" "$CLAUDE_HOME_DIR/briefs/README.template.md"
   run_install y --machine
-  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" "$TMP/other/CLAUDE.md"
+  assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" "$TMP/other/README.md"
   assert_out "Conflicts — resolve by hand"
 }
 
@@ -86,14 +107,15 @@ test_machine_refuses_a_symlink_pointing_somewhere_else() {
 test_machine_mode_needs_no_project_toolchain() {
   run_install_with_path "/usr/bin:/bin" y --machine
   assert_status 0
-  assert_symlink_to "$CLAUDE_HOME_DIR/CLAUDE.md" "$REPO_ROOT/personal/CLAUDE.md"
+  assert_symlink_to "$CLAUDE_HOME_DIR/briefs/README.template.md" \
+                    "$REPO_ROOT/docs/blc/briefs/README.md"
 }
 
 test_machine_declining_the_prompt_links_nothing() {
   run_install n --machine
   assert_status 0
   assert_out "Aborted."
-  assert_no_file "$CLAUDE_HOME_DIR/CLAUDE.md"
+  assert_no_dir "$CLAUDE_HOME_DIR"
 }
 
 test_machine_writes_nothing_into_a_project() {

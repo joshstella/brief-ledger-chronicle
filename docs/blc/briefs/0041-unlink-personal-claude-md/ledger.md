@@ -1,16 +1,16 @@
 # Ledger — #0041 Machine mode stops linking the personal CLAUDE.md
 
-`blc/2 #0041 pending a:pending`
+`blc/2 #0041 in-progress a:in-progress(brief/0041-a-the-unlink)`
 
 **Brief:** `docs/blc/briefs/0041-unlink-personal-claude-md/brief.md`
-**Status:** pending
+**Status:** in-progress
 **Started:** 2026-10-19
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | the unlink | pending | — | — |
+| a | the unlink | in-progress | `brief/0041-a-the-unlink` | — |
 
 **a — the unlink.** Machine mode stops linking `personal/CLAUDE.md` into `~/.claude/CLAUDE.md`.
 In `install.sh` it removes the link, the source check, the line in the printed plan, the
@@ -51,3 +51,12 @@ None.
 - **`personal/CLAUDE.md` describes its own install.** Line 3 says the installer links it.
 - **The author's machine depends on the old link.** `~/.claude/CLAUDE.md` here is a link to
   `personal/CLAUDE.md`. The settled decision keeps it working.
+
+## Big decisions
+
+**`README.md` does not change.** Decided 2026-10-19 at the review gate.
+
+The brief lists a `README.md` update of the machine-mode description. The README does not
+name the files that machine mode links. It says only that the step "wires up ~/.claude", and
+that is still true after this phase. An edit would add a sentence about a file that the
+installer no longer touches. The brief's line was written before anyone read the README text.
