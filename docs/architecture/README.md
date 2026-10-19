@@ -45,8 +45,8 @@ there with the code that proves it.
 - `templates/` holds files the installer writes into a target and keeps owning: one
   `process-rules.md` body goes to two destinations, because Cursor needs YAML frontmatter and
   Claude Code does not. <!-- cite: install.sh :: One process-rules.md body, two destinations -->
-- `personal/` belongs to the other install mode. `--machine` links one file into the agent's
-  home directory rather than into any project. <!-- cite: install.sh :: $SCRIPT_DIR/personal/CLAUDE.md -->
+- `personal/` holds one author's working agreement, kept as an example to copy. No install mode
+  writes it anywhere, and nothing in the toolkit reads it. <!-- cite: install.sh :: $CLAUDE_HOME/CLAUDE.md is not linked (#0041) -->
 
 ## How the tools reach the libraries
 

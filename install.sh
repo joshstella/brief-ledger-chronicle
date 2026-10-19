@@ -661,10 +661,15 @@ fi
 #
 # Why this mode exists: the commands reference user-level paths that no per-project
 # install creates — `/blc-init-briefs` reads the brief README template from
-# $CLAUDE_HOME/briefs/, and Claude Code reads the personal working agreement from
-# $CLAUDE_HOME/CLAUDE.md. Without this step those resolve to nothing, and because the
+# $CLAUDE_HOME/briefs/. Without this step it resolves to nothing, and because the
 # commands degrade gracefully rather than erroring, a machine can look configured while
 # being unrunnable from clean. That is exactly the failure this mode closes.
+#
+# $CLAUDE_HOME/CLAUDE.md is not linked (#0041). personal/CLAUDE.md is one author's working
+# style, and nothing in the toolkit reads it: the process rules ship per project through
+# templates/process-rules.md. Linking it handed every person who ran this step the author's
+# global instructions. It stays in the repo as an example to copy. A link an older run made
+# is left alone — the installer does not touch a path it no longer owns.
 #
 # Symlinks, not copies: the repo is the single source of truth, so `git pull` updates
 # every machine-level artifact at once. The tradeoff is that a pull changes your
@@ -673,7 +678,7 @@ fi
 #
 # Skills are not linked here. They install per-project, and each project run replaces
 # toolkit-owned paths with whatever this checkout ships — local edits do not survive.
-# Machine mode only links the slash-commands and personal CLAUDE.md; a machine-wide
+# Machine mode only links the slash-commands and the brief README template; a machine-wide
 # skills link would override every target on `git pull` with no per-project boundary.
 
 if [[ "$MODE" == "machine" ]]; then
@@ -681,7 +686,7 @@ if [[ "$MODE" == "machine" ]]; then
   echo "Checking machine-mode sources..."
 
   MISSING_SOURCES=()
-  for src in "personal/CLAUDE.md" "skills" "docs/blc/briefs/README.md"; do
+  for src in "skills" "docs/blc/briefs/README.md"; do
     if [[ ! -e "$SCRIPT_DIR/$src" ]]; then
       echo "  [✗] $src — missing"
       MISSING_SOURCES+=("$src")
@@ -701,7 +706,6 @@ if [[ "$MODE" == "machine" ]]; then
   echo "Machine config directory: $CLAUDE_HOME"
   echo ""
   echo "This will link (never copy, never overwrite real files):"
-  echo "  $CLAUDE_HOME/CLAUDE.md                  → personal/CLAUDE.md"
   for s in $PROCESS_SKILLS; do
     echo "  $CLAUDE_HOME/commands/$s.md → skills/$s/SKILL.md"
   done
@@ -720,10 +724,6 @@ if [[ "$MODE" == "machine" ]]; then
   echo ""
   echo "Linking..."
   echo ""
-
-  link_into_place "$SCRIPT_DIR/personal/CLAUDE.md" \
-                  "$CLAUDE_HOME/CLAUDE.md" \
-                  "CLAUDE.md"
 
   # One link per process skill rather than one for the whole directory: the single source
   # tree stores these as skills/<name>/SKILL.md, but Claude Code wants commands/<name>.md,
@@ -757,8 +757,7 @@ if [[ "$MODE" == "machine" ]]; then
     for item in ${CONFLICTS[@]+"${CONFLICTS[@]}"}; do echo "  - $item"; done
     echo ""
     echo "  Nothing was overwritten. Move or delete the file above, then re-run"
-    echo "  --machine to link it. If it holds config you want to keep, merge it into"
-    echo "  $SCRIPT_DIR/personal/CLAUDE.md first so the repo stays the source of truth."
+    echo "  --machine to link it."
   fi
 
   echo ""
