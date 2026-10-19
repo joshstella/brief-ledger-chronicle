@@ -11,8 +11,9 @@ test_machine_links_the_brief_template() {
 }
 
 # personal/CLAUDE.md is one author's working style and nothing in the toolkit reads it, so
-# linking it handed every machine that author's global instructions (#0041). -e misses a
-# dangling link and -f follows one, so both tests are needed to say "nothing is there".
+# linking it handed every machine that author's global instructions (#0041). -e follows a
+# link and so misses a dangling one, and -L catches it, so both tests are needed to say
+# "nothing is there".
 test_machine_does_not_link_the_personal_agreement() {
   run_install y --machine
   assert_status 0
