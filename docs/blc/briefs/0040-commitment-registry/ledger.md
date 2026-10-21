@@ -1,16 +1,16 @@
 # Ledger — #0040 The meta-brief layer - commitments and schedule
 
-`blc/2 #0040 in-progress a:in-progress(brief/0040-a-the-translation) b:pending c:pending d:pending`
+`blc/2 #0040 deferred a:pending b:pending c:pending d:pending`
 
 **Brief:** `docs/blc/briefs/0040-commitment-registry/brief.md`
-**Status:** in-progress
+**Status:** deferred
 **Started:** 2026-10-15
 
 ## Phases
 
 | id | label | status | branch | PR |
 |---|---|---|---|---|
-| a | the translation, by hand | in-progress | `brief/0040-a-the-translation` | — |
+| a | the translation, by hand | pending | — | — |
 | b | the registry and its gate | pending | — | — |
 | c | the delta report | pending | — | — |
 | d | cohorts | pending | — | — |
@@ -87,6 +87,21 @@ work. Re-planning from `a`'s result is the expected path.
   `unjudged`, demo events — has no real data here, exactly as #0039 had no real peer events.
   `a` can test the translation and the probes. It cannot test acceptance, and must say so
   rather than simulate it.
+
+## Parked, 2026-10-21
+
+The brief is deferred. Every phase is pending.
+
+`a` is not `deferred`. `deferred` on a phase means code parked on a branch, and `a` has none.
+`brief/0040-a-the-translation` was cut and holds no commit of its own. No criterion was
+written. The branch is left in place.
+
+The reason is a choice, not a blocker. The translation is set aside before it started. The
+brief stays filed, and the fixture decision recorded above stays with it.
+
+Resume is a ledger edit, not a command. `blc-start-brief` stops because this ledger exists.
+`blc-next-brief-phase` requires a phase that is `in-progress`, and none is. A person sets the
+brief back to `in-progress`, sets `a` to `in-progress`, and cuts the branch again.
 
 ## Branches
 
