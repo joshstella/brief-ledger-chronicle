@@ -251,6 +251,43 @@ closed briefs here nothing did, which is why half of them record no date — see
 
 **Ceiling: 26 phases.** A 27th is a new brief, not `aa`.
 
+## Big decisions
+
+A ledger can end its narrative with a `## Big decisions` section. It records a judgment call
+that was settled during the work, with reasoning that the brief does not already hold. It is
+the part of the record that says why the work went one way and not the other.
+
+**Only a decision that carries information goes in.** A question was open, someone settled it,
+and the reason is new. A clean approval is not a decision. A bug fix is not a decision. If
+nothing was decided, write nothing. Most ledgers have no section, and that is correct. The
+section is sparse by design, so each entry in it is worth reading.
+
+**Who writes it.** `blc-review-pr` appends an entry when a **Your call** item, or another
+ambiguity from the review, is settled in the conversation. Any phase can add one when it
+reopens a decision, for example "after `a`". The review's bug ledger is different: it is
+transient, kept in memory, and tracks the branch. This section stays with the brief.
+
+**Format.** One entry per decision. Each entry starts with a bold lead that states the
+outcome, not the question. Then give the date and the point where it was decided. Then give
+the reasoning: what was considered, what was rejected, and what it costs.
+
+```markdown
+## Big decisions
+
+- **`README.md` does not change.** 2026-10-19, at the review gate. The brief lists a
+  README update. The README does not name the files that machine mode links, so an edit
+  would add a sentence about a file the installer no longer touches.
+```
+
+A bullet or a paragraph can hold the lead. A long entry can have more paragraphs below it.
+Older ledgers use a `###` heading for some entries, and readers accept both. Write a new entry
+with a bold lead.
+
+**Who reads it.** `blc-chronicle` reads each entry as a fork in the story: a point where the
+work could have gone another way. A brief's "Resolved since filing" list can point here
+instead of repeating the reasoning. A decision that is settled in this section is not argued
+again without new information.
+
 ## Reporting to a tracker
 
 **A tracker is a place this record is published to. It is never a place it is read from.**
