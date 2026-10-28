@@ -332,7 +332,8 @@ gather_bold_ledger() {
   printf '%s\n' "# Ledger — ${1#*-}" '' '## Big decisions' '' \
     '- **A bullet lead.** 2026-01-01, at the review gate. The reasoning' \
     '  **wraps onto a bold continuation** that is not an entry.' '' \
-    '**A paragraph lead.** 2026-01-02. More reasoning.' '' \
+    '**A paragraph lead.** 2026-01-02. More reasoning, and' \
+    '**an unindented bold continuation** that is not an entry either.' '' \
     '**A lead that wraps' 'across two lines.** 2026-01-03.' '' \
     '## Something else' '' '**Not a fork either.**' > "$BRIEFS/$1/ledger.md"
 }
@@ -360,6 +361,8 @@ test_gather_does_not_read_other_bold_text_as_a_fork() {
   run_gather
   assert_status 0
   assert_not_contains "fork · wraps onto" "$OUT"
+  # Unindented, so only the blank-line rule rejects it.
+  assert_not_contains "fork · an unindented bold continuation" "$OUT"
   assert_not_contains "fork · across two lines" "$OUT"
   assert_not_contains "fork · Not a fork either" "$OUT"
 }
