@@ -323,6 +323,50 @@ test_gather_stops_collecting_forks_at_the_next_section() {
   assert_not_contains "fork · Not a fork" "$OUT"
 }
 
+# usage: gather_bold_ledger <folder>
+# The entry shape docs/blc/briefs/README.md prescribes: a bold lead, as a bullet or as a
+# paragraph. Nine of the eleven ledgers here wrote that shape before anything read it, and
+# the `###`-only reader reported three forks out of about seventy.
+gather_bold_ledger() {
+  mkdir -p "$BRIEFS/$1"
+  printf '%s\n' "# Ledger — ${1#*-}" '' '## Big decisions' '' \
+    '- **A bullet lead.** 2026-01-01, at the review gate. The reasoning' \
+    '  **wraps onto a bold continuation** that is not an entry.' '' \
+    '**A paragraph lead.** 2026-01-02. More reasoning, and' \
+    '**an unindented bold continuation** that is not an entry either.' '' \
+    '**A lead that wraps' 'across two lines.** 2026-01-03.' '' \
+    '## Something else' '' '**Not a fork either.**' > "$BRIEFS/$1/ledger.md"
+}
+
+test_gather_lists_bold_leads_as_forks() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_bold_ledger "0001-alpha"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_out "fork · A bullet lead."
+  assert_out "fork · A paragraph lead."
+  # The closing `**` is on the next line, so the fork is the first line, not nothing.
+  assert_out "fork · A lead that wraps"
+}
+
+# A bold phrase is a lead only where an entry can start: a bullet, or a paragraph's first
+# line. Mid-paragraph bold and bold under a later section are not forks.
+test_gather_does_not_read_other_bold_text_as_a_fork() {
+  gather_repo
+  gather_brief "0001-alpha"
+  gather_bold_ledger "0001-alpha"
+  gather_commit "2026-01-01T00:00:00" "seed #0001"
+  run_gather
+  assert_status 0
+  assert_not_contains "fork · wraps onto" "$OUT"
+  # Unindented, so only the blank-line rule rejects it.
+  assert_not_contains "fork · an unindented bold continuation" "$OUT"
+  assert_not_contains "fork · across two lines" "$OUT"
+  assert_not_contains "fork · Not a fork either" "$OUT"
+}
+
 # ── Drafts ───────────────────────────────────────────────────────────────────
 
 test_gather_lists_drafts_with_their_titles() {

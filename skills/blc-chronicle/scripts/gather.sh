@@ -81,7 +81,22 @@ if [ -s "$tmp" ]; then
     fi
     echo "- ${slug}"
     if [ -f "${d}ledger.md" ]; then
-      awk '/^## [Bb]ig decisions/{f=1;next} /^## /{f=0} f&&/^### /{sub(/^### /,"");print "    fork · "$0}' "${d}ledger.md"
+      # An entry is a bold lead (docs/blc/briefs/README.md, "Big decisions"), or a `###`
+      # heading in older ledgers. A bold lead counts only where an entry can start: a bullet,
+      # or the first line of a paragraph. Bold inside an entry that opens a paragraph is still
+      # read as a fork — the format cannot tell it apart, and a missed fork is silent where an
+      # extra one is visible to the narrator reading the ledger.
+      awk '
+        /^## [Bb]ig decisions/ { f = 1; prev = ""; next }
+        /^## / { f = 0 }
+        f && /^### / { s = $0; sub(/^### /, "", s); print "    fork · " s }
+        f && (/^- \*\*/ || (/^\*\*/ && prev ~ /^[ \t]*$/)) {
+          s = $0; sub(/^- /, "", s); s = substr(s, 3)
+          i = index(s, "**"); if (i > 0) s = substr(s, 1, i - 1)
+          print "    fork · " s
+        }
+        { prev = $0 }
+      ' "${d}ledger.md"
     fi
     narrated=$((narrated + 1))
   done < "$tmp"
