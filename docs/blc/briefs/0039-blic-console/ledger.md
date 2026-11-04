@@ -1,9 +1,9 @@
 # Ledger — #0039 The record nobody is watching while it changes
 
-`blc/2 #0039 in-progress a:done(PR#158) b:done(PR#159) c:in-progress(brief/0039-c-console) d:pending e:pending`
+`blc/2 #0039 deferred a:done(PR#158) b:done(PR#159) c:pending d:pending e:pending`
 
 **Brief:** `docs/blc/briefs/0039-blic-console/brief.md`
-**Status:** in-progress
+**Status:** deferred
 **Started:** 2026-10-14
 
 ## Phases
@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | a | the bake-off | done | `blic/bake-off` | PR#158 (the record only; the prototypes do not return) |
 | b | the read surface, published | done | `brief/0039-b-read-surface` | PR#159 |
-| c | the console, reduced and rebuilt | in-progress | `brief/0039-c-console` | — |
+| c | the console, reduced and rebuilt | pending | — | — |
 | d | distribution | pending | — | — |
 | e | where a notification lands | pending | — | — |
 
@@ -511,6 +511,23 @@ The new surface is the correct one and the old behavior is unchanged rather than
 broken, so this blocks nothing. It is written down because it is the same shape the brief was
 filed about, and because an undocumented disagreement reads as an oversight rather than as a
 decision. It belongs to its own serial, with #0039's phase tokenizer finding.
+
+## Parked, 2026-10-21
+
+The brief is deferred. Phases `a` and `b` stay done. Phases `c`, `d` and `e` are pending.
+
+`c` is not `deferred`. `deferred` on a phase means code parked on a branch, and `c` has none.
+`brief/0039-c-console` exists. Its one commit is the ledger edit that opened the phase, and
+that edit is already on `main` through #160. The branch is left in place. It holds nothing
+`main` does not have.
+
+The reason is a choice, not a blocker. The console work is set aside. The read surface from
+`b` stays.
+
+Resume is a ledger edit, not a command. `blc-start-brief` stops because this ledger exists.
+`blc-next-brief-phase` requires a phase that is `in-progress`, and none is. A person sets the
+brief back to `in-progress`, sets `c` to `in-progress`, and cuts the branch again. That stop
+is an instruction to an agent. Nothing checks it.
 
 ## Branches
 
